@@ -3,51 +3,22 @@ import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
     ArrowUpRight,
+    BarChart3,
+    Bell,
     ClipboardCheck,
     Clock3,
     LogOut,
     MapPinned,
-    Signal,
+    Play,
+    ShieldCheck,
+    UserRound,
     WifiOff,
-    BarChart3,
 } from "@tamagui/lucide-icons";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
-import {
-    AUDITOR_DASHBOARD_METRICS,
-    FIELD_PRIORITY_ITEMS,
-    PLAYSPACE_PLACES,
-    type MetricTone,
-    type PlaceStatus,
-} from "lib/playspace-demo-data";
+import { FIELD_PRIORITY_ITEMS, PLAYSPACE_PLACES, type PlaceStatus } from "lib/playspace-demo-data";
+import { designSystem, getPlaceStatusTone } from "lib/design-system";
 import { useDemoUiStore } from "stores/demo-ui-store";
 import { useAuthStore } from "stores/auth-store";
-
-type ToneTextColor = "$blue10" | "$green10" | "$purple10" | "$orange10";
-type ToneBackgroundColor = "$blue3" | "$green3" | "$purple3" | "$orange3";
-
-interface MetricToneView {
-    readonly textColor: ToneTextColor;
-    readonly backgroundColor: ToneBackgroundColor;
-}
-
-const METRIC_TONE_VIEW: Record<MetricTone, MetricToneView> = {
-    blue: {
-        textColor: "$blue10",
-        backgroundColor: "$blue3",
-    },
-    green: {
-        textColor: "$green10",
-        backgroundColor: "$green3",
-    },
-    purple: {
-        textColor: "$purple10",
-        backgroundColor: "$purple3",
-    },
-    orange: {
-        textColor: "$orange10",
-        backgroundColor: "$orange3",
-    },
-};
 
 const PLACE_STATUS_LABELS: Record<PlaceStatus, string> = {
     not_started: "Not Started",
@@ -64,11 +35,12 @@ export default function DashboardScreen() {
     const setSelectedPlaceId = useDemoUiStore((state) => state.setSelectedPlaceId);
     const session = useAuthStore((state) => state.session);
     const logout = useAuthStore((state) => state.logout);
-
-    const metrics = AUDITOR_DASHBOARD_METRICS;
     const highlightedPlaces = useMemo(() => {
         return PLAYSPACE_PLACES.filter((place) => place.status !== "submitted").slice(0, 3);
     }, []);
+    const assignedCount = PLAYSPACE_PLACES.length;
+    const completedCount = PLAYSPACE_PLACES.filter((place) => place.status === "submitted").length;
+    const priorityPlace = highlightedPlaces[0] ?? PLAYSPACE_PLACES[0];
     const fieldReadinessPercent = useMemo(() => {
         if (highlightedPlaces.length === 0) {
             return 0;
@@ -80,282 +52,683 @@ export default function DashboardScreen() {
 
         return Math.round(totalCompletion / highlightedPlaces.length);
     }, [highlightedPlaces]);
+    const activeAuditorName = session?.user.name ?? session?.user.email ?? "Active auditor";
+    const dateLabel = useMemo(() => {
+        return new Date().toLocaleDateString("en-NZ", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            weekday: "long",
+        });
+    }, []);
 
     return (
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-            <YStack gap="$4">
-                <YStack
-                    borderWidth={1}
-                    borderColor="$blue6"
-                    rounded={20}
-                    p="$4"
-                    gap="$3"
-                    bg="$blue2"
-                >
-                    <XStack justify="space-between" items="center">
-                        <Text fontSize={24} fontWeight="700">
-                            Auditor Field App
-                        </Text>
-                        <XStack gap="$2">
-                            <YStack rounded={999} px="$3" py="$1" bg="$blue4">
-                                <XStack items="center" gap="$1.5">
-                                    <WifiOff size={12} color="$blue10" />
-                                    <Paragraph color="$blue10" fontWeight="700">
-                                        Offline First
-                                    </Paragraph>
-                                </XStack>
-                            </YStack>
-                            <Button size="$2" onPress={logout}>
-                                <XStack items="center" gap="$1.5">
-                                    <LogOut size={12} />
-                                    <Text>Sign out</Text>
-                                </XStack>
-                            </Button>
-                        </XStack>
-                    </XStack>
-                    <Text fontSize={28} fontWeight="700">
-                        Daily Brief
-                    </Text>
-                    <Paragraph color="$color10">
-                        A mobile workspace for auditors to complete assigned playspace field audits
-                        without internet.
-                    </Paragraph>
-                    {session === null ? null : (
-                        <YStack gap="$1">
-                            <Paragraph color="$color10">
-                                Signed in as {session.user.email}
-                            </Paragraph>
-                            <XStack items="center" gap="$2">
-                                <Signal size={12} color="$green10" />
-                                <Paragraph color="$green10" fontWeight="700">
-                                    This home shows places assigned to your auditor account.
-                                </Paragraph>
-                            </XStack>
+        <ScrollView
+            contentInsetAdjustmentBehavior="automatic"
+            style={{ backgroundColor: designSystem.colors.background }}
+            contentContainerStyle={{
+                paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
+                paddingTop: designSystem.spacing.screenPaddingVertical,
+                paddingBottom: 132,
+                gap: 28,
+            }}
+        >
+            <YStack gap="$6">
+                <XStack justify="space-between" items="center" gap="$3">
+                    <XStack items="center" gap="$3" flex={1}>
+                        <YStack
+                            width={44}
+                            height={44}
+                            items="center"
+                            justify="center"
+                            rounded={designSystem.radii.md}
+                            borderWidth={1}
+                            borderColor={designSystem.colors.border}
+                            bg={designSystem.colors.surfaceMuted}
+                        >
+                            <UserRound size={20} color={designSystem.colors.primary} />
                         </YStack>
-                    )}
+                        <YStack flex={1} gap="$0.5">
+                            <Paragraph
+                                color={designSystem.colors.mutedForeground}
+                                fontFamily={designSystem.fonts.bodyBold}
+                                fontSize={10}
+                                textTransform="uppercase"
+                                letterSpacing={1.4}
+                            >
+                                Active auditor
+                            </Paragraph>
+                            <Text
+                                color={designSystem.colors.foreground}
+                                fontFamily={designSystem.fonts.bodyBold}
+                                fontSize={15}
+                            >
+                                {activeAuditorName}
+                            </Text>
+                        </YStack>
+                    </XStack>
 
                     <XStack gap="$2">
-                        {FIELD_PRIORITY_ITEMS.map((item) => {
-                            return (
-                                <YStack
-                                    key={item.id}
-                                    flex={1}
-                                    borderWidth={1}
-                                    borderColor="$blue6"
-                                    rounded={14}
-                                    p="$3"
-                                    bg="$background"
-                                >
-                                    <Paragraph color="$color10" fontSize={12}>
-                                        {item.title}
-                                    </Paragraph>
-                                    <Text fontSize={22} fontWeight="700" color="$blue10">
-                                        {item.value}
-                                    </Text>
-                                </YStack>
-                            );
-                        })}
-                    </XStack>
-                </YStack>
-
-                <YStack
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    rounded={16}
-                    p="$4"
-                    bg="$background"
-                    gap="$2.5"
-                    shadowColor="$shadowColor"
-                    shadowOpacity={0.08}
-                    shadowRadius={8}
-                    shadowOffset={{ width: 0, height: 3 }}
-                    elevation={2}
-                >
-                    <XStack justify="space-between" items="center">
-                        <Paragraph color="$color10">Field readiness</Paragraph>
-                        <Paragraph color="$green10" fontWeight="700">
-                            {fieldReadinessPercent}%
-                        </Paragraph>
-                    </XStack>
-                    <YStack height={8} rounded={999} bg="$background">
                         <YStack
-                            height={8}
-                            rounded={999}
-                            bg="$green9"
-                            width={`${fieldReadinessPercent}%`}
-                        />
-                    </YStack>
+                            width={42}
+                            height={42}
+                            items="center"
+                            justify="center"
+                            rounded={designSystem.radii.full}
+                            borderWidth={1}
+                            borderColor={designSystem.colors.border}
+                            bg={designSystem.colors.surfaceMuted}
+                        >
+                            <Bell size={18} color={designSystem.colors.foreground} />
+                        </YStack>
+                        <Button
+                            width={42}
+                            height={42}
+                            p={0}
+                            rounded={designSystem.radii.full}
+                            borderWidth={1}
+                            borderColor={designSystem.colors.border}
+                            bg={designSystem.colors.surfaceMuted}
+                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            onPress={logout}
+                        >
+                            <LogOut size={16} color={designSystem.colors.foreground} />
+                        </Button>
+                    </XStack>
+                </XStack>
+
+                <YStack gap="$1.5">
+                    <Text
+                        color={designSystem.colors.foreground}
+                        fontFamily={designSystem.fonts.headingBold}
+                        fontSize={34}
+                        lineHeight={38}
+                        letterSpacing={-0.8}
+                    >
+                        Field Dashboard
+                    </Text>
+                    <Paragraph
+                        color={designSystem.colors.mutedForeground}
+                        fontFamily={designSystem.fonts.bodySemiBold}
+                    >
+                        {dateLabel}
+                    </Paragraph>
                 </YStack>
 
-                <XStack gap="$2">
-                    <Button
+                <XStack gap="$3">
+                    <YStack
                         flex={1}
-                        size="$3"
-                        theme="blue"
-                        onPress={() => {
-                            router.push("/places");
+                        height={128}
+                        justify="space-between"
+                        rounded={designSystem.radii.lg}
+                        borderWidth={1}
+                        borderColor={designSystem.colors.border}
+                        bg={designSystem.colors.surface}
+                        p="$4"
+                        style={{
+                            boxShadow: designSystem.shadows.card,
                         }}
                     >
-                        <XStack items="center" gap="$1.5">
-                            <MapPinned size={14} />
-                            <Text>Places</Text>
-                        </XStack>
-                    </Button>
-                    <Button
+                        <YStack gap="$1">
+                            <Text
+                                color={designSystem.colors.primary}
+                                fontFamily={designSystem.fonts.headingBold}
+                                fontSize={34}
+                                lineHeight={36}
+                            >
+                                {assignedCount.toString().padStart(2, "0")}
+                            </Text>
+                            <Paragraph
+                                color={designSystem.colors.mutedForeground}
+                                fontFamily={designSystem.fonts.bodyBold}
+                                fontSize={11}
+                                textTransform="uppercase"
+                                letterSpacing={1.5}
+                            >
+                                Assigned
+                            </Paragraph>
+                        </YStack>
+                        <MapPinned size={28} color="rgba(255, 107, 0, 0.25)" />
+                    </YStack>
+
+                    <YStack
                         flex={1}
-                        size="$3"
-                        onPress={() => {
-                            router.push("/execute");
+                        height={128}
+                        justify="space-between"
+                        rounded={designSystem.radii.lg}
+                        borderWidth={1}
+                        borderColor={designSystem.colors.border}
+                        bg={designSystem.colors.surface}
+                        p="$4"
+                        style={{
+                            boxShadow: designSystem.shadows.card,
                         }}
                     >
-                        <XStack items="center" gap="$1.5">
-                            <ClipboardCheck size={14} />
-                            <Text>Execute</Text>
-                        </XStack>
-                    </Button>
-                    <Button
-                        flex={1}
-                        size="$3"
-                        theme="purple"
-                        onPress={() => {
-                            router.push("/reports");
-                        }}
-                    >
-                        <XStack items="center" gap="$1.5">
-                            <BarChart3 size={14} />
-                            <Text>Reports</Text>
-                        </XStack>
-                    </Button>
+                        <YStack gap="$1">
+                            <Text
+                                color={designSystem.colors.success}
+                                fontFamily={designSystem.fonts.headingBold}
+                                fontSize={34}
+                                lineHeight={36}
+                            >
+                                {completedCount.toString().padStart(2, "0")}
+                            </Text>
+                            <Paragraph
+                                color={designSystem.colors.mutedForeground}
+                                fontFamily={designSystem.fonts.bodyBold}
+                                fontSize={11}
+                                textTransform="uppercase"
+                                letterSpacing={1.5}
+                            >
+                                Completed
+                            </Paragraph>
+                        </YStack>
+                        <ShieldCheck size={28} color="rgba(16, 185, 129, 0.28)" />
+                    </YStack>
                 </XStack>
             </YStack>
 
             <YStack gap="$3">
-                {metrics.map((metric) => {
-                    const metricToneView = METRIC_TONE_VIEW[metric.tone];
+                <XStack justify="space-between" items="center">
+                    <Text
+                        color={designSystem.colors.mutedForeground}
+                        fontFamily={designSystem.fonts.bodyBold}
+                        fontSize={11}
+                        textTransform="uppercase"
+                        letterSpacing={1.6}
+                    >
+                        Priority task
+                    </Text>
+                    <Paragraph
+                        color={designSystem.colors.danger}
+                        fontFamily={designSystem.fonts.bodyBold}
+                        fontSize={11}
+                        textTransform="uppercase"
+                        letterSpacing={1.3}
+                    >
+                        Due today
+                    </Paragraph>
+                </XStack>
 
-                    return (
+                {priorityPlace === undefined ? null : (
+                    <YStack
+                        rounded={designSystem.radii.lg}
+                        borderWidth={2}
+                        borderColor={designSystem.colors.primary}
+                        bg={designSystem.colors.surface}
+                        overflow="hidden"
+                        style={{
+                            boxShadow: designSystem.shadows.card,
+                        }}
+                    >
                         <YStack
-                            key={metric.id}
-                            borderWidth={1}
-                            borderColor="$borderColor"
-                            bg="$background"
-                            rounded={16}
                             p="$4"
-                            gap="$2"
-                            shadowColor="$shadowColor"
-                            shadowOpacity={0.08}
-                            shadowRadius={8}
-                            shadowOffset={{ width: 0, height: 3 }}
-                            elevation={2}
-                            pressStyle={{ scale: 0.99 }}
+                            gap="$3"
+                            bg={designSystem.colors.surface}
+                            style={{
+                                backgroundColor: designSystem.colors.surface,
+                            }}
                         >
-                            <Paragraph color="$color10">{metric.title}</Paragraph>
-                            <Text fontSize={30} fontWeight="700" color={metricToneView.textColor}>
-                                {metric.value}
-                            </Text>
-                            <XStack items="center" gap="$2">
+                            <XStack gap="$2" items="center" flexWrap="wrap">
                                 <YStack
-                                    rounded={999}
-                                    px="$2.5"
+                                    rounded={designSystem.radii.sm}
+                                    px="$2"
                                     py="$1"
-                                    bg={metricToneView.backgroundColor}
+                                    bg={designSystem.colors.primary}
                                 >
-                                    <Paragraph color={metricToneView.textColor} fontWeight="700">
-                                        {metric.helperText}
-                                    </Paragraph>
+                                    <Text
+                                        color={designSystem.colors.primaryForeground}
+                                        fontFamily={designSystem.fonts.bodyBold}
+                                        fontSize={10}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.3}
+                                    >
+                                        Urgent audit
+                                    </Text>
                                 </YStack>
-                                <ArrowUpRight size={14} color={metricToneView.textColor} />
+                                <YStack
+                                    rounded={designSystem.radii.sm}
+                                    px="$2"
+                                    py="$1"
+                                    bg={designSystem.colors.surfaceMuted}
+                                >
+                                    <Text
+                                        color={designSystem.colors.secondaryForeground}
+                                        fontFamily={designSystem.fonts.bodyBold}
+                                        fontSize={10}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.3}
+                                    >
+                                        {priorityPlace.locality}
+                                    </Text>
+                                </YStack>
                             </XStack>
+
+                            <YStack gap="$1">
+                                <Text
+                                    color={designSystem.colors.foreground}
+                                    fontFamily={designSystem.fonts.headingBold}
+                                    fontSize={24}
+                                    lineHeight={28}
+                                >
+                                    {priorityPlace.placeName}
+                                </Text>
+                                <Paragraph
+                                    color={designSystem.colors.mutedForeground}
+                                    fontFamily={designSystem.fonts.bodyMedium}
+                                >
+                                    {priorityPlace.projectName}
+                                </Paragraph>
+                            </YStack>
                         </YStack>
-                    );
-                })}
+
+                        <XStack
+                            items="center"
+                            gap="$4"
+                            p="$4"
+                            borderTopWidth={1}
+                            borderTopColor={designSystem.colors.border}
+                        >
+                            <YStack flex={1} gap="$2">
+                                <YStack
+                                    height={6}
+                                    rounded={designSystem.radii.full}
+                                    bg={designSystem.colors.mutedSurface}
+                                    overflow="hidden"
+                                >
+                                    <YStack
+                                        height={6}
+                                        rounded={designSystem.radii.full}
+                                        bg={designSystem.colors.primary}
+                                        width={`${priorityPlace.mandatoryCompletionPercent}%`}
+                                    />
+                                </YStack>
+                                <Text
+                                    color={designSystem.colors.mutedForeground}
+                                    fontFamily={designSystem.fonts.monoBold}
+                                    fontSize={11}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.1}
+                                >
+                                    {priorityPlace.mandatoryCompletionPercent}% progress •{" "}
+                                    {priorityPlace.id.toUpperCase()}
+                                </Text>
+                            </YStack>
+                            <Button
+                                height={40}
+                                px="$4"
+                                rounded={designSystem.radii.sm}
+                                borderWidth={0}
+                                bg={designSystem.colors.primary}
+                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                onPress={() => {
+                                    setSelectedPlaceId(priorityPlace.id);
+                                    router.push("/(tabs)/execute");
+                                }}
+                            >
+                                <XStack items="center" gap="$2">
+                                    <Text
+                                        color={designSystem.colors.primaryForeground}
+                                        fontFamily={designSystem.fonts.bodyBold}
+                                        fontSize={12}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.2}
+                                    >
+                                        Resume
+                                    </Text>
+                                    <Play size={14} color={designSystem.colors.primaryForeground} />
+                                </XStack>
+                            </Button>
+                        </XStack>
+                    </YStack>
+                )}
             </YStack>
 
-            <YStack
-                borderWidth={1}
-                borderColor="$borderColor"
-                rounded={16}
-                bg="$background"
-                p="$4"
-                gap="$3"
-            >
+            <XStack gap="$3">
+                <Button
+                    flex={1}
+                    height={48}
+                    rounded={designSystem.radii.md}
+                    borderWidth={1}
+                    borderColor={designSystem.colors.border}
+                    bg={designSystem.colors.surfaceMuted}
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={() => {
+                        router.push("/places");
+                    }}
+                >
+                    <XStack items="center" gap="$2">
+                        <MapPinned size={16} color={designSystem.colors.foreground} />
+                        <Text
+                            color={designSystem.colors.foreground}
+                            fontFamily={designSystem.fonts.bodyBold}
+                            fontSize={12}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            Places
+                        </Text>
+                    </XStack>
+                </Button>
+
+                <Button
+                    flex={1}
+                    height={48}
+                    rounded={designSystem.radii.md}
+                    borderWidth={0}
+                    bg={designSystem.colors.primary}
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={() => {
+                        router.push("/execute");
+                    }}
+                >
+                    <XStack items="center" gap="$2">
+                        <ClipboardCheck size={16} color={designSystem.colors.primaryForeground} />
+                        <Text
+                            color={designSystem.colors.primaryForeground}
+                            fontFamily={designSystem.fonts.bodyBold}
+                            fontSize={12}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            Execute
+                        </Text>
+                    </XStack>
+                </Button>
+
+                <Button
+                    flex={1}
+                    height={48}
+                    rounded={designSystem.radii.md}
+                    borderWidth={1}
+                    borderColor={designSystem.colors.border}
+                    bg={designSystem.colors.surfaceMuted}
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={() => {
+                        router.push("/reports");
+                    }}
+                >
+                    <XStack items="center" gap="$2">
+                        <BarChart3 size={16} color={designSystem.colors.foreground} />
+                        <Text
+                            color={designSystem.colors.foreground}
+                            fontFamily={designSystem.fonts.bodyBold}
+                            fontSize={12}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            Reports
+                        </Text>
+                    </XStack>
+                </Button>
+            </XStack>
+
+            <YStack gap="$3">
+                <Text
+                    color={designSystem.colors.mutedForeground}
+                    fontFamily={designSystem.fonts.bodyBold}
+                    fontSize={11}
+                    textTransform="uppercase"
+                    letterSpacing={1.6}
+                >
+                    Connectivity status
+                </Text>
+
+                <YStack
+                    borderWidth={1}
+                    borderColor={designSystem.colors.border}
+                    rounded={designSystem.radii.lg}
+                    p="$4"
+                    gap="$3"
+                    bg={designSystem.colors.surfaceMuted}
+                    style={{
+                        boxShadow: designSystem.shadows.card,
+                    }}
+                >
+                    <XStack items="center" gap="$3">
+                        <YStack
+                            width={44}
+                            height={44}
+                            items="center"
+                            justify="center"
+                            rounded={designSystem.radii.md}
+                            bg={designSystem.colors.successSoft}
+                        >
+                            <WifiOff size={22} color={designSystem.colors.success} />
+                        </YStack>
+                        <YStack flex={1} gap="$1">
+                            <Text
+                                color={designSystem.colors.foreground}
+                                fontFamily={designSystem.fonts.bodyBold}
+                                fontSize={15}
+                            >
+                                Offline ready
+                            </Text>
+                            <Paragraph
+                                color={designSystem.colors.mutedForeground}
+                                fontFamily={designSystem.fonts.bodyMedium}
+                            >
+                                Assigned audit data is stored locally and ready for field use.
+                            </Paragraph>
+                        </YStack>
+                    </XStack>
+                </YStack>
+            </YStack>
+
+            <YStack gap="$3">
                 <XStack justify="space-between" items="center">
-                    <Text fontSize={19} fontWeight="700">
-                        Assigned Place Activity
+                    <Text
+                        color={designSystem.colors.mutedForeground}
+                        fontFamily={designSystem.fonts.bodyBold}
+                        fontSize={11}
+                        textTransform="uppercase"
+                        letterSpacing={1.6}
+                    >
+                        Field priorities
+                    </Text>
+                    <Text
+                        color={designSystem.colors.primary}
+                        fontFamily={designSystem.fonts.monoBold}
+                        fontSize={11}
+                        textTransform="uppercase"
+                        letterSpacing={1.1}
+                    >
+                        {fieldReadinessPercent}% ready
+                    </Text>
+                </XStack>
+
+                <XStack gap="$2.5">
+                    {FIELD_PRIORITY_ITEMS.map((item) => {
+                        return (
+                            <YStack
+                                key={item.id}
+                                flex={1}
+                                rounded={designSystem.radii.lg}
+                                borderWidth={1}
+                                borderColor={designSystem.colors.border}
+                                bg={designSystem.colors.surface}
+                                p="$3"
+                            >
+                                <Paragraph
+                                    color={designSystem.colors.mutedForeground}
+                                    fontFamily={designSystem.fonts.bodyBold}
+                                    fontSize={10}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.2}
+                                >
+                                    {item.title}
+                                </Paragraph>
+                                <Text
+                                    color={designSystem.colors.foreground}
+                                    fontFamily={designSystem.fonts.headingBold}
+                                    fontSize={24}
+                                    mt="$2"
+                                >
+                                    {item.value}
+                                </Text>
+                            </YStack>
+                        );
+                    })}
+                </XStack>
+            </YStack>
+
+            <YStack gap="$3">
+                <XStack justify="space-between" items="center">
+                    <Text
+                        color={designSystem.colors.mutedForeground}
+                        fontFamily={designSystem.fonts.bodyBold}
+                        fontSize={11}
+                        textTransform="uppercase"
+                        letterSpacing={1.6}
+                    >
+                        Active work
                     </Text>
                     <Button
-                        size="$2"
-                        theme="blue"
+                        chromeless
                         onPress={() => {
                             router.push("/places");
                         }}
                     >
-                        See all
+                        <Text
+                            color={designSystem.colors.primary}
+                            fontFamily={designSystem.fonts.bodyBold}
+                            fontSize={11}
+                            textTransform="uppercase"
+                            letterSpacing={1.3}
+                        >
+                            See all
+                        </Text>
                     </Button>
                 </XStack>
 
-                <Separator borderColor="$borderColor" />
+                <YStack gap="$3">
+                    {highlightedPlaces.map((place) => {
+                        const placeTone = getPlaceStatusTone(place.status);
 
-                {highlightedPlaces.map((place, index) => {
-                    const isLastItem = index === highlightedPlaces.length - 1;
+                        return (
+                            <YStack
+                                key={place.id}
+                                rounded={designSystem.radii.lg}
+                                borderWidth={1}
+                                borderColor={designSystem.colors.border}
+                                bg={designSystem.colors.surface}
+                                p="$4"
+                                gap="$3"
+                                style={{
+                                    boxShadow: designSystem.shadows.card,
+                                }}
+                            >
+                                <XStack justify="space-between" items="flex-start" gap="$3">
+                                    <YStack flex={1} gap="$1">
+                                        <Text
+                                            color={designSystem.colors.foreground}
+                                            fontFamily={designSystem.fonts.bodyBold}
+                                            fontSize={16}
+                                        >
+                                            {place.placeName}
+                                        </Text>
+                                        <Paragraph
+                                            color={designSystem.colors.mutedForeground}
+                                            fontFamily={designSystem.fonts.bodyMedium}
+                                        >
+                                            {place.projectName}
+                                        </Paragraph>
+                                    </YStack>
+                                    <YStack
+                                        rounded={designSystem.radii.full}
+                                        px="$3"
+                                        py="$1"
+                                        style={{ backgroundColor: placeTone.surface }}
+                                    >
+                                        <Text
+                                            style={{ color: placeTone.text }}
+                                            fontFamily={designSystem.fonts.bodyBold}
+                                            fontSize={10}
+                                            textTransform="uppercase"
+                                            letterSpacing={1.2}
+                                        >
+                                            {PLACE_STATUS_LABELS[place.status]}
+                                        </Text>
+                                    </YStack>
+                                </XStack>
 
-                    return (
-                        <YStack key={place.id} gap="$2">
-                            <XStack justify="space-between" items="center">
-                                <YStack>
-                                    <Text fontSize={16} fontWeight="600">
-                                        {place.placeName}
-                                    </Text>
-                                    <Paragraph color="$color10">{place.projectName}</Paragraph>
-                                </YStack>
-                                <YStack items="flex-end">
-                                    <Paragraph color="$blue10" fontWeight="600">
+                                <XStack justify="space-between" items="center">
+                                    <Paragraph
+                                        color={designSystem.colors.mutedForeground}
+                                        fontFamily={designSystem.fonts.bodyMedium}
+                                    >
+                                        Mandatory completion {place.mandatoryCompletionPercent}%
+                                    </Paragraph>
+                                    <Paragraph
+                                        color={designSystem.colors.primary}
+                                        fontFamily={designSystem.fonts.bodyBold}
+                                    >
                                         Audit {place.auditScore}%
                                     </Paragraph>
-                                    {place.combinedScore === null ? (
-                                        <Paragraph color="$color10">
-                                            Combined score appears after manager survey submission.
-                                        </Paragraph>
-                                    ) : (
-                                        <Paragraph color="$green10" fontWeight="600">
-                                            Combined {place.combinedScore}%
-                                        </Paragraph>
-                                    )}
-                                </YStack>
-                            </XStack>
-
-                            <XStack justify="space-between" items="center">
-                                <Paragraph color="$color10">
-                                    Mandatory completion {place.mandatoryCompletionPercent}%
-                                </Paragraph>
-                                <YStack rounded={999} px="$3" py="$1" bg="$blue3">
-                                    <Paragraph color="$blue10" fontWeight="700">
-                                        {PLACE_STATUS_LABELS[place.status]}
-                                    </Paragraph>
-                                </YStack>
-                            </XStack>
-
-                            <XStack justify="space-between" items="center">
-                                <XStack items="center" gap="$1.5">
-                                    <Clock3 size={12} color="$color10" />
-                                    <Paragraph color="$color10">{place.updatedAtLabel}</Paragraph>
                                 </XStack>
-                                <Button
-                                    size="$2"
-                                    theme="blue"
-                                    onPress={() => {
-                                        setSelectedPlaceId(place.id);
-                                        router.push("/(tabs)/execute");
-                                    }}
-                                >
-                                    Open audit
-                                </Button>
-                            </XStack>
 
-                            {isLastItem ? null : <Separator mt="$2" borderColor="$borderColor" />}
-                        </YStack>
-                    );
-                })}
+                                <YStack
+                                    height={6}
+                                    rounded={designSystem.radii.full}
+                                    bg={designSystem.colors.mutedSurface}
+                                    overflow="hidden"
+                                >
+                                    <YStack
+                                        height={6}
+                                        rounded={designSystem.radii.full}
+                                        bg={designSystem.colors.primary}
+                                        width={`${place.mandatoryCompletionPercent}%`}
+                                    />
+                                </YStack>
+
+                                <XStack justify="space-between" items="center">
+                                    <XStack items="center" gap="$1.5">
+                                        <Clock3
+                                            size={13}
+                                            color={designSystem.colors.mutedForeground}
+                                        />
+                                        <Paragraph
+                                            color={designSystem.colors.mutedForeground}
+                                            fontFamily={designSystem.fonts.bodyMedium}
+                                        >
+                                            {place.updatedAtLabel}
+                                        </Paragraph>
+                                    </XStack>
+                                    <Button
+                                        height={36}
+                                        px="$3"
+                                        rounded={designSystem.radii.sm}
+                                        borderWidth={0}
+                                        bg={designSystem.colors.primary}
+                                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                        onPress={() => {
+                                            setSelectedPlaceId(place.id);
+                                            router.push("/(tabs)/execute");
+                                        }}
+                                    >
+                                        <XStack items="center" gap="$1.5">
+                                            <Text
+                                                color={designSystem.colors.primaryForeground}
+                                                fontFamily={designSystem.fonts.bodyBold}
+                                                fontSize={11}
+                                                textTransform="uppercase"
+                                                letterSpacing={1.2}
+                                            >
+                                                Open audit
+                                            </Text>
+                                            <ArrowUpRight
+                                                size={14}
+                                                color={designSystem.colors.primaryForeground}
+                                            />
+                                        </XStack>
+                                    </Button>
+                                </XStack>
+
+                                <Separator borderColor={designSystem.colors.border} opacity={0} />
+                            </YStack>
+                        );
+                    })}
+                </YStack>
             </YStack>
         </ScrollView>
     );
