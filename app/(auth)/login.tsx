@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowRight, Eye, EyeOff, KeyRound, ShieldCheck, UserRound } from "@tamagui/lucide-icons";
-import { Button, Input, Paragraph, Text, XStack, YStack } from "tamagui";
+import { ArrowRight, Check, Eye, EyeOff, KeyRound, ShieldCheck, UserRound } from "@tamagui/lucide-icons";
+import { Button, Checkbox, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { designSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
 
@@ -22,6 +22,7 @@ export default function LoginScreen() {
     const [password, setPassword] = useState<string>("");
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [validationMessage, setValidationMessage] = useState<string | null>(null);
+    const [staySignedIn, setStaySignedIn] = useState<boolean>(true);
 
     const canSubmit = useMemo(() => {
         return !isSubmitting;
@@ -97,7 +98,7 @@ export default function LoginScreen() {
                             <Text
                                 color={designSystem.colors.foreground}
                                 fontFamily={designSystem.fonts.headingBold}
-                                fontSize={34}
+                                fontSize="$9"
                                 lineHeight={36}
                                 textTransform="uppercase"
                                 fontStyle="italic"
@@ -244,31 +245,25 @@ export default function LoginScreen() {
                             </YStack>
                         )}
 
-                        <YStack
-                            borderWidth={1}
-                            borderColor={designSystem.colors.border}
-                            rounded={designSystem.radii.md}
-                            p="$3"
-                            gap="$2"
-                            bg={designSystem.colors.surfaceMuted}
-                        >
-                            <XStack items="center" gap="$2">
-                                <ShieldCheck size={16} color={designSystem.colors.success} />
-                                <Paragraph
-                                    color={designSystem.colors.foreground}
-                                    fontFamily={designSystem.fonts.bodySemiBold}
-                                >
-                                    Stay signed in for offline field work
-                                </Paragraph>
-                            </XStack>
-                            <Paragraph
-                                color={designSystem.colors.mutedForeground}
-                                fontFamily={designSystem.fonts.bodyMedium}
+                        
+                        <XStack items="center" gap="$2" px="$1.5">
+                            <Checkbox
+                                value="staySignedIn"
+                                onCheckedChange={(checkedState) => {
+                                    setStaySignedIn(checkedState === true);
+                                }}
+                                checked={staySignedIn}
                             >
-                                Once you sign in, assigned audit data stays available on this
-                                device.
+                                {staySignedIn ? <Check size={16} color={designSystem.colors.success} /> : null}
+                            </Checkbox>
+                            <Paragraph
+                                color={designSystem.colors.foreground}
+                                fontFamily={designSystem.fonts.bodySemiBold}
+                                fontSize={15}
+                            >
+                                Stay signed in for offline field work
                             </Paragraph>
-                        </YStack>
+                        </XStack>
 
                         <Button
                             height={56}
