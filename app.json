@@ -56,11 +56,17 @@
             "typedRoutes": true
         },
         "extra": {
-            "router": {}
+            "router": {},
+            "eas": {
+                "projectId": "2e559376-25f3-44e1-88bf-00eeaf9fb763"
+            }
         },
         "runtimeVersion": {
             "policy": "appVersion"
         },
-        "owner": "pratyush.sudhakar"
+        "owner": "pratyush.sudhakar",
+        "updates": {
+            "url": "https://u.expo.dev/2e559376-25f3-44e1-88bf-00eeaf9fb763"
+        }
     }
 }
