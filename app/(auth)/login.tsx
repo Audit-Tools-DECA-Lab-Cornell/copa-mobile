@@ -55,16 +55,12 @@ export default function LoginScreen() {
             return;
         }
 
-        try {
-            await login({
-                email: normalizedEmail,
-                password: trimmedPassword,
-            });
+        await login({
+            email: normalizedEmail,
+            password: trimmedPassword,
+        });
 
-            router.replace("/(tabs)");
-        } catch {
-            // Store already exposes a user-facing error message.
-        }
+        router.replace("/(tabs)");
     };
 
     const visibleErrorMessage = validationMessage ?? errorMessage;
@@ -78,9 +74,8 @@ export default function LoginScreen() {
                 contentInsetAdjustmentBehavior="automatic"
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{
-                    flexGrow: 1,
                     paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
-                    paddingVertical: 32,
+                    paddingVertical: 48,
                     justifyContent: "center",
                 }}
             >
