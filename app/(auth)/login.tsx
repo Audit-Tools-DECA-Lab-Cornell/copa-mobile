@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowRight, Check, Eye, EyeOff, KeyRound, ShieldCheck, UserRound } from "@tamagui/lucide-icons";
+import {
+    ArrowRight,
+    Check,
+    Eye,
+    EyeOff,
+    KeyRound,
+    ShieldCheck,
+    UserRound,
+} from "@tamagui/lucide-icons";
 import { Button, Checkbox, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { designSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
@@ -245,7 +253,6 @@ export default function LoginScreen() {
                             </YStack>
                         )}
 
-                        
                         <XStack items="center" gap="$2" px="$1.5">
                             <Checkbox
                                 value="staySignedIn"
@@ -254,7 +261,9 @@ export default function LoginScreen() {
                                 }}
                                 checked={staySignedIn}
                             >
-                                {staySignedIn ? <Check size={16} color={designSystem.colors.success} /> : null}
+                                {staySignedIn ? (
+                                    <Check size={16} color={designSystem.colors.success} />
+                                ) : null}
                             </Checkbox>
                             <Paragraph
                                 color={designSystem.colors.foreground}

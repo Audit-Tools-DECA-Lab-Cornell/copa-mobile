@@ -10,18 +10,22 @@
         "splash": {
             "image": "./assets/images/splash.png",
             "resizeMode": "contain",
-            "backgroundColor": "#ffffff"
+            "backgroundColor": "#F7F1EB"
         },
         "assetBundlePatterns": ["**/*"],
         "ios": {
             "supportsTablet": true,
             "bundleIdentifier": "com.pratyush.sudhakar.audit-tools-playspace-mobile",
-            "appleTeamId": "ZD947U862S"
+            "appleTeamId": "ZD947U862S",
+            "infoPlist": {
+                "ITSAppUsesNonExemptEncryption": false
+            }
         },
         "android": {
             "adaptiveIcon": {
                 "foregroundImage": "./assets/images/adaptive-icon.png",
-                "backgroundColor": "#ffffff"
+                "backgroundColor": "#F7F1EB",
+                "monochromeImage": "./assets/images/adaptive-monochrome.png"
             },
             "package": "com.pratyush.sudhakar.audittoolsplayspacemobile"
         },

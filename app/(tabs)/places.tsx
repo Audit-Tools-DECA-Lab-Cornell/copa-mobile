@@ -236,7 +236,12 @@ export default function PlacesScreen() {
                                         p="$3"
                                     >
                                         <XStack justify="space-between" items="center" gap="$2.5">
-                                            <XStack items="center" gap="$2" flex={1} style={{ minWidth: 0 }}>
+                                            <XStack
+                                                items="center"
+                                                gap="$2"
+                                                flex={1}
+                                                style={{ minWidth: 0 }}
+                                            >
                                                 <Clock3
                                                     size={14}
                                                     color={designSystem.colors.mutedForeground}
