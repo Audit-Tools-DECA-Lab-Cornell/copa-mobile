@@ -26,6 +26,7 @@ import { StatusBar } from "expo-status-bar";
 import { Provider } from "components/Provider";
 import { designSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
+import { Platform } from "react-native";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -134,7 +135,7 @@ function RootLayoutNav() {
 
     return (
         <ThemeProvider value={navigationTheme}>
-            <StatusBar style="light" />
+            <StatusBar style="light" hidden={Platform.OS === "android"} />
             <Stack
                 screenOptions={{
                     contentStyle: {

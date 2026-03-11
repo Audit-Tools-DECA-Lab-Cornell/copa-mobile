@@ -630,6 +630,7 @@ export default function DashboardScreen() {
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
+                                            fontSize={14}
                                         >
                                             {place.projectName}
                                         </Paragraph>
@@ -656,12 +657,14 @@ export default function DashboardScreen() {
                                     <Paragraph
                                         color={designSystem.colors.mutedForeground}
                                         fontFamily={designSystem.fonts.bodyMedium}
+                                        fontSize={14}
                                     >
                                         Mandatory completion {place.mandatoryCompletionPercent}%
                                     </Paragraph>
                                     <Paragraph
                                         color={designSystem.colors.primary}
                                         fontFamily={designSystem.fonts.bodyBold}
+                                        fontSize={14}
                                     >
                                         Audit {place.auditScore}%
                                     </Paragraph>
@@ -690,13 +693,14 @@ export default function DashboardScreen() {
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
+                                            fontSize={14}
                                         >
                                             {place.updatedAtLabel}
                                         </Paragraph>
                                     </XStack>
                                     <Button
-                                        height={36}
-                                        px="$3"
+                                        height={32}
+                                        px="$4"
                                         rounded={designSystem.radii.sm}
                                         borderWidth={0}
                                         bg={designSystem.colors.primary}
