@@ -36,8 +36,8 @@ export default function ReportsScreen() {
                     <Text
                         color={designSystem.colors.foreground}
                         fontFamily={designSystem.fonts.headingBold}
-                        fontSize={32}
-                        lineHeight={36}
+                        fontSize={designSystem.typography.displayMd.fontSize}
+                        lineHeight={designSystem.typography.displayMd.lineHeight}
                         letterSpacing={-0.7}
                     >
                         Playspace Scoring
@@ -87,7 +87,7 @@ export default function ReportsScreen() {
                 <Text
                     color={designSystem.colors.mutedForeground}
                     fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={11}
+                    fontSize={designSystem.typography.labelSm.fontSize}
                     textTransform="uppercase"
                     letterSpacing={1.5}
                 >
@@ -113,14 +113,14 @@ export default function ReportsScreen() {
                                         <Text
                                             color={designSystem.colors.foreground}
                                             fontFamily={designSystem.fonts.bodyBold}
-                                            fontSize={15}
+                                            fontSize={designSystem.typography.bodyLg.fontSize}
                                         >
                                             {row.placeName}
                                         </Text>
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
-                                            fontSize={12}
+                                            fontSize={designSystem.typography.bodyXs.fontSize}
                                         >
                                             {combinedReady
                                                 ? "Combined score ready"
@@ -182,7 +182,7 @@ export default function ReportsScreen() {
                         flex={1}
                         color={designSystem.colors.warning}
                         fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={13}
+                        fontSize={designSystem.typography.bodySm.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.1}
                         style={{ flexShrink: 1, lineHeight: 18 }}
@@ -216,7 +216,7 @@ export default function ReportsScreen() {
                     <Text
                         color={designSystem.colors.foreground}
                         fontFamily={designSystem.fonts.headingBold}
-                        fontSize={20}
+                        fontSize={designSystem.typography.titleLg.fontSize}
                     >
                         Export preview
                     </Text>
@@ -326,7 +326,7 @@ function MetricCard({ label, value, accentColor, helperText }: MetricCardProps) 
             <Paragraph
                 color={designSystem.colors.mutedForeground}
                 fontFamily={designSystem.fonts.bodyBold}
-                fontSize={10}
+                fontSize={designSystem.typography.labelXs.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -334,7 +334,7 @@ function MetricCard({ label, value, accentColor, helperText }: MetricCardProps) 
             </Paragraph>
             <Text
                 fontFamily={designSystem.fonts.headingBold}
-                fontSize={28}
+                fontSize={designSystem.typography.metricLg.fontSize}
                 style={{ color: accentColor }}
             >
                 {value}
@@ -342,7 +342,7 @@ function MetricCard({ label, value, accentColor, helperText }: MetricCardProps) 
             <Paragraph
                 color={designSystem.colors.mutedForeground}
                 fontFamily={designSystem.fonts.bodyMedium}
-                fontSize={12}
+                fontSize={designSystem.typography.bodyXs.fontSize}
             >
                 {helperText}
             </Paragraph>
@@ -390,7 +390,7 @@ function ActionButton({ label, variant = "default" }: ActionButtonProps) {
                             : designSystem.colors.foreground
                     }
                     fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={11}
+                    fontSize={designSystem.typography.labelSm.fontSize}
                     textTransform="uppercase"
                     letterSpacing={1.2}
                 >

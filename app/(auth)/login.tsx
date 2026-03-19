@@ -101,8 +101,8 @@ export default function LoginScreen() {
                             <Text
                                 color={designSystem.colors.foreground}
                                 fontFamily={designSystem.fonts.headingBold}
-                                fontSize="$9"
-                                lineHeight={36}
+                                fontSize={designSystem.typography.displayMd.fontSize}
+                                lineHeight={designSystem.typography.displayMd.lineHeight}
                                 textTransform="uppercase"
                                 fontStyle="italic"
                                 letterSpacing={-0.5}
@@ -112,7 +112,7 @@ export default function LoginScreen() {
                             <Paragraph
                                 color={designSystem.colors.mutedForeground}
                                 fontFamily={designSystem.fonts.bodySemiBold}
-                                fontSize={12}
+                                fontSize={designSystem.typography.labelMd.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.6}
                             >
@@ -126,7 +126,7 @@ export default function LoginScreen() {
                             <Paragraph
                                 color={designSystem.colors.mutedForeground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={12}
+                                fontSize={designSystem.typography.labelMd.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.5}
                                 px="$1"
@@ -157,7 +157,7 @@ export default function LoginScreen() {
                                     placeholderTextColor="$color10"
                                     color={designSystem.colors.foreground}
                                     fontFamily={designSystem.fonts.bodyMedium}
-                                    fontSize={16}
+                                    fontSize={designSystem.typography.titleSm.fontSize}
                                 />
                             </XStack>
                         </YStack>
@@ -167,7 +167,7 @@ export default function LoginScreen() {
                                 <Paragraph
                                     color={designSystem.colors.mutedForeground}
                                     fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={12}
+                                    fontSize={designSystem.typography.labelMd.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.5}
                                 >
@@ -176,7 +176,7 @@ export default function LoginScreen() {
                                 <Paragraph
                                     color={designSystem.colors.primary}
                                     fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={11}
+                                    fontSize={designSystem.typography.labelSm.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.1}
                                 >
@@ -207,7 +207,7 @@ export default function LoginScreen() {
                                     placeholderTextColor="$color10"
                                     color={designSystem.colors.foreground}
                                     fontFamily={designSystem.fonts.bodyMedium}
-                                    fontSize={16}
+                                    fontSize={designSystem.typography.titleSm.fontSize}
                                 />
                                 <Button
                                     chromeless
@@ -263,7 +263,7 @@ export default function LoginScreen() {
                             <Paragraph
                                 color={designSystem.colors.foreground}
                                 fontFamily={designSystem.fonts.bodySemiBold}
-                                fontSize={15}
+                                fontSize={designSystem.typography.bodyLg.fontSize}
                             >
                                 Stay signed in for offline field work
                             </Paragraph>
@@ -288,7 +288,7 @@ export default function LoginScreen() {
                                 <Text
                                     color={designSystem.colors.primaryForeground}
                                     fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={13}
+                                    fontSize={designSystem.typography.labelLg.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.4}
                                 >
@@ -329,7 +329,7 @@ export default function LoginScreen() {
                                 <Text
                                     color={designSystem.colors.primary}
                                     fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={12}
+                                    fontSize={designSystem.typography.labelMd.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.3}
                                 >

@@ -92,7 +92,7 @@ export default function DashboardScreen() {
                             <Paragraph
                                 color={designSystem.colors.mutedForeground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={10}
+                                fontSize={designSystem.typography.labelXs.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.4}
                             >
@@ -101,7 +101,7 @@ export default function DashboardScreen() {
                             <Text
                                 color={designSystem.colors.foreground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={15}
+                                fontSize={designSystem.typography.bodyLg.fontSize}
                             >
                                 {activeAuditorName}
                             </Text>
@@ -141,8 +141,8 @@ export default function DashboardScreen() {
                     <Text
                         color={designSystem.colors.foreground}
                         fontFamily={designSystem.fonts.headingBold}
-                        fontSize={34}
-                        lineHeight={38}
+                        fontSize={designSystem.typography.displayLg.fontSize}
+                        lineHeight={designSystem.typography.displayLg.lineHeight}
                         letterSpacing={-0.8}
                     >
                         Field Dashboard
@@ -173,15 +173,15 @@ export default function DashboardScreen() {
                             <Text
                                 color={designSystem.colors.primary}
                                 fontFamily={designSystem.fonts.headingBold}
-                                fontSize={34}
-                                lineHeight={36}
+                                fontSize={designSystem.typography.displayLg.fontSize}
+                                lineHeight={designSystem.typography.displayLg.lineHeight}
                             >
                                 {assignedCount.toString().padStart(2, "0")}
                             </Text>
                             <Paragraph
                                 color={designSystem.colors.mutedForeground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={11}
+                                fontSize={designSystem.typography.labelSm.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.5}
                             >
@@ -208,15 +208,15 @@ export default function DashboardScreen() {
                             <Text
                                 color={designSystem.colors.success}
                                 fontFamily={designSystem.fonts.headingBold}
-                                fontSize={34}
-                                lineHeight={36}
+                                fontSize={designSystem.typography.displayLg.fontSize}
+                                lineHeight={designSystem.typography.displayLg.lineHeight}
                             >
                                 {completedCount.toString().padStart(2, "0")}
                             </Text>
                             <Paragraph
                                 color={designSystem.colors.mutedForeground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={11}
+                                fontSize={designSystem.typography.labelSm.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.5}
                             >
@@ -233,7 +233,7 @@ export default function DashboardScreen() {
                     <Text
                         color={designSystem.colors.mutedForeground}
                         fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={11}
+                        fontSize={designSystem.typography.labelSm.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.6}
                     >
@@ -242,7 +242,7 @@ export default function DashboardScreen() {
                     <Paragraph
                         color={designSystem.colors.danger}
                         fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={11}
+                        fontSize={designSystem.typography.labelSm.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.3}
                     >
@@ -279,7 +279,7 @@ export default function DashboardScreen() {
                                     <Text
                                         color={designSystem.colors.primaryForeground}
                                         fontFamily={designSystem.fonts.bodyBold}
-                                        fontSize={10}
+                                        fontSize={designSystem.typography.labelXs.fontSize}
                                         textTransform="uppercase"
                                         letterSpacing={1.3}
                                     >
@@ -295,7 +295,7 @@ export default function DashboardScreen() {
                                     <Text
                                         color={designSystem.colors.secondaryForeground}
                                         fontFamily={designSystem.fonts.bodyBold}
-                                        fontSize={10}
+                                        fontSize={designSystem.typography.labelXs.fontSize}
                                         textTransform="uppercase"
                                         letterSpacing={1.3}
                                     >
@@ -308,14 +308,15 @@ export default function DashboardScreen() {
                                 <Text
                                     color={designSystem.colors.foreground}
                                     fontFamily={designSystem.fonts.headingBold}
-                                    fontSize={24}
-                                    lineHeight={28}
+                                    fontSize={designSystem.typography.metricMd.fontSize}
+                                    lineHeight={designSystem.typography.metricMd.lineHeight}
                                 >
                                     {priorityPlace.placeName}
                                 </Text>
                                 <Paragraph
                                     color={designSystem.colors.mutedForeground}
                                     fontFamily={designSystem.fonts.bodyMedium}
+                                    fontSize={designSystem.typography.titleMd.fontSize}
                                 >
                                     {priorityPlace.projectName}
                                 </Paragraph>
@@ -346,7 +347,7 @@ export default function DashboardScreen() {
                                 <Text
                                     color={designSystem.colors.mutedForeground}
                                     fontFamily={designSystem.fonts.monoBold}
-                                    fontSize={11}
+                                    fontSize={designSystem.typography.labelSm.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.1}
                                 >
@@ -370,7 +371,7 @@ export default function DashboardScreen() {
                                     <Text
                                         color={designSystem.colors.primaryForeground}
                                         fontFamily={designSystem.fonts.bodyBold}
-                                        fontSize={12}
+                                        fontSize={designSystem.typography.labelMd.fontSize}
                                         textTransform="uppercase"
                                         letterSpacing={1.2}
                                     >
@@ -402,7 +403,7 @@ export default function DashboardScreen() {
                         <Text
                             color={designSystem.colors.foreground}
                             fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={12}
+                            fontSize={designSystem.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
@@ -427,7 +428,7 @@ export default function DashboardScreen() {
                         <Text
                             color={designSystem.colors.primaryForeground}
                             fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={12}
+                            fontSize={designSystem.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
@@ -453,7 +454,7 @@ export default function DashboardScreen() {
                         <Text
                             color={designSystem.colors.foreground}
                             fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={12}
+                            fontSize={designSystem.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
@@ -467,7 +468,7 @@ export default function DashboardScreen() {
                 <Text
                     color={designSystem.colors.mutedForeground}
                     fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={11}
+                    fontSize={designSystem.typography.labelSm.fontSize}
                     textTransform="uppercase"
                     letterSpacing={1.6}
                 >
@@ -500,7 +501,7 @@ export default function DashboardScreen() {
                             <Text
                                 color={designSystem.colors.foreground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={15}
+                                fontSize={designSystem.typography.bodyLg.fontSize}
                             >
                                 Offline ready
                             </Text>
@@ -520,7 +521,7 @@ export default function DashboardScreen() {
                     <Text
                         color={designSystem.colors.mutedForeground}
                         fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={11}
+                        fontSize={designSystem.typography.labelSm.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.6}
                     >
@@ -529,7 +530,7 @@ export default function DashboardScreen() {
                     <Text
                         color={designSystem.colors.primary}
                         fontFamily={designSystem.fonts.monoBold}
-                        fontSize={11}
+                        fontSize={designSystem.typography.labelSm.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.1}
                     >
@@ -552,7 +553,7 @@ export default function DashboardScreen() {
                                 <Paragraph
                                     color={designSystem.colors.mutedForeground}
                                     fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={10}
+                                    fontSize={designSystem.typography.labelXs.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.2}
                                 >
@@ -561,7 +562,7 @@ export default function DashboardScreen() {
                                 <Text
                                     color={designSystem.colors.foreground}
                                     fontFamily={designSystem.fonts.headingBold}
-                                    fontSize={24}
+                                    fontSize={designSystem.typography.metricMd.fontSize}
                                     mt="$2"
                                 >
                                     {item.value}
@@ -577,7 +578,7 @@ export default function DashboardScreen() {
                     <Text
                         color={designSystem.colors.mutedForeground}
                         fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={11}
+                        fontSize={designSystem.typography.labelSm.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.6}
                     >
@@ -592,7 +593,7 @@ export default function DashboardScreen() {
                         <Text
                             color={designSystem.colors.primary}
                             fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={11}
+                            fontSize={designSystem.typography.labelSm.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.3}
                         >
@@ -623,14 +624,14 @@ export default function DashboardScreen() {
                                         <Text
                                             color={designSystem.colors.foreground}
                                             fontFamily={designSystem.fonts.bodyBold}
-                                            fontSize={16}
+                                            fontSize={designSystem.typography.titleMd.fontSize}
                                         >
                                             {place.placeName}
                                         </Text>
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
-                                            fontSize={14}
+                                            fontSize={designSystem.typography.bodyMd.fontSize}
                                         >
                                             {place.projectName}
                                         </Paragraph>
@@ -644,7 +645,7 @@ export default function DashboardScreen() {
                                         <Text
                                             style={{ color: placeTone.text }}
                                             fontFamily={designSystem.fonts.bodyBold}
-                                            fontSize={10}
+                                            fontSize={designSystem.typography.labelXs.fontSize}
                                             textTransform="uppercase"
                                             letterSpacing={1.2}
                                         >
@@ -657,14 +658,14 @@ export default function DashboardScreen() {
                                     <Paragraph
                                         color={designSystem.colors.mutedForeground}
                                         fontFamily={designSystem.fonts.bodyMedium}
-                                        fontSize={14}
+                                        fontSize={designSystem.typography.bodyMd.fontSize}
                                     >
                                         Mandatory completion {place.mandatoryCompletionPercent}%
                                     </Paragraph>
                                     <Paragraph
                                         color={designSystem.colors.primary}
                                         fontFamily={designSystem.fonts.bodyBold}
-                                        fontSize={14}
+                                        fontSize={designSystem.typography.bodyMd.fontSize}
                                     >
                                         Audit {place.auditScore}%
                                     </Paragraph>
@@ -693,7 +694,7 @@ export default function DashboardScreen() {
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
-                                            fontSize={14}
+                                            fontSize={designSystem.typography.bodyMd.fontSize}
                                         >
                                             {place.updatedAtLabel}
                                         </Paragraph>
@@ -714,7 +715,7 @@ export default function DashboardScreen() {
                                             <Text
                                                 color={designSystem.colors.primaryForeground}
                                                 fontFamily={designSystem.fonts.bodyBold}
-                                                fontSize={11}
+                                                fontSize={designSystem.typography.labelSm.fontSize}
                                                 textTransform="uppercase"
                                                 letterSpacing={1.2}
                                             >

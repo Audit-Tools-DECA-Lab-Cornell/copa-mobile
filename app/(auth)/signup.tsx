@@ -43,7 +43,8 @@ export default function SignupScreen() {
                         <Text
                             color={designSystem.colors.foreground}
                             fontFamily={designSystem.fonts.headingBold}
-                            fontSize={32}
+                            fontSize={designSystem.typography.displayMd.fontSize}
+                            lineHeight={designSystem.typography.displayMd.lineHeight}
                             textTransform="uppercase"
                             letterSpacing={-0.5}
                         >
@@ -73,7 +74,7 @@ export default function SignupScreen() {
                         <Text
                             color={designSystem.colors.warning}
                             fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={14}
+                            fontSize={designSystem.typography.bodyMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
@@ -105,7 +106,7 @@ export default function SignupScreen() {
                         <Text
                             color={designSystem.colors.foreground}
                             fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={13}
+                            fontSize={designSystem.typography.labelLg.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.3}
                         >

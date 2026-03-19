@@ -109,14 +109,12 @@ export default function ExecuteScreen() {
                     <XStack justify="space-between" items="center">
                         <YStack
                             rounded={designSystem.radii.sm}
-                            px="$2"
-                            py="$1"
                             bg={designSystem.colors.surfaceMuted}
                         >
                             <Text
                                 color={designSystem.colors.warning}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={10}
+                                fontSize={designSystem.typography.labelXs.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.2}
                             >
@@ -132,7 +130,7 @@ export default function ExecuteScreen() {
                             <Text
                                 style={{ color: managerSurveyTone.text }}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={10}
+                                fontSize={designSystem.typography.labelXs.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.2}
                             >
@@ -145,7 +143,7 @@ export default function ExecuteScreen() {
                         <Text
                             color={designSystem.colors.mutedForeground}
                             fontFamily={designSystem.fonts.monoBold}
-                            fontSize={12}
+                            fontSize={designSystem.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.1}
                         >
@@ -154,14 +152,15 @@ export default function ExecuteScreen() {
                         <Text
                             color={designSystem.colors.foreground}
                             fontFamily={designSystem.fonts.headingBold}
-                            fontSize={28}
-                            lineHeight={32}
+                            fontSize={designSystem.typography.titleLg.fontSize}
+                            lineHeight={designSystem.typography.titleLg.lineHeight}
                         >
                             {activePlace.placeName}
                         </Text>
                         <Paragraph
                             color={designSystem.colors.mutedForeground}
                             fontFamily={designSystem.fonts.bodyMedium}
+                            fontSize={designSystem.typography.bodyLg.fontSize}
                         >
                             {activePlace.locality}
                         </Paragraph>
@@ -172,6 +171,7 @@ export default function ExecuteScreen() {
                         <Paragraph
                             fontFamily={designSystem.fonts.bodyBold}
                             style={{ color: managerSurveyTone.text }}
+                            fontSize={designSystem.typography.titleSm.fontSize}
                         >
                             {MANAGER_SURVEY_STATUS_LABELS[activePlace.managerSurveyStatus]}
                         </Paragraph>
@@ -183,14 +183,14 @@ export default function ExecuteScreen() {
                                 <Text
                                     color={designSystem.colors.mutedForeground}
                                     fontFamily={designSystem.fonts.bodyMedium}
-                                    fontSize={12}
+                                    fontSize={designSystem.typography.bodyXs.fontSize}
                                 >
                                     Section {activeSectionIndex + 1}: {activeSection.sectionName}
                                 </Text>
                                 <Text
                                     color={designSystem.colors.primary}
                                     fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={12}
+                                    fontSize={designSystem.typography.bodyXs.fontSize}
                                 >
                                     {activeSection.answeredItems}/{activeSection.totalItems}{" "}
                                     completed
@@ -233,8 +233,10 @@ export default function ExecuteScreen() {
                     <XStack items="center" gap="$2">
                         <Clock3 size={14} color={designSystem.colors.mutedForeground} />
                         <Paragraph
+                            px="$1.5"
                             color={designSystem.colors.mutedForeground}
                             fontFamily={designSystem.fonts.bodyMedium}
+                            fontSize={designSystem.typography.bodySm.fontSize}
                         >
                             Autosave every 30 seconds and on section transition.
                         </Paragraph>
@@ -243,8 +245,10 @@ export default function ExecuteScreen() {
                     <XStack items="center" gap="$2">
                         <TriangleAlert size={14} color={designSystem.colors.warning} />
                         <Paragraph
+                            px="$1.5"
                             color={designSystem.colors.warning}
                             fontFamily={designSystem.fonts.bodyMedium}
+                            fontSize={designSystem.typography.bodySm.fontSize}
                         >
                             Combined score appears after manager survey data is submitted on web.
                         </Paragraph>
@@ -290,7 +294,7 @@ export default function ExecuteScreen() {
                                             <Text
                                                 color={accentColor}
                                                 fontFamily={designSystem.fonts.headingBold}
-                                                fontSize={15}
+                                                fontSize={designSystem.typography.bodyLg.fontSize}
                                             >
                                                 {`${index + 1}`.padStart(2, "0")}
                                             </Text>
@@ -298,13 +302,18 @@ export default function ExecuteScreen() {
                                                 <Text
                                                     color={designSystem.colors.foreground}
                                                     fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={17}
+                                                    fontSize={
+                                                        designSystem.typography.titleMd.fontSize
+                                                    }
                                                 >
                                                     {section.sectionName}
                                                 </Text>
                                                 <Paragraph
                                                     color={designSystem.colors.mutedForeground}
                                                     fontFamily={designSystem.fonts.bodyMedium}
+                                                    fontSize={
+                                                        designSystem.typography.bodySm.fontSize
+                                                    }
                                                 >
                                                     {section.answeredItems} / {section.totalItems}{" "}
                                                     answered
@@ -328,7 +337,9 @@ export default function ExecuteScreen() {
                                                                   .secondaryForeground
                                                     }
                                                     fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={10}
+                                                    fontSize={
+                                                        designSystem.typography.labelSm.fontSize
+                                                    }
                                                     textTransform="uppercase"
                                                     letterSpacing={1.1}
                                                 >
@@ -375,7 +386,9 @@ export default function ExecuteScreen() {
                                                                   .secondaryForeground
                                                     }
                                                     fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={10}
+                                                    fontSize={
+                                                        designSystem.typography.labelXs.fontSize
+                                                    }
                                                     textTransform="uppercase"
                                                     letterSpacing={1.2}
                                                 >
@@ -387,7 +400,9 @@ export default function ExecuteScreen() {
                                                 <Text
                                                     color={designSystem.colors.success}
                                                     fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={12}
+                                                    fontSize={
+                                                        designSystem.typography.bodyXs.fontSize
+                                                    }
                                                 >
                                                     Section score {section.sectionScorePercent}%
                                                 </Text>
@@ -395,7 +410,9 @@ export default function ExecuteScreen() {
                                                 <Paragraph
                                                     color={designSystem.colors.mutedForeground}
                                                     fontFamily={designSystem.fonts.bodyMedium}
-                                                    fontSize={12}
+                                                    fontSize={
+                                                        designSystem.typography.bodyXs.fontSize
+                                                    }
                                                 >
                                                     Informational section, not scored.
                                                 </Paragraph>
@@ -422,13 +439,14 @@ export default function ExecuteScreen() {
                     <Text
                         color={designSystem.colors.foreground}
                         fontFamily={designSystem.fonts.headingBold}
-                        fontSize={20}
+                        fontSize={designSystem.typography.titleLg.fontSize}
                     >
                         Quick scoring preview
                     </Text>
                     <Paragraph
                         color={designSystem.colors.mutedForeground}
                         fontFamily={designSystem.fonts.bodyMedium}
+                        fontSize={designSystem.typography.bodyMd.fontSize}
                     >
                         To what extent does this place support varied, inclusive, and meaningful
                         play for youth?
@@ -466,7 +484,7 @@ export default function ExecuteScreen() {
                                                 : designSystem.colors.foreground
                                         }
                                         fontFamily={designSystem.fonts.bodyBold}
-                                        fontSize={15}
+                                        fontSize={designSystem.typography.bodyLg.fontSize}
                                     >
                                         {value}
                                     </Text>
@@ -486,7 +504,7 @@ export default function ExecuteScreen() {
                         <Paragraph
                             color={designSystem.colors.mutedForeground}
                             fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={10}
+                            fontSize={designSystem.typography.labelSm.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
@@ -495,19 +513,21 @@ export default function ExecuteScreen() {
                         <Text
                             color={designSystem.colors.primary}
                             fontFamily={designSystem.fonts.headingBold}
-                            fontSize={22}
+                            fontSize={designSystem.typography.metricSm.fontSize}
                         >
                             {scorePreviewBase}%
                         </Text>
                     </YStack>
 
-                    <XStack justify="center" items="center" gap="$2" width="100%" px="$2">
+                    <XStack justify="flex-start" items="center" width="100%">
                         <CircleCheckBig size={14} color={designSystem.colors.success} />
                         <Paragraph
                             color={designSystem.colors.success}
                             fontFamily={designSystem.fonts.bodyMedium}
-                            lineHeight={20}
-                            style={{ flexShrink: 1, textAlign: "center" }}
+                            lineHeight={designSystem.typography.bodyMd.lineHeight}
+                            fontSize={designSystem.typography.bodyMd.fontSize}
+                            style={{ textAlign: "start" }}
+                            px="$3"
                         >
                             Draft ready. Mandatory sections are{" "}
                             {mandatoryCompletion >= 80
@@ -549,7 +569,7 @@ export default function ExecuteScreen() {
                             <Text
                                 color={designSystem.colors.foreground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={12}
+                                fontSize={designSystem.typography.labelMd.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.2}
                             >
@@ -572,7 +592,7 @@ export default function ExecuteScreen() {
                             <Text
                                 color={designSystem.colors.primaryForeground}
                                 fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={12}
+                                fontSize={designSystem.typography.labelMd.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.2}
                             >
@@ -611,7 +631,7 @@ function HeaderMetric({ label, value, accentColor }: HeaderMetricProps) {
             <Paragraph
                 color={designSystem.colors.mutedForeground}
                 fontFamily={designSystem.fonts.bodyBold}
-                fontSize={10}
+                fontSize={designSystem.typography.labelXs.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -619,7 +639,7 @@ function HeaderMetric({ label, value, accentColor }: HeaderMetricProps) {
             </Paragraph>
             <Text
                 fontFamily={designSystem.fonts.headingBold}
-                fontSize={24}
+                fontSize={designSystem.typography.metricMd.fontSize}
                 style={{ color: accentColor }}
             >
                 {value}

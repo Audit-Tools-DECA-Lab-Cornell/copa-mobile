@@ -1,5 +1,24 @@
 import type { ManagerSurveyStatus, MetricTone, PlaceStatus } from "./playspace-demo-data";
 
+interface TypographyToken {
+    readonly fontSize: number;
+    readonly lineHeight: number;
+}
+
+/**
+ * Create a reusable typography token for the shared design system.
+ *
+ * @param fontSize Shared font size for a semantic text role.
+ * @param lineHeight Matching line height to preserve readable rhythm.
+ * @returns Immutable typography token used across the app.
+ */
+function createTypographyToken(fontSize: number, lineHeight: number): TypographyToken {
+    return {
+        fontSize,
+        lineHeight,
+    };
+}
+
 /**
  * Shared colors and typography extracted from the generated design concepts.
  */
@@ -44,6 +63,25 @@ export const designSystem = {
         medium: "500",
         semibold: "600",
         bold: "700",
+    },
+    typography: {
+        labelXs: createTypographyToken(9, 12),
+        labelSm: createTypographyToken(10, 14),
+        labelMd: createTypographyToken(11, 14),
+        labelLg: createTypographyToken(12, 16),
+        bodyXs: createTypographyToken(12, 16),
+        bodySm: createTypographyToken(13, 16),
+        bodyMd: createTypographyToken(14, 18),
+        bodyLg: createTypographyToken(15, 20),
+        titleSm: createTypographyToken(15, 20),
+        titleMd: createTypographyToken(16, 20),
+        titleLg: createTypographyToken(19, 24),
+        metricXs: createTypographyToken(20, 24),
+        metricSm: createTypographyToken(22, 26),
+        metricMd: createTypographyToken(24, 28),
+        metricLg: createTypographyToken(26, 30),
+        displayMd: createTypographyToken(30, 34),
+        displayLg: createTypographyToken(32, 36),
     },
     radii: {
         sm: 8,

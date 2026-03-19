@@ -66,8 +66,8 @@ export default function PlacesScreen() {
                     <Text
                         color={designSystem.colors.foreground}
                         fontFamily={designSystem.fonts.headingBold}
-                        fontSize={32}
-                        lineHeight={36}
+                        fontSize={designSystem.typography.displayMd.fontSize}
+                        lineHeight={designSystem.typography.displayMd.lineHeight}
                         letterSpacing={-0.7}
                     >
                         Assigned Places
@@ -129,13 +129,14 @@ export default function PlacesScreen() {
                                             <Text
                                                 color={designSystem.colors.foreground}
                                                 fontFamily={designSystem.fonts.bodyBold}
-                                                fontSize={17}
+                                                fontSize={designSystem.typography.titleMd.fontSize}
                                             >
                                                 {place.placeName}
                                             </Text>
                                             <Paragraph
                                                 color={designSystem.colors.mutedForeground}
                                                 fontFamily={designSystem.fonts.bodyMedium}
+                                                fontSize={designSystem.typography.bodySm.fontSize}
                                             >
                                                 {place.projectName}
                                             </Paragraph>
@@ -149,9 +150,9 @@ export default function PlacesScreen() {
                                             <Text
                                                 style={{ color: placeTone.text }}
                                                 fontFamily={designSystem.fonts.bodyBold}
-                                                fontSize={10}
+                                                fontSize={designSystem.typography.labelXs.fontSize}
                                                 textTransform="uppercase"
-                                                letterSpacing={1.2}
+                                                letterSpacing={1}
                                             >
                                                 {PLACE_STATUS_LABELS[place.status]}
                                             </Text>
@@ -166,6 +167,7 @@ export default function PlacesScreen() {
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
+                                            fontSize={designSystem.typography.bodyLg.fontSize}
                                         >
                                             {place.locality}
                                         </Paragraph>
@@ -201,13 +203,14 @@ export default function PlacesScreen() {
                                             <Paragraph
                                                 color={designSystem.colors.mutedForeground}
                                                 fontFamily={designSystem.fonts.bodyMedium}
+                                                fontSize={designSystem.typography.bodySm.fontSize}
                                             >
                                                 Mandatory completion
                                             </Paragraph>
                                             <Text
                                                 color={designSystem.colors.primary}
                                                 fontFamily={designSystem.fonts.monoBold}
-                                                fontSize={12}
+                                                fontSize={designSystem.typography.labelLg.fontSize}
                                             >
                                                 {place.mandatoryCompletionPercent}%
                                             </Text>
@@ -238,7 +241,7 @@ export default function PlacesScreen() {
                                         <XStack justify="space-between" items="center" gap="$2.5">
                                             <XStack
                                                 items="center"
-                                                gap="$2"
+                                                gap="$1.5"
                                                 flex={1}
                                                 style={{ minWidth: 0 }}
                                             >
@@ -249,6 +252,9 @@ export default function PlacesScreen() {
                                                 <Paragraph
                                                     color={designSystem.colors.mutedForeground}
                                                     fontFamily={designSystem.fonts.bodyMedium}
+                                                    fontSize={
+                                                        designSystem.typography.bodySm.fontSize
+                                                    }
                                                 >
                                                     {place.updatedAtLabel}
                                                 </Paragraph>
@@ -266,9 +272,11 @@ export default function PlacesScreen() {
                                                 <Text
                                                     style={{ color: managerSurveyTone.text }}
                                                     fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={10}
+                                                    fontSize={
+                                                        designSystem.typography.labelXs.fontSize
+                                                    }
                                                     textTransform="uppercase"
-                                                    letterSpacing={1.1}
+                                                    letterSpacing={0.8}
                                                 >
                                                     {
                                                         MANAGER_SURVEY_STATUS_LABELS[
@@ -300,7 +308,9 @@ export default function PlacesScreen() {
                                                 <Text
                                                     color={designSystem.colors.primaryForeground}
                                                     fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={10}
+                                                    fontSize={
+                                                        designSystem.typography.labelLg.fontSize
+                                                    }
                                                     textTransform="uppercase"
                                                     letterSpacing={1.1}
                                                 >
@@ -350,7 +360,7 @@ function SummaryTile({ label, value, tone }: SummaryTileProps) {
             <Paragraph
                 color={designSystem.colors.mutedForeground}
                 fontFamily={designSystem.fonts.bodyBold}
-                fontSize={10}
+                fontSize={designSystem.typography.labelXs.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -358,7 +368,7 @@ function SummaryTile({ label, value, tone }: SummaryTileProps) {
             </Paragraph>
             <Text
                 fontFamily={designSystem.fonts.headingBold}
-                fontSize={24}
+                fontSize={designSystem.typography.metricMd.fontSize}
                 mt="$2"
                 style={{ color: tileTone.text }}
             >
@@ -393,7 +403,7 @@ function ScoreTile({ label, value, valueColor }: ScoreTileProps) {
             <Paragraph
                 color={designSystem.colors.mutedForeground}
                 fontFamily={designSystem.fonts.bodyBold}
-                fontSize={10}
+                fontSize={designSystem.typography.labelSm.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -401,7 +411,7 @@ function ScoreTile({ label, value, valueColor }: ScoreTileProps) {
             </Paragraph>
             <Text
                 fontFamily={designSystem.fonts.headingBold}
-                fontSize={22}
+                fontSize={designSystem.typography.metricSm.fontSize}
                 mt="$2"
                 style={{ color: valueColor }}
             >

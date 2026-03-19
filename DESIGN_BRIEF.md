@@ -193,6 +193,14 @@ Useful characteristics:
 - emphasis on trust, progress, and clarity
 - enough warmth to avoid feeling sterile
 
+## Typography Guidance
+
+To keep the app readable and easy to tune globally, typography should follow these rules:
+
+- always specify a font size for text instead of relying on component defaults
+- prefer shared semantic typography tokens from the centralized design system so global adjustments can happen in one place
+- specify a matching line height for large headings, display values, or other prominent text where vertical rhythm matters
+
 ## What Design Exploration Can Change
 
 An AI design agent can safely explore:

@@ -76,7 +76,7 @@ export default function TabLayout() {
                     paddingBottom: 12,
                 },
                 tabBarLabelStyle: {
-                    fontSize: 10,
+                    fontSize: designSystem.typography.labelXs.fontSize,
                     fontFamily: designSystem.fonts.bodyBold,
                     letterSpacing: 1,
                     textTransform: "uppercase",

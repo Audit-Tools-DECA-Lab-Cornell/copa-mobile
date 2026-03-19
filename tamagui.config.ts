@@ -1,6 +1,44 @@
 import { defaultConfig } from "@tamagui/config/v5";
-import { createFont, createTamagui } from "tamagui";
+import { createFont, createTamagui, type Variable } from "tamagui";
 import { themes } from "./themes";
+
+const FONT_SIZE_DECREMENT = 1;
+const FONT_LINE_HEIGHT_DECREMENT = 2;
+const MINIMUM_FONT_SIZE = 10;
+const MINIMUM_LINE_HEIGHT = 12;
+
+type FontMetricValue = number | Variable<number>;
+type FontMetricScale = Readonly<Record<string, FontMetricValue>>;
+
+/**
+ * Resolve a Tamagui font metric token into a numeric value.
+ *
+ * @param value Raw font metric token from the base config.
+ * @returns Numeric value that can be adjusted safely.
+ */
+function getFontMetricValue(value: FontMetricValue): number {
+    return typeof value === "number" ? value : value.val;
+}
+
+/**
+ * Reduce a Tamagui numeric metric scale while preserving a minimum floor.
+ *
+ * @param scale Font size or line-height token map from the base config.
+ * @param decrement Amount to subtract from each numeric token.
+ * @param minimumValue Smallest value allowed after reduction.
+ * @returns A new metric scale with slightly smaller values.
+ */
+function shrinkFontMetricScale<TScale extends FontMetricScale>(
+    scale: TScale,
+    decrement: number,
+    minimumValue: number,
+): Record<string, number> {
+    return Object.fromEntries(
+        Object.entries(scale).map(([token, value]) => {
+            return [token, Math.max(getFontMetricValue(value) - decrement, minimumValue)];
+        }),
+    );
+}
 
 /**
  * Create a Tamagui font token backed by a single native family.
@@ -13,6 +51,12 @@ function createStaticFont(family: string, sourceFont: typeof defaultConfig.fonts
     return createFont({
         ...sourceFont,
         family,
+        size: shrinkFontMetricScale(sourceFont.size, FONT_SIZE_DECREMENT, MINIMUM_FONT_SIZE),
+        lineHeight: shrinkFontMetricScale(
+            sourceFont.lineHeight,
+            FONT_LINE_HEIGHT_DECREMENT,
+            MINIMUM_LINE_HEIGHT,
+        ),
         face: {
             400: { normal: family },
             500: { normal: family },
