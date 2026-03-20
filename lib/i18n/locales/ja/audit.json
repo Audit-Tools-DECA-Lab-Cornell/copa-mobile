@@ -1,0 +1,85 @@
+{
+    "autoValues": {
+        "calculatedOnSubmit": "最終提出時に計算されます",
+        "generatedOnSubmit": "最終提出時に生成されます",
+        "minutes_one": "",
+        "minutes_other": ""
+    },
+    "errors": {
+        "accessDenied403": "アクセスが拒否されました (403): この場所または監査へアクセスする権限がありません。",
+        "detailsLabel": "詳細: {{details}}",
+        "httpFallback": "{{message}}（HTTP {{statusCode}}。）",
+        "networkFallback": "{{message}}（ネットワークエラー）。",
+        "offlineChangesSaved": "{{message}} オフラインです。変更はローカルに保存され、再接続時に同期されます。",
+        "openFallback": "監査を開くことができません。",
+        "refreshFallback": "監査を更新できません。",
+        "submitFallback": "監査を提出できません。",
+        "submitNeedsUploadedDraft": "この監査を提出する前に、再接続して保存済みの変更がアップロードされるのを待ってください。",
+        "syncFallback": "バックグラウンド同期に失敗しました。"
+    },
+    "executeLanding": {
+        "continueSelectedPlace": "選択した場所を続行",
+        "openSelectedAudit": "選択した監査を開く",
+        "subtitle": "セクションごとのプレイスペース監査フローを開始または再開する場所を選択してください。",
+        "title": "監査の実行"
+    },
+    "overview": {
+        "accessDeniedTitle": "アクセスが拒否されました",
+        "assignmentAllows": "この場所の割り当ては現在、以下を許可しています:",
+        "auditRole": "監査ロール",
+        "auditUnavailableTitle": "監査は利用できません",
+        "chooseMode": "この場所でツールのどの部分を完了するかを選択してください。",
+        "loadingDraft": "現在のドラフトを読み込んでいます...",
+        "placeNotFound": "選択した場所のルートが無効です。実行タブに戻り、場所をもう一度選択してください。",
+        "placeNotFoundTitle": "場所が見つかりません",
+        "preamble": "前置き",
+        "preparingAudit": "プレイスペース監査フローを準備しています...",
+        "preparingAuditTitle": "監査を準備中",
+        "roleFixesSubset": "あなたの役割は、この場所で表示される質問の範囲をすでに固定しています。",
+        "syncStatus": {
+            "pendingMessage": "下書きの変更はキューに入り、アプリがアクティブでオンラインのときに自動的にアップロードされます。",
+            "pendingTitle": "このデバイスに保存済み",
+            "retryTitle": "アップロードが一時停止中",
+            "syncingMessage": "保存された変更を現在アップロードしています。すぐに提出したい場合は、この処理が完了するまでアプリを開いたままにしてください。",
+            "syncingTitle": "変更をアップロード中"
+        }
+    },
+    "preAudit": {
+        "complete": "完了",
+        "description": "セクション採点を行う前に、季節、天候、出席者、ユーザー数、年齢層、場所の規模を記録します。",
+        "needed": "必須",
+        "openPage": "事前監査ページを開く",
+        "preparingMessage": "事前監査の質問と保存済みドラフトの値を読み込んでいます...",
+        "preparingTitle": "事前監査を準備中",
+        "saveAndContinue": "事前監査を保存して続行",
+        "subtitle": "セクションページへ進む前に、最初のページの文脈質問を完了してください。",
+        "title": "事前監査の設定",
+        "unavailableTitle": "事前監査は利用できません"
+    },
+    "resumeAudit": "監査を再開",
+    "section": {
+        "answeredCount": "{{answered}} / {{total}} 回回答済み",
+        "backToOverview": "概要へ戻る",
+        "followUpHidden": "多様性、社交性、そして挑戦は、数量の肯定的な回答を得た後にのみ表示されます。",
+        "notesDefault": "このセクションについての所感や推奨事項を追加してください。",
+        "notesPlaceholder": "セクションのノートまたは推奨事項を追加...",
+        "openSection": "セクションを開く",
+        "pendingSync": "ローカルに保存済み - オンライン時にサーバーへ同期します。",
+        "preparingMessage": "現在のセクションと以前に保存された回答を読み込み中...",
+        "preparingTitle": "セクションを準備中",
+        "reviewSection": "セクションを確認",
+        "saveAndNext": "保存して次へ",
+        "saveSection": "セクションを保存",
+        "sectionNotes": "セクションのノート",
+        "unavailableTitle": "セクションが利用できません"
+    },
+    "stack": {
+        "auditStart": "監査開始",
+        "execute": "実行",
+        "preAudit": "事前監査",
+        "section": "セクション"
+    },
+    "startAudit": "監査を開始",
+    "submit": "監査を提出",
+    "thisPlayspace": "このプレイスペース..."
+}

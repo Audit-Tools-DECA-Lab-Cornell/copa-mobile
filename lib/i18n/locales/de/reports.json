@@ -1,16 +1,24 @@
 {
     "auditScoreByPlace": "Audit-Bewertung nach Ort",
-    "averageAuditScore": "Durchschnittliche Audit-Bewertung",
+    "averageConstructScore": "Durchschnittliche Konstruktionsbewertung",
+    "averageSociabilityScore": "Durchschnittliche Sozialverhaltensbewertung",
+    "challengeShort": "C",
     "combinedScoringComingSoon": "Kombinierte Bewertung kommt bald",
     "combinedScoringDescription": "Kombinierte Bewertungen, die auch Daten aus der Manager-Befragung enthalten, werden in einem kuenftigen Update verfuegbar sein.",
+    "diversityShort": "D",
     "exportCsv": "CSV exportieren",
     "exportDescription": "Exportpakete koennen Audit-Bewertung, Abschnittsbewertungen und Ortsmetadaten enthalten.",
     "exportPdf": "PDF exportieren",
     "exportPreview": "Exportvorschau",
     "noScoredPlacesYet": "Noch keine bewerteten Orte",
     "notScored": "Nicht bewertet",
+    "playValueShort": "PV",
+    "quantityShort": "Q",
     "scoredPlacesHelper": "{{scored}} von {{total}} Orten bewertet",
+    "sociabilityHelper": "Verfolgt den durchschnittlichen Wert des sozialen Spielverhaltens über alle eingereichten Audits.",
+    "sociabilityShort": "S",
     "subtitle": "Pruefen Sie die Audit-Ergebnisse Ihrer zugewiesenen Orte.",
     "title": "Playspace-Bewertung",
-    "topScoringPlace": "Ort mit bester Bewertung"
+    "topScoringPlace": "Ort mit bester Bewertung",
+    "usabilityShort": "U"
 }

@@ -4,6 +4,11 @@ import { useRouter } from "expo-router";
 import { Clock3, LocateFixed, MapPin } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import {
+    formatConstructSummary,
+    formatScoreValue,
+    type ScoreSummaryLabels,
+} from "lib/audit/score-helpers";
 import { useDesignSystem, getPlaceStatusTone, type DesignTone } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import type { AuditorPlace } from "lib/audit/places-api";
@@ -59,7 +64,7 @@ export default function PlacesScreen() {
 
     useEffect(() => {
         if (session !== null) {
-            void loadPlaces(session);
+            loadPlaces(session).catch(() => undefined);
         }
     }, [session, loadPlaces]);
 
@@ -77,6 +82,15 @@ export default function PlacesScreen() {
             } satisfies Record<DerivedPlaceStatus, number>,
         );
     }, [places]);
+
+    const scoreSummaryLabels: ScoreSummaryLabels = {
+        playValueShort: t("playValueShort"),
+        usabilityShort: t("usabilityShort"),
+        sociabilityShort: t("sociabilityShort"),
+        quantityShort: t("quantityShort"),
+        diversityShort: t("diversityShort"),
+        challengeShort: t("challengeShort"),
+    };
 
     if (isLoading && places.length === 0) {
         return (
@@ -155,7 +169,11 @@ export default function PlacesScreen() {
                         t("place.assignedPlace", { ns: "common" }),
                     );
                     const auditScoreLabel =
-                        place.summary_score === null ? "--" : `${place.summary_score}%`;
+                        place.score_totals === null
+                            ? place.summary_score === null
+                                ? "--"
+                                : formatScoreValue(place.summary_score)
+                            : formatConstructSummary(place.score_totals, scoreSummaryLabels);
                     const progressPercent = place.progress_percent ?? 0;
                     const updatedLabel = formatRelativeTimeLabel(
                         place.started_at,
@@ -229,7 +247,7 @@ export default function PlacesScreen() {
 
                                     <XStack gap="$3">
                                         <ScoreTile
-                                            label={t("auditScore", { ns: "places" })}
+                                            label={t("scoreSummary", { ns: "places" })}
                                             value={auditScoreLabel}
                                             valueColor={ds.colors.primary}
                                         />

@@ -1,0 +1,45 @@
+{
+    "accountTypes": {
+        "auditor": "監査人"
+    },
+    "actions": {
+        "openAudit": "監査を開く",
+        "resume": "再開",
+        "retry": "再試行",
+        "seeAll": "すべて表示",
+        "signOut": "ログアウト"
+    },
+    "place": {
+        "assignedPlace": "割り当て場所"
+    },
+    "roles": {
+        "auditor": "監査人",
+        "auditorAndPlaceAdmin": "監査人および場所管理者",
+        "placeAdmin": "場所管理者"
+    },
+    "status": {
+        "assigned": "割り当て済み",
+        "completed": "完了済み",
+        "inProgress": "進行中",
+        "notStarted": "未開始",
+        "off": "オフ",
+        "on": "オン",
+        "submitted": "提出済み"
+    },
+    "tabs": {
+        "execute": "実行",
+        "home": "ホーム",
+        "places": "場所",
+        "reports": "レポート",
+        "settings": "設定"
+    },
+    "time": {
+        "dayAgo_one": "1日前",
+        "dayAgo_other": "{{count}}日前",
+        "hourAgo_one": "1時間前",
+        "hourAgo_other": "{{count}}時間前",
+        "justNow": "たった今",
+        "minuteAgo_one": "1分前",
+        "minuteAgo_other": "{{count}}分前"
+    }
+}

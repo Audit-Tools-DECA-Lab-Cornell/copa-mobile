@@ -1,7 +1,13 @@
 {
-    "auditScore": "Audit-Bewertung",
+    "challengeShort": "C",
+    "diversityShort": "D",
     "loadingPlaces": "Ihre Orte werden geladen...",
     "mandatoryCompletion": "Pflichtfortschritt",
+    "playValueShort": "PV",
+    "quantityShort": "Q",
+    "scoreSummary": "Punktestandübersicht",
+    "sociabilityShort": "S",
     "subtitle": "Pruefen Sie Ihre Feldliste, verfolgen Sie den Fortschritt und springen Sie zurueck in aktive Audits.",
-    "title": "Zugewiesene Orte"
+    "title": "Zugewiesene Orte",
+    "usabilityShort": "U"
 }

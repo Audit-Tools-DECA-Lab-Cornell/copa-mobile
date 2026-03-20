@@ -16,7 +16,10 @@
         "label": "Accessibility"
     },
     "appearance": {
+        "dark": "Dark",
         "label": "Appearance",
+        "light": "Light",
+        "system": "System",
         "theme": "Theme",
         "themeDescription": "Choose between light, dark, or follow your device settings."
     },
@@ -24,7 +27,10 @@
         "currentValue": "Currently showing: {{value}}",
         "description": "Choose English, German, French, or follow your device language.",
         "english": "English",
-        "german": "Deutsch",
+        "french": "French",
+        "german": "German",
+        "hindi": "Hindi",
+        "japanese": "Japanese",
         "label": "Language",
         "selection": "App language"
     },

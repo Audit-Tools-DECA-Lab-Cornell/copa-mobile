@@ -1,7 +1,13 @@
 {
-    "auditScore": "ऑडिट स्कोर",
+    "challengeShort": "C",
+    "diversityShort": "D",
     "loadingPlaces": "आपके स्थान लोड हो रहे हैं...",
     "mandatoryCompletion": "अनिवार्य पूर्णता",
+    "playValueShort": "PV",
+    "quantityShort": "Q",
+    "scoreSummary": "स्कोर सारांश",
+    "sociabilityShort": "S",
     "subtitle": "अपनी फील्ड कतार की समीक्षा करें, प्रगति पर नज़र रखें, और सक्रिय ऑडिट में वापस जाएँ।",
-    "title": "असाइन किए गए स्थान"
+    "title": "असाइन किए गए स्थान",
+    "usabilityShort": "U"
 }

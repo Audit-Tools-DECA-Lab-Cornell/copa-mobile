@@ -16,7 +16,10 @@
         "label": "Accessibilité"
     },
     "appearance": {
+        "dark": "Sombre",
         "label": "Apparence",
+        "light": "Clair",
+        "system": "Système",
         "theme": "Thème",
         "themeDescription": "Choisissez entre le clair, le sombre ou le réglage de votre appareil."
     },
@@ -24,7 +27,10 @@
         "currentValue": "Affichage actuel : {{value}}",
         "description": "Choisissez l’anglais, l’allemand, le français ou le réglage de la langue de votre appareil.",
         "english": "Anglais",
-        "german": "Deutsch",
+        "french": "Français",
+        "german": "Allemand",
+        "hindi": "Hindi",
+        "japanese": "Japonais",
         "label": "Langue",
         "selection": "Langue de l’application"
     },

@@ -120,22 +120,21 @@ export const auditSectionStateSchema = z.object({
     note: z.string().nullable(),
 });
 
-export const auditScoreBreakdownSchema = z.object({
-    title: z.string().min(1),
-    addition_total: z.number(),
-    boost_total: z.number(),
-    raw_total: z.number(),
-    max_total: z.number(),
-    percent: z.number(),
+export const auditScoreTotalsSchema = z.object({
+    quantity_total: z.number(),
+    diversity_total: z.number(),
+    challenge_total: z.number(),
+    sociability_total: z.number(),
+    play_value_total: z.number(),
+    usability_total: z.number(),
 });
 
 export const auditScoresSchema = z.object({
     draft_progress_percent: z.number().nullable(),
     execution_mode: executionModeSchema.nullable(),
-    summary: auditScoreBreakdownSchema.nullable(),
-    by_section: z.record(z.string(), auditScoreBreakdownSchema),
-    by_domain: z.record(z.string(), auditScoreBreakdownSchema),
-    by_construct: z.record(z.string(), auditScoreBreakdownSchema),
+    overall: auditScoreTotalsSchema.nullable(),
+    by_section: z.record(z.string(), auditScoreTotalsSchema),
+    by_domain: z.record(z.string(), auditScoreTotalsSchema),
 });
 
 export const auditSessionSchema = z.object({
@@ -230,7 +229,7 @@ export type AuditProgress = z.infer<typeof auditProgressSchema>;
 export type AuditMeta = z.infer<typeof auditMetaSchema>;
 export type AuditPreAuditValues = z.infer<typeof preAuditValuesSchema>;
 export type AuditSectionState = z.infer<typeof auditSectionStateSchema>;
-export type AuditScoreBreakdown = z.infer<typeof auditScoreBreakdownSchema>;
+export type AuditScoreTotals = z.infer<typeof auditScoreTotalsSchema>;
 export type AuditScores = z.infer<typeof auditScoresSchema>;
 export type AuditSession = z.infer<typeof auditSessionSchema>;
 export type PreAuditDraft = z.infer<typeof preAuditDraftSchema>;

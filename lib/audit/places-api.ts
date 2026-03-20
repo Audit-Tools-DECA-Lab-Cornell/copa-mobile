@@ -1,5 +1,6 @@
 import type { AuthSession } from "lib/auth/types";
 import { parsePayload, requestJson } from "lib/audit/api";
+import { auditScoreTotalsSchema } from "lib/audit/types";
 import { z } from "zod";
 
 /**
@@ -31,6 +32,7 @@ const auditorPlaceSchema = z.object({
     started_at: z.string().nullable(),
     submitted_at: z.string().nullable(),
     summary_score: z.number().nullable(),
+    score_totals: auditScoreTotalsSchema.nullable(),
     progress_percent: z.number().nullable(),
 });
 

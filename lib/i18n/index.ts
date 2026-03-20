@@ -38,8 +38,17 @@ import { hiInstrumentTranslations } from "./locales/hi/instrument";
 import hiPlaces from "./locales/hi/places.json";
 import hiReports from "./locales/hi/reports.json";
 import hiNotFound from "./locales/hi/not-found.json";
+import jaCommon from "./locales/ja/common.json";
+import jaAuth from "./locales/ja/auth.json";
+import jaSettings from "./locales/ja/settings.json";
+import jaAudit from "./locales/ja/audit.json";
+import jaDashboard from "./locales/ja/dashboard.json";
+import { jaInstrumentTranslations } from "./locales/ja/instrument";
+import jaPlaces from "./locales/ja/places.json";
+import jaReports from "./locales/ja/reports.json";
+import jaNotFound from "./locales/ja/not-found.json";
 
-const SUPPORTED_LANGUAGES = ["en", "de", "fr", "hi"] as const;
+const SUPPORTED_LANGUAGES = ["en", "de", "fr", "hi", "ja"] as const;
 const FALLBACK_LANGUAGE = "en";
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export type LanguagePreference = "system" | SupportedLanguage;
@@ -133,6 +142,17 @@ void i18nInstance.use(initReactI18next).init({
             places: hiPlaces,
             reports: hiReports,
             "not-found": hiNotFound,
+        },
+        ja: {
+            common: jaCommon,
+            auth: jaAuth,
+            settings: jaSettings,
+            audit: jaAudit,
+            dashboard: jaDashboard,
+            instrument: jaInstrumentTranslations,
+            places: jaPlaces,
+            reports: jaReports,
+            "not-found": jaNotFound,
         },
     },
     interpolation: {

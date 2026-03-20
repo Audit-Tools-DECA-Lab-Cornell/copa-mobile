@@ -16,7 +16,10 @@
         "label": "Barrierefreiheit"
     },
     "appearance": {
+        "dark": "Dunkel",
         "label": "Erscheinungsbild",
+        "light": "Hell",
+        "system": "System",
         "theme": "Design",
         "themeDescription": "Wählen Sie zwischen Hell, Dunkel oder den Geräteeinstellungen."
     },
@@ -24,7 +27,10 @@
         "currentValue": "Aktuell angezeigt: {{value}}",
         "description": "Waehlen Sie Englisch, Deutsch, Franzoesisch oder die Sprache Ihres Geraets.",
         "english": "Englisch",
+        "french": "Französisch",
         "german": "Deutsch",
+        "hindi": "Hindi",
+        "japanese": "Japanisch",
         "label": "Sprache",
         "selection": "App-Sprache"
     },

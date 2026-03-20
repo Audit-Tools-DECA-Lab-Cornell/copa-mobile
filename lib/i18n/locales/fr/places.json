@@ -1,7 +1,13 @@
 {
-    "auditScore": "Score d’audit",
+    "challengeShort": "C",
+    "diversityShort": "D",
     "loadingPlaces": "Chargement de vos sites...",
     "mandatoryCompletion": "Achèvement obligatoire",
+    "playValueShort": "PV",
+    "quantityShort": "Q",
+    "scoreSummary": "Résumé du score",
+    "sociabilityShort": "S",
     "subtitle": "Consultez votre file de terrain, suivez la progression et reprenez les audits en cours.",
-    "title": "Sites attribués"
+    "title": "Sites attribués",
+    "usabilityShort": "U"
 }

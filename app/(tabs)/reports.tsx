@@ -3,6 +3,13 @@ import { ScrollView } from "react-native";
 import { Download, FileBarChart, TriangleAlert } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import {
+    formatColumnSummary,
+    formatConstructSummary,
+    formatScoreValue,
+    getCombinedConstructScore,
+    type ScoreSummaryLabels,
+} from "lib/audit/score-helpers";
 import { useDesignSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -19,22 +26,41 @@ export default function ReportsScreen() {
 
     useEffect(() => {
         if (session !== null) {
-            void loadPlaces(session);
+            loadPlaces(session).catch(() => undefined);
         }
     }, [session, loadPlaces]);
 
     const placesWithScores = useMemo(() => {
-        return places.filter((place) => place.summary_score !== null);
+        return places.filter((place) => place.score_totals !== null);
     }, [places]);
 
-    const averageAuditScore = useMemo(() => {
+    const scoreSummaryLabels: ScoreSummaryLabels = {
+        playValueShort: t("playValueShort"),
+        usabilityShort: t("usabilityShort"),
+        sociabilityShort: t("sociabilityShort"),
+        quantityShort: t("quantityShort"),
+        diversityShort: t("diversityShort"),
+        challengeShort: t("challengeShort"),
+    };
+
+    const averageCombinedConstructScore = useMemo(() => {
         if (placesWithScores.length === 0) {
             return 0;
         }
         const sum = placesWithScores.reduce((total, place) => {
-            return total + (place.summary_score ?? 0);
+            return total + (getCombinedConstructScore(place.score_totals) ?? 0);
         }, 0);
-        return Math.round(sum / placesWithScores.length);
+        return sum / placesWithScores.length;
+    }, [placesWithScores]);
+
+    const averageSociabilityScore = useMemo(() => {
+        if (placesWithScores.length === 0) {
+            return 0;
+        }
+        const sum = placesWithScores.reduce((total, place) => {
+            return total + (place.score_totals?.sociability_total ?? 0);
+        }, 0);
+        return sum / placesWithScores.length;
     }, [placesWithScores]);
 
     const topScoringPlace = useMemo(() => {
@@ -42,8 +68,17 @@ export default function ReportsScreen() {
             return null;
         }
         return placesWithScores.reduce((best, current) => {
-            return (current.summary_score ?? 0) > (best.summary_score ?? 0) ? current : best;
+            return (getCombinedConstructScore(current.score_totals) ?? 0) >
+                (getCombinedConstructScore(best.score_totals) ?? 0)
+                ? current
+                : best;
         });
+    }, [placesWithScores]);
+
+    const maxCombinedConstructScore = useMemo(() => {
+        return placesWithScores.reduce((currentMax, place) => {
+            return Math.max(currentMax, getCombinedConstructScore(place.score_totals) ?? 0);
+        }, 0);
     }, [placesWithScores]);
 
     return (
@@ -73,29 +108,45 @@ export default function ReportsScreen() {
                     </Paragraph>
                 </YStack>
 
-                <XStack gap="$3">
-                    <MetricCard
-                        label={t("averageAuditScore")}
-                        value={
-                            placesWithScores.length > 0 ? `${averageAuditScore.toString()}%` : "--"
-                        }
-                        accentColor={ds.colors.primary}
-                        helperText={t("scoredPlacesHelper", {
-                            scored: placesWithScores.length,
-                            total: places.length,
-                        })}
-                    />
+                <YStack gap="$3">
+                    <XStack gap="$3">
+                        <MetricCard
+                            label={t("averageConstructScore")}
+                            value={
+                                placesWithScores.length > 0
+                                    ? formatScoreValue(averageCombinedConstructScore)
+                                    : "--"
+                            }
+                            accentColor={ds.colors.primary}
+                            helperText={t("scoredPlacesHelper", {
+                                scored: placesWithScores.length,
+                                total: places.length,
+                            })}
+                        />
+                        <MetricCard
+                            label={t("averageSociabilityScore")}
+                            value={
+                                placesWithScores.length > 0
+                                    ? formatScoreValue(averageSociabilityScore)
+                                    : "--"
+                            }
+                            accentColor={ds.colors.success}
+                            helperText={t("sociabilityHelper")}
+                        />
+                    </XStack>
                     <MetricCard
                         label={t("topScoringPlace")}
                         value={
-                            topScoringPlace !== null
-                                ? `${Math.round(topScoringPlace.summary_score ?? 0).toString()}%`
-                                : "--"
+                            topScoringPlace === null
+                                ? "--"
+                                : formatScoreValue(
+                                      getCombinedConstructScore(topScoringPlace.score_totals) ?? 0,
+                                  )
                         }
-                        accentColor={ds.colors.success}
+                        accentColor={ds.colors.warning}
                         helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
                     />
-                </XStack>
+                </YStack>
             </YStack>
 
             <YStack
@@ -123,7 +174,19 @@ export default function ReportsScreen() {
 
                 <YStack gap="$3" flex={1}>
                     {places.map((place) => {
-                        const hasScore = place.summary_score !== null;
+                        const hasScore = place.score_totals !== null;
+                        const combinedConstructScore = getCombinedConstructScore(
+                            place.score_totals,
+                        );
+                        const barWidth =
+                            hasScore &&
+                            combinedConstructScore !== null &&
+                            maxCombinedConstructScore > 0
+                                ? `${Math.max(
+                                      (combinedConstructScore / maxCombinedConstructScore) * 100,
+                                      6,
+                                  )}%`
+                                : "0%";
 
                         return (
                             <YStack
@@ -163,11 +226,36 @@ export default function ReportsScreen() {
                                             fontSize={ds.typography.bodyLg.fontSize}
                                         >
                                             {hasScore
-                                                ? `${Math.round(place.summary_score ?? 0).toString()}%`
+                                                ? formatScoreValue(combinedConstructScore ?? 0)
                                                 : t("notScored")}
                                         </Paragraph>
                                     </YStack>
                                 </XStack>
+
+                                {hasScore ? (
+                                    <YStack gap="$1">
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                        >
+                                            {formatConstructSummary(
+                                                place.score_totals,
+                                                scoreSummaryLabels,
+                                            )}
+                                        </Paragraph>
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodyXs.fontSize}
+                                        >
+                                            {formatColumnSummary(
+                                                place.score_totals,
+                                                scoreSummaryLabels,
+                                            )}
+                                        </Paragraph>
+                                    </YStack>
+                                ) : null}
 
                                 {hasScore ? (
                                     <YStack
@@ -180,7 +268,7 @@ export default function ReportsScreen() {
                                             height={6}
                                             rounded={ds.radii.full}
                                             bg={ds.colors.primary}
-                                            width={`${Math.round(place.summary_score ?? 0).toString()}%`}
+                                            style={{ width: barWidth }}
                                         />
                                     </YStack>
                                 ) : null}

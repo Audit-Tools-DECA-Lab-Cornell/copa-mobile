@@ -16,15 +16,21 @@
         "label": "सुगम्यता"
     },
     "appearance": {
+        "dark": "डार्क",
         "label": "रूप",
+        "light": "लाइट",
+        "system": "सिस्टम",
         "theme": "थीम",
         "themeDescription": "लाइट, डार्क, या अपने डिवाइस सेटिंग्स का अनुसरण करने में से चुनें।"
     },
     "language": {
         "currentValue": "वर्तमान में दिखाया जा रहा है: {{value}}",
         "description": "अंग्रेज़ी, जर्मन, फ़्रेंच चुनें, या अपने डिवाइस की भाषा का अनुसरण करें।",
-        "english": "English",
-        "german": "Deutsch",
+        "english": "अंग्रेज़ी",
+        "french": "फ़्रेंच",
+        "german": "जर्मनी",
+        "hindi": "हिंदी",
+        "japanese": "जापानी",
         "label": "भाषा",
         "selection": "ऐप भाषा"
     },

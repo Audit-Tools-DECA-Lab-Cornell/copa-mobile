@@ -41,12 +41,14 @@ const THEME_OPTIONS: readonly { key: ThemeMode; Icon: FC<IconProps> }[] = [
 
 const LANGUAGE_OPTIONS: readonly {
     key: LanguagePreference;
-    translationKey: "system" | "english" | "german" | "french";
+    translationKey: "system" | "english" | "german" | "french" | "japanese" | "hindi";
 }[] = [
     { key: "system", translationKey: "system" },
     { key: "en", translationKey: "english" },
     { key: "de", translationKey: "german" },
     { key: "fr", translationKey: "french" },
+    { key: "ja", translationKey: "japanese" },
+    { key: "hi", translationKey: "hindi" },
 ];
 
 type ResolvedAppLanguage = Exclude<LanguagePreference, "system">;
@@ -66,6 +68,14 @@ function resolveAppLanguage(languageTag: string | undefined): ResolvedAppLanguag
 
     if (normalizedLanguage.startsWith("fr")) {
         return "fr";
+    }
+
+    if (normalizedLanguage.startsWith("ja")) {
+        return "ja";
+    }
+
+    if (normalizedLanguage.startsWith("hi")) {
+        return "hi";
     }
 
     return "en";
@@ -506,9 +516,20 @@ export default function SettingsScreen() {
                 >
                     {t("language.currentValue", {
                         ns: "settings",
-                        value: t(activeLanguage === "de" ? "language.german" : "language.english", {
-                            ns: "settings",
-                        }),
+                        value: t(
+                            activeLanguage === "de"
+                                ? "language.german"
+                                : activeLanguage === "fr"
+                                  ? "language.french"
+                                  : activeLanguage === "ja"
+                                    ? "language.japanese"
+                                    : activeLanguage === "hi"
+                                      ? "language.hindi"
+                                      : "language.english",
+                            {
+                                ns: "settings",
+                            },
+                        ),
                     })}
                 </Paragraph>
             </SettingsCard>

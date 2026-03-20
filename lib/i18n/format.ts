@@ -10,6 +10,7 @@ const LANGUAGE_LOCALE_MAP = {
     de: "de-DE",
     fr: "fr-FR",
     hi: "hi-IN",
+    ja: "ja-JP",
 } as const;
 
 /**
@@ -27,6 +28,8 @@ export function getLocaleTag(language: string): string {
             return LANGUAGE_LOCALE_MAP.fr;
         case "hi":
             return LANGUAGE_LOCALE_MAP.hi;
+        case "ja":
+            return LANGUAGE_LOCALE_MAP.ja;
         default:
             return LANGUAGE_LOCALE_MAP.en;
     }

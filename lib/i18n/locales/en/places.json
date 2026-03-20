@@ -1,7 +1,13 @@
 {
-    "auditScore": "Audit score",
+    "challengeShort": "C",
+    "diversityShort": "D",
     "loadingPlaces": "Loading your places...",
     "mandatoryCompletion": "Mandatory completion",
+    "playValueShort": "PV",
+    "quantityShort": "Q",
+    "scoreSummary": "Score summary",
+    "sociabilityShort": "S",
     "subtitle": "Review your field queue, monitor progress, and jump back into active audits.",
-    "title": "Assigned Places"
+    "title": "Assigned Places",
+    "usabilityShort": "U"
 }

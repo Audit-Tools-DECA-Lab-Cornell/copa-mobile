@@ -1,0 +1,17 @@
+{
+    "activeAuditor": "現在の監査人",
+    "activeWork": "実施中の監査",
+    "connectivityStatus": "接続状況",
+    "constructScore": "作成",
+    "dueToday": "本日中",
+    "fieldPriorities": "現場の優先事項",
+    "loadingPlaces": "場所を読み込み中...",
+    "mandatoryCompletion": "必須完了",
+    "offlineReadyDescription": "割り当てられた監査データはローカルに保存され、現場での使用準備が整っています。",
+    "offlineReadyTitle": "オフライン対応完了",
+    "priorityProgress": "{{percent}}% 進捗 - {{code}}",
+    "priorityTask": "優先タスク",
+    "readinessLabel": "{{percent}}% 準備完了",
+    "title": "現場ダッシュボード",
+    "urgentAudit": "緊急監査"
+}

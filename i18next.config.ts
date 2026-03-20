@@ -1,5 +1,5 @@
 export default {
-    locales: ["en", "de", "fr", "hi"],
+    locales: ["en", "de", "fr", "hi", "ja"],
     compatibilityJSON: "v4",
     extract: {
         input: [
@@ -17,7 +17,7 @@ export default {
 
         // Primary vs secondary languages
         primaryLanguage: "en",
-        secondaryLanguages: ["de", "fr", "hi"],
+        secondaryLanguages: ["de", "fr", "hi", "ja"],
 
         // What happens for missing keys in non-primary locales
         defaultValue: (key: string, ns: string, lng: string) =>
@@ -35,7 +35,7 @@ export default {
         transKeepBasicHtmlNodesFor: ["br", "strong", "i", "p"],
 
         // Linting / cleanup
-        removeUnusedKeys: true,
-        generateBasePluralForms: true,
+        removeUnusedKeys: false,
+        generateBasePluralForms: false,
     },
 };

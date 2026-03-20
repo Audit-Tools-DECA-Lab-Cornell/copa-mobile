@@ -1,16 +1,24 @@
 {
-    "auditScoreByPlace": "Audit score by place",
-    "averageAuditScore": "Average audit score",
+    "auditScoreByPlace": "Score totals by place",
+    "averageConstructScore": "Average construct score",
+    "averageSociabilityScore": "Average sociability score",
+    "challengeShort": "C",
     "combinedScoringComingSoon": "Combined scoring coming soon",
     "combinedScoringDescription": "Combined scores that include manager survey data will be available in a future update.",
+    "diversityShort": "D",
     "exportCsv": "Export CSV",
     "exportDescription": "Export packages can include audit score, section-level scoring, and place metadata.",
     "exportPdf": "Export PDF",
     "exportPreview": "Export preview",
     "noScoredPlacesYet": "No scored places yet",
     "notScored": "Not scored",
+    "playValueShort": "PV",
+    "quantityShort": "Q",
     "scoredPlacesHelper": "{{scored}} of {{total}} places scored",
+    "sociabilityHelper": "Tracks the average social-play score across submitted audits.",
+    "sociabilityShort": "S",
     "subtitle": "Review audit performance across your assigned places.",
     "title": "Playspace Scoring",
-    "topScoringPlace": "Top scoring place"
+    "topScoringPlace": "Top scoring place",
+    "usabilityShort": "U"
 }

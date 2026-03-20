@@ -7,7 +7,7 @@ import { requireOptionalNativeModule } from "expo-modules-core";
 const PREFS_STORAGE_KEY = "playspace.preferences.v1";
 
 /** Allowed persisted language values. */
-export type PersistedLanguagePreference = "system" | "en" | "de" | "fr" | "hi";
+export type PersistedLanguagePreference = "system" | "en" | "de" | "fr" | "hi" | "ja";
 
 /** Serializable shape written to device storage. */
 export interface PersistedPreferences {
@@ -143,7 +143,8 @@ function applyDefaults(value: unknown): PersistedPreferences {
         languagePreference === "en" ||
         languagePreference === "de" ||
         languagePreference === "fr" ||
-        languagePreference === "hi"
+        languagePreference === "hi" ||
+        languagePreference === "ja"
             ? languagePreference
             : DEFAULT_PREFERENCES.language;
 

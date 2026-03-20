@@ -1,0 +1,49 @@
+{
+    "about": {
+        "app": "アプリ",
+        "appName": "Playspace Mobile",
+        "instrument": "楽器",
+        "label": "アプリについて",
+        "version": "バージョン"
+    },
+    "accessibility": {
+        "dyslexicFont": "ディスレクシア対応フォント",
+        "dyslexicFontDescription": "読みやすさを向上させるために OpenDyslexic に切り替えます。",
+        "fontScaleDescription": "明るい日差しの下や薄暗い場所での読みやすさのために、テキストサイズを調整します。",
+        "fontScaleValue": "フォント倍率: {{value}}x",
+        "highContrast": "高コントラスト",
+        "highContrastDescription": "屋外・明るい環境で視認性を高めます。",
+        "label": "アクセシビリティ"
+    },
+    "appearance": {
+        "dark": "ダーク",
+        "label": "外観",
+        "light": "ライト",
+        "system": "システム",
+        "theme": "テーマ",
+        "themeDescription": "ライト、ダーク、またはデバイス設定に従う設定を選択します。"
+    },
+    "language": {
+        "currentValue": "現在表示中: {{value}}",
+        "description": "英語、ドイツ語、フランス語のいずれかを選択するか、デバイスの言語に従います。",
+        "english": "英語",
+        "french": "フランス語",
+        "german": "ドイツ語",
+        "hindi": "ヒンディー語",
+        "japanese": "日本語",
+        "label": "言語",
+        "selection": "アプリの言語"
+    },
+    "profile": {
+        "accountType": "アカウントの種類",
+        "auditorCode": "監査人コード",
+        "country": "国",
+        "editingComingSoon": "認証システムが完了次第、プロフィール編集が利用可能になります。",
+        "email": "メールアドレス",
+        "label": "プロフィール",
+        "name": "名前",
+        "role": "役割"
+    },
+    "subtitle": "プロフィール、外観、アクセシビリティ、アプリ情報。",
+    "title": "設定"
+}

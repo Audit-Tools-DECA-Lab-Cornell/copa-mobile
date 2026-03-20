@@ -48,7 +48,7 @@ MaybeJsonValue: TypeAlias = JsonValue | MissingValue
 
 OPENAI_RESPONSES_URL: Final[str] = "https://api.openai.com/v1/responses"
 DEFAULT_SOURCE_LOCALE: Final[str] = "en"
-DEFAULT_MODEL: Final[str] = "gpt-5.0-nano"
+DEFAULT_MODEL: Final[str] = "gpt-5.4-mini"
 DEFAULT_TIMEOUT_SECONDS: Final[float] = 120.0
 DEFAULT_RETRIES: Final[int] = 3
 DEFAULT_BATCH_ITEM_LIMIT: Final[int] = 40
@@ -74,7 +74,11 @@ LOCALE_STYLE_HINTS: Final[dict[str, str]] = {
     "it": (
         "Use natural, professional Italian for a field-audit mobile app. Prefer the formal "
         "address form ('Lei') when the source addresses the user directly."
-    )
+    ),
+    "ja": (
+        "Use natural, professional Japanese for a field-audit mobile app. Prefer the formal "
+        "address form ('あなた') when the source addresses the user directly."
+    ),
 }
 
 MISSING: Final[MissingValue] = MissingValue()

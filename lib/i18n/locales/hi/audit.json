@@ -2,8 +2,8 @@
     "autoValues": {
         "calculatedOnSubmit": "अंतिम सबमिट पर गणना की जाएगी",
         "generatedOnSubmit": "अंतिम सबमिट पर जनरेट किया जाएगा",
-        "minutes_one": "TODO: autoValues.minutes_one audit",
-        "minutes_other": "TODO: autoValues.minutes_other audit"
+        "minutes_one": "",
+        "minutes_other": ""
     },
     "errors": {
         "accessDenied403": "पहुंच अस्वीकृत (403): आपको इस स्थान या ऑडिट तक पहुंच की अनुमति नहीं है।",

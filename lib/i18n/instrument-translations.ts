@@ -18,10 +18,12 @@ import { enInstrumentTranslations } from "./locales/en/instrument";
 import { deInstrumentTranslations } from "./locales/de/instrument";
 import { frInstrumentTranslations } from "./locales/fr/instrument";
 import { hiInstrumentTranslations } from "./locales/hi/instrument";
+import { jaInstrumentTranslations } from "./locales/ja/instrument";
+
 /**
  * Supported instrument translation locales.
  */
-export type InstrumentLocale = "en" | "de" | "fr" | "hi";
+export type InstrumentLocale = "en" | "de" | "fr" | "hi" | "ja";
 
 /**
  * Localized copy for a choice-like option.
@@ -90,6 +92,7 @@ const INSTRUMENT_TRANSLATIONS_BY_LOCALE: Readonly<
     de: deInstrumentTranslations,
     fr: frInstrumentTranslations,
     hi: hiInstrumentTranslations,
+    ja: jaInstrumentTranslations,
 };
 
 /**
@@ -114,6 +117,10 @@ export function normalizeInstrumentLocale(languageTag: string | undefined): Inst
 
     if (languageCode === "hi") {
         return "hi";
+    }
+
+    if (languageCode === "ja") {
+        return "ja";
     }
 
     return "en";

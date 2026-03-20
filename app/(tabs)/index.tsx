@@ -16,6 +16,7 @@ import {
 } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
+import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-helpers";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import type { AuditorPlace } from "lib/audit/places-api";
@@ -716,7 +717,8 @@ export default function DashboardScreen() {
                         const status = derivePlaceStatus(place.audit_status);
                         const placeTone = getPlaceStatusTone(status, ds.colors);
                         const progressPercent = place.progress_percent ?? 0;
-                        const auditScore = place.summary_score ?? 0;
+                        const combinedConstructScore =
+                            getCombinedConstructScore(place.score_totals) ?? place.summary_score;
                         const updatedLabel = formatRelativeTimeLabel(
                             place.started_at,
                             place.submitted_at,
@@ -787,7 +789,11 @@ export default function DashboardScreen() {
                                         fontFamily={ds.fonts.bodyBold}
                                         fontSize={ds.typography.bodyMd.fontSize}
                                     >
-                                        {`${t("labels.audit", { ns: "common" })} ${auditScore}%`}
+                                        {combinedConstructScore === null
+                                            ? "--"
+                                            : `${t("constructScore", {
+                                                  ns: "dashboard",
+                                              })} ${formatScoreValue(combinedConstructScore)}`}
                                     </Paragraph>
                                 </XStack>
 
