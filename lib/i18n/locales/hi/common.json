@@ -1,0 +1,48 @@
+{
+    "accountTypes": {
+        "auditor": "ऑडिटर"
+    },
+    "actions": {
+        "openAudit": "ऑडिट खोलें",
+        "resume": "फिर से शुरू करें",
+        "retry": "पुनः प्रयास करें",
+        "seeAll": "सभी देखें",
+        "signOut": "साइन आउट"
+    },
+    "labels": {
+        "audit": "ऑडिट"
+    },
+    "place": {
+        "assignedPlace": "असाइन किया गया स्थान"
+    },
+    "roles": {
+        "auditor": "ऑडिटर",
+        "auditorAndPlaceAdmin": "ऑडिटर और प्लेस एडमिन",
+        "placeAdmin": "प्लेस एडमिन"
+    },
+    "status": {
+        "assigned": "असाइन किया गया",
+        "completed": "पूर्ण",
+        "inProgress": "प्रगति में",
+        "notStarted": "शुरू नहीं हुआ",
+        "off": "बंद",
+        "on": "चालू",
+        "submitted": "सबमिट किया गया"
+    },
+    "tabs": {
+        "execute": "निष्पादित करें",
+        "home": "होम",
+        "places": "स्थान",
+        "reports": "रिपोर्ट्स",
+        "settings": "सेटिंग्स"
+    },
+    "time": {
+        "dayAgo_one": "1 दिन पहले",
+        "dayAgo_other": "{{count}} दिन पहले",
+        "hourAgo_one": "1 घंटे पहले",
+        "hourAgo_other": "{{count}} घंटे पहले",
+        "justNow": "अभी-अभी",
+        "minuteAgo_one": "1 मिनट पहले",
+        "minuteAgo_other": "{{count}} मिनट पहले"
+    }
+}

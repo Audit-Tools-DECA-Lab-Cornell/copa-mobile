@@ -1,0 +1,85 @@
+{
+    "autoValues": {
+        "calculatedOnSubmit": "अंतिम सबमिट पर गणना की जाएगी",
+        "generatedOnSubmit": "अंतिम सबमिट पर जनरेट किया जाएगा",
+        "minutes_one": "TODO: autoValues.minutes_one audit",
+        "minutes_other": "TODO: autoValues.minutes_other audit"
+    },
+    "errors": {
+        "accessDenied403": "पहुंच अस्वीकृत (403): आपको इस स्थान या ऑडिट तक पहुंच की अनुमति नहीं है।",
+        "detailsLabel": "विवरण: {{details}}",
+        "httpFallback": "{{message}} (HTTP {{statusCode}}).",
+        "networkFallback": "{{message}} (नेटवर्क त्रुटि).",
+        "offlineChangesSaved": "{{message}} आप ऑफ़लाइन प्रतीत हो रहे हैं। बदलाव स्थानीय रूप से सहेज लिए गए हैं और दोबारा कनेक्ट होने पर सिंक हो जाएंगे।",
+        "openFallback": "ऑडिट खोला नहीं जा सका।",
+        "refreshFallback": "ऑडिट रीफ़्रेश नहीं किया जा सका।",
+        "submitFallback": "ऑडिट सबमिट नहीं किया जा सका।",
+        "submitNeedsUploadedDraft": "इस ऑडिट को सबमिट करने से पहले फिर से कनेक्ट करें और अपने सहेजे गए बदलाव अपलोड होने तक प्रतीक्षा करें।",
+        "syncFallback": "बैकग्राउंड सिंक विफल हो गया।"
+    },
+    "executeLanding": {
+        "continueSelectedPlace": "चयनित स्थान जारी रखें",
+        "openSelectedAudit": "चयनित ऑडिट खोलें",
+        "subtitle": "सेक्शन-दर-सेक्शन playspace ऑडिट फ़्लो शुरू करने या फिर से जारी करने के लिए एक स्थान चुनें।",
+        "title": "ऑडिट निष्पादन"
+    },
+    "overview": {
+        "accessDeniedTitle": "पहुंच अस्वीकृत",
+        "assignmentAllows": "यह स्थान असाइनमेंट वर्तमान में यह अनुमति देता है:",
+        "auditRole": "ऑडिट भूमिका",
+        "auditUnavailableTitle": "ऑडिट उपलब्ध नहीं है",
+        "chooseMode": "चुनें कि इस स्थान के लिए आप टूल का कौन-सा भाग पूरा करेंगे।",
+        "loadingDraft": "आपका वर्तमान ड्राफ्ट लोड किया जा रहा है...",
+        "placeNotFound": "चयनित स्थान का रूट अमान्य है। Execute टैब पर लौटें और फिर से एक स्थान चुनें।",
+        "placeNotFoundTitle": "स्थान नहीं मिला",
+        "preamble": "प्रस्तावना",
+        "preparingAudit": "playspace ऑडिट फ़्लो तैयार किया जा रहा है...",
+        "preparingAuditTitle": "ऑडिट तैयार किया जा रहा है",
+        "roleFixesSubset": "आपकी भूमिका इस स्थान के लिए प्रश्नों के दिखाई देने वाले उपसमूह को पहले से निर्धारित करती है।",
+        "syncStatus": {
+            "pendingMessage": "ड्राफ्ट में किए गए बदलाव कतार में हैं और ऐप सक्रिय तथा ऑनलाइन होने पर अपने-आप अपलोड हो जाएंगे।",
+            "pendingTitle": "इस डिवाइस पर सहेजा गया",
+            "retryTitle": "अपलोड रुका हुआ है",
+            "syncingMessage": "सहेजे गए बदलाव अभी अपलोड हो रहे हैं। यदि आपको तुरंत सबमिट करना है, तो यह पूरा होने तक ऐप खुला रखें।",
+            "syncingTitle": "बदलाव अपलोड हो रहे हैं"
+        }
+    },
+    "preAudit": {
+        "complete": "पूर्ण",
+        "description": "सेक्शन स्कोरिंग से पहले मौसम, वेदर, उपस्थित उपयोगकर्ता, उपयोगकर्ताओं की संख्या, आयु समूह और स्थान का आकार दर्ज करें।",
+        "needed": "आवश्यक",
+        "openPage": "प्री-ऑडिट पेज खोलें",
+        "preparingMessage": "प्री-ऑडिट प्रश्नों और किसी भी सहेजे गए ड्राफ्ट मानों को लोड किया जा रहा है...",
+        "preparingTitle": "प्री-ऑडिट तैयार किया जा रहा है",
+        "saveAndContinue": "प्री-ऑडिट सहेजें और जारी रखें",
+        "subtitle": "सेक्शन पेजों पर जाने से पहले पहले पेज के संदर्भ प्रश्न पूरे करें।",
+        "title": "प्री-ऑडिट सेटअप",
+        "unavailableTitle": "प्री-ऑडिट उपलब्ध नहीं है"
+    },
+    "resumeAudit": "ऑडिट फिर से शुरू करें",
+    "section": {
+        "answeredCount": "{{answered}} / {{total}} उत्तर दिए गए",
+        "backToOverview": "अवलोकन पर वापस जाएँ",
+        "followUpHidden": "विविधता, सामाजिकता और चुनौती केवल Quantity के सकारात्मक उत्तर के बाद दिखाई देते हैं।",
+        "notesDefault": "इस सेक्शन के लिए कोई भी विचार या सिफारिशें जोड़ें।",
+        "notesPlaceholder": "सेक्शन नोट्स या सिफारिशें जोड़ें...",
+        "openSection": "सेक्शन खोलें",
+        "pendingSync": "उत्तर स्थानीय रूप से सहेजे गए हैं - ऑनलाइन होने पर सर्वर से सिंक हो जाएंगे।",
+        "preparingMessage": "वर्तमान सेक्शन और पहले से सहेजे गए उत्तर लोड किए जा रहे हैं...",
+        "preparingTitle": "सेक्शन तैयार किया जा रहा है",
+        "reviewSection": "सेक्शन की समीक्षा करें",
+        "saveAndNext": "सहेजें और आगे बढ़ें",
+        "saveSection": "सेक्शन सहेजें",
+        "sectionNotes": "सेक्शन नोट्स",
+        "unavailableTitle": "सेक्शन उपलब्ध नहीं है"
+    },
+    "stack": {
+        "auditStart": "ऑडिट शुरू",
+        "execute": "निष्पादित करें",
+        "preAudit": "प्री-ऑडिट",
+        "section": "सेक्शन"
+    },
+    "startAudit": "ऑडिट शुरू करें",
+    "submit": "ऑडिट सबमिट करें",
+    "thisPlayspace": "यह playspace..."
+}

@@ -22,7 +22,7 @@
     },
     "language": {
         "currentValue": "Currently showing: {{value}}",
-        "description": "Choose English, German, or follow your device language.",
+        "description": "Choose English, German, French, or follow your device language.",
         "english": "English",
         "german": "Deutsch",
         "label": "Language",

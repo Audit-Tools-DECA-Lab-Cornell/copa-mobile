@@ -1,0 +1,16 @@
+{
+    "activeAuditor": "Auditeur actif",
+    "activeWork": "Audits actifs",
+    "connectivityStatus": "État de la connectivité",
+    "dueToday": "À faire aujourd’hui",
+    "fieldPriorities": "Priorités terrain",
+    "loadingPlaces": "Chargement de vos sites...",
+    "mandatoryCompletion": "Achèvement obligatoire",
+    "offlineReadyDescription": "Les données d’audit attribuées sont stockées localement et prêtes à être utilisées sur le terrain.",
+    "offlineReadyTitle": "Prêt hors ligne",
+    "priorityProgress": "{{percent}}% de progression - {{code}}",
+    "priorityTask": "Tâche prioritaire",
+    "readinessLabel": "{{percent}}% prêt",
+    "title": "Tableau de bord terrain",
+    "urgentAudit": "Audit urgent"
+}

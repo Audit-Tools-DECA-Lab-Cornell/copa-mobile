@@ -101,6 +101,43 @@ export const auditProgressSchema = z.object({
     sections: z.array(auditSectionProgressSchema),
 });
 
+export const auditMetaSchema = z.object({
+    execution_mode: executionModeSchema.nullable(),
+});
+
+export const preAuditValuesSchema = z.object({
+    season: z.string().nullable(),
+    weather_conditions: z.array(z.string()),
+    users_present: z.array(z.string()),
+    user_count: z.string().nullable(),
+    age_groups: z.array(z.string()),
+    place_size: z.string().nullable(),
+});
+
+export const auditSectionStateSchema = z.object({
+    section_key: z.string().min(1),
+    responses: z.record(z.string(), z.record(z.string(), z.string())),
+    note: z.string().nullable(),
+});
+
+export const auditScoreBreakdownSchema = z.object({
+    title: z.string().min(1),
+    addition_total: z.number(),
+    boost_total: z.number(),
+    raw_total: z.number(),
+    max_total: z.number(),
+    percent: z.number(),
+});
+
+export const auditScoresSchema = z.object({
+    draft_progress_percent: z.number().nullable(),
+    execution_mode: executionModeSchema.nullable(),
+    summary: auditScoreBreakdownSchema.nullable(),
+    by_section: z.record(z.string(), auditScoreBreakdownSchema),
+    by_domain: z.record(z.string(), auditScoreBreakdownSchema),
+    by_construct: z.record(z.string(), auditScoreBreakdownSchema),
+});
+
 export const auditSessionSchema = z.object({
     audit_id: z.uuid(),
     audit_code: z.string().min(1),
@@ -116,8 +153,10 @@ export const auditSessionSchema = z.object({
     started_at: z.iso.datetime(),
     submitted_at: z.iso.datetime().nullable(),
     total_minutes: z.number().int().nullable(),
-    responses_json: z.record(z.string(), z.unknown()),
-    scores_json: z.record(z.string(), z.unknown()),
+    meta: auditMetaSchema,
+    pre_audit: preAuditValuesSchema,
+    sections: z.record(z.string(), auditSectionStateSchema),
+    scores: auditScoresSchema,
     progress: auditProgressSchema,
 });
 
@@ -188,6 +227,11 @@ export type InstrumentSection = z.infer<typeof instrumentSectionSchema>;
 export type PlayspaceInstrument = z.infer<typeof playspaceInstrumentSchema>;
 export type AuditSectionProgress = z.infer<typeof auditSectionProgressSchema>;
 export type AuditProgress = z.infer<typeof auditProgressSchema>;
+export type AuditMeta = z.infer<typeof auditMetaSchema>;
+export type AuditPreAuditValues = z.infer<typeof preAuditValuesSchema>;
+export type AuditSectionState = z.infer<typeof auditSectionStateSchema>;
+export type AuditScoreBreakdown = z.infer<typeof auditScoreBreakdownSchema>;
+export type AuditScores = z.infer<typeof auditScoresSchema>;
 export type AuditSession = z.infer<typeof auditSessionSchema>;
 export type PreAuditDraft = z.infer<typeof preAuditDraftSchema>;
 export type SectionDraftPatch = z.infer<typeof sectionDraftPatchSchema>;

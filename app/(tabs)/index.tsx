@@ -411,15 +411,15 @@ export default function DashboardScreen() {
                                 <Text
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.headingBold}
-                                    fontSize={ds.typography.metricMd.fontSize}
-                                    lineHeight={ds.typography.metricMd.lineHeight}
+                                    fontSize={ds.typography.titleLg.fontSize}
+                                    lineHeight={ds.typography.titleLg.lineHeight}
                                 >
                                     {priorityPlace.place_name}
                                 </Text>
                                 <Paragraph
                                     color={ds.colors.mutedForeground}
                                     fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.titleMd.fontSize}
+                                    fontSize={ds.typography.titleSm.fontSize}
                                 >
                                     {priorityPlace.project_name}
                                 </Paragraph>

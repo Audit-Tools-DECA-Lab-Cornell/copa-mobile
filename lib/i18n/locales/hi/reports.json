@@ -1,0 +1,16 @@
+{
+    "auditScoreByPlace": "स्थान के अनुसार ऑडिट स्कोर",
+    "averageAuditScore": "औसत ऑडिट स्कोर",
+    "combinedScoringComingSoon": "संयुक्त स्कोरिंग जल्द आ रही है",
+    "combinedScoringDescription": "प्रबंधक सर्वेक्षण डेटा शामिल करने वाले संयुक्त स्कोर भविष्य के अपडेट में उपलब्ध होंगे।",
+    "exportCsv": "CSV निर्यात करें",
+    "exportDescription": "निर्यात पैकेज में ऑडिट स्कोर, अनुभाग-स्तरीय स्कोरिंग और स्थान मेटाडेटा शामिल हो सकते हैं।",
+    "exportPdf": "PDF निर्यात करें",
+    "exportPreview": "निर्यात पूर्वावलोकन",
+    "noScoredPlacesYet": "अभी तक कोई स्कोर किए गए स्थान नहीं हैं",
+    "notScored": "स्कोर नहीं किया गया",
+    "scoredPlacesHelper": "{{scored}} में से {{total}} स्थानों को स्कोर किया गया",
+    "subtitle": "अपने असाइन किए गए स्थानों में ऑडिट प्रदर्शन की समीक्षा करें।",
+    "title": "Playspace Scoring",
+    "topScoringPlace": "सबसे अधिक स्कोर वाला स्थान"
+}

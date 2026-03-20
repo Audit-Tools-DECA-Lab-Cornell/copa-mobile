@@ -1,0 +1,43 @@
+{
+    "about": {
+        "app": "ऐप",
+        "appName": "Playspace Mobile",
+        "instrument": "उपकरण",
+        "label": "जानकारी",
+        "version": "संस्करण"
+    },
+    "accessibility": {
+        "dyslexicFont": "डिस्लेक्सिया-अनुकूल फ़ॉन्ट",
+        "dyslexicFontDescription": "बेहतर पठनीयता के लिए OpenDyslexic पर स्विच करें।",
+        "fontScaleDescription": "तेज़ धूप या कम रोशनी में बेहतर पठनीयता के लिए टेक्स्ट आकार समायोजित करें।",
+        "fontScaleValue": "फ़ॉन्ट स्केल: {{value}}x",
+        "highContrast": "उच्च कंट्रास्ट",
+        "highContrastDescription": "बाहरी/तेज़ रोशनी की स्थितियों के लिए कंट्रास्ट बढ़ाएँ।",
+        "label": "सुगम्यता"
+    },
+    "appearance": {
+        "label": "रूप",
+        "theme": "थीम",
+        "themeDescription": "लाइट, डार्क, या अपने डिवाइस सेटिंग्स का अनुसरण करने में से चुनें।"
+    },
+    "language": {
+        "currentValue": "वर्तमान में दिखाया जा रहा है: {{value}}",
+        "description": "अंग्रेज़ी, जर्मन, फ़्रेंच चुनें, या अपने डिवाइस की भाषा का अनुसरण करें।",
+        "english": "English",
+        "german": "Deutsch",
+        "label": "भाषा",
+        "selection": "ऐप भाषा"
+    },
+    "profile": {
+        "accountType": "खाता प्रकार",
+        "auditorCode": "ऑडिटर कोड",
+        "country": "देश",
+        "editingComingSoon": "प्रोफ़ाइल संपादन प्रमाणीकरण प्रणाली पूरी होने के बाद उपलब्ध होगा।",
+        "email": "ईमेल",
+        "label": "प्रोफ़ाइल",
+        "name": "नाम",
+        "role": "भूमिका"
+    },
+    "subtitle": "प्रोफ़ाइल, रूप, सुगम्यता और ऐप जानकारी।",
+    "title": "सेटिंग्स"
+}

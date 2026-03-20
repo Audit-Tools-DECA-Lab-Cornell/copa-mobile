@@ -1,0 +1,51 @@
+{
+    "accountTypes": {
+        "auditor": "Auditeur"
+    },
+    "actions": {
+        "openAudit": "Ouvrir l’audit",
+        "resume": "Reprendre",
+        "retry": "Réessayer",
+        "seeAll": "Voir tout",
+        "signOut": "Se déconnecter"
+    },
+    "labels": {
+        "audit": "Audit"
+    },
+    "place": {
+        "assignedPlace": "Lieu attribué"
+    },
+    "roles": {
+        "auditor": "Auditeur",
+        "auditorAndPlaceAdmin": "Auditeur et administrateur du lieu",
+        "placeAdmin": "Administrateur du lieu"
+    },
+    "status": {
+        "assigned": "Attribué",
+        "completed": "Terminé",
+        "inProgress": "En cours",
+        "notStarted": "Non commencé",
+        "off": "OFF",
+        "on": "ON",
+        "submitted": "Soumis"
+    },
+    "tabs": {
+        "execute": "Exécuter",
+        "home": "Accueil",
+        "places": "Lieux",
+        "reports": "Rapports",
+        "settings": "Paramètres"
+    },
+    "time": {
+        "dayAgo_one": "il y a 1 jour",
+        "dayAgo_many": "TODO: time.dayAgo_many common",
+        "dayAgo_other": "il y a {{count}} jours",
+        "hourAgo_one": "il y a 1 h",
+        "hourAgo_many": "TODO: time.hourAgo_many common",
+        "hourAgo_other": "il y a {{count}} h",
+        "justNow": "À l’instant",
+        "minuteAgo_one": "il y a 1 min",
+        "minuteAgo_many": "TODO: time.minuteAgo_many common",
+        "minuteAgo_other": "il y a {{count}} min"
+    }
+}

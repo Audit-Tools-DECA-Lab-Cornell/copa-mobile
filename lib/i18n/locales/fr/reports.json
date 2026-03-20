@@ -1,0 +1,16 @@
+{
+    "auditScoreByPlace": "Score d’audit par lieu",
+    "averageAuditScore": "Score d’audit moyen",
+    "combinedScoringComingSoon": "Score combiné bientôt disponible",
+    "combinedScoringDescription": "Les scores combinés incluant les données d’enquête des responsables seront disponibles dans une prochaine mise à jour.",
+    "exportCsv": "Exporter en CSV",
+    "exportDescription": "Les exports peuvent inclure le score d’audit, le score par section et les métadonnées du lieu.",
+    "exportPdf": "Exporter en PDF",
+    "exportPreview": "Aperçu de l’export",
+    "noScoredPlacesYet": "Aucun lieu noté pour le moment",
+    "notScored": "Non noté",
+    "scoredPlacesHelper": "{{scored}} lieux notés sur {{total}}",
+    "subtitle": "Consultez les performances d’audit de vos lieux attribués.",
+    "title": "Playspace Scoring",
+    "topScoringPlace": "Lieu le mieux noté"
+}

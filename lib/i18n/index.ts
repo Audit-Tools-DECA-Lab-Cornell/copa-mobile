@@ -20,8 +20,26 @@ import { deInstrumentTranslations } from "./locales/de/instrument";
 import dePlaces from "./locales/de/places.json";
 import deReports from "./locales/de/reports.json";
 import deNotFound from "./locales/de/not-found.json";
+import frCommon from "./locales/fr/common.json";
+import frAuth from "./locales/fr/auth.json";
+import frSettings from "./locales/fr/settings.json";
+import frAudit from "./locales/fr/audit.json";
+import frDashboard from "./locales/fr/dashboard.json";
+import { frInstrumentTranslations } from "./locales/fr/instrument";
+import frPlaces from "./locales/fr/places.json";
+import frReports from "./locales/fr/reports.json";
+import frNotFound from "./locales/fr/not-found.json";
+import hiCommon from "./locales/hi/common.json";
+import hiAuth from "./locales/hi/auth.json";
+import hiSettings from "./locales/hi/settings.json";
+import hiAudit from "./locales/hi/audit.json";
+import hiDashboard from "./locales/hi/dashboard.json";
+import { hiInstrumentTranslations } from "./locales/hi/instrument";
+import hiPlaces from "./locales/hi/places.json";
+import hiReports from "./locales/hi/reports.json";
+import hiNotFound from "./locales/hi/not-found.json";
 
-const SUPPORTED_LANGUAGES = ["en", "de"] as const;
+const SUPPORTED_LANGUAGES = ["en", "de", "fr", "hi"] as const;
 const FALLBACK_LANGUAGE = "en";
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export type LanguagePreference = "system" | SupportedLanguage;
@@ -93,6 +111,28 @@ void i18nInstance.use(initReactI18next).init({
             places: dePlaces,
             reports: deReports,
             "not-found": deNotFound,
+        },
+        fr: {
+            common: frCommon,
+            auth: frAuth,
+            settings: frSettings,
+            audit: frAudit,
+            dashboard: frDashboard,
+            instrument: frInstrumentTranslations,
+            places: frPlaces,
+            reports: frReports,
+            "not-found": frNotFound,
+        },
+        hi: {
+            common: hiCommon,
+            auth: hiAuth,
+            settings: hiSettings,
+            audit: hiAudit,
+            dashboard: hiDashboard,
+            instrument: hiInstrumentTranslations,
+            places: hiPlaces,
+            reports: hiReports,
+            "not-found": hiNotFound,
         },
     },
     interpolation: {

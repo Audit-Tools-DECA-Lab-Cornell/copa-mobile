@@ -15,6 +15,8 @@ import {
 } from "lib/audit/storage";
 import type {
     AuditDraftPatch,
+    AuditPreAuditValues,
+    AuditSectionState,
     AuditSession,
     DirtyPreAudit,
     DirtySections,
@@ -68,7 +70,7 @@ interface PlayspaceAuditStoreState {
 
     /**
      * Apply one question's processed answer map locally.
-     * Updates `responses_json` in the in-memory session, marks the section as
+     * Updates the typed section state in the in-memory session, marks the section as
      * dirty, and schedules a debounced disk persist.
      */
     applyLocalQuestionAnswer: (
@@ -588,80 +590,63 @@ function markPreAuditDirty(
 }
 
 /**
- * Shallow-clone an unknown nested value into a plain `Record<string, unknown>`.
+ * Deep-clone one section's nested question-to-answer map.
  *
- * @param value Unknown JSON-like value.
- * @returns Shallow clone or empty record.
- */
-function cloneRecord(value: unknown): Record<string, unknown> {
-    if (typeof value !== "object" || value === null) {
-        return {};
-    }
-    const clone: Record<string, unknown> = {};
-    for (const [key, entry] of Object.entries(value)) {
-        clone[key] = entry;
-    }
-    return clone;
-}
-
-/**
- * Deep-clone a nested question-to-answer record while keeping only strings.
- *
- * @param value Unknown nested response payload.
+ * @param value Existing typed question responses.
  * @returns Cloned nested string record.
  */
-function cloneNestedStringRecord(value: unknown): Record<string, Record<string, string>> {
-    if (typeof value !== "object" || value === null) {
+function cloneSectionResponses(
+    value: Record<string, Record<string, string>> | undefined,
+): Record<string, Record<string, string>> {
+    if (value === undefined) {
         return {};
     }
 
     const nextRecord: Record<string, Record<string, string>> = {};
     for (const [questionKey, questionValue] of Object.entries(value)) {
-        nextRecord[questionKey] = {};
-        if (typeof questionValue !== "object" || questionValue === null) {
-            continue;
-        }
-
-        for (const [scaleKey, scaleValue] of Object.entries(questionValue)) {
-            if (typeof scaleValue === "string") {
-                nextRecord[questionKey][scaleKey] = scaleValue;
-            }
-        }
+        nextRecord[questionKey] = { ...questionValue };
     }
     return nextRecord;
 }
 
 /**
- * Clone persisted pre-audit values while preserving only string primitives and
- * string arrays.
+ * Clone one typed section state while keeping nested responses independent.
  *
- * @param value Unknown pre-audit payload.
+ * @param section Existing section state when available.
+ * @param sectionKey Section identifier to preserve on empty state.
+ * @returns Cloned section state.
+ */
+function cloneSectionState(
+    section: AuditSectionState | undefined,
+    sectionKey: string,
+): AuditSectionState {
+    return {
+        section_key: section?.section_key ?? sectionKey,
+        responses: cloneSectionResponses(section?.responses),
+        note: section?.note ?? null,
+    };
+}
+
+/**
+ * Clone typed pre-audit values into a mutable copy.
+ *
+ * @param value Existing typed pre-audit values.
  * @returns Cloned pre-audit values.
  */
-function clonePreAuditValues(value: unknown): Record<string, string | string[]> {
-    if (typeof value !== "object" || value === null) {
-        return {};
-    }
-
-    const nextValues: Record<string, string | string[]> = {};
-    for (const [fieldKey, fieldValue] of Object.entries(value)) {
-        if (typeof fieldValue === "string") {
-            nextValues[fieldKey] = fieldValue;
-            continue;
-        }
-
-        if (Array.isArray(fieldValue)) {
-            nextValues[fieldKey] = fieldValue.filter(
-                (entry): entry is string => typeof entry === "string",
-            );
-        }
-    }
-    return nextValues;
+function clonePreAuditValues(value: AuditPreAuditValues): AuditPreAuditValues {
+    return {
+        season: value.season,
+        weather_conditions: [...value.weather_conditions],
+        users_present: [...value.users_present],
+        user_count: value.user_count,
+        age_groups: [...value.age_groups],
+        place_size: value.place_size,
+    };
 }
 
 /**
  * Create a new AuditSession with one question's answers merged into
- * `responses_json.sections[sectionKey].responses[questionKey]`.
+ * `sections[sectionKey].responses[questionKey]`.
  *
  * @param session Current audit session.
  * @param sectionKey Target section.
@@ -675,23 +660,25 @@ function applyQuestionAnswerToSession(
     questionKey: string,
     answers: Record<string, string>,
 ): AuditSession {
-    const sections = cloneRecord(session.responses_json["sections"]);
-    const section = cloneRecord(sections[sectionKey]);
-    const responses = cloneRecord(section["responses"]);
-
-    responses[questionKey] = answers;
-    section["responses"] = responses;
-    sections[sectionKey] = section;
+    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
+    const responses = cloneSectionResponses(section.responses);
+    responses[questionKey] = { ...answers };
 
     return {
         ...session,
-        responses_json: { ...session.responses_json, sections },
+        sections: {
+            ...session.sections,
+            [sectionKey]: {
+                ...section,
+                responses,
+            },
+        },
     };
 }
 
 /**
  * Create a new AuditSession with a section note merged into
- * `responses_json.sections[sectionKey].note`.
+ * `sections[sectionKey].note`.
  *
  * @param session Current audit session.
  * @param sectionKey Target section.
@@ -703,21 +690,23 @@ function applySectionNoteToSession(
     sectionKey: string,
     note: string,
 ): AuditSession {
-    const sections = cloneRecord(session.responses_json["sections"]);
-    const section = cloneRecord(sections[sectionKey]);
-
-    section["note"] = note;
-    sections[sectionKey] = section;
+    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
 
     return {
         ...session,
-        responses_json: { ...session.responses_json, sections },
+        sections: {
+            ...session.sections,
+            [sectionKey]: {
+                ...section,
+                note,
+            },
+        },
     };
 }
 
 /**
  * Create a new AuditSession with pre-audit values merged into
- * `responses_json.pre_audit`.
+ * `pre_audit`.
  *
  * @param session Current audit session.
  * @param values Pre-audit form values.
@@ -725,16 +714,34 @@ function applySectionNoteToSession(
  */
 function applyPreAuditToSession(
     session: AuditSession,
-    values: Record<string, string | string[]>,
+    values: Record<string, string | string[] | null>,
 ): AuditSession {
-    const currentPreAudit = cloneRecord(session.responses_json["pre_audit"]);
-    for (const [key, value] of Object.entries(values)) {
-        currentPreAudit[key] = value;
-    }
+    const currentPreAudit = clonePreAuditValues(session.pre_audit);
+    currentPreAudit.season = readNullableStringValue(values["season"], currentPreAudit.season);
+    currentPreAudit.weather_conditions = readStringArrayValue(
+        values["weather_conditions"],
+        currentPreAudit.weather_conditions,
+    );
+    currentPreAudit.users_present = readStringArrayValue(
+        values["users_present"],
+        currentPreAudit.users_present,
+    );
+    currentPreAudit.user_count = readNullableStringValue(
+        values["user_count"],
+        currentPreAudit.user_count,
+    );
+    currentPreAudit.age_groups = readStringArrayValue(
+        values["age_groups"],
+        currentPreAudit.age_groups,
+    );
+    currentPreAudit.place_size = readNullableStringValue(
+        values["place_size"],
+        currentPreAudit.place_size,
+    );
 
     return {
         ...session,
-        responses_json: { ...session.responses_json, pre_audit: currentPreAudit },
+        pre_audit: currentPreAudit,
     };
 }
 
@@ -873,10 +880,9 @@ function copySectionDraftFromSession(
     targetSession: AuditSession,
     sectionKey: string,
 ): AuditSession {
-    const sections = cloneRecord(sourceSession.responses_json["sections"]);
-    const sourceSection = cloneRecord(sections[sectionKey]);
-    const sourceResponses = cloneNestedStringRecord(sourceSection["responses"]);
-    const sourceNote = typeof sourceSection["note"] === "string" ? sourceSection["note"] : null;
+    const sourceSection = cloneSectionState(sourceSession.sections[sectionKey], sectionKey);
+    const sourceResponses = cloneSectionResponses(sourceSection.responses);
+    const sourceNote = sourceSection.note;
 
     let nextSession = applySectionResponsesToSession(targetSession, sectionKey, sourceResponses);
     nextSession = applySectionNoteToSession(nextSession, sectionKey, sourceNote ?? "");
@@ -894,7 +900,7 @@ function copyPreAuditDraftFromSession(
     sourceSession: AuditSession,
     targetSession: AuditSession,
 ): AuditSession {
-    const preAudit = clonePreAuditValues(sourceSession.responses_json["pre_audit"]);
+    const preAudit = clonePreAuditValues(sourceSession.pre_audit);
     return applyPreAuditToSession(targetSession, preAudit);
 }
 
@@ -911,14 +917,17 @@ function applySectionResponsesToSession(
     sectionKey: string,
     responses: Record<string, Record<string, string>>,
 ): AuditSession {
-    const sections = cloneRecord(session.responses_json["sections"]);
-    const section = cloneRecord(sections[sectionKey]);
-    section["responses"] = responses;
-    sections[sectionKey] = section;
+    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
 
     return {
         ...session,
-        responses_json: { ...session.responses_json, sections },
+        sections: {
+            ...session.sections,
+            [sectionKey]: {
+                ...section,
+                responses: cloneSectionResponses(responses),
+            },
+        },
     };
 }
 
@@ -958,16 +967,13 @@ function buildPatchFromDirtyState(
     const patch: AuditDraftPatch = { sections };
 
     if (hasPreAudit) {
-        const preAuditRaw = cloneRecord(session.responses_json["pre_audit"]);
         patch.pre_audit = {
-            season: typeof preAuditRaw["season"] === "string" ? preAuditRaw["season"] : null,
-            weather_conditions: toStringArray(preAuditRaw["weather_conditions"]),
-            users_present: toStringArray(preAuditRaw["users_present"]),
-            user_count:
-                typeof preAuditRaw["user_count"] === "string" ? preAuditRaw["user_count"] : null,
-            age_groups: toStringArray(preAuditRaw["age_groups"]),
-            place_size:
-                typeof preAuditRaw["place_size"] === "string" ? preAuditRaw["place_size"] : null,
+            season: session.pre_audit.season,
+            weather_conditions: [...session.pre_audit.weather_conditions],
+            users_present: [...session.pre_audit.users_present],
+            user_count: session.pre_audit.user_count,
+            age_groups: [...session.pre_audit.age_groups],
+            place_size: session.pre_audit.place_size,
         };
     }
 
@@ -983,14 +989,29 @@ function buildPatchFromDirtyState(
 }
 
 /**
- * Safely coerce an unknown value into a string array.
+ * Read a nullable string form value while preserving the current fallback.
  *
- * @param value Unknown value from responses_json.
- * @returns Filtered string array.
+ * @param value Candidate input value.
+ * @param fallback Existing field value.
+ * @returns Normalized string-or-null value.
  */
-function toStringArray(value: unknown): string[] {
+function readNullableStringValue(value: unknown, fallback: string | null): string | null {
+    if (typeof value !== "string") {
+        return fallback;
+    }
+    return value.trim().length > 0 ? value : null;
+}
+
+/**
+ * Read a string-array form value while preserving the current fallback.
+ *
+ * @param value Candidate input value.
+ * @param fallback Existing field value.
+ * @returns Normalized string array.
+ */
+function readStringArrayValue(value: unknown, fallback: string[]): string[] {
     if (!Array.isArray(value)) {
-        return [];
+        return [...fallback];
     }
     return value.filter((entry): entry is string => typeof entry === "string");
 }

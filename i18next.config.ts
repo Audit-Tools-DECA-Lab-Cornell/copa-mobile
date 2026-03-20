@@ -1,5 +1,5 @@
 export default {
-    locales: ["en", "de"],
+    locales: ["en", "de", "fr", "hi"],
     compatibilityJSON: "v4",
     extract: {
         input: [
@@ -17,11 +17,11 @@ export default {
 
         // Primary vs secondary languages
         primaryLanguage: "en",
-        secondaryLanguages: ["de"],
+        secondaryLanguages: ["de", "fr", "hi"],
 
         // What happens for missing keys in non-primary locales
         defaultValue: (key: string, ns: string, lng: string) =>
-            lng === "en" ? "" : `TODO: ${key}`,
+            lng === "en" ? "" : `TODO: ${key} ${ns}`,
 
         // Namespace/key behavior
         defaultNS: "common",

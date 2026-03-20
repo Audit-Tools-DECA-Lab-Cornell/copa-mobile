@@ -1,0 +1,86 @@
+{
+    "autoValues": {
+        "calculatedOnSubmit": "Calculé lors de l’envoi final",
+        "generatedOnSubmit": "Généré lors de l’envoi final",
+        "minutes_one": "TODO: autoValues.minutes_one audit",
+        "minutes_many": "TODO: autoValues.minutes_many audit",
+        "minutes_other": "TODO: autoValues.minutes_other audit"
+    },
+    "errors": {
+        "accessDenied403": "Accès refusé (403) : vous n’êtes pas autorisé à accéder à ce lieu ou à cet audit.",
+        "detailsLabel": "Détails : {{details}}",
+        "httpFallback": "{{message}} (HTTP {{statusCode}}).",
+        "networkFallback": "{{message}} (erreur réseau).",
+        "offlineChangesSaved": "{{message}} Vous semblez être hors ligne. Les modifications sont enregistrées localement et seront synchronisées lorsque vous vous reconnecterez.",
+        "openFallback": "Impossible d’ouvrir l’audit.",
+        "refreshFallback": "Impossible d’actualiser l’audit.",
+        "submitFallback": "Impossible d’envoyer l’audit.",
+        "submitNeedsUploadedDraft": "Reconnectez-vous et attendez que vos modifications enregistrées soient téléversées avant d’envoyer cet audit.",
+        "syncFallback": "La synchronisation en arrière-plan a échoué."
+    },
+    "executeLanding": {
+        "continueSelectedPlace": "Continuer le lieu sélectionné",
+        "openSelectedAudit": "Ouvrir l’audit sélectionné",
+        "subtitle": "Choisissez un lieu pour démarrer ou reprendre le flux d’audit playspace section par section.",
+        "title": "Exécution de l’audit"
+    },
+    "overview": {
+        "accessDeniedTitle": "Accès refusé",
+        "assignmentAllows": "Cette affectation de lieu permet actuellement :",
+        "auditRole": "Rôle dans l’audit",
+        "auditUnavailableTitle": "Audit indisponible",
+        "chooseMode": "Choisissez la partie de l’outil que vous allez remplir pour ce lieu.",
+        "loadingDraft": "Chargement de votre brouillon actuel...",
+        "placeNotFound": "L’itinéraire du lieu sélectionné n’est pas valide. Revenez à l’onglet Exécuter et choisissez à nouveau un lieu.",
+        "placeNotFoundTitle": "Lieu introuvable",
+        "preamble": "Préambule",
+        "preparingAudit": "Préparation du flux d’audit playspace...",
+        "preparingAuditTitle": "Préparation de l’audit",
+        "roleFixesSubset": "Votre rôle définit déjà le sous-ensemble visible de questions pour ce lieu.",
+        "syncStatus": {
+            "pendingMessage": "Les modifications du brouillon sont en attente et seront téléversées automatiquement lorsque l’application sera active et en ligne.",
+            "pendingTitle": "Enregistré sur cet appareil",
+            "retryTitle": "Téléversement en pause",
+            "syncingMessage": "Les modifications enregistrées sont en cours de téléversement. Gardez l’application ouverte jusqu’à la fin si vous devez envoyer immédiatement.",
+            "syncingTitle": "Téléversement des modifications"
+        }
+    },
+    "preAudit": {
+        "complete": "Terminé",
+        "description": "Saisissez la saison, la météo, les utilisateurs présents, le nombre d’utilisateurs, les groupes d’âge et la taille du lieu avant l’évaluation par section.",
+        "needed": "Requis",
+        "openPage": "Ouvrir la page de pré-audit",
+        "preparingMessage": "Chargement des questions de pré-audit et des éventuelles valeurs de brouillon enregistrées...",
+        "preparingTitle": "Préparation du pré-audit",
+        "saveAndContinue": "Enregistrer le pré-audit et continuer",
+        "subtitle": "Répondez aux questions de contexte de la première page avant de passer aux pages de section.",
+        "title": "Configuration pré-audit",
+        "unavailableTitle": "Pré-audit indisponible"
+    },
+    "resumeAudit": "Reprendre l’audit",
+    "section": {
+        "answeredCount": "{{answered}} / {{total}} répondues",
+        "backToOverview": "Retour à l’aperçu",
+        "followUpHidden": "Diversité, sociabilité et défi n’apparaissent qu’après une réponse positive à la question sur la quantité.",
+        "notesDefault": "Ajoutez des réflexions ou des recommandations pour cette section.",
+        "notesPlaceholder": "Ajouter des notes ou des recommandations pour cette section...",
+        "openSection": "Ouvrir la section",
+        "pendingSync": "Réponses enregistrées localement - elles seront synchronisées avec le serveur lorsque vous serez en ligne.",
+        "preparingMessage": "Chargement de la section actuelle et des réponses précédemment enregistrées...",
+        "preparingTitle": "Préparation de la section",
+        "reviewSection": "Passer en revue la section",
+        "saveAndNext": "Enregistrer et suivant",
+        "saveSection": "Enregistrer la section",
+        "sectionNotes": "Notes de section",
+        "unavailableTitle": "Section indisponible"
+    },
+    "stack": {
+        "auditStart": "Début de l’audit",
+        "execute": "Exécuter",
+        "preAudit": "Pré-audit",
+        "section": "Section"
+    },
+    "startAudit": "Commencer l’audit",
+    "submit": "Soumettre l’audit",
+    "thisPlayspace": "Cet espace de jeu..."
+}

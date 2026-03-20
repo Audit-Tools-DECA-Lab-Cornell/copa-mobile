@@ -8,6 +8,8 @@ type RelativeTimeUnit = "minute" | "hour" | "day";
 const LANGUAGE_LOCALE_MAP = {
     en: "en-NZ",
     de: "de-DE",
+    fr: "fr-FR",
+    hi: "hi-IN",
 } as const;
 
 /**
@@ -18,7 +20,16 @@ const LANGUAGE_LOCALE_MAP = {
  */
 export function getLocaleTag(language: string): string {
     const normalizedLanguage = language.trim().toLowerCase();
-    return normalizedLanguage.startsWith("de") ? LANGUAGE_LOCALE_MAP.de : LANGUAGE_LOCALE_MAP.en;
+    switch (normalizedLanguage) {
+        case "de":
+            return LANGUAGE_LOCALE_MAP.de;
+        case "fr":
+            return LANGUAGE_LOCALE_MAP.fr;
+        case "hi":
+            return LANGUAGE_LOCALE_MAP.hi;
+        default:
+            return LANGUAGE_LOCALE_MAP.en;
+    }
 }
 
 /**

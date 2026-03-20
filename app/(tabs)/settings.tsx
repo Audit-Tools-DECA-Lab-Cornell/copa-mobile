@@ -3,6 +3,8 @@ import { ScrollView, TextStyle, type DimensionValue } from "react-native";
 import { useRouter } from "expo-router";
 import {
     Accessibility,
+    Check,
+    ChevronDown,
     Eye,
     Globe,
     Info,
@@ -39,12 +41,35 @@ const THEME_OPTIONS: readonly { key: ThemeMode; Icon: FC<IconProps> }[] = [
 
 const LANGUAGE_OPTIONS: readonly {
     key: LanguagePreference;
-    translationKey: "system" | "english" | "german";
+    translationKey: "system" | "english" | "german" | "french";
 }[] = [
     { key: "system", translationKey: "system" },
     { key: "en", translationKey: "english" },
     { key: "de", translationKey: "german" },
+    { key: "fr", translationKey: "french" },
 ];
+
+type ResolvedAppLanguage = Exclude<LanguagePreference, "system">;
+
+/**
+ * Resolve the active i18n language tag to one of the app's explicit language codes.
+ *
+ * @param languageTag Current i18n language tag.
+ * @returns Supported concrete app language.
+ */
+function resolveAppLanguage(languageTag: string | undefined): ResolvedAppLanguage {
+    const normalizedLanguage = typeof languageTag === "string" ? languageTag.toLowerCase() : "";
+
+    if (normalizedLanguage.startsWith("de")) {
+        return "de";
+    }
+
+    if (normalizedLanguage.startsWith("fr")) {
+        return "fr";
+    }
+
+    return "en";
+}
 
 /**
  * Settings tab with read-only profile, appearance, accessibility, and about.
@@ -75,6 +100,7 @@ export default function SettingsScreen() {
     const [profile, setProfile] = useState<MyAuditorProfile | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
+    const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
 
     useEffect(() => {
         if (session === null) {
@@ -112,9 +138,17 @@ export default function SettingsScreen() {
     const userName = account?.name ?? session?.user.name ?? "—";
     const userEmail = account?.email ?? session?.user.email ?? "—";
     const accountType = session === null ? "—" : t("accountTypes.auditor", { ns: "common" });
-    const activeLanguage = (i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith("de")
-        ? "de"
-        : "en";
+    const activeLanguage = resolveAppLanguage(i18n.resolvedLanguage ?? i18n.language);
+    const getLanguageOptionLabel = (preference: LanguagePreference): string => {
+        const matchingOption = LANGUAGE_OPTIONS.find((option) => option.key === preference);
+
+        if (matchingOption === undefined) {
+            return t("language.english", { ns: "settings" });
+        }
+
+        return t(`language.${matchingOption.translationKey}`, { ns: "settings" });
+    };
+    const selectedLanguageLabel = getLanguageOptionLabel(languagePreference);
 
     if (isLoading) {
         return <SettingsSkeletonScreen ds={ds} />;
@@ -388,36 +422,83 @@ export default function SettingsScreen() {
                         {t("language.description", { ns: "settings" })}
                     </Paragraph>
                 </YStack>
-                <XStack gap="$2">
-                    {LANGUAGE_OPTIONS.map((option) => {
-                        const isSelected = languagePreference === option.key;
-                        return (
-                            <Button
-                                key={option.key}
-                                flex={1}
-                                height={52}
-                                rounded={ds.radii.md}
-                                borderWidth={1}
-                                borderColor={isSelected ? ds.colors.primary : ds.colors.border}
-                                bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={() => {
-                                    setLanguagePreference(option.key);
-                                }}
-                            >
-                                <Text
-                                    color={isSelected ? ds.colors.primary : ds.colors.foreground}
-                                    fontFamily={
-                                        isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium
-                                    }
-                                    fontSize={ds.typography.bodySm.fontSize}
+                <Button
+                    width="100%"
+                    height={52}
+                    rounded={ds.radii.md}
+                    borderWidth={1}
+                    borderColor={isLanguageMenuOpen ? ds.colors.primary : ds.colors.border}
+                    bg={isLanguageMenuOpen ? ds.colors.primarySoft : ds.colors.input}
+                    px="$3.5"
+                    justify="space-between"
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={() => {
+                        setIsLanguageMenuOpen((currentValue) => !currentValue);
+                    }}
+                >
+                    <Text
+                        color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.foreground}
+                        fontFamily={isLanguageMenuOpen ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {selectedLanguageLabel}
+                    </Text>
+                    <ChevronDown
+                        size={16}
+                        color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.mutedForeground}
+                    />
+                </Button>
+
+                {isLanguageMenuOpen ? (
+                    <YStack
+                        width="100%"
+                        rounded={ds.radii.md}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surface}
+                        p="$1"
+                        gap="$1"
+                        style={{ boxShadow: ds.shadows.card }}
+                    >
+                        {LANGUAGE_OPTIONS.map((option) => {
+                            const isSelected = languagePreference === option.key;
+
+                            return (
+                                <Button
+                                    key={option.key}
+                                    justify="space-between"
+                                    height={46}
+                                    rounded={ds.radii.md}
+                                    borderWidth={1}
+                                    borderColor={isSelected ? ds.colors.primary : "transparent"}
+                                    bg={isSelected ? ds.colors.primarySoft : "transparent"}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={() => {
+                                        setLanguagePreference(option.key);
+                                        setIsLanguageMenuOpen(false);
+                                    }}
                                 >
-                                    {t(`language.${option.translationKey}`, { ns: "settings" })}
-                                </Text>
-                            </Button>
-                        );
-                    })}
-                </XStack>
+                                    <Text
+                                        color={
+                                            isSelected ? ds.colors.primary : ds.colors.foreground
+                                        }
+                                        fontFamily={
+                                            isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium
+                                        }
+                                        fontSize={ds.typography.bodyMd.fontSize}
+                                    >
+                                        {getLanguageOptionLabel(option.key)}
+                                    </Text>
+                                    {isSelected ? (
+                                        <Check size={16} color={ds.colors.primary} />
+                                    ) : (
+                                        <YStack width={16} height={16} />
+                                    )}
+                                </Button>
+                            );
+                        })}
+                    </YStack>
+                ) : null}
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -509,11 +590,7 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                     <SkeletonBlock ds={ds} width="38%" height={20} rounded={ds.radii.sm} />
                     <SkeletonBlock ds={ds} width="70%" height={16} rounded={ds.radii.sm} />
                 </YStack>
-                <XStack gap="$2">
-                    <SkeletonBlock ds={ds} flex={1} height={52} />
-                    <SkeletonBlock ds={ds} flex={1} height={52} />
-                    <SkeletonBlock ds={ds} flex={1} height={52} />
-                </XStack>
+                <SkeletonBlock ds={ds} width="100%" height={52} />
                 <SkeletonBlock ds={ds} width="58%" height={16} rounded={ds.radii.sm} />
             </SettingsCardSkeleton>
         </ScrollView>

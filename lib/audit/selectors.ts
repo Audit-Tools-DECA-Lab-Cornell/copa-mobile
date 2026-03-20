@@ -1,11 +1,9 @@
-import {
-    readNestedStringRecord,
-    readStringRecord,
-    type AuditSession,
-    type ExecutionMode,
-    type InstrumentQuestion,
-    type InstrumentSection,
-    type PlayspaceInstrument,
+import type {
+    AuditSession,
+    ExecutionMode,
+    InstrumentQuestion,
+    InstrumentSection,
+    PlayspaceInstrument,
 } from "lib/audit/types";
 
 /**
@@ -64,18 +62,7 @@ export function getSectionResponses(
     auditSession: AuditSession,
     sectionKey: string,
 ): Record<string, Record<string, string>> {
-    const sectionsValue = auditSession.responses_json["sections"];
-    if (typeof sectionsValue !== "object" || sectionsValue === null) {
-        return {};
-    }
-
-    const sectionValue = Reflect.get(sectionsValue, sectionKey);
-    if (typeof sectionValue !== "object" || sectionValue === null) {
-        return {};
-    }
-
-    const responsesValue = Reflect.get(sectionValue, "responses");
-    return readNestedStringRecord(responsesValue);
+    return auditSession.sections[sectionKey]?.responses ?? {};
 }
 
 /**
@@ -86,18 +73,7 @@ export function getSectionResponses(
  * @returns Stored note string or an empty string.
  */
 export function getSectionNote(auditSession: AuditSession, sectionKey: string): string {
-    const sectionsValue = auditSession.responses_json["sections"];
-    if (typeof sectionsValue !== "object" || sectionsValue === null) {
-        return "";
-    }
-
-    const sectionValue = Reflect.get(sectionsValue, sectionKey);
-    if (typeof sectionValue !== "object" || sectionValue === null) {
-        return "";
-    }
-
-    const noteValue = Reflect.get(sectionValue, "note");
-    return typeof noteValue === "string" ? noteValue : "";
+    return auditSession.sections[sectionKey]?.note ?? "";
 }
 
 /**
@@ -107,22 +83,14 @@ export function getSectionNote(auditSession: AuditSession, sectionKey: string): 
  * @returns String-or-array map of saved pre-audit values.
  */
 export function getPreAuditValues(auditSession: AuditSession): Record<string, string | string[]> {
-    const preAuditValue = auditSession.responses_json["pre_audit"];
-    if (typeof preAuditValue !== "object" || preAuditValue === null) {
-        return {};
-    }
-
-    const nextValues: Record<string, string | string[]> = {};
-    for (const [valueKey, valueEntry] of Object.entries(preAuditValue)) {
-        if (typeof valueEntry === "string") {
-            nextValues[valueKey] = valueEntry;
-            continue;
-        }
-        if (Array.isArray(valueEntry) && valueEntry.every((entry) => typeof entry === "string")) {
-            nextValues[valueKey] = valueEntry;
-        }
-    }
-    return nextValues;
+    return {
+        season: auditSession.pre_audit.season ?? "",
+        weather_conditions: [...auditSession.pre_audit.weather_conditions],
+        users_present: [...auditSession.pre_audit.users_present],
+        user_count: auditSession.pre_audit.user_count ?? "",
+        age_groups: [...auditSession.pre_audit.age_groups],
+        place_size: auditSession.pre_audit.place_size ?? "",
+    };
 }
 
 /**
@@ -138,6 +106,5 @@ export function getQuestionAnswers(
     sectionKey: string,
     questionKey: string,
 ): Record<string, string> {
-    const sectionResponses = getSectionResponses(auditSession, sectionKey);
-    return readStringRecord(sectionResponses[questionKey]);
+    return auditSession.sections[sectionKey]?.responses[questionKey] ?? {};
 }

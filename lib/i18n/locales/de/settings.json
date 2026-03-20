@@ -22,7 +22,7 @@
     },
     "language": {
         "currentValue": "Aktuell angezeigt: {{value}}",
-        "description": "Waehlen Sie Englisch, Deutsch oder die Sprache Ihres Geraets.",
+        "description": "Waehlen Sie Englisch, Deutsch, Franzoesisch oder die Sprache Ihres Geraets.",
         "english": "Englisch",
         "german": "Deutsch",
         "label": "Sprache",

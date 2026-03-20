@@ -1,0 +1,16 @@
+{
+    "activeAuditor": "सक्रिय ऑडिटर",
+    "activeWork": "सक्रिय ऑडिट",
+    "connectivityStatus": "कनेक्टिविटी स्थिति",
+    "dueToday": "आज देय",
+    "fieldPriorities": "फील्ड प्राथमिकताएँ",
+    "loadingPlaces": "आपके स्थान लोड हो रहे हैं...",
+    "mandatoryCompletion": "अनिवार्य पूर्णता",
+    "offlineReadyDescription": "असाइन किया गया ऑडिट डेटा स्थानीय रूप से संग्रहीत है और फील्ड उपयोग के लिए तैयार है।",
+    "offlineReadyTitle": "ऑफ़लाइन तैयार",
+    "priorityProgress": "{{percent}}% प्रगति - {{code}}",
+    "priorityTask": "प्राथमिकता कार्य",
+    "readinessLabel": "{{percent}}% तैयार",
+    "title": "फील्ड डैशबोर्ड",
+    "urgentAudit": "तत्काल ऑडिट"
+}

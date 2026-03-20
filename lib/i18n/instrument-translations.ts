@@ -16,11 +16,12 @@ import { PLAYSPACE_INSTRUMENT } from "lib/instrument";
 
 import { enInstrumentTranslations } from "./locales/en/instrument";
 import { deInstrumentTranslations } from "./locales/de/instrument";
-
+import { frInstrumentTranslations } from "./locales/fr/instrument";
+import { hiInstrumentTranslations } from "./locales/hi/instrument";
 /**
  * Supported instrument translation locales.
  */
-export type InstrumentLocale = "en" | "de";
+export type InstrumentLocale = "en" | "de" | "fr" | "hi";
 
 /**
  * Localized copy for a choice-like option.
@@ -87,6 +88,8 @@ const INSTRUMENT_TRANSLATIONS_BY_LOCALE: Readonly<
 > = {
     en: enInstrumentTranslations,
     de: deInstrumentTranslations,
+    fr: frInstrumentTranslations,
+    hi: hiInstrumentTranslations,
 };
 
 /**
@@ -101,7 +104,19 @@ export function normalizeInstrumentLocale(languageTag: string | undefined): Inst
     }
 
     const [languageCode] = languageTag.toLowerCase().split("-");
-    return languageCode === "de" ? "de" : "en";
+    if (languageCode === "de") {
+        return "de";
+    }
+
+    if (languageCode === "fr") {
+        return "fr";
+    }
+
+    if (languageCode === "hi") {
+        return "hi";
+    }
+
+    return "en";
 }
 
 /**
