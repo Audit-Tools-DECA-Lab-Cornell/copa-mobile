@@ -1,48 +1,97 @@
 import { useEffect, useRef } from "react";
+import * as Network from "expo-network";
+import { AppState, type AppStateStatus } from "react-native";
+import { runPendingAuditSyncAsync } from "lib/audit/background-sync";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
-/** Retry interval for background sync when dirty data exists (ms). */
-const SYNC_INTERVAL_MS = 30000;
+/** Debounce bursty local edits before attempting a foreground sync (ms). */
+const FOREGROUND_SYNC_DEBOUNCE_MS = 1000;
 
 /**
- * Background sync hook that flushes locally-saved audit answers to the
- * backend whenever connectivity is available.
+ * Event-driven foreground sync hook that flushes locally-saved audit answers
+ * when the authenticated tab tree is active.
  *
- * Starts an immediate flush attempt when dirty data is detected, then
- * retries on a fixed interval until all dirty data is synced.
- *
- * Place this hook in a layout component that stays mounted for the duration
- * of the authenticated session (e.g. the main tab layout).
+ * Sync attempts are triggered by:
+ * - app startup once the authenticated user's audit store is hydrated
+ * - debounced local edits
+ * - connectivity restoration
+ * - app foregrounding
  */
 export function useAuditSync(): void {
     const session = useAuthStore((state) => state.session);
+    const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
     const dirtyPreAudit = usePlayspaceAuditStore((state) => state.dirtyPreAudit);
-    const flushPendingChanges = usePlayspaceAuditStore((state) => state.flushPendingChanges);
+    const localChangeCounter = usePlayspaceAuditStore((state) => state.localChangeCounter);
 
-    const hasDirtyData = Object.keys(dirtySections).length > 0 || dirtyPreAudit.length > 0;
+    const hasDirtyData =
+        Object.keys(dirtySections).length > 0 || Object.keys(dirtyPreAudit).length > 0;
 
     const sessionRef = useRef(session);
     sessionRef.current = session;
+    const hasDirtyDataRef = useRef(hasDirtyData);
+    hasDirtyDataRef.current = hasDirtyData;
+    const isCurrentUserHydrated = session?.user.id === currentUserId;
 
     useEffect(() => {
-        if (!isHydrated || !hasDirtyData || session === null) {
+        if (!isHydrated || !hasDirtyData || !isCurrentUserHydrated || session === null) {
             return;
         }
 
-        void flushPendingChanges(session);
+        const timer = setTimeout(() => {
+            void runPendingAuditSyncAsync({ session });
+        }, FOREGROUND_SYNC_DEBOUNCE_MS);
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [hasDirtyData, isCurrentUserHydrated, isHydrated, localChangeCounter, session]);
 
-        const timer = setInterval(() => {
+    useEffect(() => {
+        if (!isHydrated || !isCurrentUserHydrated || session === null) {
+            return;
+        }
+
+        const networkSubscription = Network.addNetworkStateListener((networkState) => {
+            const isOnline =
+                networkState.isConnected !== false && networkState.isInternetReachable !== false;
+            if (!isOnline || !hasDirtyDataRef.current) {
+                return;
+            }
+
             const currentSession = sessionRef.current;
             if (currentSession !== null) {
-                void flushPendingChanges(currentSession);
+                void runPendingAuditSyncAsync({ session: currentSession });
             }
-        }, SYNC_INTERVAL_MS);
+        });
 
         return () => {
-            clearInterval(timer);
+            networkSubscription.remove();
         };
-    }, [isHydrated, hasDirtyData, session, flushPendingChanges]);
+    }, [isCurrentUserHydrated, isHydrated, session]);
+
+    useEffect(() => {
+        if (!isHydrated || !isCurrentUserHydrated || session === null) {
+            return;
+        }
+
+        const appStateSubscription = AppState.addEventListener(
+            "change",
+            (nextAppState: AppStateStatus) => {
+                if (nextAppState !== "active" || !hasDirtyDataRef.current) {
+                    return;
+                }
+
+                const currentSession = sessionRef.current;
+                if (currentSession !== null) {
+                    void runPendingAuditSyncAsync({ session: currentSession });
+                }
+            },
+        );
+
+        return () => {
+            appStateSubscription.remove();
+        };
+    }, [isCurrentUserHydrated, isHydrated, session]);
 }

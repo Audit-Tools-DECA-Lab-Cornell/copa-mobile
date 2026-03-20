@@ -75,6 +75,17 @@ const headingBoldFont = createStaticFont("SpaceGrotesk-Bold", defaultConfig.font
 const monoFont = createStaticFont("JetBrainsMono-Regular", defaultConfig.fonts.body);
 const monoMediumFont = createStaticFont("JetBrainsMono-Medium", defaultConfig.fonts.body);
 const monoBoldFont = createStaticFont("JetBrainsMono-Bold", defaultConfig.fonts.body);
+const bodyDyslexicFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.fonts.body);
+const bodyDyslexicMediumFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.fonts.body);
+const bodyDyslexicSemiBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.body);
+const bodyDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.body);
+const headingDyslexicMediumFont = createStaticFont(
+    "OpenDyslexic-Regular",
+    defaultConfig.fonts.heading,
+);
+const headingDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.heading);
+const monoDyslexicMediumFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.fonts.body);
+const monoDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.body);
 
 export const config = createTamagui({
     ...defaultConfig,
@@ -90,6 +101,14 @@ export const config = createTamagui({
         mono: monoFont,
         monoMedium: monoMediumFont,
         monoBold: monoBoldFont,
+        bodyDyslexic: bodyDyslexicFont,
+        bodyDyslexicMedium: bodyDyslexicMediumFont,
+        bodyDyslexicSemiBold: bodyDyslexicSemiBoldFont,
+        bodyDyslexicBold: bodyDyslexicBoldFont,
+        headingDyslexicMedium: headingDyslexicMediumFont,
+        headingDyslexicBold: headingDyslexicBoldFont,
+        monoDyslexicMedium: monoDyslexicMediumFont,
+        monoDyslexicBold: monoDyslexicBoldFont,
     },
     themes,
     media: {

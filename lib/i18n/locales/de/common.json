@@ -1,0 +1,48 @@
+{
+    "accountTypes": {
+        "auditor": "Pruefperson"
+    },
+    "actions": {
+        "openAudit": "Audit oeffnen",
+        "resume": "Fortsetzen",
+        "retry": "Erneut versuchen",
+        "seeAll": "Alle anzeigen",
+        "signOut": "Abmelden"
+    },
+    "labels": {
+        "audit": "Audit"
+    },
+    "place": {
+        "assignedPlace": "Zugewiesener Ort"
+    },
+    "roles": {
+        "auditor": "Pruefperson",
+        "auditorAndPlaceAdmin": "Pruefperson und Ortsverwaltung",
+        "placeAdmin": "Ortsverwaltung"
+    },
+    "status": {
+        "assigned": "Zugewiesen",
+        "completed": "Abgeschlossen",
+        "inProgress": "In Bearbeitung",
+        "notStarted": "Nicht begonnen",
+        "off": "AUS",
+        "on": "AN",
+        "submitted": "Eingereicht"
+    },
+    "tabs": {
+        "execute": "Durchfuehren",
+        "home": "Start",
+        "places": "Orte",
+        "reports": "Berichte",
+        "settings": "Einstellungen"
+    },
+    "time": {
+        "dayAgo_one": "vor 1 Tag",
+        "dayAgo_other": "vor {{count}} Tagen",
+        "hourAgo_one": "vor 1 Std.",
+        "hourAgo_other": "vor {{count}} Std.",
+        "justNow": "Gerade eben",
+        "minuteAgo_one": "vor 1 Min.",
+        "minuteAgo_other": "vor {{count}} Min."
+    }
+}

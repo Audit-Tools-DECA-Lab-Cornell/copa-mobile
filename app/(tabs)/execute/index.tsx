@@ -2,8 +2,9 @@ import { useEffect, useMemo } from "react";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck } from "@tamagui/lucide-icons";
+import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { designSystem } from "lib/design-system";
+import { useDesignSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
@@ -12,20 +13,23 @@ import { usePlacesStore } from "stores/places-store";
  * Execute tab landing screen with place picker and audit flow entry point.
  */
 export default function ExecuteIndexScreen() {
+    const ds = useDesignSystem();
     const router = useRouter();
+    const { t } = useTranslation(["audit", "common"]);
     const session = useAuthStore((state) => state.session);
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
+    const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const places = usePlacesStore((state) => state.places);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
 
     useEffect(() => {
-        void hydrate();
-    }, [hydrate]);
+        hydrate(session?.user.id ?? null).catch(() => undefined);
+    }, [hydrate, session]);
 
     useEffect(() => {
         if (session !== null) {
-            void loadPlaces(session);
+            loadPlaces(session).catch(() => undefined);
         }
     }, [session, loadPlaces]);
 
@@ -34,79 +38,77 @@ export default function ExecuteIndexScreen() {
     }, [places]);
 
     const firstPlace = activePlaces[0] ?? places[0];
+    const hasHydratedCurrentUser = session === null || currentUserId === session.user.id;
 
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: designSystem.colors.background }}
+            style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
-                paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
-                paddingTop: designSystem.spacing.screenPaddingVertical,
+                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                paddingTop: ds.spacing.screenPaddingVertical,
                 paddingBottom: 92,
                 gap: 20,
             }}
         >
             <YStack gap="$3">
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.headingBold}
-                    fontSize={designSystem.typography.displayMd.fontSize}
-                    lineHeight={designSystem.typography.displayMd.lineHeight}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.headingBold}
+                    fontSize={ds.typography.displayMd.fontSize}
+                    lineHeight={ds.typography.displayMd.lineHeight}
                 >
-                    Audit Execute
+                    {t("executeLanding.title", { ns: "audit" })}
                 </Text>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyLg.fontSize}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
                 >
-                    Choose a place to start or resume the section-by-section playspace audit flow.
+                    {t("executeLanding.subtitle", { ns: "audit" })}
                 </Paragraph>
             </YStack>
 
             {firstPlace === undefined ? null : (
                 <YStack
-                    rounded={designSystem.radii.lg}
+                    rounded={ds.radii.lg}
                     borderWidth={1}
-                    borderColor={designSystem.colors.border}
-                    bg={designSystem.colors.surface}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.surface}
                     p="$4"
                     gap="$3"
                     style={{
-                        boxShadow: designSystem.shadows.card,
+                        boxShadow: ds.shadows.card,
                     }}
                 >
                     <XStack items="center" gap="$2">
-                        <ClipboardCheck size={16} color={designSystem.colors.primary} />
+                        <ClipboardCheck size={16} color={ds.colors.primary} />
                         <Text
-                            color={designSystem.colors.primary}
-                            fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={designSystem.typography.labelMd.fontSize}
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
-                            Continue Selected Place
+                            {t("executeLanding.continueSelectedPlace", { ns: "audit" })}
                         </Text>
                     </XStack>
                     <Text
-                        color={designSystem.colors.foreground}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.titleLg.fontSize}
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.titleLg.fontSize}
                     >
                         {firstPlace.place_name}
                     </Text>
-                    <Paragraph
-                        color={designSystem.colors.mutedForeground}
-                        fontFamily={designSystem.fonts.bodyMedium}
-                    >
+                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                         {[firstPlace.city, firstPlace.country].filter(Boolean).join(", ") ||
-                            "Assigned place"}
+                            t("place.assignedPlace", { ns: "common" })}
                     </Paragraph>
                     <Button
                         height={48}
-                        rounded={designSystem.radii.md}
+                        rounded={ds.radii.md}
                         borderWidth={0}
-                        bg={designSystem.colors.primary}
+                        bg={ds.colors.primary}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={() => {
                             router.push(`/(tabs)/execute/${firstPlace.place_id}`);
@@ -114,15 +116,15 @@ export default function ExecuteIndexScreen() {
                     >
                         <XStack items="center" gap="$2">
                             <Text
-                                color={designSystem.colors.primaryForeground}
-                                fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={designSystem.typography.labelLg.fontSize}
+                                color={ds.colors.primaryForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelLg.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.2}
                             >
-                                Open selected audit
+                                {t("executeLanding.openSelectedAudit", { ns: "audit" })}
                             </Text>
-                            <ArrowRight size={16} color={designSystem.colors.primaryForeground} />
+                            <ArrowRight size={16} color={ds.colors.primaryForeground} />
                         </XStack>
                     </Button>
                 </YStack>
@@ -130,54 +132,58 @@ export default function ExecuteIndexScreen() {
 
             <YStack gap="$3">
                 {places.map((place) => {
-                    const activeSession = sessionsByPlaceId[place.place_id];
+                    const activeSession = hasHydratedCurrentUser
+                        ? sessionsByPlaceId[place.place_id]
+                        : undefined;
                     const hasActiveSession = activeSession !== undefined;
 
                     return (
                         <YStack
                             key={place.place_id}
-                            rounded={designSystem.radii.lg}
+                            rounded={ds.radii.lg}
                             borderWidth={1}
-                            borderColor={designSystem.colors.border}
-                            bg={designSystem.colors.surface}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
                             p="$4"
                             gap="$2"
                             style={{
-                                boxShadow: designSystem.shadows.card,
+                                boxShadow: ds.shadows.card,
                             }}
                         >
                             <Text
-                                color={designSystem.colors.foreground}
-                                fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={designSystem.typography.titleMd.fontSize}
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.titleMd.fontSize}
                             >
                                 {place.place_name}
                             </Text>
                             <Paragraph
-                                color={designSystem.colors.mutedForeground}
-                                fontFamily={designSystem.fonts.bodyMedium}
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
                             >
                                 {place.project_name}
                             </Paragraph>
                             <Button
                                 height={42}
-                                rounded={designSystem.radii.md}
+                                rounded={ds.radii.md}
                                 borderWidth={1}
-                                borderColor={designSystem.colors.border}
-                                bg={designSystem.colors.input}
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.input}
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {
                                     router.push(`/(tabs)/execute/${place.place_id}`);
                                 }}
                             >
                                 <Text
-                                    color={designSystem.colors.foreground}
-                                    fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={designSystem.typography.labelMd.fontSize}
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelMd.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.2}
                                 >
-                                    {hasActiveSession ? "Resume audit" : "Start audit"}
+                                    {hasActiveSession
+                                        ? t("resumeAudit", { ns: "audit" })
+                                        : t("startAudit", { ns: "audit" })}
                                 </Text>
                             </Button>
                         </YStack>

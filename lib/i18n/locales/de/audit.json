@@ -1,0 +1,85 @@
+{
+    "autoValues": {
+        "calculatedOnSubmit": "Wird bei der finalen Einreichung berechnet",
+        "generatedOnSubmit": "Wird bei der finalen Einreichung erstellt",
+        "minutes_one": "TODO: autoValues.minutes_one",
+        "minutes_other": "TODO: autoValues.minutes_other"
+    },
+    "errors": {
+        "accessDenied403": "Zugriff verweigert (403): Sie duerfen auf diesen Ort oder dieses Audit nicht zugreifen.",
+        "detailsLabel": "Details: {{details}}",
+        "httpFallback": "{{message}} (HTTP {{statusCode}}).",
+        "networkFallback": "{{message}} (Netzwerkfehler).",
+        "offlineChangesSaved": "{{message}} Sie scheinen offline zu sein. Aenderungen werden lokal gespeichert und synchronisiert, sobald Sie wieder verbunden sind.",
+        "openFallback": "Audit konnte nicht geoeffnet werden.",
+        "refreshFallback": "Audit konnte nicht aktualisiert werden.",
+        "submitFallback": "Audit konnte nicht eingereicht werden.",
+        "submitNeedsUploadedDraft": "Stellen Sie die Verbindung wieder her und warten Sie, bis Ihre gespeicherten Aenderungen hochgeladen wurden, bevor Sie dieses Audit einreichen.",
+        "syncFallback": "Die Hintergrundsynchronisierung ist fehlgeschlagen."
+    },
+    "executeLanding": {
+        "continueSelectedPlace": "Ausgewaehlten Ort fortsetzen",
+        "openSelectedAudit": "Ausgewaehltes Audit oeffnen",
+        "subtitle": "Waehlen Sie einen Ort, um den abschnittsweisen Playspace-Ablauf zu starten oder fortzusetzen.",
+        "title": "Audit durchfuehren"
+    },
+    "overview": {
+        "accessDeniedTitle": "Zugriff verweigert",
+        "assignmentAllows": "Diese Ortszuweisung erlaubt derzeit:",
+        "auditRole": "Audit-Rolle",
+        "auditUnavailableTitle": "Audit nicht verfuegbar",
+        "chooseMode": "Waehlen Sie aus, welchen Teil des Instruments Sie fuer diesen Ort ausfuellen moechten.",
+        "loadingDraft": "Ihr aktueller Entwurf wird geladen...",
+        "placeNotFound": "Die ausgewaehlte Ortsroute ist ungueltig. Kehren Sie zum Durchfuehren-Tab zurueck und waehlen Sie erneut einen Ort.",
+        "placeNotFoundTitle": "Ort nicht gefunden",
+        "preamble": "Einleitung",
+        "preparingAudit": "Der Playspace-Audit-Ablauf wird vorbereitet...",
+        "preparingAuditTitle": "Audit wird vorbereitet",
+        "roleFixesSubset": "Ihre Rolle legt bereits fest, welcher Teil der Fragen fuer diesen Ort sichtbar ist.",
+        "syncStatus": {
+            "pendingMessage": "Entwurfsaenderungen sind vorgemerkt und werden automatisch hochgeladen, sobald die App aktiv und online ist.",
+            "pendingTitle": "Auf diesem Geraet gespeichert",
+            "retryTitle": "Upload pausiert",
+            "syncingMessage": "Gespeicherte Aenderungen werden jetzt hochgeladen. Lassen Sie die App geoeffnet, wenn Sie direkt danach einreichen moechten.",
+            "syncingTitle": "Aenderungen werden hochgeladen"
+        }
+    },
+    "preAudit": {
+        "complete": "Vollstaendig",
+        "description": "Erfassen Sie Jahreszeit, Wetter, anwesende Nutzer, Nutzeranzahl, Altersgruppen und Ortsgroesse vor der Abschnittsbewertung.",
+        "needed": "Erforderlich",
+        "openPage": "Vor-Audit oeffnen",
+        "preparingMessage": "Die Vor-Audit-Fragen und gespeicherten Entwurfswerte werden geladen...",
+        "preparingTitle": "Vor-Audit wird vorbereitet",
+        "saveAndContinue": "Vor-Audit speichern und fortfahren",
+        "subtitle": "Beantworten Sie zuerst die Kontextfragen, bevor Sie die Abschnittsseiten durchgehen.",
+        "title": "Vor-Audit",
+        "unavailableTitle": "Vor-Audit nicht verfuegbar"
+    },
+    "resumeAudit": "Audit fortsetzen",
+    "section": {
+        "answeredCount": "{{answered}} / {{total}} beantwortet",
+        "backToOverview": "Zurueck zur Uebersicht",
+        "followUpHidden": "Vielfalt, Geselligkeit und Herausforderung erscheinen erst nach einer positiven Antwort bei Quantitaet.",
+        "notesDefault": "Fuegen Sie Ueberlegungen oder Empfehlungen fuer diesen Abschnitt hinzu.",
+        "notesPlaceholder": "Notizen oder Empfehlungen hinzufuegen...",
+        "openSection": "Abschnitt oeffnen",
+        "pendingSync": "Antworten wurden lokal gespeichert - sie werden synchronisiert, sobald Sie wieder online sind.",
+        "preparingMessage": "Der aktuelle Abschnitt und zuvor gespeicherte Antworten werden geladen...",
+        "preparingTitle": "Abschnitt wird vorbereitet",
+        "reviewSection": "Abschnitt pruefen",
+        "saveAndNext": "Speichern und weiter",
+        "saveSection": "Abschnitt speichern",
+        "sectionNotes": "Abschnittsnotizen",
+        "unavailableTitle": "Abschnitt nicht verfuegbar"
+    },
+    "stack": {
+        "auditStart": "Audit-Start",
+        "execute": "Durchfuehren",
+        "preAudit": "Vor-Audit",
+        "section": "Abschnitt"
+    },
+    "startAudit": "Audit starten",
+    "submit": "Audit einreichen",
+    "thisPlayspace": "Dieser Spielplatz..."
+}

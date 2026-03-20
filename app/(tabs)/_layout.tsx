@@ -1,6 +1,13 @@
 import { Tabs } from "expo-router";
-import { BarChart3, ClipboardCheck, LayoutDashboard, MapPinned } from "@tamagui/lucide-icons";
-import { designSystem } from "lib/design-system";
+import {
+    BarChart3,
+    ClipboardCheck,
+    LayoutDashboard,
+    MapPinned,
+    Settings,
+} from "@tamagui/lucide-icons";
+import { useTranslation } from "react-i18next";
+import { useDesignSystem } from "lib/design-system";
 import { useAuditSync } from "lib/audit/use-audit-sync";
 
 interface TabIconProps {
@@ -9,78 +16,33 @@ interface TabIconProps {
 }
 
 /**
- * Dashboard tab icon renderer.
- */
-function DashboardTabIcon({ focused, size }: TabIconProps) {
-    return (
-        <LayoutDashboard
-            color={focused ? designSystem.colors.primary : designSystem.colors.mutedForeground}
-            size={size}
-        />
-    );
-}
-
-/**
- * Places tab icon renderer.
- */
-function PlacesTabIcon({ focused, size }: TabIconProps) {
-    return (
-        <MapPinned
-            color={focused ? designSystem.colors.primary : designSystem.colors.mutedForeground}
-            size={size}
-        />
-    );
-}
-
-/**
- * Execute tab icon renderer.
- */
-function ExecuteTabIcon({ focused, size }: TabIconProps) {
-    return (
-        <ClipboardCheck
-            color={focused ? designSystem.colors.primary : designSystem.colors.mutedForeground}
-            size={size}
-        />
-    );
-}
-
-/**
- * Reports tab icon renderer.
- */
-function ReportsTabIcon({ focused, size }: TabIconProps) {
-    return (
-        <BarChart3
-            color={focused ? designSystem.colors.primary : designSystem.colors.mutedForeground}
-            size={size}
-        />
-    );
-}
-
-/**
- * Main tab layout for the playspace mobile demo.
+ * Main tab layout for the playspace mobile app.
  */
 export default function TabLayout() {
     useAuditSync();
+    const ds = useDesignSystem();
+    const { t } = useTranslation("common");
 
     return (
         <Tabs
             screenOptions={{
                 headerShown: false,
                 sceneStyle: {
-                    backgroundColor: designSystem.colors.background,
+                    backgroundColor: ds.colors.background,
                 },
-                tabBarActiveTintColor: designSystem.colors.primary,
-                tabBarInactiveTintColor: designSystem.colors.mutedForeground,
+                tabBarActiveTintColor: ds.colors.primary,
+                tabBarInactiveTintColor: ds.colors.mutedForeground,
                 tabBarStyle: {
-                    backgroundColor: designSystem.colors.overlay,
-                    borderTopColor: designSystem.colors.border,
+                    backgroundColor: ds.colors.overlay,
+                    borderTopColor: ds.colors.border,
                     height: 78,
                     paddingTop: 8,
                     paddingBottom: 12,
                 },
                 tabBarLabelStyle: {
-                    fontSize: designSystem.typography.labelXs.fontSize,
-                    fontFamily: designSystem.fonts.bodyBold,
+                    fontSize: ds.typography.labelXs.fontSize,
+                    fontFamily: ds.fonts.bodyBold,
+                    color: ds.colors.primary,
                     letterSpacing: 1,
                     textTransform: "uppercase",
                 },
@@ -89,29 +51,61 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: "Home",
-                    tabBarIcon: DashboardTabIcon,
+                    title: t("tabs.home"),
+                    tabBarIcon: ({ focused, size }: TabIconProps) => (
+                        <LayoutDashboard
+                            color={focused ? ds.colors.primary : ds.colors.mutedForeground}
+                            size={size}
+                        />
+                    ),
                 }}
             />
             <Tabs.Screen
                 name="places"
                 options={{
-                    title: "Places",
-                    tabBarIcon: PlacesTabIcon,
+                    title: t("tabs.places"),
+                    tabBarIcon: ({ focused, size }: TabIconProps) => (
+                        <MapPinned
+                            color={focused ? ds.colors.primary : ds.colors.mutedForeground}
+                            size={size}
+                        />
+                    ),
                 }}
             />
             <Tabs.Screen
                 name="execute"
                 options={{
-                    title: "Execute",
-                    tabBarIcon: ExecuteTabIcon,
+                    title: t("tabs.execute"),
+                    tabBarIcon: ({ focused, size }: TabIconProps) => (
+                        <ClipboardCheck
+                            color={focused ? ds.colors.primary : ds.colors.mutedForeground}
+                            size={size}
+                        />
+                    ),
                 }}
             />
             <Tabs.Screen
                 name="reports"
                 options={{
-                    title: "Reports",
-                    tabBarIcon: ReportsTabIcon,
+                    title: t("tabs.reports"),
+                    tabBarIcon: ({ focused, size }: TabIconProps) => (
+                        <BarChart3
+                            color={focused ? ds.colors.primary : ds.colors.mutedForeground}
+                            size={size}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: t("tabs.settings"),
+                    tabBarIcon: ({ focused, size }: TabIconProps) => (
+                        <Settings
+                            color={focused ? ds.colors.primary : ds.colors.mutedForeground}
+                            size={size}
+                        />
+                    ),
                 }}
             />
         </Tabs>

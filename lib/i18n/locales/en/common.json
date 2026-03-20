@@ -1,0 +1,48 @@
+{
+    "accountTypes": {
+        "auditor": "Auditor"
+    },
+    "actions": {
+        "openAudit": "Open audit",
+        "resume": "Resume",
+        "retry": "Retry",
+        "seeAll": "See all",
+        "signOut": "Sign out"
+    },
+    "labels": {
+        "audit": "Audit"
+    },
+    "place": {
+        "assignedPlace": "Assigned place"
+    },
+    "roles": {
+        "auditor": "Auditor",
+        "auditorAndPlaceAdmin": "Auditor and Place Admin",
+        "placeAdmin": "Place Admin"
+    },
+    "status": {
+        "assigned": "Assigned",
+        "completed": "Completed",
+        "inProgress": "In progress",
+        "notStarted": "Not started",
+        "off": "OFF",
+        "on": "ON",
+        "submitted": "Submitted"
+    },
+    "tabs": {
+        "execute": "Execute",
+        "home": "Home",
+        "places": "Places",
+        "reports": "Reports",
+        "settings": "Settings"
+    },
+    "time": {
+        "dayAgo_one": "1 day ago",
+        "dayAgo_other": "{{count}} days ago",
+        "hourAgo_one": "1 hr ago",
+        "hourAgo_other": "{{count}} hr ago",
+        "justNow": "Just now",
+        "minuteAgo_one": "1 min ago",
+        "minuteAgo_other": "{{count}} min ago"
+    }
+}

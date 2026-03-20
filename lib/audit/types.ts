@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+export type DirtySections = Record<string, Record<string, number>>;
+export type DirtyPreAudit = Record<string, number>;
+
 export const executionModeSchema = z.enum(["audit", "survey", "both"]);
 export const assignmentRoleSchema = z.enum(["auditor", "place_admin"]);
 export const assignmentRolesSchema = z.array(assignmentRoleSchema).min(1);
@@ -143,12 +146,28 @@ export const auditDraftPatchSchema = z.object({
     sections: z.record(z.string(), sectionDraftPatchSchema).default({}),
 });
 
+const dirtySectionVersionMapSchema = z.record(z.string(), z.number().int().nonnegative());
+
+const dirtySectionsSchema = z
+    .union([
+        z.record(z.string(), z.array(z.string())),
+        z.record(z.string(), dirtySectionVersionMapSchema),
+    ])
+    .transform<DirtySections>((value) => normalizeDirtySections(value));
+
+const dirtyPreAuditSchema = z
+    .union([z.array(z.string()), z.record(z.string(), z.number().int().nonnegative())])
+    .transform<DirtyPreAudit>((value) => normalizeDirtyPreAudit(value));
+
 export const persistedAuditStateSchema = z.object({
+    storage_user_id: z.string().min(1).nullable().default(null),
     instrument: playspaceInstrumentSchema.nullable(),
     sessions_by_audit_id: z.record(z.string(), auditSessionSchema),
     sessions_by_place_id: z.record(z.string(), auditSessionSchema),
-    dirty_sections: z.record(z.string(), z.array(z.string())).default({}),
-    dirty_pre_audit: z.array(z.string()).default([]),
+    dirty_sections: dirtySectionsSchema.default({}),
+    dirty_pre_audit: dirtyPreAuditSchema.default({}),
+    local_change_counter: z.number().int().nonnegative().default(0),
+    last_successful_sync_at: z.string().nullable().default(null),
 });
 
 export type ExecutionMode = z.infer<typeof executionModeSchema>;
@@ -211,4 +230,53 @@ export function readNestedStringRecord(value: unknown): Record<string, Record<st
         nextRecord[recordKey] = readStringRecord(recordValue);
     }
     return nextRecord;
+}
+
+/**
+ * Normalize either the legacy array-based dirty section structure or the new
+ * versioned structure into a stable version map.
+ *
+ * @param value Parsed persisted dirty section payload.
+ * @returns Audit-to-section version map.
+ */
+function normalizeDirtySections(
+    value: Record<string, string[]> | Record<string, Record<string, number>>,
+): DirtySections {
+    const nextDirtySections: DirtySections = {};
+    for (const [auditId, auditValue] of Object.entries(value)) {
+        if (Array.isArray(auditValue)) {
+            nextDirtySections[auditId] = Object.fromEntries(
+                auditValue.map((sectionKey) => [sectionKey, 0]),
+            );
+            continue;
+        }
+
+        const nextAuditSections: Record<string, number> = {};
+        for (const [sectionKey, version] of Object.entries(auditValue)) {
+            if (typeof version === "number") {
+                nextAuditSections[sectionKey] = version;
+            }
+        }
+        nextDirtySections[auditId] = nextAuditSections;
+    }
+    return nextDirtySections;
+}
+
+/**
+ * Normalize either the legacy array-based pre-audit dirty structure or the new
+ * versioned structure into a stable version map.
+ *
+ * @param value Parsed persisted dirty pre-audit payload.
+ * @returns Audit-to-version map for pre-audit edits.
+ */
+function normalizeDirtyPreAudit(value: string[] | DirtyPreAudit): DirtyPreAudit {
+    if (Array.isArray(value)) {
+        return Object.fromEntries(value.map((auditId) => [auditId, 0]));
+    }
+
+    const nextDirtyPreAudit: DirtyPreAudit = {};
+    for (const [auditId, version] of Object.entries(value)) {
+        nextDirtyPreAudit[auditId] = version;
+    }
+    return nextDirtyPreAudit;
 }

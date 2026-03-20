@@ -10,8 +10,9 @@ import {
     ShieldCheck,
     UserRound,
 } from "@tamagui/lucide-icons";
+import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Paragraph, Text, XStack, YStack } from "tamagui";
-import { designSystem } from "lib/design-system";
+import { useDesignSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -20,7 +21,9 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Login screen for playspace mobile.
  */
 export default function LoginScreen() {
+    const ds = useDesignSystem();
     const router = useRouter();
+    const { t } = useTranslation(["auth", "common"]);
     const login = useAuthStore((state) => state.login);
     const clearError = useAuthStore((state) => state.clearError);
     const isSubmitting = useAuthStore((state) => state.isSubmitting);
@@ -47,11 +50,11 @@ export default function LoginScreen() {
         const trimmedPassword = password.trim();
 
         if (!EMAIL_PATTERN.test(normalizedEmail)) {
-            setValidationMessage("Please enter a valid email address.");
+            setValidationMessage(t("login.validation.invalidEmail", { ns: "auth" }));
             return;
         }
         if (trimmedPassword.length === 0) {
-            setValidationMessage("Password is required.");
+            setValidationMessage(t("login.validation.passwordRequired", { ns: "auth" }));
             return;
         }
 
@@ -68,13 +71,13 @@ export default function LoginScreen() {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={{ flex: 1, backgroundColor: designSystem.colors.background }}
+            style={{ flex: 1, backgroundColor: ds.colors.background }}
         >
             <ScrollView
                 contentInsetAdjustmentBehavior="automatic"
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{
-                    paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
+                    paddingHorizontal: ds.spacing.screenPaddingHorizontal,
                     paddingVertical: 48,
                     justifyContent: "center",
                 }}
@@ -86,23 +89,23 @@ export default function LoginScreen() {
                             height={88}
                             items="center"
                             justify="center"
-                            rounded={designSystem.radii.xl}
+                            rounded={ds.radii.xl}
                             borderWidth={1}
-                            borderColor={designSystem.colors.border}
-                            bg={designSystem.colors.surfaceMuted}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surfaceMuted}
                             style={{
-                                boxShadow: designSystem.shadows.card,
+                                boxShadow: ds.shadows.card,
                             }}
                         >
-                            <ShieldCheck size={34} color={designSystem.colors.primary} />
+                            <ShieldCheck size={34} color={ds.colors.primary} />
                         </YStack>
 
                         <YStack items="center" gap="$2">
                             <Text
-                                color={designSystem.colors.foreground}
-                                fontFamily={designSystem.fonts.headingBold}
-                                fontSize={designSystem.typography.displayMd.fontSize}
-                                lineHeight={designSystem.typography.displayMd.lineHeight}
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.headingBold}
+                                fontSize={ds.typography.displayMd.fontSize}
+                                lineHeight={ds.typography.displayMd.lineHeight}
                                 textTransform="uppercase"
                                 fontStyle="italic"
                                 letterSpacing={-0.5}
@@ -110,13 +113,13 @@ export default function LoginScreen() {
                                 Playspace
                             </Text>
                             <Paragraph
-                                color={designSystem.colors.mutedForeground}
-                                fontFamily={designSystem.fonts.bodySemiBold}
-                                fontSize={designSystem.typography.labelMd.fontSize}
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodySemiBold}
+                                fontSize={ds.typography.labelMd.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.6}
                             >
-                                Playspace form participant
+                                {t("brand.subtitle", { ns: "auth" })}
                             </Paragraph>
                         </YStack>
                     </YStack>
@@ -124,26 +127,26 @@ export default function LoginScreen() {
                     <YStack gap="$4">
                         <YStack gap="$2">
                             <Paragraph
-                                color={designSystem.colors.mutedForeground}
-                                fontFamily={designSystem.fonts.bodyBold}
-                                fontSize={designSystem.typography.labelMd.fontSize}
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelMd.fontSize}
                                 textTransform="uppercase"
                                 letterSpacing={1.5}
                                 px="$1"
                             >
-                                Participant identity
+                                {t("login.identityLabel", { ns: "auth" })}
                             </Paragraph>
                             <XStack
                                 items="center"
                                 gap="$3"
                                 px="$4"
                                 height={56}
-                                rounded={designSystem.radii.md}
+                                rounded={ds.radii.md}
                                 borderWidth={1}
-                                borderColor={designSystem.colors.border}
-                                bg={designSystem.colors.input}
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.input}
                             >
-                                <UserRound size={18} color={designSystem.colors.mutedForeground} />
+                                <UserRound size={18} color={ds.colors.mutedForeground} />
                                 <Input
                                     unstyled
                                     flex={1}
@@ -153,11 +156,11 @@ export default function LoginScreen() {
                                     autoCorrect={false}
                                     keyboardType="email-address"
                                     textContentType="emailAddress"
-                                    placeholder="auditor@example.com"
+                                    placeholder={t("login.emailPlaceholder", { ns: "auth" })}
                                     placeholderTextColor="$color10"
-                                    color={designSystem.colors.foreground}
-                                    fontFamily={designSystem.fonts.bodyMedium}
-                                    fontSize={designSystem.typography.titleSm.fontSize}
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.titleSm.fontSize}
                                 />
                             </XStack>
                         </YStack>
@@ -165,22 +168,22 @@ export default function LoginScreen() {
                         <YStack gap="$2">
                             <XStack justify="space-between" items="center" px="$1">
                                 <Paragraph
-                                    color={designSystem.colors.mutedForeground}
-                                    fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={designSystem.typography.labelMd.fontSize}
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelMd.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.5}
                                 >
-                                    Access key
+                                    {t("login.accessKeyLabel", { ns: "auth" })}
                                 </Paragraph>
                                 <Paragraph
-                                    color={designSystem.colors.primary}
-                                    fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={designSystem.typography.labelSm.fontSize}
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelSm.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.1}
                                 >
-                                    Offline sign-in
+                                    {t("login.offlineSignIn", { ns: "auth" })}
                                 </Paragraph>
                             </XStack>
                             <XStack
@@ -188,12 +191,12 @@ export default function LoginScreen() {
                                 gap="$3"
                                 px="$4"
                                 height={56}
-                                rounded={designSystem.radii.md}
+                                rounded={ds.radii.md}
                                 borderWidth={1}
-                                borderColor={designSystem.colors.border}
-                                bg={designSystem.colors.input}
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.input}
                             >
-                                <KeyRound size={18} color={designSystem.colors.mutedForeground} />
+                                <KeyRound size={18} color={ds.colors.mutedForeground} />
                                 <Input
                                     unstyled
                                     flex={1}
@@ -203,11 +206,11 @@ export default function LoginScreen() {
                                     autoCorrect={false}
                                     textContentType="password"
                                     secureTextEntry={!showPassword}
-                                    placeholder="Enter password"
+                                    placeholder={t("login.passwordPlaceholder", { ns: "auth" })}
                                     placeholderTextColor="$color10"
-                                    color={designSystem.colors.foreground}
-                                    fontFamily={designSystem.fonts.bodyMedium}
-                                    fontSize={designSystem.typography.titleSm.fontSize}
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.titleSm.fontSize}
                                 />
                                 <Button
                                     chromeless
@@ -217,15 +220,9 @@ export default function LoginScreen() {
                                     }}
                                 >
                                     {showPassword ? (
-                                        <EyeOff
-                                            size={16}
-                                            color={designSystem.colors.mutedForeground}
-                                        />
+                                        <EyeOff size={16} color={ds.colors.mutedForeground} />
                                     ) : (
-                                        <Eye
-                                            size={16}
-                                            color={designSystem.colors.mutedForeground}
-                                        />
+                                        <Eye size={16} color={ds.colors.mutedForeground} />
                                     )}
                                 </Button>
                             </XStack>
@@ -234,14 +231,14 @@ export default function LoginScreen() {
                         {visibleErrorMessage === null ? null : (
                             <YStack
                                 borderWidth={1}
-                                borderColor={designSystem.colors.danger}
-                                bg={designSystem.colors.dangerSoft}
-                                rounded={designSystem.radii.md}
+                                borderColor={ds.colors.danger}
+                                bg={ds.colors.dangerSoft}
+                                rounded={ds.radii.md}
                                 p="$3"
                             >
                                 <Paragraph
-                                    color={designSystem.colors.danger}
-                                    fontFamily={designSystem.fonts.bodyMedium}
+                                    color={ds.colors.danger}
+                                    fontFamily={ds.fonts.bodyMedium}
                                 >
                                     {visibleErrorMessage}
                                 </Paragraph>
@@ -257,23 +254,23 @@ export default function LoginScreen() {
                                 checked={staySignedIn}
                             >
                                 {staySignedIn ? (
-                                    <Check size={16} color={designSystem.colors.success} />
+                                    <Check size={16} color={ds.colors.success} />
                                 ) : null}
                             </Checkbox>
                             <Paragraph
-                                color={designSystem.colors.foreground}
-                                fontFamily={designSystem.fonts.bodySemiBold}
-                                fontSize={designSystem.typography.bodyLg.fontSize}
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodySemiBold}
+                                fontSize={ds.typography.bodyLg.fontSize}
                             >
-                                Stay signed in for offline field work
+                                {t("login.staySignedIn", { ns: "auth" })}
                             </Paragraph>
                         </XStack>
 
                         <Button
                             height={56}
-                            rounded={designSystem.radii.md}
+                            rounded={ds.radii.md}
                             borderWidth={0}
-                            bg={designSystem.colors.primary}
+                            bg={ds.colors.primary}
                             disabled={!canSubmit}
                             opacity={canSubmit ? 1 : 0.65}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
@@ -281,23 +278,22 @@ export default function LoginScreen() {
                                 void handleLogin();
                             }}
                             style={{
-                                boxShadow: designSystem.shadows.accent,
+                                boxShadow: ds.shadows.accent,
                             }}
                         >
                             <XStack items="center" gap="$2">
                                 <Text
-                                    color={designSystem.colors.primaryForeground}
-                                    fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={designSystem.typography.labelLg.fontSize}
+                                    color={ds.colors.primaryForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelLg.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.4}
                                 >
-                                    {isSubmitting ? "Initializing access..." : "Initialize access"}
+                                    {isSubmitting
+                                        ? t("login.submitting", { ns: "auth" })
+                                        : t("login.submit", { ns: "auth" })}
                                 </Text>
-                                <ArrowRight
-                                    size={16}
-                                    color={designSystem.colors.primaryForeground}
-                                />
+                                <ArrowRight size={16} color={ds.colors.primaryForeground} />
                             </XStack>
                         </Button>
 
@@ -306,18 +302,18 @@ export default function LoginScreen() {
                             gap="$3"
                             items="center"
                             borderTopWidth={1}
-                            borderTopColor={designSystem.colors.border}
+                            borderTopColor={ds.colors.border}
                         >
                             <Paragraph
-                                color={designSystem.colors.mutedForeground}
-                                fontFamily={designSystem.fonts.bodyMedium}
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
                             >
-                                Need an assigned playspace account?
+                                {t("login.needAccount", { ns: "auth" })}
                             </Paragraph>
                             <Button
                                 height={44}
                                 px="$4"
-                                rounded={designSystem.radii.md}
+                                rounded={ds.radii.md}
                                 borderWidth={1}
                                 borderColor="rgba(255, 107, 0, 0.24)"
                                 bg="transparent"
@@ -327,13 +323,13 @@ export default function LoginScreen() {
                                 }}
                             >
                                 <Text
-                                    color={designSystem.colors.primary}
-                                    fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={designSystem.typography.labelMd.fontSize}
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelMd.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.3}
                                 >
-                                    Access setup guide
+                                    {t("login.accessGuide", { ns: "auth" })}
                                 </Text>
                             </Button>
                         </YStack>

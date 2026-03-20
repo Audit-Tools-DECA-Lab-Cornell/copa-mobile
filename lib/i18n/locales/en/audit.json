@@ -1,0 +1,85 @@
+{
+    "autoValues": {
+        "calculatedOnSubmit": "Calculated on final submit",
+        "generatedOnSubmit": "Generated on final submit",
+        "minutes_one": "",
+        "minutes_other": ""
+    },
+    "errors": {
+        "accessDenied403": "Access denied (403): you are not allowed to access this place or audit.",
+        "detailsLabel": "Details: {{details}}",
+        "httpFallback": "{{message}} (HTTP {{statusCode}}).",
+        "networkFallback": "{{message}} (network error).",
+        "offlineChangesSaved": "{{message}} You appear to be offline. Changes are saved locally and will sync when you reconnect.",
+        "openFallback": "Unable to open audit.",
+        "refreshFallback": "Unable to refresh audit.",
+        "submitFallback": "Unable to submit audit.",
+        "submitNeedsUploadedDraft": "Reconnect and wait for your saved changes to upload before submitting this audit.",
+        "syncFallback": "Background sync failed."
+    },
+    "executeLanding": {
+        "continueSelectedPlace": "Continue Selected Place",
+        "openSelectedAudit": "Open selected audit",
+        "subtitle": "Choose a place to start or resume the section-by-section playspace audit flow.",
+        "title": "Audit Execute"
+    },
+    "overview": {
+        "accessDeniedTitle": "Access Denied",
+        "assignmentAllows": "This place assignment currently allows:",
+        "auditRole": "Audit Role",
+        "auditUnavailableTitle": "Audit Unavailable",
+        "chooseMode": "Choose what part of the tool you will complete for this place.",
+        "loadingDraft": "Loading your current draft...",
+        "placeNotFound": "The selected place route is invalid. Return to the Execute tab and choose a place again.",
+        "placeNotFoundTitle": "Place Not Found",
+        "preamble": "Preamble",
+        "preparingAudit": "Preparing the playspace audit flow...",
+        "preparingAuditTitle": "Preparing Audit",
+        "roleFixesSubset": "Your role already fixes the visible subset of questions for this place.",
+        "syncStatus": {
+            "pendingMessage": "Draft changes are queued and will upload automatically when the app is active and online.",
+            "pendingTitle": "Saved on this device",
+            "retryTitle": "Upload paused",
+            "syncingMessage": "Saved changes are uploading now. Keep the app open until this finishes if you need to submit right away.",
+            "syncingTitle": "Uploading changes"
+        }
+    },
+    "preAudit": {
+        "complete": "Complete",
+        "description": "Capture season, weather, users present, user count, age groups, and place size before section scoring.",
+        "needed": "Needed",
+        "openPage": "Open pre-audit page",
+        "preparingMessage": "Loading the pre-audit questions and any saved draft values...",
+        "preparingTitle": "Preparing Pre-Audit",
+        "saveAndContinue": "Save pre-audit and continue",
+        "subtitle": "Complete the first-page context questions before moving through the section pages.",
+        "title": "Pre-Audit Setup",
+        "unavailableTitle": "Pre-Audit Unavailable"
+    },
+    "resumeAudit": "Resume audit",
+    "section": {
+        "answeredCount": "{{answered}} / {{total}} answered",
+        "backToOverview": "Back to overview",
+        "followUpHidden": "Diversity, Sociability, and Challenge appear only after a positive Quantity answer.",
+        "notesDefault": "Add any reflections or recommendations for this section.",
+        "notesPlaceholder": "Add section notes or recommendations...",
+        "openSection": "Open section",
+        "pendingSync": "Answers saved locally - will sync to the server when online.",
+        "preparingMessage": "Loading the current section and any previously saved answers...",
+        "preparingTitle": "Preparing Section",
+        "reviewSection": "Review section",
+        "saveAndNext": "Save and next",
+        "saveSection": "Save section",
+        "sectionNotes": "Section Notes",
+        "unavailableTitle": "Section Unavailable"
+    },
+    "stack": {
+        "auditStart": "Audit Start",
+        "execute": "Execute",
+        "preAudit": "Pre-Audit",
+        "section": "Section"
+    },
+    "startAudit": "Start audit",
+    "submit": "Submit audit",
+    "thisPlayspace": "This playspace..."
+}

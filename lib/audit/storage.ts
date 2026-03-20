@@ -1,13 +1,20 @@
 import { requireOptionalNativeModule } from "expo-modules-core";
 import { persistedAuditStateSchema, type PersistedAuditState } from "lib/audit/types";
 
-const AUDIT_STATE_STORAGE_KEY = "playspace.audit.state.v1";
-const AUDIT_STATE_INDEX_KEY = `${AUDIT_STATE_STORAGE_KEY}.index`;
-const AUDIT_STATE_PART_PREFIX = `${AUDIT_STATE_STORAGE_KEY}.part.`;
+const AUDIT_STATE_STORAGE_KEY_PREFIX = "playspace.audit.state.v2";
+const LEGACY_AUDIT_STATE_STORAGE_KEY = "playspace.audit.state.v1";
+const LEGACY_AUDIT_STATE_INDEX_KEY = `${LEGACY_AUDIT_STATE_STORAGE_KEY}.index`;
+const LEGACY_AUDIT_STATE_PART_PREFIX = `${LEGACY_AUDIT_STATE_STORAGE_KEY}.part.`;
 const SECURE_STORE_CHUNK_SIZE = 1500;
 
-let inMemoryAuditState: string | null = null;
+const inMemoryAuditState: Record<string, string> = {};
 let secureStoreApiCache: SecureStoreApi | null | undefined;
+
+interface AuditStorageKeys {
+    readonly stateKey: string;
+    readonly indexKey: string;
+    readonly partPrefix: string;
+}
 
 interface SecureStoreApi {
     readonly setItemAsync: (key: string, value: string) => Promise<void>;
@@ -33,100 +40,78 @@ type DeleteValueWithKeyAsyncFunction = (
 /**
  * Persist the latest instrument and audit sessions for offline use.
  *
+ * @param userId Authenticated auditor identifier.
  * @param state Validated persisted audit state.
  */
-export async function savePersistedAuditState(state: PersistedAuditState): Promise<void> {
-    const serializedState = JSON.stringify(state);
+export async function savePersistedAuditState(
+    userId: string,
+    state: PersistedAuditState,
+): Promise<void> {
+    const storageKeys = getAuditStorageKeys(userId);
+    const serializedState = JSON.stringify({
+        ...state,
+        storage_user_id: userId,
+    } satisfies PersistedAuditState);
     const localStorageApi = resolveLocalStorageApi();
     if (localStorageApi !== null) {
-        localStorageApi.setItem(AUDIT_STATE_STORAGE_KEY, serializedState);
-        inMemoryAuditState = serializedState;
+        localStorageApi.setItem(storageKeys.stateKey, serializedState);
+        inMemoryAuditState[storageKeys.stateKey] = serializedState;
         return;
     }
 
     const secureStoreApi = await resolveSecureStoreApi();
     if (secureStoreApi === null) {
-        inMemoryAuditState = serializedState;
+        inMemoryAuditState[storageKeys.stateKey] = serializedState;
         return;
     }
 
     try {
-        await saveChunkedSecureStoreValue(secureStoreApi, serializedState);
+        await saveChunkedSecureStoreValue(secureStoreApi, storageKeys, serializedState);
     } catch {
-        inMemoryAuditState = serializedState;
+        inMemoryAuditState[storageKeys.stateKey] = serializedState;
     }
 }
 
 /**
  * Read and validate the last persisted audit state snapshot.
  *
+ * @param userId Authenticated auditor identifier.
  * @returns Stored audit state when valid, otherwise null.
  */
-export async function readPersistedAuditState(): Promise<PersistedAuditState | null> {
-    const localStorageApi = resolveLocalStorageApi();
-    let rawValue: string | null = null;
-
-    if (localStorageApi !== null) {
-        rawValue = localStorageApi.getItem(AUDIT_STATE_STORAGE_KEY);
-    } else {
-        const secureStoreApi = await resolveSecureStoreApi();
-        if (secureStoreApi !== null) {
-            try {
-                rawValue = await readChunkedSecureStoreValue(secureStoreApi);
-            } catch {
-                rawValue = inMemoryAuditState;
-            }
-        } else {
-            rawValue = inMemoryAuditState;
-        }
+export async function readPersistedAuditState(userId: string): Promise<PersistedAuditState | null> {
+    const storageKeys = getAuditStorageKeys(userId);
+    const rawValue = await readSerializedAuditState(storageKeys);
+    const parsedState = await parsePersistedAuditState(storageKeys, rawValue);
+    if (parsedState !== null) {
+        return {
+            ...parsedState,
+            storage_user_id: userId,
+        };
     }
 
-    if (rawValue === null) {
+    const legacyStorageKeys = getLegacyAuditStorageKeys();
+    const legacyRawValue = await readSerializedAuditState(legacyStorageKeys);
+    const legacyState = await parsePersistedAuditState(legacyStorageKeys, legacyRawValue);
+    if (legacyState === null) {
         return null;
     }
 
-    try {
-        const parsedValue: unknown = JSON.parse(rawValue);
-        const parsedState = persistedAuditStateSchema.safeParse(parsedValue);
-        if (!parsedState.success) {
-            await clearPersistedAuditState();
-            return null;
-        }
-
-        return parsedState.data;
-    } catch {
-        await clearPersistedAuditState();
-        return null;
-    }
+    const migratedState: PersistedAuditState = {
+        ...legacyState,
+        storage_user_id: userId,
+    };
+    await savePersistedAuditState(userId, migratedState);
+    await clearSerializedAuditState(legacyStorageKeys);
+    return migratedState;
 }
 
 /**
  * Clear any persisted offline audit state.
+ *
+ * @param userId Authenticated auditor identifier.
  */
-export async function clearPersistedAuditState(): Promise<void> {
-    inMemoryAuditState = null;
-
-    const localStorageApi = resolveLocalStorageApi();
-    if (localStorageApi !== null) {
-        localStorageApi.removeItem(AUDIT_STATE_STORAGE_KEY);
-        return;
-    }
-
-    const secureStoreApi = await resolveSecureStoreApi();
-    if (secureStoreApi === null) {
-        return;
-    }
-
-    try {
-        const existingIndexValue = await secureStoreApi.getItemAsync(AUDIT_STATE_INDEX_KEY);
-        const partCount = parseChunkCount(existingIndexValue);
-        for (let index = 0; index < partCount; index += 1) {
-            await secureStoreApi.deleteItemAsync(`${AUDIT_STATE_PART_PREFIX}${index}`);
-        }
-        await secureStoreApi.deleteItemAsync(AUDIT_STATE_INDEX_KEY);
-    } catch {
-        // Ignore cleanup failures for optional offline storage.
-    }
+export async function clearPersistedAuditState(userId: string): Promise<void> {
+    await clearSerializedAuditState(getAuditStorageKeys(userId));
 }
 
 /**
@@ -135,7 +120,7 @@ export async function clearPersistedAuditState(): Promise<void> {
  * @returns Local storage API on supported runtimes, otherwise null.
  */
 function resolveLocalStorageApi(): Storage | null {
-    if (typeof globalThis.localStorage === "undefined") {
+    if (globalThis.localStorage === undefined) {
         return null;
     }
 
@@ -150,9 +135,10 @@ function resolveLocalStorageApi(): Storage | null {
  */
 async function saveChunkedSecureStoreValue(
     secureStoreApi: SecureStoreApi,
+    storageKeys: AuditStorageKeys,
     serializedState: string,
 ): Promise<void> {
-    const previousIndexValue = await secureStoreApi.getItemAsync(AUDIT_STATE_INDEX_KEY);
+    const previousIndexValue = await secureStoreApi.getItemAsync(storageKeys.indexKey);
     const previousPartCount = parseChunkCount(previousIndexValue);
 
     const nextParts: string[] = [];
@@ -165,41 +151,45 @@ async function saveChunkedSecureStoreValue(
         if (partValue === undefined) {
             continue;
         }
-        await secureStoreApi.setItemAsync(`${AUDIT_STATE_PART_PREFIX}${index}`, partValue);
+        await secureStoreApi.setItemAsync(`${storageKeys.partPrefix}${index}`, partValue);
     }
 
     for (let index = nextParts.length; index < previousPartCount; index += 1) {
-        await secureStoreApi.deleteItemAsync(`${AUDIT_STATE_PART_PREFIX}${index}`);
+        await secureStoreApi.deleteItemAsync(`${storageKeys.partPrefix}${index}`);
     }
 
-    await secureStoreApi.setItemAsync(AUDIT_STATE_INDEX_KEY, String(nextParts.length));
-    inMemoryAuditState = serializedState;
+    await secureStoreApi.setItemAsync(storageKeys.indexKey, String(nextParts.length));
+    inMemoryAuditState[storageKeys.stateKey] = serializedState;
 }
 
 /**
  * Read a chunked serialized payload from secure-store.
  *
  * @param secureStoreApi Normalized secure-store API.
+ * @param storageKeys User-scoped storage keys.
  * @returns Reassembled JSON string when present, otherwise null.
  */
-async function readChunkedSecureStoreValue(secureStoreApi: SecureStoreApi): Promise<string | null> {
-    const indexValue = await secureStoreApi.getItemAsync(AUDIT_STATE_INDEX_KEY);
+async function readChunkedSecureStoreValue(
+    secureStoreApi: SecureStoreApi,
+    storageKeys: AuditStorageKeys,
+): Promise<string | null> {
+    const indexValue = await secureStoreApi.getItemAsync(storageKeys.indexKey);
     const partCount = parseChunkCount(indexValue);
     if (partCount <= 0) {
-        return inMemoryAuditState;
+        return inMemoryAuditState[storageKeys.stateKey] ?? null;
     }
 
     const parts: string[] = [];
     for (let index = 0; index < partCount; index += 1) {
-        const partValue = await secureStoreApi.getItemAsync(`${AUDIT_STATE_PART_PREFIX}${index}`);
+        const partValue = await secureStoreApi.getItemAsync(`${storageKeys.partPrefix}${index}`);
         if (partValue === null) {
-            return inMemoryAuditState;
+            return inMemoryAuditState[storageKeys.stateKey] ?? null;
         }
         parts.push(partValue);
     }
 
     const reassembledValue = parts.join("");
-    inMemoryAuditState = reassembledValue;
+    inMemoryAuditState[storageKeys.stateKey] = reassembledValue;
     return reassembledValue;
 }
 
@@ -219,6 +209,120 @@ function parseChunkCount(value: string | null): number {
         return 0;
     }
     return parsedValue;
+}
+
+/**
+ * Read a serialized audit payload from the active storage backend.
+ *
+ * @param storageKeys User-scoped storage keys.
+ * @returns Serialized payload or null.
+ */
+async function readSerializedAuditState(storageKeys: AuditStorageKeys): Promise<string | null> {
+    const localStorageApi = resolveLocalStorageApi();
+    if (localStorageApi !== null) {
+        return localStorageApi.getItem(storageKeys.stateKey);
+    }
+
+    const secureStoreApi = await resolveSecureStoreApi();
+    if (secureStoreApi !== null) {
+        try {
+            return await readChunkedSecureStoreValue(secureStoreApi, storageKeys);
+        } catch {
+            return inMemoryAuditState[storageKeys.stateKey] ?? null;
+        }
+    }
+
+    return inMemoryAuditState[storageKeys.stateKey] ?? null;
+}
+
+/**
+ * Parse, validate, and clean up a serialized persisted audit payload.
+ *
+ * @param storageKeys User-scoped storage keys.
+ * @param rawValue Raw serialized payload.
+ * @returns Valid persisted state or null.
+ */
+async function parsePersistedAuditState(
+    storageKeys: AuditStorageKeys,
+    rawValue: string | null,
+): Promise<PersistedAuditState | null> {
+    if (rawValue === null) {
+        return null;
+    }
+
+    try {
+        const parsedValue: unknown = JSON.parse(rawValue);
+        const parsedState = persistedAuditStateSchema.safeParse(parsedValue);
+        if (!parsedState.success) {
+            await clearSerializedAuditState(storageKeys);
+            return null;
+        }
+
+        return parsedState.data;
+    } catch {
+        await clearSerializedAuditState(storageKeys);
+        return null;
+    }
+}
+
+/**
+ * Clear one user-scoped persisted payload from the active storage backend.
+ *
+ * @param storageKeys User-scoped storage keys.
+ */
+async function clearSerializedAuditState(storageKeys: AuditStorageKeys): Promise<void> {
+    delete inMemoryAuditState[storageKeys.stateKey];
+
+    const localStorageApi = resolveLocalStorageApi();
+    if (localStorageApi !== null) {
+        localStorageApi.removeItem(storageKeys.stateKey);
+        return;
+    }
+
+    const secureStoreApi = await resolveSecureStoreApi();
+    if (secureStoreApi === null) {
+        return;
+    }
+
+    try {
+        const existingIndexValue = await secureStoreApi.getItemAsync(storageKeys.indexKey);
+        const partCount = parseChunkCount(existingIndexValue);
+        for (let index = 0; index < partCount; index += 1) {
+            await secureStoreApi.deleteItemAsync(`${storageKeys.partPrefix}${index}`);
+        }
+        await secureStoreApi.deleteItemAsync(storageKeys.indexKey);
+    } catch {
+        // Ignore cleanup failures for optional offline storage.
+    }
+}
+
+/**
+ * Build user-scoped storage keys for persisted audit state.
+ *
+ * @param userId Authenticated auditor identifier.
+ * @returns Key set for local storage and secure-store backends.
+ */
+function getAuditStorageKeys(userId: string): AuditStorageKeys {
+    const encodedUserId = encodeURIComponent(userId);
+    const stateKey = `${AUDIT_STATE_STORAGE_KEY_PREFIX}.${encodedUserId}`;
+    return {
+        stateKey,
+        indexKey: `${stateKey}.index`,
+        partPrefix: `${stateKey}.part.`,
+    };
+}
+
+/**
+ * Build the legacy global storage keys for one-time migration support.
+ *
+ * @returns Legacy key set.
+ */
+function getLegacyAuditStorageKeys(): AuditStorageKeys {
+    return {
+        stateKey: LEGACY_AUDIT_STATE_STORAGE_KEY,
+        indexKey: LEGACY_AUDIT_STATE_INDEX_KEY,
+        partPrefix: LEGACY_AUDIT_STATE_PART_PREFIX,
+    };
 }
 
 /**
@@ -307,7 +411,7 @@ function toSecureStoreApi(value: unknown): SecureStoreApi | null {
         deleteItemAsync: async (key: string) => {
             await deleteValueWithKeyAsync(key);
         },
-        ...(isAvailableAsync !== null ? { isAvailableAsync } : {}),
+        ...(isAvailableAsync === null ? {} : { isAvailableAsync }),
     };
 }
 

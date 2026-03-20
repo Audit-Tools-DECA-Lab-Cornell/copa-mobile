@@ -1,7 +1,10 @@
 import { create } from "zustand";
+import { unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { AuthApiError, loginWithPassword, signupWithPassword } from "lib/auth/api";
 import { clearAuthSession, readAuthSession, saveAuthSession } from "lib/auth/storage";
+import i18n from "lib/i18n";
 import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
+import { usePlayspaceAuditStore } from "stores/audit-store";
 
 /**
  * Auth loading states used by route guards.
@@ -131,6 +134,11 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     },
 
     logout: async () => {
+        const currentSession = get().session;
+        if (currentSession !== null) {
+            await usePlayspaceAuditStore.getState().clearStoredState(currentSession.user.id);
+        }
+        await unregisterAuditBackgroundTaskAsync().catch(() => undefined);
         await clearAuthSession();
         set(() => ({
             session: null,
@@ -175,19 +183,19 @@ function toAuthErrorMessage(error: unknown): string {
         }
 
         if (error.statusCode === 0) {
-            return "Unable to reach the authentication service.";
+            return i18n.t("auth:errors.serviceUnavailable");
         }
 
         if (error.statusCode === 403) {
-            return "This mobile app supports assigned playspace participants. Sign in with your participant account.";
+            return i18n.t("auth:errors.assignedParticipantOnly");
         }
 
-        return "Authentication failed. Please check your details and try again.";
+        return i18n.t("auth:errors.authFailed");
     }
 
     if (error instanceof Error && error.message.trim().length > 0) {
         return error.message;
     }
 
-    return "An unexpected authentication error occurred.";
+    return i18n.t("auth:errors.unexpected");
 }

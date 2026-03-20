@@ -1,65 +1,88 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo } from "react";
 import { ScrollView } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowRight, CircleCheckBig, ClipboardList, Shapes } from "@tamagui/lucide-icons";
+import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { designSystem } from "lib/design-system";
+import { useDesignSystem } from "lib/design-system";
 import { getVisibleSections } from "lib/audit/selectors";
-import type { AssignmentRoles, ExecutionMode } from "lib/audit/types";
+import type { ExecutionMode } from "lib/audit/types";
+import { getAssignmentRolesLabel, getExecutionModeShortLabel } from "lib/i18n/format";
+import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
+import type { TFunction } from "i18next";
 
 /**
  * Place-scoped execute overview with preamble, mode selection, and section routing.
  */
 export default function ExecutePlaceScreen() {
+    const ds = useDesignSystem();
     const router = useRouter();
+    const navigation = useNavigation();
+    const { t } = useTranslation(["audit", "common"]);
+    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{ placeId?: string | string[] }>();
     const authSession = useAuthStore((state) => state.session);
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
+    const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
     const submitAuditSession = usePlayspaceAuditStore((state) => state.submitAuditSession);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const isLoadingAudit = usePlayspaceAuditStore((state) => state.isLoadingAudit);
     const isSavingDraft = usePlayspaceAuditStore((state) => state.isSavingDraft);
+    const isSyncing = usePlayspaceAuditStore((state) => state.isSyncing);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
-    const instrument = usePlayspaceAuditStore((state) => state.instrument);
+    const lastSyncError = usePlayspaceAuditStore((state) => state.lastSyncError);
+    const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
+    const dirtyPreAudit = usePlayspaceAuditStore((state) => state.dirtyPreAudit);
     const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
 
     const placeId = readSingleParam(params.placeId);
     const auditSession = placeId === null ? undefined : sessionsByPlaceId[placeId];
+    const isCurrentAuditUserReady = authSession !== null && currentUserId === authSession.user.id;
 
     useEffect(() => {
-        hydrate().catch(() => undefined);
-    }, [hydrate]);
+        hydrate(authSession?.user.id ?? null).catch(() => undefined);
+    }, [authSession, hydrate]);
 
     useEffect(() => {
-        if (!isHydrated || authSession === null || placeId === null) {
+        if (!isHydrated || !isCurrentAuditUserReady || placeId === null) {
             return;
         }
 
         ensurePlaceAudit(authSession, placeId).catch(() => undefined);
-    }, [authSession, ensurePlaceAudit, isHydrated, placeId]);
+    }, [authSession, ensurePlaceAudit, isCurrentAuditUserReady, isHydrated, placeId]);
 
-    const placeLocality = useMemo(() => {
-        if (auditSession === undefined) {
-            return "";
+    useLayoutEffect(() => {
+        if (auditSession !== undefined) {
+            const mode = getExecutionModeShortLabel(auditSession.selected_execution_mode, t);
+            const suffix = mode.length > 0 ? ` — ${mode}` : "";
+            navigation.setOptions({ title: `${auditSession.place_name}${suffix}` });
         }
-        return auditSession.place_type ?? "Assigned place";
-    }, [auditSession]);
+    }, [navigation, auditSession, t]);
+
+    const placeLocality = getPlaceLocality(auditSession, t);
 
     const visibleSections = useMemo(() => {
-        if (instrument === null || auditSession === undefined) {
+        if (auditSession === undefined) {
             return [];
         }
         return getVisibleSections(instrument, auditSession.selected_execution_mode);
     }, [auditSession, instrument]);
+    const pendingSectionCount =
+        auditSession === undefined
+            ? 0
+            : Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
+    const hasPendingPreAudit =
+        auditSession !== undefined && dirtyPreAudit[auditSession.audit_id] !== undefined;
+    const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
 
     if (placeId === null) {
         return (
             <CenteredMessageCard
-                title="Place Not Found"
-                message="The selected place route is invalid. Return to the Execute tab and choose a place again."
+                title={t("overview.placeNotFoundTitle", { ns: "audit" })}
+                message={t("overview.placeNotFound", { ns: "audit" })}
             />
         );
     }
@@ -67,9 +90,9 @@ export default function ExecutePlaceScreen() {
     if (errorMessage !== null && auditSession === undefined) {
         return (
             <CenteredMessageCard
-                title={errorMessage.includes("403") ? "Access Denied" : "Audit Unavailable"}
+                title={getOverviewErrorTitle(errorMessage, t)}
                 message={errorMessage}
-                actionLabel="Retry"
+                actionLabel={t("actions.retry", { ns: "common" })}
                 onAction={() => {
                     if (authSession === null) {
                         return;
@@ -80,14 +103,14 @@ export default function ExecutePlaceScreen() {
         );
     }
 
-    if (!isHydrated || authSession === null || auditSession === undefined) {
+    if (!isHydrated || !isCurrentAuditUserReady || auditSession === undefined) {
         return (
             <CenteredMessageCard
-                title="Preparing Audit"
+                title={t("overview.preparingAuditTitle", { ns: "audit" })}
                 message={
                     isLoadingAudit
-                        ? "Loading your current draft..."
-                        : "Preparing the playspace audit flow..."
+                        ? t("overview.loadingDraft", { ns: "audit" })
+                        : t("overview.preparingAudit", { ns: "audit" })
                 }
             />
         );
@@ -96,63 +119,69 @@ export default function ExecutePlaceScreen() {
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: designSystem.colors.background }}
+            style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
-                paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
-                paddingTop: designSystem.spacing.screenPaddingVertical,
+                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                paddingTop: ds.spacing.screenPaddingVertical,
                 paddingBottom: 132,
                 gap: 20,
             }}
         >
             <YStack gap="$3">
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.headingBold}
-                    fontSize={designSystem.typography.displayMd.fontSize}
-                    lineHeight={designSystem.typography.displayMd.lineHeight}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.headingBold}
+                    fontSize={ds.typography.displayMd.fontSize}
+                    lineHeight={ds.typography.displayMd.lineHeight}
                 >
                     {auditSession.place_name}
                 </Text>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyLg.fontSize}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
                     textTransform="capitalize"
                 >
                     {placeLocality}
                 </Paragraph>
             </YStack>
 
+            <AuditSyncStatusCard
+                hasPendingLocalChanges={hasPendingLocalChanges}
+                isSyncing={isSyncing}
+                lastSyncError={lastSyncError}
+            />
+
             <YStack
-                rounded={designSystem.radii.lg}
+                rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={designSystem.colors.border}
-                bg={designSystem.colors.surface}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
                 p="$4"
                 gap="$3"
                 style={{
-                    boxShadow: designSystem.shadows.card,
+                    boxShadow: ds.shadows.card,
                 }}
             >
                 <XStack items="center" gap="$2">
-                    <Shapes size={16} color={designSystem.colors.primary} />
+                    <Shapes size={16} color={ds.colors.primary} />
                     <Text
-                        color={designSystem.colors.primary}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.labelMd.fontSize}
+                        color={ds.colors.primary}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelMd.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.2}
                     >
-                        Preamble
+                        {t("overview.preamble", { ns: "audit" })}
                     </Text>
                 </XStack>
                 {instrument.preamble.map((paragraph) => {
                     return (
                         <Paragraph
                             key={paragraph}
-                            color={designSystem.colors.secondaryForeground}
-                            fontFamily={designSystem.fonts.bodyMedium}
-                            fontSize={designSystem.typography.bodyMd.fontSize}
+                            color={ds.colors.secondaryForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyMd.fontSize}
                         >
                             {paragraph}
                         </Paragraph>
@@ -161,53 +190,53 @@ export default function ExecutePlaceScreen() {
             </YStack>
 
             <YStack
-                rounded={designSystem.radii.lg}
+                rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={designSystem.colors.border}
-                bg={designSystem.colors.surface}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
                 p="$4"
                 gap="$3"
                 style={{
-                    boxShadow: designSystem.shadows.card,
+                    boxShadow: ds.shadows.card,
                 }}
             >
                 <XStack items="center" gap="$2">
-                    <ClipboardList size={16} color={designSystem.colors.primary} />
+                    <ClipboardList size={16} color={ds.colors.primary} />
                     <Text
-                        color={designSystem.colors.primary}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.labelMd.fontSize}
+                        color={ds.colors.primary}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelMd.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.2}
                     >
-                        Audit Role
+                        {t("overview.auditRole", { ns: "audit" })}
                     </Text>
                 </XStack>
                 <Paragraph
-                    color={designSystem.colors.secondaryForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyMd.fontSize}
-                    lineHeight={designSystem.typography.bodyMd.lineHeight}
+                    color={ds.colors.secondaryForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                    lineHeight={ds.typography.bodyMd.lineHeight}
                 >
-                    This place assignment currently allows:{" "}
+                    {`${t("overview.assignmentAllows", { ns: "audit" })} `}
                     <Text
-                        color={designSystem.colors.foreground}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.bodyMd.fontSize}
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.bodyMd.fontSize}
                     >
-                        {formatAssignmentRoles(auditSession.assignment_roles)}
+                        {getAssignmentRolesLabel(auditSession.assignment_roles, t)}
                     </Text>
                 </Paragraph>
 
                 {auditSession.allowed_execution_modes.length > 1 ? (
                     <YStack gap="$2.5">
                         <Paragraph
-                            color={designSystem.colors.mutedForeground}
-                            fontFamily={designSystem.fonts.bodyMedium}
-                            fontSize={designSystem.typography.bodyMd.fontSize}
-                            lineHeight={designSystem.typography.bodyMd.lineHeight}
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyMd.fontSize}
+                            lineHeight={ds.typography.bodyMd.lineHeight}
                         >
-                            Choose what part of the tool you will complete for this place.
+                            {t("overview.chooseMode", { ns: "audit" })}
                         </Paragraph>
                         {instrument.execution_modes
                             .filter((option) => {
@@ -222,19 +251,15 @@ export default function ExecutePlaceScreen() {
                                 return (
                                     <Button
                                         key={option.key}
-                                        height={56}
-                                        rounded={designSystem.radii.md}
+                                        height="$space.15"
+                                        rounded={ds.radii.md}
                                         borderWidth={1}
+                                        flex={1}
+                                        justify="flex-start"
                                         borderColor={
-                                            isSelected
-                                                ? designSystem.colors.primary
-                                                : designSystem.colors.border
+                                            isSelected ? ds.colors.primary : ds.colors.border
                                         }
-                                        bg={
-                                            isSelected
-                                                ? designSystem.colors.primarySoft
-                                                : designSystem.colors.input
-                                        }
+                                        bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
                                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                         onPress={() => {
                                             if (authSession === null) {
@@ -247,25 +272,23 @@ export default function ExecutePlaceScreen() {
                                             ).catch(() => {});
                                         }}
                                     >
-                                        <YStack gap="$1" items="flex-start">
+                                        <YStack gap="$2" items="flex-start">
                                             <Text
                                                 color={
                                                     isSelected
-                                                        ? designSystem.colors.primary
-                                                        : designSystem.colors.foreground
+                                                        ? ds.colors.primary
+                                                        : ds.colors.foreground
                                                 }
-                                                fontFamily={designSystem.fonts.bodyBold}
-                                                fontSize={designSystem.typography.bodyMd.fontSize}
+                                                fontFamily={ds.fonts.bodyBold}
+                                                fontSize={ds.typography.bodyMd.fontSize}
                                             >
                                                 {option.label}
                                             </Text>
                                             {option.description ? (
                                                 <Paragraph
-                                                    color={designSystem.colors.mutedForeground}
-                                                    fontFamily={designSystem.fonts.bodyMedium}
-                                                    fontSize={
-                                                        designSystem.typography.bodySm.fontSize
-                                                    }
+                                                    color={ds.colors.mutedForeground}
+                                                    fontFamily={ds.fonts.bodyMedium}
+                                                    fontSize={ds.typography.bodySm.fontSize}
                                                 >
                                                     {option.description}
                                                 </Paragraph>
@@ -277,64 +300,65 @@ export default function ExecutePlaceScreen() {
                     </YStack>
                 ) : (
                     <Paragraph
-                        color={designSystem.colors.secondaryForeground}
-                        fontFamily={designSystem.fonts.bodyMedium}
-                        fontSize={designSystem.typography.bodyMd.fontSize}
-                        lineHeight={designSystem.typography.bodyMd.lineHeight}
+                        color={ds.colors.secondaryForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyMd.fontSize}
+                        lineHeight={ds.typography.bodyMd.lineHeight}
                     >
-                        Your role already fixes the visible subset of questions for this place.
+                        {t("overview.roleFixesSubset", { ns: "audit" })}
                     </Paragraph>
                 )}
             </YStack>
 
             <YStack
-                rounded={designSystem.radii.lg}
+                rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={designSystem.colors.border}
-                bg={designSystem.colors.surface}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
                 p="$4"
                 gap="$3"
                 style={{
-                    boxShadow: designSystem.shadows.card,
+                    boxShadow: ds.shadows.card,
                 }}
             >
                 <XStack items="center" justify="space-between">
                     <Text
-                        color={designSystem.colors.foreground}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.titleMd.fontSize}
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.titleMd.fontSize}
                     >
-                        Pre-Audit Setup
+                        {t("preAudit.title", { ns: "audit" })}
                     </Text>
                     <Text
                         color={
                             auditSession.progress.required_pre_audit_complete
-                                ? designSystem.colors.success
-                                : designSystem.colors.warning
+                                ? ds.colors.success
+                                : ds.colors.warning
                         }
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.labelMd.fontSize}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelMd.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.1}
                     >
-                        {auditSession.progress.required_pre_audit_complete ? "Complete" : "Needed"}
+                        {auditSession.progress.required_pre_audit_complete
+                            ? t("preAudit.complete", { ns: "audit" })
+                            : t("preAudit.needed", { ns: "audit" })}
                     </Text>
                 </XStack>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyMd.fontSize}
-                    lineHeight={designSystem.typography.bodyMd.lineHeight}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                    lineHeight={ds.typography.bodyMd.lineHeight}
                 >
-                    Capture season, weather, users present, user count, age groups, and place size
-                    before section scoring.
+                    {t("preAudit.description", { ns: "audit" })}
                 </Paragraph>
                 <Button
                     height={48}
-                    rounded={designSystem.radii.md}
+                    rounded={ds.radii.md}
                     borderWidth={1}
-                    borderColor={designSystem.colors.border}
-                    bg={designSystem.colors.input}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.input}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
                         router.push(`/(tabs)/execute/${placeId}/pre-audit`);
@@ -342,15 +366,15 @@ export default function ExecutePlaceScreen() {
                 >
                     <XStack items="center" gap="$2">
                         <Text
-                            color={designSystem.colors.foreground}
-                            fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={designSystem.typography.labelLg.fontSize}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelLg.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
-                            Open pre-audit page
+                            {t("preAudit.openPage", { ns: "audit" })}
                         </Text>
-                        <ArrowRight size={16} color={designSystem.colors.foreground} />
+                        <ArrowRight size={16} color={ds.colors.foreground} />
                     </XStack>
                 </Button>
             </YStack>
@@ -365,54 +389,49 @@ export default function ExecutePlaceScreen() {
                     return (
                         <YStack
                             key={section.section_key}
-                            rounded={designSystem.radii.lg}
+                            rounded={ds.radii.lg}
                             borderWidth={1}
-                            borderColor={designSystem.colors.border}
-                            bg={designSystem.colors.surface}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
                             p="$4"
                             gap="$3"
                             style={{
-                                boxShadow: designSystem.shadows.card,
+                                boxShadow: ds.shadows.card,
                             }}
                         >
                             <XStack justify="space-between" items="flex-start" gap="$3">
                                 <YStack flex={1} gap="$1.5">
                                     <Text
-                                        color={designSystem.colors.foreground}
-                                        fontFamily={designSystem.fonts.bodyBold}
-                                        fontSize={designSystem.typography.titleMd.fontSize}
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.titleMd.fontSize}
                                     >
                                         {section.title}
                                     </Text>
                                     <Paragraph
-                                        color={designSystem.colors.mutedForeground}
-                                        fontFamily={designSystem.fonts.bodyMedium}
-                                        fontSize={designSystem.typography.bodySm.fontSize}
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodySm.fontSize}
                                     >
-                                        {progress?.answered_question_count ?? 0} /{" "}
-                                        {progress?.visible_question_count ??
-                                            section.questions.length}{" "}
-                                        answered
+                                        {t("section.answeredCount", {
+                                            ns: "audit",
+                                            answered: progress?.answered_question_count ?? 0,
+                                            total:
+                                                progress?.visible_question_count ??
+                                                section.questions.length,
+                                        })}
                                     </Paragraph>
                                 </YStack>
                                 {isComplete ? (
-                                    <CircleCheckBig size={18} color={designSystem.colors.success} />
+                                    <CircleCheckBig size={18} color={ds.colors.success} />
                                 ) : null}
                             </XStack>
                             <Button
                                 height={46}
-                                rounded={designSystem.radii.md}
+                                rounded={ds.radii.md}
                                 borderWidth={1}
-                                borderColor={
-                                    isComplete
-                                        ? designSystem.colors.success
-                                        : designSystem.colors.border
-                                }
-                                bg={
-                                    isComplete
-                                        ? designSystem.colors.successSoft
-                                        : designSystem.colors.input
-                                }
+                                borderColor={isComplete ? ds.colors.success : ds.colors.border}
+                                bg={isComplete ? ds.colors.successSoft : ds.colors.input}
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {
                                     router.push(
@@ -421,17 +440,15 @@ export default function ExecutePlaceScreen() {
                                 }}
                             >
                                 <Text
-                                    color={
-                                        isComplete
-                                            ? designSystem.colors.success
-                                            : designSystem.colors.foreground
-                                    }
-                                    fontFamily={designSystem.fonts.bodyBold}
-                                    fontSize={designSystem.typography.labelLg.fontSize}
+                                    color={isComplete ? ds.colors.success : ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelLg.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.2}
                                 >
-                                    {isComplete ? "Review section" : "Open section"}
+                                    {isComplete
+                                        ? t("section.reviewSection", { ns: "audit" })
+                                        : t("section.openSection", { ns: "audit" })}
                                 </Text>
                             </Button>
                         </YStack>
@@ -442,11 +459,11 @@ export default function ExecutePlaceScreen() {
             {auditSession.progress.ready_to_submit ? (
                 <Button
                     height={52}
-                    rounded={designSystem.radii.md}
+                    rounded={ds.radii.md}
                     borderWidth={0}
-                    bg={designSystem.colors.primary}
-                    disabled={isSavingDraft}
-                    opacity={isSavingDraft ? 0.7 : 1}
+                    bg={ds.colors.primary}
+                    disabled={isSavingDraft || isSyncing}
+                    opacity={isSavingDraft || isSyncing ? 0.7 : 1}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
                         if (authSession === null) {
@@ -458,26 +475,97 @@ export default function ExecutePlaceScreen() {
                     }}
                 >
                     <Text
-                        color={designSystem.colors.primaryForeground}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.labelLg.fontSize}
+                        color={ds.colors.primaryForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelLg.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.2}
                     >
-                        Submit audit
+                        {t("submit", { ns: "audit" })}
                     </Text>
                 </Button>
             ) : null}
 
             {errorMessage === null ? null : (
-                <Paragraph
-                    color={designSystem.colors.warning}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                >
+                <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
                     {errorMessage}
                 </Paragraph>
             )}
         </ScrollView>
+    );
+}
+
+interface AuditSyncStatusCardProps {
+    readonly hasPendingLocalChanges: boolean;
+    readonly isSyncing: boolean;
+    readonly lastSyncError: string | null;
+}
+
+/**
+ * Compact sync-state card so auditors can tell whether their draft is queued,
+ * uploading, or blocked on-device.
+ *
+ * @param props Sync-state presentation props.
+ * @returns Status card or null when there is nothing noteworthy to show.
+ */
+function AuditSyncStatusCard({
+    hasPendingLocalChanges,
+    isSyncing,
+    lastSyncError,
+}: Readonly<AuditSyncStatusCardProps>) {
+    const ds = useDesignSystem();
+    const { t } = useTranslation("audit");
+    const hasSyncFailure = lastSyncError !== null;
+    const shouldShowCard = hasPendingLocalChanges || hasSyncFailure;
+
+    if (!shouldShowCard) {
+        return null;
+    }
+
+    const tone = isSyncing
+        ? ds.colors.primary
+        : hasSyncFailure
+          ? ds.colors.warning
+          : ds.colors.mutedForeground;
+    const title = isSyncing
+        ? t("overview.syncStatus.syncingTitle")
+        : hasSyncFailure
+          ? t("overview.syncStatus.retryTitle")
+          : t("overview.syncStatus.pendingTitle");
+    const message = isSyncing
+        ? t("overview.syncStatus.syncingMessage")
+        : hasSyncFailure
+          ? (lastSyncError ?? "")
+          : t("overview.syncStatus.pendingMessage");
+
+    return (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={tone}
+            bg={ds.colors.surface}
+            p="$4"
+            gap="$2"
+            style={{ boxShadow: ds.shadows.card }}
+        >
+            <Text
+                color={tone}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelMd.fontSize}
+                textTransform="uppercase"
+                letterSpacing={1.1}
+            >
+                {title}
+            </Text>
+            <Paragraph
+                color={ds.colors.secondaryForeground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodyMd.fontSize}
+                lineHeight={ds.typography.bodyMd.lineHeight}
+            >
+                {message}
+            </Paragraph>
+        </YStack>
     );
 }
 
@@ -500,49 +588,47 @@ function CenteredMessageCard({
     actionLabel,
     onAction,
 }: Readonly<CenteredMessageCardProps>) {
+    const ds = useDesignSystem();
     return (
         <YStack
             flex={1}
             justify="center"
-            px={designSystem.spacing.screenPaddingHorizontal}
-            bg={designSystem.colors.background}
+            px={ds.spacing.screenPaddingHorizontal}
+            bg={ds.colors.background}
         >
             <YStack
-                rounded={designSystem.radii.lg}
+                rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={designSystem.colors.border}
-                bg={designSystem.colors.surface}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
                 p="$4"
                 gap="$2"
             >
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={designSystem.typography.titleLg.fontSize}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleLg.fontSize}
                 >
                     {title}
                 </Text>
-                <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                >
+                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                     {message}
                 </Paragraph>
                 {actionLabel !== undefined && typeof onAction === "function" ? (
                     <Button
                         mt="$2"
                         height={44}
-                        rounded={designSystem.radii.md}
+                        rounded={ds.radii.md}
                         borderWidth={1}
-                        borderColor={designSystem.colors.border}
-                        bg={designSystem.colors.input}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.input}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={onAction}
                     >
                         <Text
-                            color={designSystem.colors.foreground}
-                            fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={designSystem.typography.labelMd.fontSize}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.1}
                         >
@@ -572,20 +658,31 @@ function readSingleParam(value: string | string[] | undefined): string | null {
 }
 
 /**
- * Format a backend assignment role into user-facing copy.
+ * Resolve the correct overview error card title from the current error payload.
  *
- * @param roles Assignment capabilities from the audit session.
- * @returns Human-readable role label.
+ * @param errorMessage Error message shown to the user.
+ * @param t Translation function.
+ * @returns Localized error title for the overview screen.
  */
-function formatAssignmentRoles(roles: AssignmentRoles): string {
-    const hasAuditor = roles.includes("auditor");
-    const hasPlaceAdmin = roles.includes("place_admin");
+export function getOverviewErrorTitle(errorMessage: string, t: TFunction): string {
+    return errorMessage.includes("403")
+        ? t("overview.accessDeniedTitle", { ns: "audit" })
+        : t("overview.auditUnavailableTitle", { ns: "audit" });
+}
 
-    if (hasAuditor && hasPlaceAdmin) {
-        return "Auditor and Place Admin";
+/**
+ * Resolve place locality copy for the overview header.
+ *
+ * @param auditSession Loaded audit session for the active place.
+ * @param t Translation function.
+ * @returns Place type label or fallback copy.
+ */
+export function getPlaceLocality(
+    auditSession: { readonly place_type?: string | null } | undefined,
+    t: TFunction,
+): string {
+    if (auditSession === undefined) {
+        return "";
     }
-    if (hasPlaceAdmin) {
-        return "Place Admin";
-    }
-    return "Auditor";
+    return auditSession.place_type ?? t("place.assignedPlace", { ns: "common" });
 }

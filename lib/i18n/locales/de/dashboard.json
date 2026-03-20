@@ -1,0 +1,16 @@
+{
+    "activeAuditor": "Aktive Pruefperson",
+    "activeWork": "Aktive Audits",
+    "connectivityStatus": "Verbindungsstatus",
+    "dueToday": "Heute faellig",
+    "fieldPriorities": "Feldprioritaeten",
+    "loadingPlaces": "Ihre Orte werden geladen...",
+    "mandatoryCompletion": "Pflichtfortschritt",
+    "offlineReadyDescription": "Zugewiesene Auditdaten sind lokal gespeichert und fuer den Feldeinsatz bereit.",
+    "offlineReadyTitle": "Offline bereit",
+    "priorityProgress": "{{percent}}% Fortschritt - {{code}}",
+    "priorityTask": "Prioritaetsaufgabe",
+    "readinessLabel": "{{percent}}% bereit",
+    "title": "Felduebersicht",
+    "urgentAudit": "Dringendes Audit"
+}

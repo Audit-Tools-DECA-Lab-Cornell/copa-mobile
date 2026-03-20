@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ScrollView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { designSystem } from "lib/design-system";
+import { useDesignSystem } from "lib/design-system";
 import { getPreAuditValues } from "lib/audit/selectors";
 import type { PreAuditQuestion } from "lib/audit/types";
+import { formatLocalizedDate, formatLocalizedTime } from "lib/i18n/format";
+import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -13,17 +17,20 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
  *
  * Form values are kept in local state for responsive interactions and flushed
  * to the Zustand store (and then to disk) on each selection change, on blur,
- * and on component unmount.  The background sync timer pushes dirty pre-audit
+ * and on component unmount. Event-driven sync then pushes dirty pre-audit
  * data to the API when connectivity is available.
  */
 export default function PreAuditScreen() {
+    const ds = useDesignSystem();
     const router = useRouter();
+    const { t, i18n } = useTranslation(["audit", "common"]);
+    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{ placeId?: string | string[] }>();
     const authSession = useAuthStore((state) => state.session);
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
+    const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
     const applyLocalPreAudit = usePlayspaceAuditStore((state) => state.applyLocalPreAudit);
-    const instrument = usePlayspaceAuditStore((state) => state.instrument);
     const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
@@ -36,18 +43,34 @@ export default function PreAuditScreen() {
     const formInitializedRef = useRef(false);
 
     useEffect(() => {
-        void hydrate();
-    }, [hydrate]);
+        hydrate(authSession?.user.id ?? null).catch(() => undefined);
+    }, [authSession, hydrate]);
 
     useEffect(() => {
-        if (!isHydrated || authSession === null || placeId === null) {
+        if (
+            !isHydrated ||
+            authSession === null ||
+            currentUserId !== authSession.user.id ||
+            placeId === null
+        ) {
             return;
         }
-        void ensurePlaceAudit(authSession, placeId).catch(() => {});
-    }, [authSession, ensurePlaceAudit, isHydrated, placeId]);
+        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
+    }, [authSession, currentUserId, ensurePlaceAudit, isHydrated, placeId]);
 
     useEffect(() => {
-        if (formInitializedRef.current || auditSession === undefined) {
+        formInitializedRef.current = false;
+    }, [auditSession?.audit_id]);
+
+    useEffect(() => {
+        if (auditSession === undefined) {
+            formInitializedRef.current = false;
+            formValuesRef.current = {};
+            setFormValues({});
+            return;
+        }
+
+        if (formInitializedRef.current) {
             return;
         }
         const stored = getPreAuditValues(auditSession);
@@ -93,17 +116,21 @@ export default function PreAuditScreen() {
     if (
         placeId === null ||
         authSession === null ||
-        instrument === null ||
+        currentUserId !== authSession.user.id ||
         auditSession === undefined
     ) {
         if (placeId !== null && authSession !== null && errorMessage !== null) {
             return (
                 <CenteredMessageCard
-                    title={errorMessage.includes("403") ? "Access Denied" : "Pre-Audit Unavailable"}
+                    title={
+                        errorMessage.includes("403")
+                            ? t("overview.accessDeniedTitle", { ns: "audit" })
+                            : t("preAudit.unavailableTitle", { ns: "audit" })
+                    }
                     message={errorMessage}
-                    actionLabel="Retry"
+                    actionLabel={t("actions.retry", { ns: "common" })}
                     onAction={() => {
-                        void ensurePlaceAudit(authSession, placeId).catch(() => {});
+                        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
                     }}
                 />
             );
@@ -111,8 +138,8 @@ export default function PreAuditScreen() {
 
         return (
             <CenteredMessageCard
-                title="Preparing Pre-Audit"
-                message="Loading the pre-audit questions and any saved draft values..."
+                title={t("preAudit.preparingTitle", { ns: "audit" })}
+                message={t("preAudit.preparingMessage", { ns: "audit" })}
             />
         );
     }
@@ -120,30 +147,29 @@ export default function PreAuditScreen() {
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: designSystem.colors.background }}
+            style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
-                paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
-                paddingTop: designSystem.spacing.screenPaddingVertical,
+                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                paddingTop: ds.spacing.screenPaddingVertical,
                 paddingBottom: 132,
                 gap: 20,
             }}
         >
             <YStack gap="$3">
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.headingBold}
-                    fontSize={designSystem.typography.displayMd.fontSize}
-                    lineHeight={designSystem.typography.displayMd.lineHeight}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.headingBold}
+                    fontSize={ds.typography.displayMd.fontSize}
+                    lineHeight={ds.typography.displayMd.lineHeight}
                 >
-                    Pre-Audit Setup
+                    {t("preAudit.title", { ns: "audit" })}
                 </Text>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyLg.fontSize}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
                 >
-                    Complete the first-page context questions before moving through the section
-                    pages.
+                    {t("preAudit.subtitle", { ns: "audit" })}
                 </Paragraph>
             </YStack>
 
@@ -155,6 +181,7 @@ export default function PreAuditScreen() {
                                 key={question.key}
                                 question={question}
                                 auditSession={auditSession}
+                                language={i18n.language}
                             />
                         );
                     }
@@ -184,33 +211,30 @@ export default function PreAuditScreen() {
             </YStack>
 
             {errorMessage === null ? null : (
-                <Paragraph
-                    color={designSystem.colors.warning}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                >
+                <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
                     {errorMessage}
                 </Paragraph>
             )}
 
             <Button
                 height={52}
-                rounded={designSystem.radii.md}
+                rounded={ds.radii.md}
                 borderWidth={0}
-                bg={designSystem.colors.primary}
+                bg={ds.colors.primary}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
                     flushToStore();
-                    router.replace(`/(tabs)/execute/${placeId}`);
+                    router.back();
                 }}
             >
                 <Text
-                    color={designSystem.colors.primaryForeground}
-                    fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={designSystem.typography.labelLg.fontSize}
+                    color={ds.colors.primaryForeground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelLg.fontSize}
                     textTransform="uppercase"
                     letterSpacing={1.2}
                 >
-                    Save pre-audit and continue
+                    {t("preAudit.saveAndContinue", { ns: "audit" })}
                 </Text>
             </Button>
         </ScrollView>
@@ -224,21 +248,24 @@ interface AutoFieldCardProps {
         readonly submitted_at: string | null;
         readonly total_minutes: number | null;
     };
+    readonly language: string;
 }
 
 /**
  * @param props Auto-field props.
  * @returns Read-only timestamp card.
  */
-function AutoFieldCard({ question, auditSession }: Readonly<AutoFieldCardProps>) {
+function AutoFieldCard({ question, auditSession, language }: Readonly<AutoFieldCardProps>) {
+    const ds = useDesignSystem();
+    const { t } = useTranslation("audit");
     return (
         <FieldCard title={question.label} description={question.description ?? null}>
             <Text
-                color={designSystem.colors.foreground}
-                fontFamily={designSystem.fonts.bodyBold}
-                fontSize={designSystem.typography.bodyLg.fontSize}
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.bodyLg.fontSize}
             >
-                {formatAutoValue(question.key, auditSession)}
+                {formatAutoValue(question.key, auditSession, language, t)}
             </Text>
         </FieldCard>
     );
@@ -261,6 +288,7 @@ function ChoiceFieldCard({
     onSingleSelect,
     onToggleSelect,
 }: Readonly<ChoiceFieldCardProps>) {
+    const ds = useDesignSystem();
     const selectedValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
 
     return (
@@ -274,18 +302,10 @@ function ChoiceFieldCard({
                             key={`${question.key}.${option.key}`}
                             width="48.5%"
                             height={42}
-                            rounded={designSystem.radii.md}
+                            rounded={ds.radii.md}
                             borderWidth={1}
-                            borderColor={
-                                isSelected
-                                    ? designSystem.colors.primary
-                                    : designSystem.colors.border
-                            }
-                            bg={
-                                isSelected
-                                    ? designSystem.colors.primarySoft
-                                    : designSystem.colors.input
-                            }
+                            borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                            bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
                                 if (question.input_type === "single_select") {
@@ -296,17 +316,9 @@ function ChoiceFieldCard({
                             }}
                         >
                             <Text
-                                color={
-                                    isSelected
-                                        ? designSystem.colors.primary
-                                        : designSystem.colors.foreground
-                                }
-                                fontFamily={
-                                    isSelected
-                                        ? designSystem.fonts.bodyBold
-                                        : designSystem.fonts.bodyMedium
-                                }
-                                fontSize={designSystem.typography.bodySm.fontSize}
+                                color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
                             >
@@ -331,29 +343,30 @@ interface FieldCardProps {
  * @returns Framed field card.
  */
 function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
+    const ds = useDesignSystem();
     return (
         <YStack
-            rounded={designSystem.radii.lg}
+            rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={designSystem.colors.border}
-            bg={designSystem.colors.surface}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
             p="$4"
             gap="$3"
-            style={{ boxShadow: designSystem.shadows.card }}
+            style={{ boxShadow: ds.shadows.card }}
         >
             <YStack gap="$1">
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={designSystem.typography.titleMd.fontSize}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
                 >
                     {title}
                 </Text>
                 {description === null ? null : (
                     <Paragraph
-                        color={designSystem.colors.mutedForeground}
-                        fontFamily={designSystem.fonts.bodyMedium}
-                        fontSize={designSystem.typography.bodySm.fontSize}
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
                     >
                         {description}
                     </Paragraph>
@@ -381,49 +394,47 @@ function CenteredMessageCard({
     actionLabel,
     onAction,
 }: Readonly<CenteredMessageCardProps>) {
+    const ds = useDesignSystem();
     return (
         <YStack
             flex={1}
             justify="center"
-            px={designSystem.spacing.screenPaddingHorizontal}
-            bg={designSystem.colors.background}
+            px={ds.spacing.screenPaddingHorizontal}
+            bg={ds.colors.background}
         >
             <YStack
-                rounded={designSystem.radii.lg}
+                rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={designSystem.colors.border}
-                bg={designSystem.colors.surface}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
                 p="$4"
                 gap="$2"
             >
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={designSystem.typography.titleLg.fontSize}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleLg.fontSize}
                 >
                     {title}
                 </Text>
-                <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                >
+                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                     {message}
                 </Paragraph>
                 {actionLabel !== undefined && typeof onAction === "function" ? (
                     <Button
                         mt="$2"
                         height={44}
-                        rounded={designSystem.radii.md}
+                        rounded={ds.radii.md}
                         borderWidth={1}
-                        borderColor={designSystem.colors.border}
-                        bg={designSystem.colors.input}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.input}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={onAction}
                     >
                         <Text
-                            color={designSystem.colors.foreground}
-                            fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={designSystem.typography.labelMd.fontSize}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.1}
                         >
@@ -462,22 +473,24 @@ function formatAutoValue(
         readonly submitted_at: string | null;
         readonly total_minutes: number | null;
     },
+    language: string,
+    t: TFunction<"audit">,
 ): string {
     if (questionKey === "audit_date") {
-        return new Date(auditSession.started_at).toLocaleDateString();
+        return formatLocalizedDate(auditSession.started_at, language);
     }
     if (questionKey === "started_at") {
-        return new Date(auditSession.started_at).toLocaleTimeString();
+        return formatLocalizedTime(auditSession.started_at, language);
     }
     if (questionKey === "submitted_at") {
         return auditSession.submitted_at === null
-            ? "Generated on final submit"
-            : new Date(auditSession.submitted_at).toLocaleTimeString();
+            ? t("autoValues.generatedOnSubmit")
+            : formatLocalizedTime(auditSession.submitted_at, language);
     }
     if (questionKey === "total_minutes") {
         return auditSession.total_minutes === null
-            ? "Calculated on final submit"
-            : `${auditSession.total_minutes} minutes`;
+            ? t("autoValues.calculatedOnSubmit")
+            : t("autoValues.minutes", { count: auditSession.total_minutes });
     }
     return "";
 }

@@ -2,8 +2,10 @@ import { useEffect, useMemo } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Clock3, LocateFixed, MapPin } from "@tamagui/lucide-icons";
+import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { designSystem, getPlaceStatusTone, type DesignTone } from "lib/design-system";
+import { useDesignSystem, getPlaceStatusTone, type DesignTone } from "lib/design-system";
+import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -12,15 +14,6 @@ import { usePlacesStore } from "stores/places-store";
  * UI status derived from the backend `audit_status` value.
  */
 type DerivedPlaceStatus = "not_started" | "in_progress" | "submitted";
-
-/**
- * Labels displayed inside status pills.
- */
-const PLACE_STATUS_LABELS: Record<DerivedPlaceStatus, string> = {
-    not_started: "Not Started",
-    in_progress: "In Progress",
-    submitted: "Submitted",
-};
 
 /**
  * Map the backend `audit_status` to a local UI status string.
@@ -39,52 +32,15 @@ function derivePlaceStatus(auditStatus: AuditorPlace["audit_status"]): DerivedPl
 }
 
 /**
- * Build a human-readable relative-time label from ISO timestamps.
- *
- * @param startedAt  ISO date string for when the audit was started.
- * @param submittedAt ISO date string for when the audit was submitted.
- * @returns Short relative-time string such as "2 days ago" or "Not started".
- */
-function deriveUpdatedAtLabel(startedAt: string | null, submittedAt: string | null): string {
-    const iso = submittedAt ?? startedAt;
-    if (iso === null) {
-        return "Not started";
-    }
-
-    const diffMs = Date.now() - new Date(iso).getTime();
-    if (diffMs < 0) {
-        return "Just now";
-    }
-
-    const minutes = Math.floor(diffMs / 60_000);
-    if (minutes < 1) {
-        return "Just now";
-    }
-    if (minutes < 60) {
-        return `${minutes}m ago`;
-    }
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) {
-        return `${hours}h ago`;
-    }
-
-    const days = Math.floor(hours / 24);
-    if (days === 1) {
-        return "1 day ago";
-    }
-    return `${days} days ago`;
-}
-
-/**
  * Build a locality string from city, province, and country fields.
  *
  * @param place Auditor place record.
+ * @param fallbackLabel Fallback label when no locality is available.
  * @returns Comma-separated locality or fallback text.
  */
-function deriveLocality(place: AuditorPlace): string {
+function deriveLocality(place: AuditorPlace, fallbackLabel: string): string {
     const parts = [place.city, place.province, place.country].filter(Boolean);
-    return parts.length > 0 ? parts.join(", ") : "Assigned place";
+    return parts.length > 0 ? parts.join(", ") : fallbackLabel;
 }
 
 /**
@@ -93,7 +49,9 @@ function deriveLocality(place: AuditorPlace): string {
  * with status pills, progress bars, and score tiles.
  */
 export default function PlacesScreen() {
+    const ds = useDesignSystem();
     const router = useRouter();
+    const { t, i18n } = useTranslation(["places", "common"]);
     const session = useAuthStore((state) => state.session);
     const places = usePlacesStore((state) => state.places);
     const isLoading = usePlacesStore((state) => state.isLoading);
@@ -122,14 +80,14 @@ export default function PlacesScreen() {
 
     if (isLoading && places.length === 0) {
         return (
-            <YStack flex={1} items="center" justify="center" bg={designSystem.colors.background}>
-                <ActivityIndicator size="large" color={designSystem.colors.primary} />
+            <YStack flex={1} items="center" justify="center" bg={ds.colors.background}>
+                <ActivityIndicator size="large" color={ds.colors.primary} />
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
                     mt="$4"
                 >
-                    Loading your places…
+                    {t("loadingPlaces", { ns: "places" })}
                 </Paragraph>
             </YStack>
         );
@@ -138,10 +96,10 @@ export default function PlacesScreen() {
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: designSystem.colors.background }}
+            style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
-                paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
-                paddingTop: designSystem.spacing.screenPaddingVertical,
+                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                paddingTop: ds.spacing.screenPaddingVertical,
                 paddingBottom: 92,
                 gap: 24,
             }}
@@ -149,40 +107,40 @@ export default function PlacesScreen() {
             <YStack gap="$4">
                 <YStack gap="$1.5">
                     <Text
-                        color={designSystem.colors.foreground}
-                        fontFamily={designSystem.fonts.headingBold}
-                        fontSize={designSystem.typography.displayMd.fontSize}
-                        lineHeight={designSystem.typography.displayMd.lineHeight}
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={ds.typography.displayMd.fontSize}
+                        lineHeight={ds.typography.displayMd.lineHeight}
                         letterSpacing={-0.7}
                     >
-                        Assigned Places
+                        {t("title", { ns: "places" })}
                     </Text>
-                    <Paragraph
-                        color={designSystem.colors.mutedForeground}
-                        fontFamily={designSystem.fonts.bodyMedium}
-                    >
-                        Review your field queue, monitor progress, and jump back into active audits.
+                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
+                        {t("subtitle", { ns: "places" })}
                     </Paragraph>
                 </YStack>
 
                 <XStack gap="$3">
-                    <SummaryTile label="In progress" value={placeStatusCounts.in_progress} />
                     <SummaryTile
-                        label="Not started"
+                        label={t("status.inProgress", { ns: "common" })}
+                        value={placeStatusCounts.in_progress}
+                    />
+                    <SummaryTile
+                        label={t("status.notStarted", { ns: "common" })}
                         value={placeStatusCounts.not_started}
                         tone={{
-                            accent: designSystem.colors.warning,
-                            surface: designSystem.colors.warningSoft,
-                            text: designSystem.colors.warning,
+                            accent: ds.colors.warning,
+                            surface: ds.colors.warningSoft,
+                            text: ds.colors.warning,
                         }}
                     />
                     <SummaryTile
-                        label="Submitted"
+                        label={t("status.submitted", { ns: "common" })}
                         value={placeStatusCounts.submitted}
                         tone={{
-                            accent: designSystem.colors.success,
-                            surface: designSystem.colors.successSoft,
-                            text: designSystem.colors.success,
+                            accent: ds.colors.success,
+                            surface: ds.colors.successSoft,
+                            text: ds.colors.success,
                         }}
                     />
                 </XStack>
@@ -191,23 +149,31 @@ export default function PlacesScreen() {
             <YStack gap="$3">
                 {places.map((place) => {
                     const status = derivePlaceStatus(place.audit_status);
-                    const placeTone = getPlaceStatusTone(status);
-                    const locality = deriveLocality(place);
+                    const placeTone = getPlaceStatusTone(status, ds.colors);
+                    const locality = deriveLocality(
+                        place,
+                        t("place.assignedPlace", { ns: "common" }),
+                    );
                     const auditScoreLabel =
                         place.summary_score === null ? "--" : `${place.summary_score}%`;
                     const progressPercent = place.progress_percent ?? 0;
-                    const updatedLabel = deriveUpdatedAtLabel(place.started_at, place.submitted_at);
+                    const updatedLabel = formatRelativeTimeLabel(
+                        place.started_at,
+                        place.submitted_at,
+                        i18n.language,
+                        t,
+                    );
 
                     return (
                         <YStack
                             key={place.place_id}
-                            rounded={designSystem.radii.lg}
+                            rounded={ds.radii.lg}
                             borderWidth={1}
-                            borderColor={designSystem.colors.border}
-                            bg={designSystem.colors.surface}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
                             overflow="hidden"
                             style={{
-                                boxShadow: designSystem.shadows.card,
+                                boxShadow: ds.shadows.card,
                             }}
                         >
                             <XStack>
@@ -217,47 +183,45 @@ export default function PlacesScreen() {
                                     <XStack justify="space-between" items="flex-start" gap="$3">
                                         <YStack flex={1} gap="$1">
                                             <Text
-                                                color={designSystem.colors.foreground}
-                                                fontFamily={designSystem.fonts.bodyBold}
-                                                fontSize={designSystem.typography.titleMd.fontSize}
+                                                color={ds.colors.foreground}
+                                                fontFamily={ds.fonts.bodyBold}
+                                                fontSize={ds.typography.titleLg.fontSize}
+                                                lineHeight={ds.typography.titleLg.lineHeight}
                                             >
                                                 {place.place_name}
                                             </Text>
                                             <Paragraph
-                                                color={designSystem.colors.mutedForeground}
-                                                fontFamily={designSystem.fonts.bodyMedium}
-                                                fontSize={designSystem.typography.bodyXs.fontSize}
+                                                color={ds.colors.mutedForeground}
+                                                fontFamily={ds.fonts.bodyMedium}
+                                                fontSize={ds.typography.bodyXs.fontSize}
                                             >
                                                 {place.project_name}
                                             </Paragraph>
                                         </YStack>
                                         <YStack
-                                            rounded={designSystem.radii.full}
+                                            rounded={ds.radii.full}
                                             px="$3"
                                             py="$1"
                                             style={{ backgroundColor: placeTone.surface }}
                                         >
                                             <Text
                                                 style={{ color: placeTone.text }}
-                                                fontFamily={designSystem.fonts.bodyBold}
-                                                fontSize={designSystem.typography.labelXs.fontSize}
+                                                fontFamily={ds.fonts.bodyBold}
+                                                fontSize={ds.typography.labelXs.fontSize}
                                                 textTransform="uppercase"
                                                 letterSpacing={1}
                                             >
-                                                {PLACE_STATUS_LABELS[status]}
+                                                {getPlaceStatusLabel(status, t)}
                                             </Text>
                                         </YStack>
                                     </XStack>
 
                                     <XStack items="center" gap="$2">
-                                        <MapPin
-                                            size={14}
-                                            color={designSystem.colors.mutedForeground}
-                                        />
+                                        <MapPin size={14} color={ds.colors.mutedForeground} />
                                         <Paragraph
-                                            color={designSystem.colors.mutedForeground}
-                                            fontFamily={designSystem.fonts.bodyMedium}
-                                            fontSize={designSystem.typography.bodyMd.fontSize}
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
                                         >
                                             {locality}
                                         </Paragraph>
@@ -265,39 +229,39 @@ export default function PlacesScreen() {
 
                                     <XStack gap="$3">
                                         <ScoreTile
-                                            label="Audit score"
+                                            label={t("auditScore", { ns: "places" })}
                                             value={auditScoreLabel}
-                                            valueColor={designSystem.colors.primary}
+                                            valueColor={ds.colors.primary}
                                         />
                                     </XStack>
 
                                     <YStack gap="$2">
                                         <XStack justify="space-between" items="center">
                                             <Paragraph
-                                                color={designSystem.colors.mutedForeground}
-                                                fontFamily={designSystem.fonts.bodyMedium}
-                                                fontSize={designSystem.typography.bodySm.fontSize}
+                                                color={ds.colors.mutedForeground}
+                                                fontFamily={ds.fonts.bodyMedium}
+                                                fontSize={ds.typography.bodySm.fontSize}
                                             >
-                                                Mandatory completion
+                                                {t("mandatoryCompletion", { ns: "places" })}
                                             </Paragraph>
                                             <Text
-                                                color={designSystem.colors.primary}
-                                                fontFamily={designSystem.fonts.monoBold}
-                                                fontSize={designSystem.typography.labelLg.fontSize}
+                                                color={ds.colors.primary}
+                                                fontFamily={ds.fonts.monoBold}
+                                                fontSize={ds.typography.labelLg.fontSize}
                                             >
                                                 {progressPercent}%
                                             </Text>
                                         </XStack>
                                         <YStack
                                             height={6}
-                                            rounded={designSystem.radii.full}
-                                            bg={designSystem.colors.mutedSurface}
+                                            rounded={ds.radii.full}
+                                            bg={ds.colors.mutedSurface}
                                             overflow="hidden"
                                         >
                                             <YStack
                                                 height={6}
-                                                rounded={designSystem.radii.full}
-                                                bg={designSystem.colors.primary}
+                                                rounded={ds.radii.full}
+                                                bg={ds.colors.primary}
                                                 width={`${progressPercent}%`}
                                             />
                                         </YStack>
@@ -305,10 +269,10 @@ export default function PlacesScreen() {
 
                                     <YStack
                                         gap="$3"
-                                        rounded={designSystem.radii.md}
+                                        rounded={ds.radii.md}
                                         borderWidth={1}
-                                        borderColor={designSystem.colors.border}
-                                        bg={designSystem.colors.input}
+                                        borderColor={ds.colors.border}
+                                        bg={ds.colors.input}
                                         p="$3"
                                     >
                                         <XStack justify="space-between" items="center" gap="$2.5">
@@ -320,14 +284,12 @@ export default function PlacesScreen() {
                                             >
                                                 <Clock3
                                                     size={14}
-                                                    color={designSystem.colors.mutedForeground}
+                                                    color={ds.colors.mutedForeground}
                                                 />
                                                 <Paragraph
-                                                    color={designSystem.colors.mutedForeground}
-                                                    fontFamily={designSystem.fonts.bodyMedium}
-                                                    fontSize={
-                                                        designSystem.typography.bodySm.fontSize
-                                                    }
+                                                    color={ds.colors.mutedForeground}
+                                                    fontFamily={ds.fonts.bodyMedium}
+                                                    fontSize={ds.typography.bodySm.fontSize}
                                                 >
                                                     {updatedLabel}
                                                 </Paragraph>
@@ -338,9 +300,9 @@ export default function PlacesScreen() {
                                             width="100%"
                                             height={42}
                                             px="$3"
-                                            rounded={designSystem.radii.sm}
+                                            rounded={ds.radii.sm}
                                             borderWidth={0}
-                                            bg={designSystem.colors.primary}
+                                            bg={ds.colors.primary}
                                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                             onPress={() => {
                                                 router.push(`/(tabs)/execute/${place.place_id}`);
@@ -349,18 +311,18 @@ export default function PlacesScreen() {
                                             <XStack items="center" justify="center" gap="$1.5">
                                                 <LocateFixed
                                                     size={14}
-                                                    color={designSystem.colors.primaryForeground}
+                                                    color={ds.colors.primaryForeground}
                                                 />
                                                 <Text
-                                                    color={designSystem.colors.primaryForeground}
-                                                    fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={
-                                                        designSystem.typography.labelLg.fontSize
-                                                    }
+                                                    color={ds.colors.primaryForeground}
+                                                    fontFamily={ds.fonts.bodyBold}
+                                                    fontSize={ds.typography.labelLg.fontSize}
                                                     textTransform="uppercase"
                                                     letterSpacing={1.1}
                                                 >
-                                                    Open audit
+                                                    {t("actions.openAudit", {
+                                                        ns: "common",
+                                                    })}
                                                 </Text>
                                             </XStack>
                                         </Button>
@@ -388,33 +350,35 @@ interface SummaryTileProps {
  * @returns Small metric card.
  */
 function SummaryTile({ label, value, tone }: SummaryTileProps) {
+    const ds = useDesignSystem();
     const tileTone = tone ?? {
-        accent: designSystem.colors.primary,
-        surface: designSystem.colors.primarySoft,
-        text: designSystem.colors.primary,
+        accent: ds.colors.primary,
+        surface: ds.colors.primarySoft,
+        text: ds.colors.primary,
     };
 
     return (
         <YStack
             flex={1}
-            rounded={designSystem.radii.lg}
+            rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={designSystem.colors.border}
-            bg={designSystem.colors.surface}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            justify="space-between"
             p="$3"
         >
             <Paragraph
-                color={designSystem.colors.mutedForeground}
-                fontFamily={designSystem.fonts.bodyBold}
-                fontSize={designSystem.typography.labelXs.fontSize}
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelXs.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
                 {label}
             </Paragraph>
             <Text
-                fontFamily={designSystem.fonts.headingBold}
-                fontSize={designSystem.typography.metricMd.fontSize}
+                fontFamily={ds.fonts.headingBold}
+                fontSize={ds.typography.metricMd.fontSize}
                 mt="$2"
                 style={{ color: tileTone.text }}
             >
@@ -437,27 +401,28 @@ interface ScoreTileProps {
  * @returns Bordered score surface.
  */
 function ScoreTile({ label, value, valueColor }: ScoreTileProps) {
+    const ds = useDesignSystem();
     return (
         <YStack
             flex={1}
-            rounded={designSystem.radii.md}
+            rounded={ds.radii.md}
             borderWidth={1}
-            borderColor={designSystem.colors.border}
-            bg={designSystem.colors.input}
+            borderColor={ds.colors.border}
+            bg={ds.colors.input}
             p="$3"
         >
             <Paragraph
-                color={designSystem.colors.mutedForeground}
-                fontFamily={designSystem.fonts.bodyBold}
-                fontSize={designSystem.typography.labelSm.fontSize}
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelSm.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
                 {label}
             </Paragraph>
             <Text
-                fontFamily={designSystem.fonts.headingBold}
-                fontSize={designSystem.typography.metricSm.fontSize}
+                fontFamily={ds.fonts.headingBold}
+                fontSize={ds.typography.metricSm.fontSize}
                 mt="$2"
                 style={{ color: valueColor }}
             >

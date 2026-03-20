@@ -1,0 +1,43 @@
+{
+    "about": {
+        "app": "App",
+        "appName": "Playspace Mobile",
+        "instrument": "Instrument",
+        "label": "Über",
+        "version": "Version"
+    },
+    "accessibility": {
+        "dyslexicFont": "Legasthenie-freundliche Schrift",
+        "dyslexicFontDescription": "Wechsel zu OpenDyslexic für bessere Lesbarkeit.",
+        "fontScaleDescription": "Passen Sie die Textgroesse fuer bessere Lesbarkeit bei hellem Sonnenlicht oder schlechten Lichtverhaeltnissen an.",
+        "fontScaleValue": "Schriftgroesse: {{value}}x",
+        "highContrast": "Hoher Kontrast",
+        "highContrastDescription": "Erhöhter Kontrast für Outdoor-/Hellbedingungen.",
+        "label": "Barrierefreiheit"
+    },
+    "appearance": {
+        "label": "Erscheinungsbild",
+        "theme": "Design",
+        "themeDescription": "Wählen Sie zwischen Hell, Dunkel oder den Geräteeinstellungen."
+    },
+    "language": {
+        "currentValue": "Aktuell angezeigt: {{value}}",
+        "description": "Waehlen Sie Englisch, Deutsch oder die Sprache Ihres Geraets.",
+        "english": "Englisch",
+        "german": "Deutsch",
+        "label": "Sprache",
+        "selection": "App-Sprache"
+    },
+    "profile": {
+        "accountType": "Kontotyp",
+        "auditorCode": "Auditor-Code",
+        "country": "Land",
+        "editingComingSoon": "Die Profilbearbeitung wird verfuegbar sein, sobald das Authentifizierungssystem abgeschlossen ist.",
+        "email": "E-Mail",
+        "label": "Profil",
+        "name": "Name",
+        "role": "Rolle"
+    },
+    "subtitle": "Profil, Erscheinungsbild, Barrierefreiheit und App-Informationen.",
+    "title": "Einstellungen"
+}

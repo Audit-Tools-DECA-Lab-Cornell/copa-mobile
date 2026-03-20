@@ -3,22 +3,18 @@ import { ToastProvider, ToastViewport } from "@tamagui/toast";
 import { CurrentToast } from "./CurrentToast";
 import { config } from "../tamagui.config";
 
-export function Provider({
-    children,
-    ...rest
-}: Readonly<Omit<TamaguiProviderProps, "config" | "defaultTheme">>) {
+interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "defaultTheme"> {
+    /** Tamagui theme name — typically "light" or "dark". */
+    readonly theme?: "light" | "dark";
+}
+
+/**
+ * Global provider wrapping Tamagui, toasts, and theme selection.
+ */
+export function Provider({ children, theme = "dark", ...rest }: Readonly<ProviderProps>) {
     return (
-        <TamaguiProvider config={config} defaultTheme="dark" {...rest}>
-            <ToastProvider
-                swipeDirection="horizontal"
-                duration={6000}
-                native={
-                    [
-                        // uncomment the next line to do native toasts on mobile. NOTE: it'll require you making a dev build and won't work with Expo Go
-                        // 'mobile'
-                    ]
-                }
-            >
+        <TamaguiProvider config={config} defaultTheme={theme} {...rest}>
+            <ToastProvider swipeDirection="horizontal" duration={6000} native={[]}>
                 {children}
                 <CurrentToast />
                 <ToastViewport top="$8" left={0} right={0} />

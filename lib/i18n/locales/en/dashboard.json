@@ -1,0 +1,16 @@
+{
+    "activeAuditor": "Active auditor",
+    "activeWork": "Active audits",
+    "connectivityStatus": "Connectivity status",
+    "dueToday": "Due today",
+    "fieldPriorities": "Field priorities",
+    "loadingPlaces": "Loading your places...",
+    "mandatoryCompletion": "Mandatory completion",
+    "offlineReadyDescription": "Assigned audit data is stored locally and ready for field use.",
+    "offlineReadyTitle": "Offline ready",
+    "priorityProgress": "{{percent}}% progress - {{code}}",
+    "priorityTask": "Priority task",
+    "readinessLabel": "{{percent}}% ready",
+    "title": "Field Dashboard",
+    "urgentAudit": "Urgent audit"
+}

@@ -1,6 +1,7 @@
 import { Fragment } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { designSystem } from "lib/design-system";
+import { useDesignSystem } from "lib/design-system";
 import type { InstrumentQuestion, QuestionScale } from "lib/audit/types";
 
 /**
@@ -47,6 +48,8 @@ export function QuestionCard({
     selectedAnswers,
     onSelectAnswer,
 }: Readonly<QuestionCardProps>) {
+    const ds = useDesignSystem();
+    const { t } = useTranslation("audit");
     const quantityScale = question.scales[0];
     const selectedQuantityKey =
         quantityScale !== undefined ? selectedAnswers[quantityScale.key] : undefined;
@@ -58,43 +61,35 @@ export function QuestionCard({
 
     return (
         <YStack
-            rounded={designSystem.radii.lg}
+            rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={designSystem.colors.border}
-            bg={designSystem.colors.surface}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
             p="$4"
             gap="$3.5"
             style={{
-                boxShadow: designSystem.shadows.card,
+                boxShadow: ds.shadows.card,
             }}
         >
             <Text
-                color={designSystem.colors.foreground}
-                fontFamily={designSystem.fonts.bodyMedium}
-                fontSize={designSystem.typography.titleSm.fontSize}
-                lineHeight={designSystem.typography.titleSm.lineHeight}
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.titleSm.fontSize}
+                lineHeight={ds.typography.titleSm.lineHeight}
             >
                 <Text
-                    color={designSystem.colors.secondaryForeground}
-                    fontFamily={designSystem.fonts.bodySemiBold}
-                    fontSize={designSystem.typography.bodyLg.fontSize}
+                    color={ds.colors.secondaryForeground}
+                    fontFamily={ds.fonts.bodySemiBold}
+                    fontSize={ds.typography.bodyLg.fontSize}
                 >
-                    {"This playspace . . . \n"}
+                    {`${t("thisPlayspace")}\n`}
                 </Text>
                 {promptSegments.map((segment, index) => (
                     <Fragment key={`${question.question_key}-seg-${index.toString()}`}>
                         <Text
-                            fontFamily={
-                                segment.bold
-                                    ? designSystem.fonts.bodyBold
-                                    : designSystem.fonts.bodyRegular
-                            }
-                            fontSize={designSystem.typography.titleSm.fontSize}
-                            color={
-                                segment.bold
-                                    ? designSystem.colors.primary
-                                    : designSystem.colors.primaryForeground
-                            }
+                            fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
+                            fontSize={ds.typography.titleSm.fontSize}
+                            color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                         >
                             {segment.text}
                         </Text>
@@ -120,12 +115,11 @@ export function QuestionCard({
 
             {question.scales.length > 1 && !showFollowUpScales ? (
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyXs.fontSize}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyXs.fontSize}
                 >
-                    Diversity, Sociability, and Challenge appear only after a positive Quantity
-                    answer.
+                    {t("section.followUpHidden")}
                 </Paragraph>
             ) : null}
         </YStack>
@@ -151,29 +145,30 @@ function ScaleSelector({
     selectedOptionKey,
     onSelectAnswer,
 }: Readonly<ScaleSelectorProps>) {
+    const ds = useDesignSystem();
     return (
         <YStack
-            rounded={designSystem.radii.md}
+            rounded={ds.radii.md}
             borderWidth={1}
-            borderColor={designSystem.colors.border}
-            bg={designSystem.colors.input}
+            borderColor={ds.colors.border}
+            bg={ds.colors.input}
             p="$3"
             gap="$2.5"
         >
             <YStack gap="$1">
                 <Text
-                    color={designSystem.colors.primary}
-                    fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={designSystem.typography.titleSm.fontSize}
+                    color={ds.colors.primary}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleSm.fontSize}
                     textTransform="uppercase"
                     letterSpacing={1.2}
                 >
                     {scale.title}
                 </Text>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodySm.fontSize}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
                 >
                     {scale.prompt}
                 </Paragraph>
@@ -187,36 +182,20 @@ function ScaleSelector({
                         <Button
                             key={`${scale.key}.${option.key}`}
                             width="48.5%"
-                            rounded={designSystem.radii.md}
+                            rounded={ds.radii.md}
                             height={42}
                             borderWidth={1}
-                            borderColor={
-                                isSelected
-                                    ? designSystem.colors.primary
-                                    : designSystem.colors.border
-                            }
-                            bg={
-                                isSelected
-                                    ? designSystem.colors.primarySoft
-                                    : designSystem.colors.surfaceMuted
-                            }
+                            borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                            bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
                                 onSelectAnswer(questionKey, scale.key, option.key);
                             }}
                         >
                             <Text
-                                color={
-                                    isSelected
-                                        ? designSystem.colors.primary
-                                        : designSystem.colors.foreground
-                                }
-                                fontFamily={
-                                    isSelected
-                                        ? designSystem.fonts.bodyBold
-                                        : designSystem.fonts.bodyMedium
-                                }
-                                fontSize={designSystem.typography.bodySm.fontSize}
+                                color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
                             >

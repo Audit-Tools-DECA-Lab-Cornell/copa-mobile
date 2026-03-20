@@ -1,11 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ScrollView, TextInput } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { QuestionCard } from "components/playspace-audit/question-card";
-import { designSystem } from "lib/design-system";
+import { useDesignSystem } from "lib/design-system";
 import { getQuestionAnswers, getSectionNote, getVisibleSections } from "lib/audit/selectors";
-import type { InstrumentSection, QuestionScale } from "lib/audit/types";
+import type {
+    ExecutionMode,
+    InstrumentSection,
+    PlayspaceInstrument,
+    QuestionScale,
+} from "lib/audit/types";
+import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -14,26 +21,30 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
  *
  * Answers are written directly to the Zustand store on every tap so they
  * persist across navigation and survive app restarts.  The store debounces
- * disk writes and a background timer pushes dirty sections to the API when
+ * disk writes and event-driven sync pushes dirty sections to the API when
  * connectivity is available.
  *
  * The section note is kept in local state for responsive typing and flushed
  * to the store on blur, explicit save, or component unmount.
  */
 export default function ExecuteSectionScreen() {
+    const ds = useDesignSystem();
     const router = useRouter();
+    const navigation = useNavigation();
+    const { t } = useTranslation(["audit", "common"]);
+    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         sectionKey?: string | string[];
     }>();
     const authSession = useAuthStore((state) => state.session);
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
+    const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
     const applyLocalQuestionAnswer = usePlayspaceAuditStore(
         (state) => state.applyLocalQuestionAnswer,
     );
     const applyLocalSectionNote = usePlayspaceAuditStore((state) => state.applyLocalSectionNote);
-    const instrument = usePlayspaceAuditStore((state) => state.instrument);
     const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
@@ -50,20 +61,35 @@ export default function ExecuteSectionScreen() {
             ? undefined
             : visibleSections.find((section) => section.section_key === sectionKey);
 
+    useLayoutEffect(() => {
+        if (activeSection !== undefined) {
+            navigation.setOptions({ title: activeSection.title });
+        }
+    }, [navigation, activeSection]);
+
     const [localNote, setLocalNote] = useState("");
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
 
     useEffect(() => {
-        void hydrate();
-    }, [hydrate]);
+        hydrate(authSession?.user.id ?? null).catch(() => undefined);
+    }, [authSession, hydrate]);
 
     useEffect(() => {
-        if (!isHydrated || authSession === null || placeId === null) {
+        if (
+            !isHydrated ||
+            authSession === null ||
+            currentUserId !== authSession.user.id ||
+            placeId === null
+        ) {
             return;
         }
-        void ensurePlaceAudit(authSession, placeId).catch(() => {});
-    }, [authSession, ensurePlaceAudit, isHydrated, placeId]);
+        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
+    }, [authSession, currentUserId, ensurePlaceAudit, isHydrated, placeId]);
+
+    useEffect(() => {
+        noteInitializedRef.current = false;
+    }, [activeSection?.section_key, auditSession?.audit_id]);
 
     useEffect(() => {
         if (
@@ -107,6 +133,7 @@ export default function ExecuteSectionScreen() {
         placeId === null ||
         sectionKey === null ||
         authSession === null ||
+        currentUserId !== authSession.user.id ||
         auditSession === undefined ||
         activeSection === undefined
     ) {
@@ -118,11 +145,15 @@ export default function ExecuteSectionScreen() {
         ) {
             return (
                 <CenteredMessageCard
-                    title={errorMessage.includes("403") ? "Access Denied" : "Section Unavailable"}
+                    title={
+                        errorMessage.includes("403")
+                            ? t("overview.accessDeniedTitle", { ns: "audit" })
+                            : t("section.unavailableTitle", { ns: "audit" })
+                    }
                     message={errorMessage}
-                    actionLabel="Retry"
+                    actionLabel={t("actions.retry", { ns: "common" })}
                     onAction={() => {
-                        void ensurePlaceAudit(authSession, placeId).catch(() => {});
+                        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
                     }}
                 />
             );
@@ -130,8 +161,8 @@ export default function ExecuteSectionScreen() {
 
         return (
             <CenteredMessageCard
-                title="Preparing Section"
-                message="Loading the current section and any previously saved answers..."
+                title={t("section.preparingTitle", { ns: "audit" })}
+                message={t("section.preparingMessage", { ns: "audit" })}
             />
         );
     }
@@ -141,27 +172,27 @@ export default function ExecuteSectionScreen() {
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: designSystem.colors.background }}
+            style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
-                paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
-                paddingTop: designSystem.spacing.screenPaddingVertical,
+                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                paddingTop: ds.spacing.screenPaddingVertical,
                 paddingBottom: 144,
                 gap: 20,
             }}
         >
             <YStack gap="$3">
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.headingBold}
-                    fontSize={designSystem.typography.displayMd.fontSize}
-                    lineHeight={designSystem.typography.displayMd.lineHeight}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.headingBold}
+                    fontSize={ds.typography.displayMd.fontSize}
+                    lineHeight={ds.typography.displayMd.lineHeight}
                 >
                     {activeSection.title}
                 </Text>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyLg.fontSize}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
                 >
                     {activeSection.description ?? activeSection.instruction}
                 </Paragraph>
@@ -205,46 +236,45 @@ export default function ExecuteSectionScreen() {
             </YStack>
 
             <YStack
-                rounded={designSystem.radii.lg}
+                rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={designSystem.colors.border}
-                bg={designSystem.colors.surface}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
                 p="$4"
                 gap="$3"
-                style={{ boxShadow: designSystem.shadows.card }}
+                style={{ boxShadow: ds.shadows.card }}
             >
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={designSystem.typography.titleMd.fontSize}
-                    lineHeight={designSystem.typography.titleMd.lineHeight}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
+                    lineHeight={ds.typography.titleMd.lineHeight}
                 >
-                    Section Notes
+                    {t("section.sectionNotes", { ns: "audit" })}
                 </Text>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodyLg.fontSize}
-                    lineHeight={designSystem.typography.bodyLg.lineHeight}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
+                    lineHeight={ds.typography.bodyLg.lineHeight}
                     marginBlockEnd={4}
                 >
-                    {activeSection.notes_prompt ??
-                        "Add any reflections or recommendations for this section."}
+                    {activeSection.notes_prompt ?? t("section.notesDefault", { ns: "audit" })}
                 </Paragraph>
                 <TextInput
                     multiline
                     value={localNote}
                     onChangeText={handleNoteChange}
                     onBlur={flushNoteToStore}
-                    placeholder="Add section notes or recommendations..."
-                    placeholderTextColor={designSystem.colors.mutedForeground}
+                    placeholder={t("section.notesPlaceholder", { ns: "audit" })}
+                    placeholderTextColor={ds.colors.mutedForeground}
                     style={{
                         minHeight: 120,
-                        borderRadius: designSystem.radii.md,
+                        borderRadius: ds.radii.md,
                         borderWidth: 1,
-                        borderColor: designSystem.colors.border,
-                        backgroundColor: designSystem.colors.input,
-                        color: designSystem.colors.foreground,
+                        borderColor: ds.colors.border,
+                        backgroundColor: ds.colors.input,
+                        color: ds.colors.foreground,
                         paddingHorizontal: 14,
                         paddingVertical: 12,
                         textAlignVertical: "top",
@@ -254,18 +284,20 @@ export default function ExecuteSectionScreen() {
 
             {hasPendingLocalChanges ? (
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
-                    fontSize={designSystem.typography.bodySm.fontSize}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
                 >
-                    Answers saved locally — will sync to server when online.
+                    {t("section.pendingSync", { ns: "audit" })}
                 </Paragraph>
             ) : null}
 
             {errorMessage === null ? null : (
                 <Paragraph
-                    color={designSystem.colors.warning}
-                    fontFamily={designSystem.fonts.bodyMedium}
+                    color={ds.colors.warning}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    lineHeight={ds.typography.bodySm.lineHeight}
                 >
                     {errorMessage}
                 </Paragraph>
@@ -275,32 +307,32 @@ export default function ExecuteSectionScreen() {
                 <Button
                     flex={1}
                     height={52}
-                    rounded={designSystem.radii.md}
+                    rounded={ds.radii.md}
                     borderWidth={1}
-                    borderColor={designSystem.colors.border}
-                    bg={designSystem.colors.input}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.input}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
                         flushNoteToStore();
-                        router.replace(`/(tabs)/execute/${placeId}`);
+                        router.back();
                     }}
                 >
                     <Text
-                        color={designSystem.colors.foreground}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.labelLg.fontSize}
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelLg.fontSize}
                         textTransform="uppercase"
                         letterSpacing={0.5}
                     >
-                        Back to overview
+                        {t("section.backToOverview", { ns: "audit" })}
                     </Text>
                 </Button>
                 <Button
                     flex={1}
                     height={52}
-                    rounded={designSystem.radii.md}
+                    rounded={ds.radii.md}
                     borderWidth={0}
-                    bg={designSystem.colors.primary}
+                    bg={ds.colors.primary}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
                         flushNoteToStore();
@@ -314,13 +346,15 @@ export default function ExecuteSectionScreen() {
                     }}
                 >
                     <Text
-                        color={designSystem.colors.primaryForeground}
-                        fontFamily={designSystem.fonts.bodyBold}
-                        fontSize={designSystem.typography.labelLg.fontSize}
+                        color={ds.colors.primaryForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelLg.fontSize}
                         textTransform="uppercase"
                         letterSpacing={0.7}
                     >
-                        {nextSection === undefined ? "Save section" : "Save and next"}
+                        {nextSection === undefined
+                            ? t("section.saveSection", { ns: "audit" })
+                            : t("section.saveAndNext", { ns: "audit" })}
                     </Text>
                 </Button>
             </XStack>
@@ -333,23 +367,30 @@ export default function ExecuteSectionScreen() {
  * array reference when the inputs haven't meaningfully changed.
  */
 function getVisibleSectionsStable(
-    instrument: { readonly sections: readonly InstrumentSection[] } | null,
+    instrument: PlayspaceInstrument,
     auditSession: { readonly selected_execution_mode: string | null } | undefined,
 ): InstrumentSection[] {
-    if (instrument === null || auditSession === undefined) {
+    if (auditSession === undefined) {
         return EMPTY_SECTIONS;
     }
     const mode = auditSession.selected_execution_mode;
-    if (mode === null) {
+    if (!isExecutionMode(mode)) {
         return EMPTY_SECTIONS;
     }
-    return getVisibleSections(
-        instrument as Parameters<typeof getVisibleSections>[0],
-        mode as Parameters<typeof getVisibleSections>[1],
-    );
+    return getVisibleSections(instrument, mode);
 }
 
 const EMPTY_SECTIONS: InstrumentSection[] = [];
+
+/**
+ * Validate that a persisted mode string matches the supported execution modes.
+ *
+ * @param value Persisted execution mode value.
+ * @returns True when the value is a supported execution mode.
+ */
+function isExecutionMode(value: string | null): value is ExecutionMode {
+    return value === "audit" || value === "survey" || value === "both";
+}
 
 interface CenteredMessageCardProps {
     readonly title: string;
@@ -368,31 +409,33 @@ function CenteredMessageCard({
     actionLabel,
     onAction,
 }: Readonly<CenteredMessageCardProps>) {
+    const ds = useDesignSystem();
     return (
         <YStack
             flex={1}
             justify="center"
-            px={designSystem.spacing.screenPaddingHorizontal}
-            bg={designSystem.colors.background}
+            px={ds.spacing.screenPaddingHorizontal}
+            bg={ds.colors.background}
         >
             <YStack
-                rounded={designSystem.radii.lg}
+                rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={designSystem.colors.border}
-                bg={designSystem.colors.surface}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
                 p="$4"
                 gap="$2"
             >
                 <Text
-                    color={designSystem.colors.foreground}
-                    fontFamily={designSystem.fonts.bodyBold}
-                    fontSize={designSystem.typography.titleLg.fontSize}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleLg.fontSize}
                 >
                     {title}
                 </Text>
                 <Paragraph
-                    color={designSystem.colors.mutedForeground}
-                    fontFamily={designSystem.fonts.bodyMedium}
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
                 >
                     {message}
                 </Paragraph>
@@ -400,17 +443,17 @@ function CenteredMessageCard({
                     <Button
                         mt="$2"
                         height={44}
-                        rounded={designSystem.radii.md}
+                        rounded={ds.radii.md}
                         borderWidth={1}
-                        borderColor={designSystem.colors.border}
-                        bg={designSystem.colors.input}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.input}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={onAction}
                     >
                         <Text
-                            color={designSystem.colors.foreground}
-                            fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={designSystem.typography.labelMd.fontSize}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.1}
                         >

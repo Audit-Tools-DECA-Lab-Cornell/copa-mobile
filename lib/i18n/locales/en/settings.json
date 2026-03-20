@@ -1,0 +1,43 @@
+{
+    "about": {
+        "app": "App",
+        "appName": "Playspace Mobile",
+        "instrument": "Instrument",
+        "label": "About",
+        "version": "Version"
+    },
+    "accessibility": {
+        "dyslexicFont": "Dyslexia-Friendly Font",
+        "dyslexicFontDescription": "Switch to OpenDyslexic for improved readability.",
+        "fontScaleDescription": "Adjust text size for field readability in bright sunlight or low light.",
+        "fontScaleValue": "Font Scale: {{value}}x",
+        "highContrast": "High Contrast",
+        "highContrastDescription": "Boost contrast for outdoor/bright conditions.",
+        "label": "Accessibility"
+    },
+    "appearance": {
+        "label": "Appearance",
+        "theme": "Theme",
+        "themeDescription": "Choose between light, dark, or follow your device settings."
+    },
+    "language": {
+        "currentValue": "Currently showing: {{value}}",
+        "description": "Choose English, German, or follow your device language.",
+        "english": "English",
+        "german": "Deutsch",
+        "label": "Language",
+        "selection": "App language"
+    },
+    "profile": {
+        "accountType": "Account type",
+        "auditorCode": "Auditor Code",
+        "country": "Country",
+        "editingComingSoon": "Profile editing will be available once the authentication system is complete.",
+        "email": "Email",
+        "label": "Profile",
+        "name": "Name",
+        "role": "Role"
+    },
+    "subtitle": "Profile, appearance, accessibility, and app information.",
+    "title": "Settings"
+}

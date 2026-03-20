@@ -1,0 +1,16 @@
+{
+    "auditScoreByPlace": "Audit-Bewertung nach Ort",
+    "averageAuditScore": "Durchschnittliche Audit-Bewertung",
+    "combinedScoringComingSoon": "Kombinierte Bewertung kommt bald",
+    "combinedScoringDescription": "Kombinierte Bewertungen, die auch Daten aus der Manager-Befragung enthalten, werden in einem kuenftigen Update verfuegbar sein.",
+    "exportCsv": "CSV exportieren",
+    "exportDescription": "Exportpakete koennen Audit-Bewertung, Abschnittsbewertungen und Ortsmetadaten enthalten.",
+    "exportPdf": "PDF exportieren",
+    "exportPreview": "Exportvorschau",
+    "noScoredPlacesYet": "Noch keine bewerteten Orte",
+    "notScored": "Nicht bewertet",
+    "scoredPlacesHelper": "{{scored}} von {{total}} Orten bewertet",
+    "subtitle": "Pruefen Sie die Audit-Ergebnisse Ihrer zugewiesenen Orte.",
+    "title": "Playspace-Bewertung",
+    "topScoringPlace": "Ort mit bester Bewertung"
+}

@@ -1,24 +1,27 @@
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons";
+import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { designSystem } from "lib/design-system";
+import { useDesignSystem } from "lib/design-system";
 
 /**
  * Signup route shares auditor access setup guidance.
  */
 export default function SignupScreen() {
+    const ds = useDesignSystem();
     const router = useRouter();
+    const { t } = useTranslation("auth");
 
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={{
                 flexGrow: 1,
-                paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
+                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
                 paddingVertical: 32,
                 justifyContent: "center",
-                backgroundColor: designSystem.colors.background,
+                backgroundColor: ds.colors.background,
             }}
         >
             <YStack gap="$6" width="100%" style={{ maxWidth: 440, alignSelf: "center" }}>
@@ -28,89 +31,87 @@ export default function SignupScreen() {
                         height={88}
                         items="center"
                         justify="center"
-                        rounded={designSystem.radii.xl}
+                        rounded={ds.radii.xl}
                         borderWidth={1}
-                        borderColor={designSystem.colors.border}
-                        bg={designSystem.colors.surfaceMuted}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surfaceMuted}
                         style={{
-                            boxShadow: designSystem.shadows.card,
+                            boxShadow: ds.shadows.card,
                         }}
                     >
-                        <ShieldAlert size={34} color={designSystem.colors.warning} />
+                        <ShieldAlert size={34} color={ds.colors.warning} />
                     </YStack>
 
                     <YStack items="center" gap="$2">
                         <Text
-                            color={designSystem.colors.foreground}
-                            fontFamily={designSystem.fonts.headingBold}
-                            fontSize={designSystem.typography.displayMd.fontSize}
-                            lineHeight={designSystem.typography.displayMd.lineHeight}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.headingBold}
+                            fontSize={ds.typography.displayMd.fontSize}
+                            lineHeight={ds.typography.displayMd.lineHeight}
                             textTransform="uppercase"
                             letterSpacing={-0.5}
                         >
-                            Access setup
+                            {t("signup.title")}
                         </Text>
                         <Paragraph
-                            color={designSystem.colors.mutedForeground}
-                            fontFamily={designSystem.fonts.bodyMedium}
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
                             style={{ textAlign: "center" }}
                         >
-                            Mobile access is provisioned during project onboarding. Self-signup is
-                            not available in the app.
+                            {t("signup.subtitle")}
                         </Paragraph>
                     </YStack>
                 </YStack>
 
                 <YStack
                     borderWidth={1}
-                    borderColor={designSystem.colors.warning}
-                    bg={designSystem.colors.warningSoft}
-                    rounded={designSystem.radii.lg}
+                    borderColor={ds.colors.warning}
+                    bg={ds.colors.warningSoft}
+                    rounded={ds.radii.lg}
                     p="$4"
                     gap="$3"
                 >
                     <XStack items="center" gap="$2">
-                        <ShieldAlert size={18} color={designSystem.colors.warning} />
+                        <ShieldAlert size={18} color={ds.colors.warning} />
                         <Text
-                            color={designSystem.colors.warning}
-                            fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={designSystem.typography.bodyMd.fontSize}
+                            color={ds.colors.warning}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.bodyMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
-                            Use your assigned playspace participant credentials.
+                            {t("signup.warningTitle")}
                         </Text>
                     </XStack>
                     <Paragraph
-                        color={designSystem.colors.secondaryForeground}
-                        fontFamily={designSystem.fonts.bodyMedium}
+                        color={ds.colors.secondaryForeground}
+                        fontFamily={ds.fonts.bodyMedium}
                     >
-                        If you need access, ask your project lead to set up your participant account
-                        and share sign-in details.
+                        {t("signup.warningBody")}
                     </Paragraph>
                 </YStack>
 
                 <Button
                     height={52}
-                    rounded={designSystem.radii.md}
+                    rounded={ds.radii.md}
                     borderWidth={1}
-                    borderColor={designSystem.colors.border}
-                    bg={designSystem.colors.surface}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.surface}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
                         router.replace("/(auth)/login");
                     }}
                 >
                     <XStack items="center" gap="$2">
-                        <ArrowLeft size={16} color={designSystem.colors.foreground} />
+                        <ArrowLeft size={16} color={ds.colors.foreground} />
                         <Text
-                            color={designSystem.colors.foreground}
-                            fontFamily={designSystem.fonts.bodyBold}
-                            fontSize={designSystem.typography.labelLg.fontSize}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelLg.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.3}
                         >
-                            Back to sign in
+                            {t("signup.backToSignIn")}
                         </Text>
                     </XStack>
                 </Button>

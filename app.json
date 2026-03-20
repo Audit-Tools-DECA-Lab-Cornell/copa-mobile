@@ -54,7 +54,8 @@
                 }
             ],
             "expo-web-browser",
-            "expo-secure-store"
+            "expo-secure-store",
+            "expo-background-task"
         ],
         "experiments": {
             "typedRoutes": true

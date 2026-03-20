@@ -1,0 +1,41 @@
+export default {
+    locales: ["en", "de"],
+    compatibilityJSON: "v4",
+    extract: {
+        input: [
+            "app/**/*.{ts,tsx,js,jsx,md}",
+            "components/**/*.{ts,tsx,js,jsx,md}",
+            "lib/**/*.{ts,tsx,js,jsx,md}",
+            "stores/**/*.{ts,tsx,js,jsx,md}",
+        ],
+        ignore: ["lib/i18n/locales/**", "node_modules/**"],
+        output: "lib/i18n/locales/{{language}}/{{namespace}}.json",
+
+        // Keep files clean and predictable
+        sort: true,
+        indentation: 4,
+
+        // Primary vs secondary languages
+        primaryLanguage: "en",
+        secondaryLanguages: ["de"],
+
+        // What happens for missing keys in non-primary locales
+        defaultValue: (key: string, ns: string, lng: string) =>
+            lng === "en" ? "" : `TODO: ${key}`,
+
+        // Namespace/key behavior
+        defaultNS: "common",
+        nsSeparator: ":",
+        keySeparator: ".", // or false if you prefer flat keys
+
+        // Extraction heuristics (React + hooks)
+        functions: ["t", "*.t", "i18next.t"],
+        useTranslationNames: ["useTranslation", "useT"],
+        transComponents: ["Trans"],
+        transKeepBasicHtmlNodesFor: ["br", "strong", "i", "p"],
+
+        // Linting / cleanup
+        removeUnusedKeys: true,
+        generateBasePluralForms: true,
+    },
+};
