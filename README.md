@@ -9,7 +9,8 @@ Built with Expo + Expo Router + Tamagui, with strict TypeScript, ESLint, and Pre
 - This mobile app supports auditors completing assigned playspace audits in the field.
 - Manager planning, manager surveys, and oversight workflows are handled in web tools.
 - Mobile users see only assigned places and complete focused field execution flows.
-- Audit score is captured in mobile; combined score appears after manager survey data is submitted on web.
+- Mobile currently shows audit-only raw score totals and compact construct summaries.
+- Combined scoring that includes manager survey input is planned for a future update.
 
 ## Prerequisites
 
@@ -119,6 +120,18 @@ bun run ci:quality
 - `stores/` - Zustand state stores
 - `assets/` - static app assets
 
+## Playspace Data Contract And Scoring
+
+- Audit session payloads are validated with Zod in `lib/audit/types.ts`.
+- Assigned-place payloads are validated with Zod in `lib/audit/places-api.ts`.
+- The app consumes typed Playspace fields for `meta`, `pre_audit`, `sections`, `scores`, and `progress`.
+- Score displays use raw total buckets rather than percent summaries:
+    - construct totals: `play_value_total`, `usability_total`, `sociability_total`
+    - column totals: `quantity_total`, `diversity_total`, `challenge_total`
+- Compact score labels currently use short forms such as `PV`, `U`, `S`, `Q`, `D`, and `C`.
+- When `score_totals` is not present, the app can still fall back to the legacy `summary_score` field for compatibility with older backend payloads.
+
 ## Notes
 
 - Expo Router entry point is configured via `main: "expo-router/entry"` in `package.json`.
+- The newest score-summary label keys currently have English strings only; other locales fall back to English until translations are added.

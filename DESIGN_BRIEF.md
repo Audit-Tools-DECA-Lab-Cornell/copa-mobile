@@ -40,7 +40,8 @@ These are important constraints that design explorations should keep intact:
 - Users mainly work with places assigned to them.
 - The app should communicate an offline-friendly or offline-first mindset.
 - Audit completion happens on mobile.
-- Some combined scoring depends on manager input that happens outside the mobile app.
+- Mobile currently shows audit-only raw score totals.
+- Some combined scoring depends on manager input that happens outside the mobile app and is not yet implemented here.
 - Self-signup is not a core flow for mobile users.
 
 ## App Structure
@@ -78,8 +79,8 @@ Execute audit
   -> Submit when ready
 
 Scoring
-  -> Review audit outcomes
-  -> Review combined scoring when available
+  -> Review audit-only raw score totals
+  -> Review combined scoring when available in a future release
 ```
 
 ## Screen Intent
@@ -156,11 +157,19 @@ This screen should feel like a guided workflow, not a generic form dump.
 
 This screen is a review and summary surface. It helps the auditor understand outcomes after or during field work.
 
+Current implementation notes:
+
+- the screen shows audit-only raw score totals today
+- construct summaries are based on play value, usability, and sociability
+- column summaries are based on quantity, diversity, and challenge
+- combined scoring that includes manager input is still future work
+- the newest compact score labels currently fall back to English outside the English locale
+
 Design direction:
 
 - top-level summary first
 - deeper comparisons second
-- strong clarity between audit-only results and combined results
+- strong clarity between audit-only results that exist now and combined results that are still future
 - export affordances can feel present, but should not dominate the experience
 
 This screen should feel informative and structured, but lighter than the execution screen.
