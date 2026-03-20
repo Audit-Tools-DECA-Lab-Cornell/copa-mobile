@@ -35,7 +35,7 @@ module.exports = defineConfig([
             "no-restricted-imports": [
                 "error",
                 {
-                    patterns: ["app/*", "components/*", "stores/*"],
+                    patterns: ["app/*", "components/*"],
                 },
             ],
         },

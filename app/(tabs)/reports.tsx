@@ -1,24 +1,47 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { ScrollView } from "react-native";
 import { Download, FileBarChart, TriangleAlert } from "@tamagui/lucide-icons";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { REPORT_COMPARISON_ROWS, type ReportComparisonRow } from "lib/playspace-demo-data";
 import { designSystem } from "lib/design-system";
+import { useAuthStore } from "stores/auth-store";
+import { usePlacesStore } from "stores/places-store";
 
 /**
- * Scoring tab with audit and combined scoring visuals.
+ * Scoring tab with audit performance visuals derived from assigned places.
  */
 export default function ReportsScreen() {
+    const session = useAuthStore((state) => state.session);
+    const places = usePlacesStore((state) => state.places);
+    const loadPlaces = usePlacesStore((state) => state.loadPlaces);
+
+    useEffect(() => {
+        if (session !== null) {
+            void loadPlaces(session);
+        }
+    }, [session, loadPlaces]);
+
+    const placesWithScores = useMemo(() => {
+        return places.filter((place) => place.summary_score !== null);
+    }, [places]);
+
     const averageAuditScore = useMemo(() => {
-        return calculateAverageAuditScore(REPORT_COMPARISON_ROWS);
-    }, []);
-    const averageCombinedScore = useMemo(() => {
-        return calculateAverageCombinedScore(REPORT_COMPARISON_ROWS);
-    }, []);
-    const topCombinedPlace = useMemo(() => {
-        return getTopCombinedPlace(REPORT_COMPARISON_ROWS);
-    }, []);
-    const topCombinedPlaceLabel = topCombinedPlace?.placeName ?? "Awaiting manager survey data";
+        if (placesWithScores.length === 0) {
+            return 0;
+        }
+        const sum = placesWithScores.reduce((total, place) => {
+            return total + (place.summary_score ?? 0);
+        }, 0);
+        return Math.round(sum / placesWithScores.length);
+    }, [placesWithScores]);
+
+    const topScoringPlace = useMemo(() => {
+        if (placesWithScores.length === 0) {
+            return null;
+        }
+        return placesWithScores.reduce((best, current) => {
+            return (current.summary_score ?? 0) > (best.summary_score ?? 0) ? current : best;
+        });
+    }, [placesWithScores]);
 
     return (
         <ScrollView
@@ -27,7 +50,7 @@ export default function ReportsScreen() {
             contentContainerStyle={{
                 paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
                 paddingTop: designSystem.spacing.screenPaddingVertical,
-                paddingBottom: 132,
+                paddingBottom: 92,
                 gap: 24,
             }}
         >
@@ -46,29 +69,28 @@ export default function ReportsScreen() {
                         color={designSystem.colors.mutedForeground}
                         fontFamily={designSystem.fonts.bodyMedium}
                     >
-                        Review audit performance, see when combined scoring is ready, and prepare
-                        exports for stakeholders.
+                        Review audit performance across your assigned places.
                     </Paragraph>
                 </YStack>
 
                 <XStack gap="$3">
                     <MetricCard
                         label="Average audit score"
-                        value={`${averageAuditScore}%`}
+                        value={
+                            placesWithScores.length > 0 ? `${averageAuditScore.toString()}%` : "--"
+                        }
                         accentColor={designSystem.colors.primary}
-                        helperText="Field results only"
+                        helperText={`${placesWithScores.length.toString()} of ${places.length.toString()} places scored`}
                     />
                     <MetricCard
-                        label="Average combined score"
+                        label="Top scoring place"
                         value={
-                            averageCombinedScore === null ? "Pending" : `${averageCombinedScore}%`
+                            topScoringPlace !== null
+                                ? `${Math.round(topScoringPlace.summary_score ?? 0).toString()}%`
+                                : "--"
                         }
-                        accentColor={
-                            averageCombinedScore === null
-                                ? designSystem.colors.warning
-                                : designSystem.colors.success
-                        }
-                        helperText={topCombinedPlaceLabel}
+                        accentColor={designSystem.colors.success}
+                        helperText={topScoringPlace?.place_name ?? "No scored places yet"}
                     />
                 </XStack>
             </YStack>
@@ -80,6 +102,8 @@ export default function ReportsScreen() {
                 bg={designSystem.colors.surface}
                 p="$4"
                 gap="$3"
+                flex={1}
+                items="stretch"
                 style={{
                     boxShadow: designSystem.shadows.card,
                 }}
@@ -91,22 +115,22 @@ export default function ReportsScreen() {
                     textTransform="uppercase"
                     letterSpacing={1.5}
                 >
-                    Audit and combined score by place
+                    Audit score by place
                 </Text>
 
-                <YStack gap="$3">
-                    {REPORT_COMPARISON_ROWS.map((row) => {
-                        const combinedReady = row.managerSurveyStatus === "submitted";
+                <YStack gap="$3" flex={1}>
+                    {places.map((place) => {
+                        const hasScore = place.summary_score !== null;
 
                         return (
                             <YStack
-                                key={row.id}
+                                key={place.place_id}
                                 rounded={designSystem.radii.md}
                                 borderWidth={1}
                                 borderColor={designSystem.colors.border}
                                 bg={designSystem.colors.input}
                                 p="$3"
-                                gap="$2.5"
+                                gap="$2"
                             >
                                 <XStack justify="space-between" items="flex-start" gap="$3">
                                     <YStack flex={1}>
@@ -115,53 +139,48 @@ export default function ReportsScreen() {
                                             fontFamily={designSystem.fonts.bodyBold}
                                             fontSize={designSystem.typography.bodyLg.fontSize}
                                         >
-                                            {row.placeName}
+                                            {place.place_name}
                                         </Text>
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
                                             fontSize={designSystem.typography.bodyXs.fontSize}
                                         >
-                                            {combinedReady
-                                                ? "Combined score ready"
-                                                : "Waiting for manager survey"}
+                                            {place.project_name}
                                         </Paragraph>
                                     </YStack>
-                                    <YStack items="flex-end" gap="$0.5">
-                                        <Paragraph
-                                            color={designSystem.colors.primary}
-                                            fontFamily={designSystem.fonts.bodyBold}
-                                        >
-                                            Audit {row.auditScore}%
-                                        </Paragraph>
+                                    <YStack items="flex-end">
                                         <Paragraph
                                             color={
-                                                row.combinedScore === null
-                                                    ? designSystem.colors.warning
-                                                    : designSystem.colors.success
+                                                hasScore
+                                                    ? designSystem.colors.primary
+                                                    : designSystem.colors.mutedForeground
                                             }
                                             fontFamily={designSystem.fonts.bodyBold}
+                                            fontSize={designSystem.typography.bodyLg.fontSize}
                                         >
-                                            {row.combinedScore === null
-                                                ? "Combined pending"
-                                                : `Combined ${row.combinedScore}%`}
+                                            {hasScore
+                                                ? `${Math.round(place.summary_score ?? 0).toString()}%`
+                                                : "Not scored"}
                                         </Paragraph>
                                     </YStack>
                                 </XStack>
 
-                                <YStack
-                                    height={6}
-                                    rounded={designSystem.radii.full}
-                                    bg={designSystem.colors.mutedSurface}
-                                    overflow="hidden"
-                                >
+                                {hasScore ? (
                                     <YStack
                                         height={6}
                                         rounded={designSystem.radii.full}
-                                        bg={designSystem.colors.primary}
-                                        width={`${row.auditScore}%`}
-                                    />
-                                </YStack>
+                                        bg={designSystem.colors.mutedSurface}
+                                        overflow="hidden"
+                                    >
+                                        <YStack
+                                            height={6}
+                                            rounded={designSystem.radii.full}
+                                            bg={designSystem.colors.primary}
+                                            width={`${Math.round(place.summary_score ?? 0).toString()}%`}
+                                        />
+                                    </YStack>
+                                ) : null}
                             </YStack>
                         );
                     })}
@@ -176,27 +195,29 @@ export default function ReportsScreen() {
                 p="$4"
                 gap="$3"
             >
-                <XStack items="flex-start" gap="$2.5" width="100%">
+                <XStack items="center" gap="$2" width="100%">
                     <TriangleAlert size={16} color={designSystem.colors.warning} />
                     <Text
                         flex={1}
                         color={designSystem.colors.warning}
                         fontFamily={designSystem.fonts.bodyBold}
                         fontSize={designSystem.typography.bodySm.fontSize}
+                        lineHeight={designSystem.typography.bodySm.lineHeight}
                         textTransform="uppercase"
-                        letterSpacing={1.1}
-                        style={{ flexShrink: 1, lineHeight: 18 }}
+                        letterSpacing={0.7}
+                        style={{ flexShrink: 1 }}
                     >
-                        Combined score updates after manager survey submission
+                        Combined scoring coming soon
                     </Text>
                 </XStack>
                 <Paragraph
                     color={designSystem.colors.secondaryForeground}
                     fontFamily={designSystem.fonts.bodyMedium}
-                    lineHeight={20}
+                    fontSize={designSystem.typography.bodySm.fontSize}
+                    lineHeight={designSystem.typography.bodySm.lineHeight}
                 >
-                    Audit score is available immediately after field completion, while combined
-                    scoring depends on manager input submitted outside the mobile app.
+                    Combined scores that include manager survey data will be available in a future
+                    update.
                 </Paragraph>
             </YStack>
 
@@ -224,9 +245,11 @@ export default function ReportsScreen() {
                 <Paragraph
                     color={designSystem.colors.mutedForeground}
                     fontFamily={designSystem.fonts.bodyMedium}
+                    fontSize={designSystem.typography.bodyMd.fontSize}
+                    lineHeight={designSystem.typography.bodyMd.lineHeight}
                 >
-                    Export packages can include audit score, combined score when available,
-                    section-level scoring, and place metadata.
+                    Export packages can include audit score, section-level scoring, and place
+                    metadata.
                 </Paragraph>
                 <XStack gap="$2">
                     <ActionButton label="Export PDF" />
@@ -235,65 +258,6 @@ export default function ReportsScreen() {
             </YStack>
         </ScrollView>
     );
-}
-
-/**
- * Calculate average audit score for the visible rows.
- *
- * @param rows Report comparison rows.
- * @returns Rounded average score.
- */
-function calculateAverageAuditScore(rows: readonly ReportComparisonRow[]): number {
-    if (rows.length === 0) {
-        return 0;
-    }
-
-    const sum = rows.reduce((currentSum, row) => {
-        return currentSum + row.auditScore;
-    }, 0);
-
-    return Math.round(sum / rows.length);
-}
-
-/**
- * Calculate average combined score for rows with available data.
- *
- * @param rows Report comparison rows.
- * @returns Rounded average or null when unavailable.
- */
-function calculateAverageCombinedScore(rows: readonly ReportComparisonRow[]): number | null {
-    const rowsWithCombinedScore = rows.filter((row) => row.combinedScore !== null);
-    if (rowsWithCombinedScore.length === 0) {
-        return null;
-    }
-
-    const sum = rowsWithCombinedScore.reduce((currentSum, row) => {
-        return currentSum + (row.combinedScore ?? 0);
-    }, 0);
-
-    return Math.round(sum / rowsWithCombinedScore.length);
-}
-
-/**
- * Resolve the row with the highest combined score.
- *
- * @param rows Report comparison rows.
- * @returns Best combined score row or null for empty data.
- */
-function getTopCombinedPlace(rows: readonly ReportComparisonRow[]): ReportComparisonRow | null {
-    const rowsWithCombinedScore = rows.filter((row) => row.combinedScore !== null);
-    const [firstRow, ...remainingRows] = rowsWithCombinedScore;
-    if (firstRow === undefined) {
-        return null;
-    }
-
-    return remainingRows.reduce((highest, current) => {
-        if ((current.combinedScore ?? 0) > (highest.combinedScore ?? 0)) {
-            return current;
-        }
-
-        return highest;
-    }, firstRow);
 }
 
 interface MetricCardProps {
@@ -317,8 +281,10 @@ function MetricCard({ label, value, accentColor, helperText }: MetricCardProps) 
             borderWidth={1}
             borderColor={designSystem.colors.border}
             bg={designSystem.colors.surface}
-            p="$4"
-            gap="$2"
+            px="$4"
+            py="$3"
+            justify="space-between"
+            gap="$1"
             style={{
                 boxShadow: designSystem.shadows.card,
             }}

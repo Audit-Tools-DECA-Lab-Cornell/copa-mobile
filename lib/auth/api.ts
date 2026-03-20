@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
+import { getApiBaseUrl } from "lib/api-base-url";
 
-const DEFAULT_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 const authResponseSchema = z.object({
     access_token: z.string().min(1),
     token_type: z.literal("bearer"),
@@ -39,6 +39,7 @@ export async function loginWithPassword(payload: LoginPayload): Promise<AuthSess
     const responsePayload = await postJson("/playspace/auth/login", {
         email: payload.email,
         password: payload.password,
+        account_type: "AUDITOR",
     });
 
     return parseAuthResponse(responsePayload);
@@ -59,20 +60,6 @@ export async function signupWithPassword(payload: SignupPayload): Promise<AuthSe
     });
 
     return parseAuthResponse(responsePayload);
-}
-
-/**
- * Resolve API base URL from environment with fallback.
- *
- * @returns Sanitized API base URL.
- */
-function getApiBaseUrl(): string {
-    const configuredValue = process.env.EXPO_PUBLIC_API_BASE_URL;
-    if (typeof configuredValue === "string" && configuredValue.trim().length > 0) {
-        return configuredValue.trim();
-    }
-
-    return DEFAULT_API_BASE_URL;
 }
 
 /**

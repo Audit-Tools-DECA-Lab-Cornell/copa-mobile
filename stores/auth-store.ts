@@ -179,7 +179,7 @@ function toAuthErrorMessage(error: unknown): string {
         }
 
         if (error.statusCode === 403) {
-            return "This mobile app supports playspace field auditors. Sign in with your auditor account.";
+            return "This mobile app supports assigned playspace participants. Sign in with your participant account.";
         }
 
         return "Authentication failed. Please check your details and try again.";
@@ -190,22 +190,4 @@ function toAuthErrorMessage(error: unknown): string {
     }
 
     return "An unexpected authentication error occurred.";
-}
-
-/**
- * Ensure session role matches the mobile auditor workflow.
- *
- * @param session Auth session from backend.
- * @returns Same session when role is AUDITOR.
- */
-// @ts-expect-error: this is a temporary function to ensure the session is an auditor session
-function ensureAuditorSession(session: AuthSession): AuthSession {
-    if (session.user.accountType !== "AUDITOR") {
-        throw new AuthApiError(
-            "This mobile app supports playspace field auditing workflows. Use an assigned auditor account.",
-            403,
-        );
-    }
-
-    return session;
 }

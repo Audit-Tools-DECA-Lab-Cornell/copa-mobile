@@ -116,7 +116,7 @@ export default function LoginScreen() {
                                 textTransform="uppercase"
                                 letterSpacing={1.6}
                             >
-                                Field audit professional
+                                Playspace form participant
                             </Paragraph>
                         </YStack>
                     </YStack>
@@ -131,7 +131,7 @@ export default function LoginScreen() {
                                 letterSpacing={1.5}
                                 px="$1"
                             >
-                                Auditor identity
+                                Participant identity
                             </Paragraph>
                             <XStack
                                 items="center"
@@ -312,7 +312,7 @@ export default function LoginScreen() {
                                 color={designSystem.colors.mutedForeground}
                                 fontFamily={designSystem.fonts.bodyMedium}
                             >
-                                New auditor or need access?
+                                Need an assigned playspace account?
                             </Paragraph>
                             <Button
                                 height={44}

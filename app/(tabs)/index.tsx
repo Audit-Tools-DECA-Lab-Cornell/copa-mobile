@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { ScrollView } from "react-native";
+import { useEffect, useMemo } from "react";
+import { ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
     ArrowUpRight,
@@ -15,44 +15,166 @@ import {
     WifiOff,
 } from "@tamagui/lucide-icons";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
-import { FIELD_PRIORITY_ITEMS, PLAYSPACE_PLACES, type PlaceStatus } from "lib/playspace-demo-data";
 import { designSystem, getPlaceStatusTone } from "lib/design-system";
-import { useDemoUiStore } from "stores/demo-ui-store";
+import type { AuditorPlace } from "lib/audit/places-api";
 import { useAuthStore } from "stores/auth-store";
+import { usePlacesStore } from "stores/places-store";
 
-const PLACE_STATUS_LABELS: Record<PlaceStatus, string> = {
+/**
+ * UI status derived from the backend `audit_status` value.
+ */
+type DerivedPlaceStatus = "not_started" | "in_progress" | "submitted";
+
+/**
+ * Labels displayed inside status pills.
+ */
+const PLACE_STATUS_LABELS: Record<DerivedPlaceStatus, string> = {
     not_started: "Not Started",
     in_progress: "In Progress",
-    ready_for_review: "Ready for Review",
     submitted: "Submitted",
 };
 
 /**
+ * Map the backend `audit_status` to a local UI status string.
+ *
+ * @param auditStatus Raw audit status from the API (nullable).
+ * @returns Normalised UI status used for pills and tone lookups.
+ */
+function derivePlaceStatus(auditStatus: AuditorPlace["audit_status"]): DerivedPlaceStatus {
+    if (auditStatus === "SUBMITTED") {
+        return "submitted";
+    }
+    if (auditStatus === "IN_PROGRESS" || auditStatus === "PAUSED") {
+        return "in_progress";
+    }
+    return "not_started";
+}
+
+/**
+ * Build a human-readable relative-time label from ISO timestamps.
+ *
+ * @param startedAt  ISO date string for when the audit was started.
+ * @param submittedAt ISO date string for when the audit was submitted.
+ * @returns Short relative-time string such as "2 days ago" or "Not started".
+ */
+function deriveUpdatedAtLabel(startedAt: string | null, submittedAt: string | null): string {
+    const iso = submittedAt ?? startedAt;
+    if (iso === null) {
+        return "Not started";
+    }
+
+    const diffMs = Date.now() - new Date(iso).getTime();
+    if (diffMs < 0) {
+        return "Just now";
+    }
+
+    const minutes = Math.floor(diffMs / 60_000);
+    if (minutes < 1) {
+        return "Just now";
+    }
+    if (minutes < 60) {
+        return `${minutes}m ago`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+        return `${hours}h ago`;
+    }
+
+    const days = Math.floor(hours / 24);
+    if (days === 1) {
+        return "1 day ago";
+    }
+    return `${days} days ago`;
+}
+
+/**
+ * Build a locality string from city and country fields.
+ *
+ * @param place Auditor place record.
+ * @returns Comma-separated locality or fallback text.
+ */
+function deriveLocality(place: AuditorPlace): string {
+    const parts = [place.city, place.country].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "Assigned place";
+}
+
+/**
  * Dashboard tab for playspace field operations.
+ * Displays real-time metrics, priority tasks, and active work cards
+ * sourced from the auditor's assigned places API.
  */
 export default function DashboardScreen() {
     const router = useRouter();
-    const setSelectedPlaceId = useDemoUiStore((state) => state.setSelectedPlaceId);
     const session = useAuthStore((state) => state.session);
     const logout = useAuthStore((state) => state.logout);
+    const places = usePlacesStore((state) => state.places);
+    const isLoading = usePlacesStore((state) => state.isLoading);
+    const loadPlaces = usePlacesStore((state) => state.loadPlaces);
+
+    useEffect(() => {
+        if (session !== null) {
+            void loadPlaces(session);
+        }
+    }, [session, loadPlaces]);
+
+    const assignedCount = places.length;
+
+    const completedCount = useMemo(() => {
+        return places.filter((p) => p.audit_status === "SUBMITTED").length;
+    }, [places]);
+
+    const inProgressCount = useMemo(() => {
+        return places.filter((p) => p.audit_status === "IN_PROGRESS").length;
+    }, [places]);
+
+    const notStartedCount = useMemo(() => {
+        return places.filter((p) => p.audit_status === null).length;
+    }, [places]);
+
+    const submittedCount = completedCount;
+
     const highlightedPlaces = useMemo(() => {
-        return PLAYSPACE_PLACES.filter((place) => place.status !== "submitted").slice(0, 3);
-    }, []);
-    const assignedCount = PLAYSPACE_PLACES.length;
-    const completedCount = PLAYSPACE_PLACES.filter((place) => place.status === "submitted").length;
-    const priorityPlace = highlightedPlaces[0] ?? PLAYSPACE_PLACES[0];
+        return places.filter((p) => p.audit_status !== "SUBMITTED").slice(0, 3);
+    }, [places]);
+
+    const priorityPlace = useMemo<AuditorPlace | undefined>(() => {
+        const inProgress = places.find(
+            (p) => p.audit_status === "IN_PROGRESS" || p.audit_status === "PAUSED",
+        );
+        if (inProgress !== undefined) {
+            return inProgress;
+        }
+        const notStarted = places.find((p) => p.audit_status === null);
+        return notStarted;
+    }, [places]);
+
     const fieldReadinessPercent = useMemo(() => {
         if (highlightedPlaces.length === 0) {
             return 0;
         }
 
         const totalCompletion = highlightedPlaces.reduce((sum, place) => {
-            return sum + place.mandatoryCompletionPercent;
+            return sum + (place.progress_percent ?? 0);
         }, 0);
 
         return Math.round(totalCompletion / highlightedPlaces.length);
     }, [highlightedPlaces]);
+
+    const fieldPriorityItems: readonly {
+        readonly id: string;
+        readonly title: string;
+        readonly value: string;
+    }[] = useMemo(() => {
+        return [
+            { id: "priority-in-progress", title: "In Progress", value: String(inProgressCount) },
+            { id: "priority-not-started", title: "Not Started", value: String(notStartedCount) },
+            { id: "priority-submitted", title: "Submitted", value: String(submittedCount) },
+        ] as const;
+    }, [inProgressCount, notStartedCount, submittedCount]);
+
     const activeAuditorName = session?.user.name ?? session?.user.email ?? "Active auditor";
+
     const dateLabel = useMemo(() => {
         return new Date().toLocaleDateString("en-NZ", {
             month: "long",
@@ -62,6 +184,21 @@ export default function DashboardScreen() {
         });
     }, []);
 
+    if (isLoading && places.length === 0) {
+        return (
+            <YStack flex={1} items="center" justify="center" bg={designSystem.colors.background}>
+                <ActivityIndicator size="large" color={designSystem.colors.primary} />
+                <Paragraph
+                    color={designSystem.colors.mutedForeground}
+                    fontFamily={designSystem.fonts.bodyMedium}
+                    mt="$4"
+                >
+                    Loading your places…
+                </Paragraph>
+            </YStack>
+        );
+    }
+
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
@@ -69,7 +206,7 @@ export default function DashboardScreen() {
             contentContainerStyle={{
                 paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
                 paddingTop: designSystem.spacing.screenPaddingVertical,
-                paddingBottom: 132,
+                paddingBottom: 92,
                 gap: 28,
             }}
         >
@@ -299,7 +436,7 @@ export default function DashboardScreen() {
                                         textTransform="uppercase"
                                         letterSpacing={1.3}
                                     >
-                                        {priorityPlace.locality}
+                                        {deriveLocality(priorityPlace)}
                                     </Text>
                                 </YStack>
                             </XStack>
@@ -311,14 +448,14 @@ export default function DashboardScreen() {
                                     fontSize={designSystem.typography.metricMd.fontSize}
                                     lineHeight={designSystem.typography.metricMd.lineHeight}
                                 >
-                                    {priorityPlace.placeName}
+                                    {priorityPlace.place_name}
                                 </Text>
                                 <Paragraph
                                     color={designSystem.colors.mutedForeground}
                                     fontFamily={designSystem.fonts.bodyMedium}
                                     fontSize={designSystem.typography.titleMd.fontSize}
                                 >
-                                    {priorityPlace.projectName}
+                                    {priorityPlace.project_name}
                                 </Paragraph>
                             </YStack>
                         </YStack>
@@ -341,7 +478,7 @@ export default function DashboardScreen() {
                                         height={6}
                                         rounded={designSystem.radii.full}
                                         bg={designSystem.colors.primary}
-                                        width={`${priorityPlace.mandatoryCompletionPercent}%`}
+                                        width={`${priorityPlace.progress_percent ?? 0}%`}
                                     />
                                 </YStack>
                                 <Text
@@ -351,8 +488,8 @@ export default function DashboardScreen() {
                                     textTransform="uppercase"
                                     letterSpacing={1.1}
                                 >
-                                    {priorityPlace.mandatoryCompletionPercent}% progress •{" "}
-                                    {priorityPlace.id.toUpperCase()}
+                                    {priorityPlace.progress_percent ?? 0}% progress •{" "}
+                                    {priorityPlace.place_id.slice(-8).toUpperCase()}
                                 </Text>
                             </YStack>
                             <Button
@@ -363,8 +500,7 @@ export default function DashboardScreen() {
                                 bg={designSystem.colors.primary}
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {
-                                    setSelectedPlaceId(priorityPlace.id);
-                                    router.push("/(tabs)/execute");
+                                    router.push(`/(tabs)/execute/${priorityPlace.place_id}`);
                                 }}
                             >
                                 <XStack items="center" gap="$2">
@@ -539,16 +675,17 @@ export default function DashboardScreen() {
                 </XStack>
 
                 <XStack gap="$2.5">
-                    {FIELD_PRIORITY_ITEMS.map((item) => {
+                    {fieldPriorityItems.map((item) => {
                         return (
                             <YStack
                                 key={item.id}
                                 flex={1}
-                                rounded={designSystem.radii.lg}
+                                rounded={designSystem.radii.md}
                                 borderWidth={1}
                                 borderColor={designSystem.colors.border}
                                 bg={designSystem.colors.surface}
-                                p="$3"
+                                justify="space-between"
+                                p="$2.5"
                             >
                                 <Paragraph
                                     color={designSystem.colors.mutedForeground}
@@ -604,11 +741,18 @@ export default function DashboardScreen() {
 
                 <YStack gap="$3">
                     {highlightedPlaces.map((place) => {
-                        const placeTone = getPlaceStatusTone(place.status);
+                        const status = derivePlaceStatus(place.audit_status);
+                        const placeTone = getPlaceStatusTone(status);
+                        const progressPercent = place.progress_percent ?? 0;
+                        const auditScore = place.summary_score ?? 0;
+                        const updatedLabel = deriveUpdatedAtLabel(
+                            place.started_at,
+                            place.submitted_at,
+                        );
 
                         return (
                             <YStack
-                                key={place.id}
+                                key={place.place_id}
                                 rounded={designSystem.radii.lg}
                                 borderWidth={1}
                                 borderColor={designSystem.colors.border}
@@ -626,14 +770,14 @@ export default function DashboardScreen() {
                                             fontFamily={designSystem.fonts.bodyBold}
                                             fontSize={designSystem.typography.titleMd.fontSize}
                                         >
-                                            {place.placeName}
+                                            {place.place_name}
                                         </Text>
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
                                             fontSize={designSystem.typography.bodyMd.fontSize}
                                         >
-                                            {place.projectName}
+                                            {place.project_name}
                                         </Paragraph>
                                     </YStack>
                                     <YStack
@@ -649,7 +793,7 @@ export default function DashboardScreen() {
                                             textTransform="uppercase"
                                             letterSpacing={1.2}
                                         >
-                                            {PLACE_STATUS_LABELS[place.status]}
+                                            {PLACE_STATUS_LABELS[status]}
                                         </Text>
                                     </YStack>
                                 </XStack>
@@ -660,14 +804,14 @@ export default function DashboardScreen() {
                                         fontFamily={designSystem.fonts.bodyMedium}
                                         fontSize={designSystem.typography.bodyMd.fontSize}
                                     >
-                                        Mandatory completion {place.mandatoryCompletionPercent}%
+                                        Mandatory completion {progressPercent}%
                                     </Paragraph>
                                     <Paragraph
                                         color={designSystem.colors.primary}
                                         fontFamily={designSystem.fonts.bodyBold}
                                         fontSize={designSystem.typography.bodyMd.fontSize}
                                     >
-                                        Audit {place.auditScore}%
+                                        Audit {auditScore}%
                                     </Paragraph>
                                 </XStack>
 
@@ -681,7 +825,7 @@ export default function DashboardScreen() {
                                         height={6}
                                         rounded={designSystem.radii.full}
                                         bg={designSystem.colors.primary}
-                                        width={`${place.mandatoryCompletionPercent}%`}
+                                        width={`${progressPercent}%`}
                                     />
                                 </YStack>
 
@@ -696,7 +840,7 @@ export default function DashboardScreen() {
                                             fontFamily={designSystem.fonts.bodyMedium}
                                             fontSize={designSystem.typography.bodyMd.fontSize}
                                         >
-                                            {place.updatedAtLabel}
+                                            {updatedLabel}
                                         </Paragraph>
                                     </XStack>
                                     <Button
@@ -707,8 +851,7 @@ export default function DashboardScreen() {
                                         bg={designSystem.colors.primary}
                                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                         onPress={() => {
-                                            setSelectedPlaceId(place.id);
-                                            router.push("/(tabs)/execute");
+                                            router.push(`/(tabs)/execute/${place.place_id}`);
                                         }}
                                     >
                                         <XStack items="center" gap="$1.5">

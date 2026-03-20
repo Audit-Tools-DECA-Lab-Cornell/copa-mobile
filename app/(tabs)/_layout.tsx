@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { BarChart3, ClipboardCheck, LayoutDashboard, MapPinned } from "@tamagui/lucide-icons";
 import { designSystem } from "lib/design-system";
+import { useAuditSync } from "lib/audit/use-audit-sync";
 
 interface TabIconProps {
     readonly focused: boolean;
@@ -59,6 +60,8 @@ function ReportsTabIcon({ focused, size }: TabIconProps) {
  * Main tab layout for the playspace mobile demo.
  */
 export default function TabLayout() {
+    useAuditSync();
+
     return (
         <Tabs
             screenOptions={{

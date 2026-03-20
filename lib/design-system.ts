@@ -1,4 +1,12 @@
-import type { ManagerSurveyStatus, MetricTone, PlaceStatus } from "./playspace-demo-data";
+/**
+ * Place workflow status used for status pill rendering.
+ */
+export type PlaceStatus = "not_started" | "in_progress" | "submitted";
+
+/**
+ * Color tone key for dashboard metric cards.
+ */
+export type MetricTone = "blue" | "green" | "purple" | "orange";
 
 interface TypographyToken {
     readonly fontSize: number;
@@ -75,7 +83,7 @@ export const designSystem = {
         bodyLg: createTypographyToken(15, 20),
         titleSm: createTypographyToken(15, 20),
         titleMd: createTypographyToken(16, 20),
-        titleLg: createTypographyToken(19, 24),
+        titleLg: createTypographyToken(18, 24),
         metricXs: createTypographyToken(20, 24),
         metricSm: createTypographyToken(22, 26),
         metricMd: createTypographyToken(24, 28),
@@ -162,45 +170,7 @@ export function getPlaceStatusTone(status: PlaceStatus): DesignTone {
         };
     }
 
-    if (status === "ready_for_review") {
-        return {
-            accent: designSystem.colors.violet,
-            surface: designSystem.colors.violetSoft,
-            text: designSystem.colors.violet,
-        };
-    }
-
     if (status === "in_progress") {
-        return {
-            accent: designSystem.colors.primary,
-            surface: designSystem.colors.primarySoft,
-            text: designSystem.colors.primary,
-        };
-    }
-
-    return {
-        accent: designSystem.colors.warning,
-        surface: designSystem.colors.warningSoft,
-        text: designSystem.colors.warning,
-    };
-}
-
-/**
- * Resolve manager survey state colors into the extracted design palette.
- *
- * @param status Manager survey progress.
- * @returns Accent, surface, and text colors for the survey state.
- */
-export function getManagerSurveyTone(status: ManagerSurveyStatus): DesignTone {
-    if (status === "submitted") {
-        return {
-            accent: designSystem.colors.success,
-            surface: designSystem.colors.successSoft,
-            text: designSystem.colors.success,
-        };
-    }
-
-    if (status === "requested") {
         return {
             accent: designSystem.colors.primary,
             surface: designSystem.colors.primarySoft,

@@ -78,15 +78,15 @@ export default function SignupScreen() {
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
-                            Use your assigned auditor credentials.
+                            Use your assigned playspace participant credentials.
                         </Text>
                     </XStack>
                     <Paragraph
                         color={designSystem.colors.secondaryForeground}
                         fontFamily={designSystem.fonts.bodyMedium}
                     >
-                        If you need access, ask your project lead to set up your auditor account and
-                        share sign-in details.
+                        If you need access, ask your project lead to set up your participant account
+                        and share sign-in details.
                     </Paragraph>
                 </YStack>
 

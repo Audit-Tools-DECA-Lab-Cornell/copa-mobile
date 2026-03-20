@@ -1,0 +1,214 @@
+import { z } from "zod";
+
+export const executionModeSchema = z.enum(["audit", "survey", "both"]);
+export const assignmentRoleSchema = z.enum(["auditor", "place_admin"]);
+export const assignmentRolesSchema = z.array(assignmentRoleSchema).min(1);
+export const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
+export const questionModeSchema = z.enum(["audit", "survey", "both"]);
+export const constructKeySchema = z.enum(["usability", "play_value"]);
+export const scaleKeySchema = z.enum(["quantity", "diversity", "sociability", "challenge"]);
+export const preAuditInputTypeSchema = z.enum(["single_select", "multi_select", "auto_timestamp"]);
+
+export const choiceOptionSchema = z.object({
+    key: z.string().min(1),
+    label: z.string().min(1),
+    description: z.string().nullable().optional(),
+});
+
+export const scaleOptionSchema = z.object({
+    key: z.string().min(1),
+    label: z.string().min(1),
+    addition_value: z.number(),
+    boost_value: z.number(),
+    allows_follow_up_scales: z.boolean(),
+    is_not_applicable: z.boolean(),
+});
+
+export const scaleDefinitionSchema = z.object({
+    key: scaleKeySchema,
+    title: z.string().min(1),
+    prompt: z.string().min(1),
+    description: z.string().min(1),
+    options: z.array(scaleOptionSchema),
+});
+
+export const preAuditQuestionSchema = z.object({
+    key: z.string().min(1),
+    label: z.string().min(1),
+    description: z.string().nullable().optional(),
+    input_type: preAuditInputTypeSchema,
+    required: z.boolean(),
+    options: z.array(choiceOptionSchema),
+});
+
+export const questionScaleSchema = z.object({
+    key: scaleKeySchema,
+    title: z.string().min(1),
+    prompt: z.string().min(1),
+    options: z.array(scaleOptionSchema),
+});
+
+export const instrumentQuestionSchema = z.object({
+    question_key: z.string().min(1),
+    mode: questionModeSchema,
+    constructs: z.array(constructKeySchema),
+    domains: z.array(z.string()),
+    section_key: z.string().min(1),
+    prompt: z.string().min(1),
+    scales: z.array(questionScaleSchema),
+});
+
+export const instrumentSectionSchema = z.object({
+    section_key: z.string().min(1),
+    title: z.string().min(1),
+    description: z.string().nullable().optional(),
+    instruction: z.string().min(1),
+    notes_prompt: z.string().nullable().optional(),
+    questions: z.array(instrumentQuestionSchema),
+});
+
+export const playspaceInstrumentSchema = z.object({
+    instrument_key: z.string().min(1),
+    instrument_name: z.string().min(1),
+    instrument_version: z.string().min(1),
+    current_sheet: z.string().min(1),
+    source_files: z.array(z.string()),
+    preamble: z.array(z.string()),
+    execution_modes: z.array(choiceOptionSchema),
+    pre_audit_questions: z.array(preAuditQuestionSchema),
+    scale_guidance: z.array(scaleDefinitionSchema),
+    sections: z.array(instrumentSectionSchema),
+});
+
+export const auditSectionProgressSchema = z.object({
+    section_key: z.string().min(1),
+    title: z.string().min(1),
+    visible_question_count: z.number().int().nonnegative(),
+    answered_question_count: z.number().int().nonnegative(),
+    is_complete: z.boolean(),
+});
+
+export const auditProgressSchema = z.object({
+    required_pre_audit_complete: z.boolean(),
+    visible_section_count: z.number().int().nonnegative(),
+    completed_section_count: z.number().int().nonnegative(),
+    total_visible_questions: z.number().int().nonnegative(),
+    answered_visible_questions: z.number().int().nonnegative(),
+    ready_to_submit: z.boolean(),
+    sections: z.array(auditSectionProgressSchema),
+});
+
+export const auditSessionSchema = z.object({
+    audit_id: z.uuid(),
+    audit_code: z.string().min(1),
+    place_id: z.uuid(),
+    place_name: z.string().min(1),
+    place_type: z.string().nullable(),
+    assignment_roles: assignmentRolesSchema,
+    allowed_execution_modes: z.array(executionModeSchema),
+    selected_execution_mode: executionModeSchema.nullable(),
+    status: auditStatusSchema,
+    instrument_key: z.string().min(1),
+    instrument_version: z.string().min(1),
+    started_at: z.iso.datetime(),
+    submitted_at: z.iso.datetime().nullable(),
+    total_minutes: z.number().int().nullable(),
+    responses_json: z.record(z.string(), z.unknown()),
+    scores_json: z.record(z.string(), z.unknown()),
+    progress: auditProgressSchema,
+});
+
+export const preAuditDraftSchema = z.object({
+    season: z.string().nullable().optional(),
+    weather_conditions: z.array(z.string()).default([]),
+    users_present: z.array(z.string()).default([]),
+    user_count: z.string().nullable().optional(),
+    age_groups: z.array(z.string()).default([]),
+    place_size: z.string().nullable().optional(),
+});
+
+export const sectionDraftPatchSchema = z.object({
+    responses: z.record(z.string(), z.record(z.string(), z.string())).default({}),
+    note: z.string().nullable().optional(),
+});
+
+export const auditDraftPatchSchema = z.object({
+    meta: z
+        .object({
+            execution_mode: executionModeSchema.nullable().optional(),
+        })
+        .nullable()
+        .optional(),
+    pre_audit: preAuditDraftSchema.nullable().optional(),
+    sections: z.record(z.string(), sectionDraftPatchSchema).default({}),
+});
+
+export const persistedAuditStateSchema = z.object({
+    instrument: playspaceInstrumentSchema.nullable(),
+    sessions_by_audit_id: z.record(z.string(), auditSessionSchema),
+    sessions_by_place_id: z.record(z.string(), auditSessionSchema),
+    dirty_sections: z.record(z.string(), z.array(z.string())).default({}),
+    dirty_pre_audit: z.array(z.string()).default([]),
+});
+
+export type ExecutionMode = z.infer<typeof executionModeSchema>;
+export type AssignmentRole = z.infer<typeof assignmentRoleSchema>;
+export type AssignmentRoles = z.infer<typeof assignmentRolesSchema>;
+export type AuditStatus = z.infer<typeof auditStatusSchema>;
+export type QuestionMode = z.infer<typeof questionModeSchema>;
+export type ConstructKey = z.infer<typeof constructKeySchema>;
+export type ScaleKey = z.infer<typeof scaleKeySchema>;
+export type PreAuditInputType = z.infer<typeof preAuditInputTypeSchema>;
+export type ChoiceOption = z.infer<typeof choiceOptionSchema>;
+export type ScaleOption = z.infer<typeof scaleOptionSchema>;
+export type ScaleDefinition = z.infer<typeof scaleDefinitionSchema>;
+export type PreAuditQuestion = z.infer<typeof preAuditQuestionSchema>;
+export type QuestionScale = z.infer<typeof questionScaleSchema>;
+export type InstrumentQuestion = z.infer<typeof instrumentQuestionSchema>;
+export type InstrumentSection = z.infer<typeof instrumentSectionSchema>;
+export type PlayspaceInstrument = z.infer<typeof playspaceInstrumentSchema>;
+export type AuditSectionProgress = z.infer<typeof auditSectionProgressSchema>;
+export type AuditProgress = z.infer<typeof auditProgressSchema>;
+export type AuditSession = z.infer<typeof auditSessionSchema>;
+export type PreAuditDraft = z.infer<typeof preAuditDraftSchema>;
+export type SectionDraftPatch = z.infer<typeof sectionDraftPatchSchema>;
+export type AuditDraftPatch = z.infer<typeof auditDraftPatchSchema>;
+export type PersistedAuditState = z.infer<typeof persistedAuditStateSchema>;
+
+/**
+ * Read a string-only answer map from an unknown JSON payload.
+ *
+ * @param value Unknown JSON-like value.
+ * @returns A string record when available, otherwise an empty object.
+ */
+export function readStringRecord(value: unknown): Record<string, string> {
+    if (typeof value !== "object" || value === null) {
+        return {};
+    }
+
+    const nextRecord: Record<string, string> = {};
+    for (const [recordKey, recordValue] of Object.entries(value)) {
+        if (typeof recordValue === "string") {
+            nextRecord[recordKey] = recordValue;
+        }
+    }
+    return nextRecord;
+}
+
+/**
+ * Read a nested question-to-scale answer map from unknown JSON.
+ *
+ * @param value Unknown JSON-like value.
+ * @returns A normalized nested record of section answers.
+ */
+export function readNestedStringRecord(value: unknown): Record<string, Record<string, string>> {
+    if (typeof value !== "object" || value === null) {
+        return {};
+    }
+
+    const nextRecord: Record<string, Record<string, string>> = {};
+    for (const [recordKey, recordValue] of Object.entries(value)) {
+        nextRecord[recordKey] = readStringRecord(recordValue);
+    }
+    return nextRecord;
+}

@@ -1,54 +1,139 @@
-import { useMemo } from "react";
-import { ScrollView } from "react-native";
+import { useEffect, useMemo } from "react";
+import { ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { Clock3, LocateFixed, MapPin } from "@tamagui/lucide-icons";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import {
-    PLAYSPACE_PLACES,
-    type ManagerSurveyStatus,
-    type PlaceStatus,
-} from "lib/playspace-demo-data";
-import {
-    designSystem,
-    getManagerSurveyTone,
-    getPlaceStatusTone,
-    type DesignTone,
-} from "lib/design-system";
-import { useDemoUiStore } from "stores/demo-ui-store";
+import { designSystem, getPlaceStatusTone, type DesignTone } from "lib/design-system";
+import type { AuditorPlace } from "lib/audit/places-api";
+import { useAuthStore } from "stores/auth-store";
+import { usePlacesStore } from "stores/places-store";
 
-const PLACE_STATUS_LABELS: Record<PlaceStatus, string> = {
+/**
+ * UI status derived from the backend `audit_status` value.
+ */
+type DerivedPlaceStatus = "not_started" | "in_progress" | "submitted";
+
+/**
+ * Labels displayed inside status pills.
+ */
+const PLACE_STATUS_LABELS: Record<DerivedPlaceStatus, string> = {
     not_started: "Not Started",
     in_progress: "In Progress",
-    ready_for_review: "Ready for Review",
     submitted: "Submitted",
 };
 
-const MANAGER_SURVEY_STATUS_LABELS: Record<ManagerSurveyStatus, string> = {
-    pending: "Survey Pending",
-    requested: "Survey Requested",
-    submitted: "Survey Submitted",
-};
+/**
+ * Map the backend `audit_status` to a local UI status string.
+ *
+ * @param auditStatus Raw audit status from the API (nullable).
+ * @returns Normalised UI status used for pills and tone lookups.
+ */
+function derivePlaceStatus(auditStatus: AuditorPlace["audit_status"]): DerivedPlaceStatus {
+    if (auditStatus === "SUBMITTED") {
+        return "submitted";
+    }
+    if (auditStatus === "IN_PROGRESS" || auditStatus === "PAUSED") {
+        return "in_progress";
+    }
+    return "not_started";
+}
+
+/**
+ * Build a human-readable relative-time label from ISO timestamps.
+ *
+ * @param startedAt  ISO date string for when the audit was started.
+ * @param submittedAt ISO date string for when the audit was submitted.
+ * @returns Short relative-time string such as "2 days ago" or "Not started".
+ */
+function deriveUpdatedAtLabel(startedAt: string | null, submittedAt: string | null): string {
+    const iso = submittedAt ?? startedAt;
+    if (iso === null) {
+        return "Not started";
+    }
+
+    const diffMs = Date.now() - new Date(iso).getTime();
+    if (diffMs < 0) {
+        return "Just now";
+    }
+
+    const minutes = Math.floor(diffMs / 60_000);
+    if (minutes < 1) {
+        return "Just now";
+    }
+    if (minutes < 60) {
+        return `${minutes}m ago`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+        return `${hours}h ago`;
+    }
+
+    const days = Math.floor(hours / 24);
+    if (days === 1) {
+        return "1 day ago";
+    }
+    return `${days} days ago`;
+}
+
+/**
+ * Build a locality string from city, province, and country fields.
+ *
+ * @param place Auditor place record.
+ * @returns Comma-separated locality or fallback text.
+ */
+function deriveLocality(place: AuditorPlace): string {
+    const parts = [place.city, place.province, place.country].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "Assigned place";
+}
 
 /**
  * Assigned places tab for auditor field execution.
+ * Displays the full list of places from the auditor's assignment API,
+ * with status pills, progress bars, and score tiles.
  */
 export default function PlacesScreen() {
     const router = useRouter();
-    const setSelectedPlaceId = useDemoUiStore((state) => state.setSelectedPlaceId);
+    const session = useAuthStore((state) => state.session);
+    const places = usePlacesStore((state) => state.places);
+    const isLoading = usePlacesStore((state) => state.isLoading);
+    const loadPlaces = usePlacesStore((state) => state.loadPlaces);
+
+    useEffect(() => {
+        if (session !== null) {
+            void loadPlaces(session);
+        }
+    }, [session, loadPlaces]);
+
     const placeStatusCounts = useMemo(() => {
-        return PLAYSPACE_PLACES.reduce(
+        return places.reduce(
             (accumulator, place) => {
-                accumulator[place.status] += 1;
+                const status = derivePlaceStatus(place.audit_status);
+                accumulator[status] += 1;
                 return accumulator;
             },
             {
                 not_started: 0,
                 in_progress: 0,
-                ready_for_review: 0,
                 submitted: 0,
-            } satisfies Record<PlaceStatus, number>,
+            } satisfies Record<DerivedPlaceStatus, number>,
         );
-    }, []);
+    }, [places]);
+
+    if (isLoading && places.length === 0) {
+        return (
+            <YStack flex={1} items="center" justify="center" bg={designSystem.colors.background}>
+                <ActivityIndicator size="large" color={designSystem.colors.primary} />
+                <Paragraph
+                    color={designSystem.colors.mutedForeground}
+                    fontFamily={designSystem.fonts.bodyMedium}
+                    mt="$4"
+                >
+                    Loading your places…
+                </Paragraph>
+            </YStack>
+        );
+    }
 
     return (
         <ScrollView
@@ -57,7 +142,7 @@ export default function PlacesScreen() {
             contentContainerStyle={{
                 paddingHorizontal: designSystem.spacing.screenPaddingHorizontal,
                 paddingTop: designSystem.spacing.screenPaddingVertical,
-                paddingBottom: 132,
+                paddingBottom: 92,
                 gap: 24,
             }}
         >
@@ -83,12 +168,12 @@ export default function PlacesScreen() {
                 <XStack gap="$3">
                     <SummaryTile label="In progress" value={placeStatusCounts.in_progress} />
                     <SummaryTile
-                        label="Ready"
-                        value={placeStatusCounts.ready_for_review}
+                        label="Not started"
+                        value={placeStatusCounts.not_started}
                         tone={{
-                            accent: designSystem.colors.violet,
-                            surface: designSystem.colors.violetSoft,
-                            text: designSystem.colors.violet,
+                            accent: designSystem.colors.warning,
+                            surface: designSystem.colors.warningSoft,
+                            text: designSystem.colors.warning,
                         }}
                     />
                     <SummaryTile
@@ -104,13 +189,18 @@ export default function PlacesScreen() {
             </YStack>
 
             <YStack gap="$3">
-                {PLAYSPACE_PLACES.map((place) => {
-                    const placeTone = getPlaceStatusTone(place.status);
-                    const managerSurveyTone = getManagerSurveyTone(place.managerSurveyStatus);
+                {places.map((place) => {
+                    const status = derivePlaceStatus(place.audit_status);
+                    const placeTone = getPlaceStatusTone(status);
+                    const locality = deriveLocality(place);
+                    const auditScoreLabel =
+                        place.summary_score === null ? "--" : `${place.summary_score}%`;
+                    const progressPercent = place.progress_percent ?? 0;
+                    const updatedLabel = deriveUpdatedAtLabel(place.started_at, place.submitted_at);
 
                     return (
                         <YStack
-                            key={place.id}
+                            key={place.place_id}
                             rounded={designSystem.radii.lg}
                             borderWidth={1}
                             borderColor={designSystem.colors.border}
@@ -131,14 +221,14 @@ export default function PlacesScreen() {
                                                 fontFamily={designSystem.fonts.bodyBold}
                                                 fontSize={designSystem.typography.titleMd.fontSize}
                                             >
-                                                {place.placeName}
+                                                {place.place_name}
                                             </Text>
                                             <Paragraph
                                                 color={designSystem.colors.mutedForeground}
                                                 fontFamily={designSystem.fonts.bodyMedium}
-                                                fontSize={designSystem.typography.bodySm.fontSize}
+                                                fontSize={designSystem.typography.bodyXs.fontSize}
                                             >
-                                                {place.projectName}
+                                                {place.project_name}
                                             </Paragraph>
                                         </YStack>
                                         <YStack
@@ -154,7 +244,7 @@ export default function PlacesScreen() {
                                                 textTransform="uppercase"
                                                 letterSpacing={1}
                                             >
-                                                {PLACE_STATUS_LABELS[place.status]}
+                                                {PLACE_STATUS_LABELS[status]}
                                             </Text>
                                         </YStack>
                                     </XStack>
@@ -167,34 +257,17 @@ export default function PlacesScreen() {
                                         <Paragraph
                                             color={designSystem.colors.mutedForeground}
                                             fontFamily={designSystem.fonts.bodyMedium}
-                                            fontSize={designSystem.typography.bodyLg.fontSize}
+                                            fontSize={designSystem.typography.bodyMd.fontSize}
                                         >
-                                            {place.locality}
+                                            {locality}
                                         </Paragraph>
                                     </XStack>
 
                                     <XStack gap="$3">
                                         <ScoreTile
                                             label="Audit score"
-                                            value={
-                                                place.auditScore === 0
-                                                    ? "--"
-                                                    : `${place.auditScore}%`
-                                            }
+                                            value={auditScoreLabel}
                                             valueColor={designSystem.colors.primary}
-                                        />
-                                        <ScoreTile
-                                            label="Combined score"
-                                            value={
-                                                place.combinedScore === null
-                                                    ? "Pending"
-                                                    : `${place.combinedScore}%`
-                                            }
-                                            valueColor={
-                                                place.combinedScore === null
-                                                    ? designSystem.colors.warning
-                                                    : designSystem.colors.success
-                                            }
                                         />
                                     </XStack>
 
@@ -212,7 +285,7 @@ export default function PlacesScreen() {
                                                 fontFamily={designSystem.fonts.monoBold}
                                                 fontSize={designSystem.typography.labelLg.fontSize}
                                             >
-                                                {place.mandatoryCompletionPercent}%
+                                                {progressPercent}%
                                             </Text>
                                         </XStack>
                                         <YStack
@@ -225,7 +298,7 @@ export default function PlacesScreen() {
                                                 height={6}
                                                 rounded={designSystem.radii.full}
                                                 bg={designSystem.colors.primary}
-                                                width={`${place.mandatoryCompletionPercent}%`}
+                                                width={`${progressPercent}%`}
                                             />
                                         </YStack>
                                     </YStack>
@@ -256,35 +329,9 @@ export default function PlacesScreen() {
                                                         designSystem.typography.bodySm.fontSize
                                                     }
                                                 >
-                                                    {place.updatedAtLabel}
+                                                    {updatedLabel}
                                                 </Paragraph>
                                             </XStack>
-
-                                            <YStack
-                                                height={30}
-                                                justify="center"
-                                                rounded={designSystem.radii.sm}
-                                                px="$3"
-                                                style={{
-                                                    backgroundColor: managerSurveyTone.surface,
-                                                }}
-                                            >
-                                                <Text
-                                                    style={{ color: managerSurveyTone.text }}
-                                                    fontFamily={designSystem.fonts.bodyBold}
-                                                    fontSize={
-                                                        designSystem.typography.labelXs.fontSize
-                                                    }
-                                                    textTransform="uppercase"
-                                                    letterSpacing={0.8}
-                                                >
-                                                    {
-                                                        MANAGER_SURVEY_STATUS_LABELS[
-                                                            place.managerSurveyStatus
-                                                        ]
-                                                    }
-                                                </Text>
-                                            </YStack>
                                         </XStack>
 
                                         <Button
@@ -296,8 +343,7 @@ export default function PlacesScreen() {
                                             bg={designSystem.colors.primary}
                                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                             onPress={() => {
-                                                setSelectedPlaceId(place.id);
-                                                router.push("/(tabs)/execute");
+                                                router.push(`/(tabs)/execute/${place.place_id}`);
                                             }}
                                         >
                                             <XStack items="center" justify="center" gap="$1.5">
