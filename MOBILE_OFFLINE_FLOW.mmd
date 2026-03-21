@@ -1,0 +1,101 @@
+flowchart TB
+  subgraph entry [App start and hydrate]
+    A[Auditor signs in or app reopens]
+  end
+
+  subgraph hydrate [Hydrate user-scoped audit state]
+    H1[Hydrate auditData$ and auditUI$ for current user]
+    H2{MMKV snapshot exists for user?}
+    H3[Parse and validate persisted audit state]
+    H4[Apply persisted state into Legend State in one batch]
+    H5[Read legacy Secure Store audit snapshot]
+    H6{Legacy snapshot found?}
+    H7[Migrate legacy snapshot into Legend State then save immediately to MMKV]
+    H8[Start debounced auto-save observer]
+    H9[Set auditUI$.isHydrated true]
+    HR[Discard stale hydrate response when a newer hydrate started]
+  end
+
+  subgraph runtime [Live editing runtime]
+    E1[Auditor edits pre-audit answers section answers or notes]
+    E2[Update session data and dirty version maps]
+    E3[Batch related Legend State writes]
+    E4[Observed auditData$ schedules debounced MMKV save]
+  end
+
+  subgraph persist [On-device persistence]
+    P1[Debounced MMKV write for audit snapshot]
+    P2[saveNow forces immediate MMKV write]
+  end
+
+  subgraph sync [REST sync with backend]
+    S0[flushPendingChanges runs on foreground background or reconnect]
+    S1{Sync already running?}
+    S2[Collect dirty audit ids from dirty_sections and dirty_pre_audit]
+    S3{Any dirty audits?}
+    S4[Build one patch per dirty audit from current local state]
+    S5{Patch contains changes?}
+    S6[saveAuditDraft HTTP request]
+    S7{Request succeeded?}
+    S8[Merge server response with any newer local edits]
+    S9[Clear acknowledged dirty versions]
+    S10[Record last_successful_sync_at]
+    S11[saveNow after flush loop]
+    S12[Store lastSyncError and keep dirty state for retry]
+  end
+
+  subgraph submit [Submit audit]
+    T1[submitAuditSession]
+    T2[Flush pending changes for this audit]
+    T3{Flush failed or audit still dirty?}
+    T4[Block submit and show error]
+    T5[submitAudit HTTP request]
+  end
+
+  subgraph logout [Logout or user switch]
+    L1[Clear stored state or hydrate null]
+    L2[Stop auto-save observer and pending timer]
+    L3[Remove MMKV key or reset observables]
+  end
+
+  subgraph auth [Auth boundary]
+    N1[Auth session stays in Secure Store and is separate from auditData$]
+  end
+
+  A --> H1
+  H1 --> H2
+  H2 -->|yes| H3
+  H3 -->|valid| H4
+  H2 -->|no| H5
+  H5 --> H6
+  H6 -->|yes| H7
+  H6 -->|no| H8
+  H4 --> H8
+  H7 --> H8
+  H8 --> H9
+  H1 -.-> HR
+
+  H9 --> E1
+  E1 --> E2 --> E3 --> E4 --> P1
+  H7 --> P2
+  S8 --> P2
+  S11 --> P2
+
+  S0 --> S1
+  S1 -->|yes| S0
+  S1 -->|no| S2 --> S3
+  S3 -->|no| S0
+  S3 -->|yes| S4 --> S5
+  S5 -->|yes| S6
+  S5 -->|no| S4
+  S6 --> S7
+  S7 -->|ok| S8 --> S9 --> S10 --> S11
+  S7 -->|offline or HTTP error| S12
+
+  T1 --> T2 --> T3
+  T3 -->|yes| T4
+  T3 -->|no| T5
+
+  A --> N1
+  A --> L1
+  L1 --> L2 --> L3

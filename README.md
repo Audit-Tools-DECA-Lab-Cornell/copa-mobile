@@ -1,125 +1,81 @@
-# Audit Tools Playspace Mobile
+# Playspace Mobile
 
-Mobile app for auditors to complete playspace field audits on phones/tablets, including offline draft capture and later sync.
+> Auditor-facing mobile app for the Playspace Play Value and Usability Audit Tool.
 
-Built with Expo + Expo Router + Tamagui, with strict TypeScript, ESLint, and Prettier quality gates.
+Built with **Expo + Expo Router + Tamagui** for native iOS and Android field use. Supports offline draft capture, later sync, submitted-audit reporting, and client-side export.
+
+---
+
+## Table of Contents
+
+- [Product Scope](#product-scope)
+- [Architecture](#architecture)
+- [Offline-First Architecture](#offline-first-architecture)
+- [Feature Set](#feature-set)
+- [Localization](#localization)
+- [Route Map](#route-map)
+- [Project Structure](#project-structure)
+- [Data Contract & Scoring](#data-contract--scoring)
+- [Quick Start](#quick-start)
+- [Scripts](#scripts)
+- [Quality Gates](#quality-gates)
+- [Current Limitations](#current-limitations)
+- [Related Docs](#related-docs)
+
+---
 
 ## Product Scope
 
-- This mobile app supports auditors completing assigned playspace audits in the field.
-- Manager planning, manager surveys, and oversight workflows are handled in web tools.
-- Mobile users see only assigned places and complete focused field execution flows.
-- Mobile currently shows audit-only raw score totals and compact construct summaries.
-- Combined scoring that includes manager survey input is planned for a future update.
+### In scope
 
-## Prerequisites
+| Responsibility                                           |
+| -------------------------------------------------------- |
+| Auditor sign-in and session restoration                  |
+| Assigned place discovery                                 |
+| Starting or resuming Playspace audits                    |
+| Offline-first audit drafting and later sync              |
+| Submitted-audit reporting and export                     |
+| Lightweight mobile detail surfaces for places and audits |
 
-- Bun `1.3.x` (project package manager)
-- Node.js `20+` (Expo and tooling compatibility)
-- Expo-compatible environment:
-    - iOS: Xcode
-    - Android: Android Studio + SDK
+### Out of scope
 
-## Quick Start
+The following remain **separate web/backend planning tracks** and are not part of this app:
 
-1. Install dependencies:
+- Manager web dashboards
+- Manager survey entry
+- Combined manager survey + audit scoring
+- Weighted scoring
+- Heavy historical analytics or cross-audit comparison dashboards
 
-    ```bash
-    bun install
-    ```
+---
 
-2. (Optional) configure API URL in `.env`:
+## Architecture
 
-    ```bash
-    EXPO_PUBLIC_API_BASE_URL="http://127.0.0.1:8000"
-    ```
+### Tech Stack
 
-    If omitted, the app defaults to `http://127.0.0.1:8000`.
+| Layer                 | Technology         |
+| --------------------- | ------------------ |
+| Framework             | Expo + Expo Router |
+| UI                    | Tamagui            |
+| Language              | TypeScript         |
+| Validation            | Zod                |
+| Audit runtime state   | Legend State       |
+| On-device persistence | MMKV               |
+| Auth session storage  | Expo Secure Store  |
 
-3. Start the Expo dev server:
+### Why Legend State + MMKV
 
-    ```bash
-    bun run start
-    ```
+The audit flow is **offline-first**, with a clear three-layer state model:
 
-4. Run on a platform:
+| Layer                             | Role                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------- |
+| **Observable runtime state**      | Legend State observables: live in-session audit state                     |
+| **Persistent on-device storage**  | MMKV: durable snapshot; dirty version maps track pending patches          |
+| **Server-synced source of truth** | Background + foreground sync flush patches when connectivity is available |
 
-    ```bash
-    bun run ios
-    bun run android
-    bun run web
-    ```
+This replaces the older custom audit persistence path and gives the app a clear separation of concerns.
 
-## Scripts
-
-- `bun run start` - start Expo dev server (clears cache)
-- `bun run ios` - run iOS native app
-- `bun run android` - run Android native app
-- `bun run web` - run web target locally
-- `bun run build:web` - export static web build
-- `bun run doctor` - run Expo diagnostics (`expo-doctor`)
-- `bun run perf:web:budget` - enforce web bundle size budget
-- `bun run ci:quality` - run complete CI quality pipeline locally
-
-## Code Quality
-
-- `bun run typecheck` - TypeScript checks (`tsc --noEmit`)
-- `bun run lint` - ESLint checks
-- `bun run lint:fix` - auto-fix ESLint issues when possible
-- `bun run format` - format files with Prettier
-- `bun run format:check` - verify formatting without writing changes
-- `bun run check` - run typecheck + lint + format check
-
-### Pre-Commit Gate
-
-The repository uses `husky` + `lint-staged` for staged-file quality checks:
-
-- TypeScript/JavaScript files run ESLint fix + Prettier
-- JSON/Markdown/YAML files run Prettier
-
-If hooks are not active on your machine, run:
-
-```bash
-bun run prepare
-```
-
-### CI Quality Gate
-
-GitHub Actions workflow: `.github/workflows/mobile-quality.yml`
-
-The pipeline runs:
-
-1. `bun install --frozen-lockfile`
-2. `bun run check`
-3. `bun run doctor`
-4. `bun run build:web`
-5. `bun run perf:web:budget`
-
-### Dependency Governance
-
-- Dependabot is configured in `.github/dependabot.yml` for:
-    - npm dependencies
-    - GitHub Actions dependencies
-
-### PR Quality Policy
-
-- Pull requests use `.github/pull_request_template.md`
-- Every PR must include risk notes and verification checklist status
-
-Recommended before opening a PR:
-
-```bash
-bun run ci:quality
-```
-
-## Project Structure
-
-- `app/` - Expo Router routes/screens
-- `components/` - shared UI components
-- `lib/` - domain logic (auth/api/demo data)
-- `lib/storage/` - MMKV storage instance and Legend State persistence plugin
-- `stores/` - state stores (Legend State for audit, Zustand for auth/places/preferences)
-- `assets/` - static app assets
+---
 
 ## Offline-First Architecture
 
@@ -129,18 +85,238 @@ bun run ci:quality
 - **Background sync** (`lib/audit/background-sync.ts`) and **foreground sync** (`lib/audit/use-audit-sync.ts`) flush dirty audit edits to the REST API when connectivity is available.
 - On first launch after migration, the hydrate flow reads legacy Secure Store data and migrates it to MMKV automatically.
 
-## Playspace Data Contract And Scoring
+---
 
-- Audit session payloads are validated with Zod in `lib/audit/types.ts`.
-- Assigned-place payloads are validated with Zod in `lib/audit/places-api.ts`.
-- The app consumes typed Playspace fields for `meta`, `pre_audit`, `sections`, `scores`, and `progress`.
-- Score displays use raw total buckets rather than percent summaries:
-    - construct totals: `play_value_total`, `usability_total`, `sociability_total`
-    - column totals: `quantity_total`, `diversity_total`, `challenge_total`
-- Compact score labels currently use short forms such as `PV`, `U`, `S`, `Q`, `D`, and `C`.
-- When `score_totals` is not present, the app can still fall back to the legacy `summary_score` field for compatibility with older backend payloads.
+## Feature Set
 
-## Notes
+### Audit Execution
 
-- Expo Router entry point is configured via `main: "expo-router/entry"` in `package.json`.
-- The newest score-summary label keys currently have English strings only; other locales fall back to English until translations are added.
+- Start or resume an audit for an assigned place
+- Select or inherit execution mode: `audit`, `survey`, or `both`
+- Complete pre-audit questions
+- Answer section questions with quantity-gated follow-up scales
+- Add section notes
+- Auto-save locally and resume later
+- Submit only when visible questions and pre-audit are complete
+
+### Place & Report Surfaces
+
+- **Execute** tab: current field workflow
+- **Places** tab: search, filter, and sort
+- **Reports** tab: search, filter, sort, preview, and export
+- Place detail screen
+- Audit detail screen
+
+### Export
+
+Submitted audits can be exported client-side in:
+
+| Format |                                    |
+| ------ | ---------------------------------- |
+| `CSV`  | Spreadsheet-compatible flat export |
+| `XLSX` | Excel workbook                     |
+| `PDF`  | Formatted audit report             |
+
+Each export includes: audit overview, pre-audit answers, PVUA guidance / scale legend, and a PVUA-style response matrix.
+
+---
+
+## Localization
+
+### Current Approach
+
+- Shared UI strings live in locale JSON files
+- `lib/instrument.ts` is the raw English structural source of truth
+- Locale-specific `instrument.ts` bundles provide translated display copy
+- `useLocalizedInstrument()` overlays translated copy onto the raw instrument
+
+### Rule: i18n for user-facing copy only
+
+| ✅ Use i18n for     | ❌ Do not use i18n for               |
+| ------------------- | ------------------------------------ |
+| Button labels       | Storage keys                         |
+| Section headings    | File path builders                   |
+| Error messages      | CSS/HTML-like strings                |
+| User-facing prompts | Code-shaped identifiers              |
+|                     | Technical string composition helpers |
+
+---
+
+## Route Map
+
+```
+app/
+├── (tabs)/
+│   ├── execute/
+│   │   ├── index.tsx
+│   │   └── [placeId]/index.tsx
+│   ├── places.tsx
+│   ├── reports.tsx
+│   └── settings.tsx
+├── place/[placeId].tsx
+└── report/[auditId].tsx
+```
+
+---
+
+## Project Structure
+
+```
+app/              Expo Router screens and route layouts
+components/       Shared UI and design primitives
+components/ui/    Reusable search/filter/collapsible/stat/export controls
+lib/audit/        Audit API, export logic, helpers, selectors, sync helpers
+lib/i18n/         i18n bootstrapping and instrument localization
+lib/storage/      MMKV storage and persistence adapter
+stores/           Legend State (audit) + Zustand (auth/places/prefs)
+assets/           Static assets
+```
+
+---
+
+## Data Contract & Scoring
+
+Audit session payloads are validated with Zod in `lib/audit/types.ts`. Assigned-place payloads are validated with Zod in `lib/audit/places-api.ts`.
+
+### Typed Payload Fields
+
+The app consumes the following typed fields:
+
+**Session payloads:** `meta`, `pre_audit`, `sections`, `scores`, `progress`
+
+**Assigned-place summaries:** `audit_status`, `audit_id`, `summary_score`, `score_totals`, `progress_percent`
+
+### Score Displays
+
+Score displays use **raw total buckets**, not percent summaries:
+
+| Type             | Fields                                                       |
+| ---------------- | ------------------------------------------------------------ |
+| Construct totals | `play_value_total` · `usability_total` · `sociability_total` |
+| Column totals    | `quantity_total` · `diversity_total` · `challenge_total`     |
+| Compact labels   | `PV` · `U` · `S` · `Q` · `D` · `C`                           |
+
+> **Fallback:** when `score_totals` is not present, the app falls back to the legacy `summary_score` field for compatibility with older backend payloads.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+| Tool           | Version                    |
+| -------------- | -------------------------- |
+| Bun            | `1.3.x`                    |
+| Node.js        | `20+`                      |
+| Xcode          | Latest (iOS dev)           |
+| Android Studio | Latest + SDK (Android dev) |
+
+### Install
+
+```bash
+bun install
+```
+
+### Configure API URL
+
+```bash
+EXPO_PUBLIC_API_BASE_URL="http://127.0.0.1:8000"
+```
+
+Defaults to `http://127.0.0.1:8000` if omitted.
+
+### Run
+
+```bash
+bun run start      # start Expo dev server
+bun run ios        # run iOS app
+bun run android    # run Android app
+```
+
+> `bun run web` exists for tooling/dev purposes only. The product target is native mobile, not a web deployment.
+
+---
+
+## Scripts
+
+### Development
+
+| Command             | Description                 |
+| ------------------- | --------------------------- |
+| `bun run start`     | Start Expo dev server       |
+| `bun run ios`       | Run iOS app                 |
+| `bun run android`   | Run Android app             |
+| `bun run web`       | Local web target (dev only) |
+| `bun run build:web` | Export static web build     |
+| `bun run doctor`    | Expo diagnostics            |
+
+### Code Quality
+
+| Command                | Description                     |
+| ---------------------- | ------------------------------- |
+| `bun run typecheck`    | TypeScript checks               |
+| `bun run lint`         | ESLint checks                   |
+| `bun run lint:fix`     | Auto-fix ESLint issues          |
+| `bun run format`       | Prettier write                  |
+| `bun run format:check` | Prettier check                  |
+| `bun run check`        | typecheck + lint + format check |
+| `bun run ci:quality`   | Local quality pipeline          |
+
+### i18n
+
+| Command                | Description                          |
+| ---------------------- | ------------------------------------ |
+| `bun run i18n:extract` | Extract user-facing translation keys |
+| `bun run i18n:check`   | Inspect translation status           |
+
+---
+
+## Quality Gates
+
+### Pre-commit
+
+This repo uses `husky` + `lint-staged`:
+
+| File type              | Hook                  |
+| ---------------------- | --------------------- |
+| TS / JS                | ESLint fix + Prettier |
+| JSON / Markdown / YAML | Prettier              |
+
+If hooks are missing locally:
+
+```bash
+bun run prepare
+```
+
+### Recommended Local Validation
+
+```bash
+bun run check
+bun run doctor
+```
+
+### Dependency Governance
+
+Dependabot is configured in `.github/dependabot.yml` for:
+
+- npm dependencies
+- GitHub Actions dependencies
+
+---
+
+## Current Limitations
+
+- Newest locale additions still need translation coverage in some non-English locales
+- Manager survey and combined scoring are not present in the mobile product yet
+- Mobile analytics are intentionally lightweight: the backend surface is centered on assigned-place summaries plus per-audit detail
+
+---
+
+## Related Docs
+
+| File                                       | Description                         |
+| ------------------------------------------ | ----------------------------------- |
+| `../../PLANNING.md`                        | Cross-project status and priorities |
+| `../../instructions/playspace/PLANNING.md` | Playspace roadmap and boundaries    |
+| `../../instructions/playspace/SCORING.md`  | Current scoring rules               |
+| `MOBILE_OFFLINE_FLOW.mmd`                  | Local save and sync flow (Mermaid)  |
