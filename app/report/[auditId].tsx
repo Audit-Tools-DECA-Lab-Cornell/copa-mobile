@@ -210,7 +210,7 @@ export default function AuditReportDetailScreen() {
                     exportAuditMissingMessage: t("exportAuditMissing", { ns: "reports" }),
                     auditorProfile,
                 });
-                const fileName = await shareSingleAuditExport(exportableAudit, instrument, format);
+                await shareSingleAuditExport(exportableAudit, instrument, format);
                 const placeAbbreviatedName = place.place_name
                     .split(" ")
                     .map((word) => word[0])
