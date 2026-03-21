@@ -37,7 +37,7 @@ export function SearchInput({ value, onChangeText, placeholder }: Readonly<Searc
                 autoCorrect={false}
                 returnKeyType="search"
                 placeholder={placeholder}
-                placeholderTextColor="$color10"
+                placeholderTextColor="$placeholderColor"
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
                 fontSize={ds.typography.bodyMd.fontSize}

@@ -240,9 +240,10 @@ export default function ReportsScreen() {
 
     const showExportSuccess = useCallback(
         (fileName: string) => {
-            toast.show(t("exportReadyTitle"), {
-                message: t("exportReadyMessage", { fileName }),
+            toast.show(t("exportReadyTitle", { ns: "reports" }), {
+                message: t("exportReadyMessage", { ns: "reports", fileName }),
                 duration: 4000,
+                variant: "success",
             });
         },
         [t, toast],
@@ -257,6 +258,7 @@ export default function ReportsScreen() {
             toast.show(t("exportFailedTitle"), {
                 message,
                 duration: 5000,
+                variant: "error",
             });
         },
         [t, toast],

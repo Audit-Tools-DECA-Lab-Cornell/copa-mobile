@@ -79,7 +79,8 @@
         "saveAndNext": "सहेजें और आगे बढ़ें",
         "saveSection": "सेक्शन सहेजें",
         "sectionNotes": "सेक्शन नोट्स",
-        "unavailableTitle": "सेक्शन उपलब्ध नहीं है"
+        "unavailableTitle": "सेक्शन उपलब्ध नहीं है",
+        "uploadingShort": "अपलोड हो रहा है…"
     },
     "stack": {
         "auditStart": "ऑडिट शुरू",

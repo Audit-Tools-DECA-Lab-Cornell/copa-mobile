@@ -79,7 +79,8 @@
         "saveAndNext": "Save and next",
         "saveSection": "Save section",
         "sectionNotes": "Section Notes",
-        "unavailableTitle": "Section Unavailable"
+        "unavailableTitle": "Section Unavailable",
+        "uploadingShort": "Uploading…"
     },
     "stack": {
         "auditStart": "Audit Start",

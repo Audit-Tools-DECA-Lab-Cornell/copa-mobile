@@ -50,6 +50,7 @@ interface ColorPalette {
     readonly dangerSoft: string;
     readonly infoSoft: string;
     readonly violetSoft: string;
+    readonly placeholderColor: string;
 }
 
 interface ShadowPalette {
@@ -81,6 +82,7 @@ const DARK_COLORS = {
     dangerSoft: "rgba(201, 132, 114, 0.12)",
     infoSoft: "rgba(123, 144, 184, 0.12)",
     violetSoft: "rgba(155, 134, 178, 0.12)",
+    placeholderColor: "#AFA497",
 } as const satisfies ColorPalette;
 
 const DARK_SHADOWS = {
@@ -112,6 +114,7 @@ const LIGHT_COLORS = {
     dangerSoft: "rgba(181, 74, 56, 0.12)",
     infoSoft: "rgba(74, 97, 154, 0.12)",
     violetSoft: "rgba(107, 90, 138, 0.12)",
+    placeholderColor: "#6E6258",
 } as const satisfies ColorPalette;
 
 const LIGHT_SHADOWS = {
@@ -143,6 +146,7 @@ const DARK_HIGH_CONTRAST_COLORS = {
     dangerSoft: "rgba(242, 163, 146, 0.2)",
     infoSoft: "rgba(168, 194, 245, 0.2)",
     violetSoft: "rgba(208, 184, 244, 0.2)",
+    placeholderColor: "#8E8E8E",
 } as const satisfies ColorPalette;
 
 const LIGHT_HIGH_CONTRAST_COLORS = {
@@ -169,6 +173,7 @@ const LIGHT_HIGH_CONTRAST_COLORS = {
     dangerSoft: "rgba(142, 35, 26, 0.16)",
     infoSoft: "rgba(22, 58, 112, 0.16)",
     violetSoft: "rgba(77, 58, 112, 0.16)",
+    placeholderColor: "#D1C4B6",
 } as const satisfies ColorPalette;
 
 interface FontTokenScale {

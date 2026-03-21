@@ -79,7 +79,8 @@
         "saveAndNext": "Speichern und weiter",
         "saveSection": "Abschnitt speichern",
         "sectionNotes": "Abschnittsnotizen",
-        "unavailableTitle": "Abschnitt nicht verfuegbar"
+        "unavailableTitle": "Abschnitt nicht verfuegbar",
+        "uploadingShort": "Wird hochgeladen…"
     },
     "stack": {
         "auditStart": "Audit-Start",

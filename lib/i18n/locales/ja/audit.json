@@ -79,7 +79,8 @@
         "saveAndNext": "保存して次へ",
         "saveSection": "セクションを保存",
         "sectionNotes": "セクションのノート",
-        "unavailableTitle": "セクションが利用できません"
+        "unavailableTitle": "セクションが利用できません",
+        "uploadingShort": "アップロード中…"
     },
     "stack": {
         "auditStart": "監査開始",

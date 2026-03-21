@@ -15,6 +15,10 @@ export default function ExecuteLayout() {
 
     const themedHeaderOptions = {
         headerShown: true,
+        headerBackButtonMenuEnabled: true,
+        headerBackButtonDisplayMode: "minimal",
+        headerBackVisible: true,
+        headerBlurEffect: "light",
         headerStyle: { backgroundColor: ds.colors.surface },
         headerTintColor: ds.colors.primary,
         headerTitleStyle: {

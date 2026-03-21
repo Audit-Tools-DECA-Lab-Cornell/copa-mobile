@@ -170,6 +170,7 @@ export default function AuditReportDetailScreen() {
             toast.show(t("exportReadyTitle", { ns: "reports" }), {
                 message: t("exportReadyMessage", { ns: "reports", fileName }),
                 duration: 4000,
+                variant: "success",
             });
         },
         [t, toast],
@@ -184,6 +185,7 @@ export default function AuditReportDetailScreen() {
             toast.show(t("exportFailedTitle", { ns: "reports" }), {
                 message,
                 duration: 5000,
+                variant: "error",
             });
         },
         [t, toast],
@@ -209,7 +211,16 @@ export default function AuditReportDetailScreen() {
                     auditorProfile,
                 });
                 const fileName = await shareSingleAuditExport(exportableAudit, instrument, format);
-                showExportSuccess(fileName);
+                const placeAbbreviatedName = place.place_name
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .toUpperCase();
+                const auditorCode = auditorProfile?.auditorCode ?? "";
+                const userFriendlyFileName =
+                    "PVUA " + placeAbbreviatedName + " " + auditorCode + " " + format.toUpperCase();
+
+                showExportSuccess(userFriendlyFileName);
             } catch (error) {
                 showExportError(error);
             } finally {
@@ -325,6 +336,56 @@ export default function AuditReportDetailScreen() {
                         />
                     </YStack>
 
+                    {place === undefined ? null : (
+                        <YStack
+                            rounded={ds.radii.lg}
+                            borderWidth={1}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
+                            p="$4"
+                            gap="$4"
+                            style={{ boxShadow: ds.shadows.card }}
+                        >
+                            <XStack items="center" gap="$2">
+                                <FileBarChart size={16} color={ds.colors.primary} />
+                                <Text
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.titleMd.fontSize}
+                                >
+                                    {t("detail.exportThisAudit", { ns: "reports" })}
+                                </Text>
+                            </XStack>
+                            <XStack gap="$2">
+                                <ActionButton
+                                    label={t("exportPdf", { ns: "reports" })}
+                                    onPress={() => {
+                                        handleSingleAuditExport("pdf").catch(() => undefined);
+                                    }}
+                                    disabled={activeExportKey !== null}
+                                    isLoading={activeExportKey === `single:${place.place_id}:pdf`}
+                                />
+                                <ActionButton
+                                    label={t("exportCsv", { ns: "reports" })}
+                                    variant="primary"
+                                    onPress={() => {
+                                        handleSingleAuditExport("csv").catch(() => undefined);
+                                    }}
+                                    disabled={activeExportKey !== null}
+                                    isLoading={activeExportKey === `single:${place.place_id}:csv`}
+                                />
+                                <ActionButton
+                                    label={t("exportExcel", { ns: "reports" })}
+                                    onPress={() => {
+                                        handleSingleAuditExport("xlsx").catch(() => undefined);
+                                    }}
+                                    disabled={activeExportKey !== null}
+                                    isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
+                                />
+                            </XStack>
+                        </YStack>
+                    )}
+
                     <YStack
                         rounded={ds.radii.lg}
                         borderWidth={1}
@@ -433,56 +494,6 @@ export default function AuditReportDetailScreen() {
                             </YStack>
                         )}
                     </YStack>
-
-                    {place === undefined ? null : (
-                        <YStack
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            p="$4"
-                            gap="$4"
-                            style={{ boxShadow: ds.shadows.card }}
-                        >
-                            <XStack items="center" gap="$2">
-                                <FileBarChart size={16} color={ds.colors.primary} />
-                                <Text
-                                    color={ds.colors.foreground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.titleMd.fontSize}
-                                >
-                                    {t("detail.exportThisAudit", { ns: "reports" })}
-                                </Text>
-                            </XStack>
-                            <XStack gap="$2">
-                                <ActionButton
-                                    label={t("exportPdf", { ns: "reports" })}
-                                    onPress={() => {
-                                        handleSingleAuditExport("pdf").catch(() => undefined);
-                                    }}
-                                    disabled={activeExportKey !== null}
-                                    isLoading={activeExportKey === `single:${place.place_id}:pdf`}
-                                />
-                                <ActionButton
-                                    label={t("exportCsv", { ns: "reports" })}
-                                    variant="primary"
-                                    onPress={() => {
-                                        handleSingleAuditExport("csv").catch(() => undefined);
-                                    }}
-                                    disabled={activeExportKey !== null}
-                                    isLoading={activeExportKey === `single:${place.place_id}:csv`}
-                                />
-                                <ActionButton
-                                    label={t("exportExcel", { ns: "reports" })}
-                                    onPress={() => {
-                                        handleSingleAuditExport("xlsx").catch(() => undefined);
-                                    }}
-                                    disabled={activeExportKey !== null}
-                                    isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
-                                />
-                            </XStack>
-                        </YStack>
-                    )}
                 </ScrollView>
             )}
         </>

@@ -6,7 +6,7 @@ import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
 /** Debounce bursty local edits before attempting a foreground sync (ms). */
-const FOREGROUND_SYNC_DEBOUNCE_MS = 1000;
+const FOREGROUND_SYNC_DEBOUNCE_MS = 400;
 
 /**
  * Event-driven foreground sync hook that flushes locally-saved audit answers

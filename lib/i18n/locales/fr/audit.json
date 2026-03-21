@@ -80,7 +80,8 @@
         "saveAndNext": "Enregistrer et suivant",
         "saveSection": "Enregistrer la section",
         "sectionNotes": "Notes de section",
-        "unavailableTitle": "Section indisponible"
+        "unavailableTitle": "Section indisponible",
+        "uploadingShort": "Téléversement…"
     },
     "stack": {
         "auditStart": "Début de l’audit",
