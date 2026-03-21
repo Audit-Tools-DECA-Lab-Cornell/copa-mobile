@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { PLAYSPACE_INSTRUMENT } from "../lib/instrument.ts";
+import { BASE_PLAYSPACE_INSTRUMENT } from "../lib/instrument.ts";
 import { enInstrumentTranslations } from "../lib/i18n/locales/en/instrument.ts";
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
@@ -82,7 +82,7 @@ function mergeChoiceOption(baseOption, translation) {
  * Build the fully resolved compact translation bundle from the raw instrument and
  * optional locale-specific overrides.
  *
- * @param {typeof PLAYSPACE_INSTRUMENT} baseInstrument Canonical instrument definition.
+ * @param {typeof BASE_PLAYSPACE_INSTRUMENT} baseInstrument Canonical instrument definition.
  * @param {Record<string, unknown>} localeOverrides Partial locale translation overrides.
  * @returns {Record<string, unknown>} Fully resolved compact translation bundle.
  */
@@ -291,7 +291,7 @@ async function main() {
 
     if (mode === "source") {
         const bundle = buildResolvedInstrumentBundle(
-            PLAYSPACE_INSTRUMENT,
+            BASE_PLAYSPACE_INSTRUMENT,
             enInstrumentTranslations,
         );
         process.stdout.write(`${JSON.stringify(bundle, null, 2)}\n`);

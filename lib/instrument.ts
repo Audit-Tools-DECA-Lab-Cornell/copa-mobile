@@ -3,11 +3,14 @@ import type { PlayspaceInstrument } from "lib/audit/types";
 /**
  * Static instrument definition for PVUA v5.2.
  *
+ * This file is the raw English source of truth for the instrument structure.
+ * Localized display copy is layered on separately from `lib/i18n/locales/{locale}/instrument.ts`.
+ *
  * Edit questions, sections, scales, and options directly in this file.
  * Reverse-scored question values are pre-flipped.
  * Use **double asterisks** around text for bold rendering in the mobile UI.
  */
-export const PLAYSPACE_INSTRUMENT: PlayspaceInstrument = {
+export const BASE_PLAYSPACE_INSTRUMENT: PlayspaceInstrument = {
     instrument_key: "pvua_v5_2",
     instrument_name: "Playspace Play Value and Usability Audit Tool",
     instrument_version: "5.2",

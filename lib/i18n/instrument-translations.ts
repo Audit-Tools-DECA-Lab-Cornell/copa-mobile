@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "node_modules/react-i18next";
 
 import type {
     ChoiceOption,
@@ -12,7 +12,7 @@ import type {
     ScaleKey,
     ScaleOption,
 } from "lib/audit/types";
-import { PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 
 import { enInstrumentTranslations } from "./locales/en/instrument";
 import { deInstrumentTranslations } from "./locales/de/instrument";
@@ -404,6 +404,6 @@ export function useLocalizedInstrument(): PlayspaceInstrument {
 
     return useMemo(() => {
         const translations = getInstrumentTranslations(activeLanguage);
-        return localizeInstrument(PLAYSPACE_INSTRUMENT, translations);
+        return localizeInstrument(BASE_PLAYSPACE_INSTRUMENT, translations);
     }, [activeLanguage]);
 }

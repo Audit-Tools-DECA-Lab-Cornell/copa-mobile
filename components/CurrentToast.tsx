@@ -1,5 +1,6 @@
 import { Toast, useToastController, useToastState } from "@tamagui/toast";
 import { Button, H4, XStack, YStack, isWeb } from "tamagui";
+import { useTranslation } from "react-i18next";
 
 export function CurrentToast() {
     const currentToast = useToastState();
@@ -39,26 +40,29 @@ export function CurrentToast() {
 
 export function ToastControl() {
     const toast = useToastController();
-
+    const { t } = useTranslation("common");
     return (
         <YStack gap="$2" items="center">
-            <H4>Toast demo</H4>
+            <H4>{t("toastDemo", { ns: "common" })}</H4>
             <XStack gap="$2" justify="center">
                 <Button
                     onPress={() => {
-                        toast.show("Successfully saved!", {
-                            message: "Don't worry, we've got your data.",
+                        toast.show(t("toastSuccess", { ns: "common" }), {
+                            message: t(
+                                "dontWorryWeveGotYourData",
+                                "Don't worry, we've got your data.",
+                            ),
                         });
                     }}
                 >
-                    Show
+                    {t("toastShow", { ns: "common" })}
                 </Button>
                 <Button
                     onPress={() => {
                         toast.hide();
                     }}
                 >
-                    Hide
+                    {t("toastHide", { ns: "common" })}
                 </Button>
             </XStack>
         </YStack>

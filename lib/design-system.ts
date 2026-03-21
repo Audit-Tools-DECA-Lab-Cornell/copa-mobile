@@ -234,6 +234,7 @@ const BASE_TYPOGRAPHY = {
     metricSm: createTypographyToken(22, 26),
     metricMd: createTypographyToken(24, 28),
     metricLg: createTypographyToken(26, 30),
+    displaySm: createTypographyToken(28, 32),
     displayMd: createTypographyToken(30, 34),
     displayLg: createTypographyToken(32, 36),
 } as const;

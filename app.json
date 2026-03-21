@@ -55,7 +55,8 @@
             ],
             "expo-web-browser",
             "expo-secure-store",
-            "expo-background-task"
+            "expo-background-task",
+            "expo-sharing"
         ],
         "experiments": {
             "typedRoutes": true

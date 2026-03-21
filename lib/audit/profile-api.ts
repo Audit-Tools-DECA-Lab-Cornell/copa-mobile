@@ -1,6 +1,7 @@
 import type { AuthSession } from "lib/auth/types";
 import { requestJson, parsePayload } from "lib/audit/api";
 import { z } from "zod";
+import { t } from "i18next";
 
 const myAccountSchema = z.object({
     account_id: z.string(),
@@ -47,6 +48,6 @@ export async function fetchMyAuditorProfile(session: AuthSession): Promise<MyAud
     return parsePayload(
         payload,
         myAuditorProfileSchema,
-        "Auditor profile response shape is invalid.",
+        t("auditorProfileResponseShapeIsInvalid", "Auditor profile response shape is invalid."),
     );
 }

@@ -32,7 +32,8 @@
         "hindi": "हिंदी",
         "japanese": "जापानी",
         "label": "भाषा",
-        "selection": "ऐप भाषा"
+        "selection": "ऐप भाषा",
+        "system": "सिस्टम"
     },
     "profile": {
         "accountType": "खाता प्रकार",

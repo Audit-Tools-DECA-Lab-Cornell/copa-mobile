@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
 import { getApiBaseUrl } from "lib/api-base-url";
+import { t } from "i18next";
 
 const authResponseSchema = z.object({
     access_token: z.string().min(1),
@@ -84,19 +85,36 @@ async function postJson(path: string, payload: Record<string, string>): Promise<
             body: JSON.stringify(payload),
         });
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Network request failed.";
-        throw new AuthApiError("Unable to reach authentication service.", 0, message);
+        const message =
+            error instanceof Error
+                ? error.message
+                : t("networkRequestFailed", "Network request failed.");
+        throw new AuthApiError(
+            t("unableToReachAuthenticationService", "Unable to reach authentication service."),
+            0,
+            message,
+        );
     }
 
     if (!response.ok) {
         const details = await readErrorDetails(response);
-        throw new AuthApiError("Authentication request failed.", response.status, details);
+        throw new AuthApiError(
+            t("authenticationRequestFailed", "Authentication request failed."),
+            response.status,
+            details,
+        );
     }
 
     try {
         return await response.json();
     } catch {
-        throw new AuthApiError("Authentication service returned invalid JSON.", response.status);
+        throw new AuthApiError(
+            t(
+                "authenticationServiceReturnedInvalidJson",
+                "Authentication service returned invalid JSON.",
+            ),
+            response.status,
+        );
     }
 }
 
@@ -145,7 +163,7 @@ function parseAuthResponse(payload: unknown): AuthSession {
     const parsedPayload = authResponseSchema.safeParse(payload);
     if (!parsedPayload.success) {
         throw new AuthApiError(
-            "Authentication response shape is invalid.",
+            t("authenticationResponseShapeIsInvalid", "Authentication response shape is invalid."),
             500,
             formatZodIssues(parsedPayload.error),
         );

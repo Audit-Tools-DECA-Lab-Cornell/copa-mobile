@@ -32,7 +32,8 @@
         "hindi": "Hindi",
         "japanese": "Japanese",
         "label": "Language",
-        "selection": "App language"
+        "selection": "App language",
+        "system": "System"
     },
     "profile": {
         "accountType": "Account type",

@@ -2,9 +2,9 @@
     "autoValues": {
         "calculatedOnSubmit": "Calculé lors de l’envoi final",
         "generatedOnSubmit": "Généré lors de l’envoi final",
-        "minutes_one": "TODO: autoValues.minutes_one audit",
-        "minutes_many": "TODO: autoValues.minutes_many audit",
-        "minutes_other": "TODO: autoValues.minutes_other audit"
+        "minutes_one": "",
+        "minutes_other": "",
+        "minutes_many": "il y a {{count}} mins"
     },
     "errors": {
         "accessDenied403": "Accès refusé (403) : vous n’êtes pas autorisé à accéder à ce lieu ou à cet audit.",
@@ -20,10 +20,14 @@
     },
     "executeLanding": {
         "continueSelectedPlace": "Continuer le lieu sélectionné",
+        "emptyMessage": "Essayez une autre combinaison de recherche ou de filtre.",
+        "emptyTitle": "Aucune audit ne correspond",
         "openSelectedAudit": "Ouvrir l’audit sélectionné",
+        "searchPlaceholder": "Rechercher des lieux ou des projets",
         "subtitle": "Choisissez un lieu pour démarrer ou reprendre le flux d’audit playspace section par section.",
         "title": "Exécution de l’audit"
     },
+    "mode": "— {{mode}}",
     "overview": {
         "accessDeniedTitle": "Accès refusé",
         "assignmentAllows": "Cette affectation de lieu permet actuellement :",
@@ -36,6 +40,8 @@
         "preamble": "Préambule",
         "preparingAudit": "Préparation du flux d’audit playspace...",
         "preparingAuditTitle": "Préparation de l’audit",
+        "sectionEmpty": "Aucune section ne correspond au filtre actuel.",
+        "sections": "Sections",
         "roleFixesSubset": "Votre rôle définit déjà le sous-ensemble visible de questions pour ce lieu.",
         "syncStatus": {
             "pendingMessage": "Les modifications du brouillon sont en attente et seront téléversées automatiquement lorsque l’application sera active et en ligne.",
@@ -43,8 +49,10 @@
             "retryTitle": "Téléversement en pause",
             "syncingMessage": "Les modifications enregistrées sont en cours de téléversement. Gardez l’application ouverte jusqu’à la fin si vous devez envoyer immédiatement.",
             "syncingTitle": "Téléversement des modifications"
-        }
+        },
+        "viewPlaceDetails": "Voir les détails du lieu"
     },
+    "place_namesuffix": "{{place_name}}{{suffix}}",
     "preAudit": {
         "complete": "Terminé",
         "description": "Saisissez la saison, la météo, les utilisateurs présents, le nombre d’utilisateurs, les groupes d’âge et la taille du lieu avant l’évaluation par section.",

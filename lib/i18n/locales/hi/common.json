@@ -7,11 +7,34 @@
         "resume": "फिर से शुरू करें",
         "retry": "पुनः प्रयास करें",
         "seeAll": "सभी देखें",
-        "signOut": "साइन आउट"
+        "signOut": "साइन आउट",
+        "viewDetails": "विवरण देखें",
+        "viewReport": "रिपोर्ट देखें"
     },
+    "assignedPlacesResponseShapeIsInvalid": "निर्धारित स्थानों की प्रतिक्रिया का स्वरूप अमान्य है।",
+    "auditorProfileResponseShapeIsInvalid": "ऑडिटर प्रोफ़ाइल की प्रतिक्रिया का स्वरूप अमान्य है।",
+    "auditSessionResponseShapeIsInvalid": "ऑडिट सत्र की प्रतिक्रिया का स्वरूप अमान्य है।",
+    "authenticationRequestFailed": "प्रमाणीकरण अनुरोध विफल रहा।",
+    "authenticationResponseShapeIsInvalid": "प्रमाणीकरण प्रतिक्रिया का स्वरूप अमान्य है।",
+    "authenticationServiceReturnedInvalidJson": "प्रमाणीकरण सेवा ने अमान्य JSON लौटाया।",
+    "dontWorryWeveGotYourData": "चिंता न करें, आपका डेटा हमारे पास है।",
+    "draftPatchIsInvalid": "ड्राफ्ट पैच अमान्य है।",
+    "executionModeIsInvalid": "निष्पादन मोड अमान्य है।",
+    "filters": {
+        "active": "सक्रिय",
+        "all": "सभी",
+        "complete": "पूर्ण",
+        "incomplete": "अपूर्ण",
+        "notScored": "अंकित नहीं",
+        "scored": "अंकित",
+        "submitted": "सबमिट किया गया"
+    },
+    "networkRequestFailed": "नेटवर्क अनुरोध विफल रहा।",
     "place": {
         "assignedPlace": "असाइन किया गया स्थान"
     },
+    "playspaceAuditRequestFailed": "Playspace ऑडिट अनुरोध विफल रहा।",
+    "playspaceAuditServiceReturnedInvalidJson": "Playspace ऑडिट सेवा ने अमान्य JSON लौटाया।",
     "roles": {
         "auditor": "ऑडिटर",
         "auditorAndPlaceAdmin": "ऑडिटर और प्लेस एडमिन",
@@ -25,6 +48,12 @@
         "off": "बंद",
         "on": "चालू",
         "submitted": "सबमिट किया गया"
+    },
+    "sort": {
+        "name": "नाम",
+        "progress": "प्रगति",
+        "recent": "हालिया",
+        "score": "स्कोर"
     },
     "tabs": {
         "execute": "निष्पादित करें",
@@ -41,5 +70,14 @@
         "justNow": "अभी-अभी",
         "minuteAgo_one": "1 मिनट पहले",
         "minuteAgo_other": "{{count}} मिनट पहले"
-    }
+    },
+    "toast": {
+        "demo": "डेमो",
+        "hide": "छिपाएँ",
+        "show": "दिखाएँ",
+        "success": "सफलतापूर्वक सहेजा गया!"
+    },
+    "unableToLoadPlaces": "स्थान लोड नहीं किए जा सके।",
+    "unableToReachAuthenticationService": "प्रमाणीकरण सेवा तक नहीं पहुंचा जा सका।",
+    "unableToReachPlayspaceAuditService": "Playspace ऑडिट सेवा तक नहीं पहुंचा जा सका।"
 }

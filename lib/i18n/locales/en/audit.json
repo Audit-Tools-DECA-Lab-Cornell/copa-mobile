@@ -19,10 +19,14 @@
     },
     "executeLanding": {
         "continueSelectedPlace": "Continue Selected Place",
+        "emptyMessage": "Try a different search or filter combination.",
+        "emptyTitle": "No audits match",
         "openSelectedAudit": "Open selected audit",
+        "searchPlaceholder": "Search places or projects",
         "subtitle": "Choose a place to start or resume the section-by-section playspace audit flow.",
         "title": "Audit Execute"
     },
+    "mode": "— {{mode}}",
     "overview": {
         "accessDeniedTitle": "Access Denied",
         "assignmentAllows": "This place assignment currently allows:",
@@ -35,6 +39,8 @@
         "preamble": "Preamble",
         "preparingAudit": "Preparing the playspace audit flow...",
         "preparingAuditTitle": "Preparing Audit",
+        "sectionEmpty": "No sections match the current filter.",
+        "sections": "Sections",
         "roleFixesSubset": "Your role already fixes the visible subset of questions for this place.",
         "syncStatus": {
             "pendingMessage": "Draft changes are queued and will upload automatically when the app is active and online.",
@@ -42,8 +48,10 @@
             "retryTitle": "Upload paused",
             "syncingMessage": "Saved changes are uploading now. Keep the app open until this finishes if you need to submit right away.",
             "syncingTitle": "Uploading changes"
-        }
+        },
+        "viewPlaceDetails": "View place details"
     },
+    "place_namesuffix": "{{place_name}}{{suffix}}",
     "preAudit": {
         "complete": "Complete",
         "description": "Capture season, weather, users present, user count, age groups, and place size before section scoring.",

@@ -1,4 +1,5 @@
-import { create } from "zustand";
+import { batch, observable, observe } from "@legendapp/state";
+import { useSelector } from "@legendapp/state/react";
 import type { AuthSession } from "lib/auth/types";
 import {
     createOrResumeAudit,
@@ -8,11 +9,7 @@ import {
     submitAudit,
 } from "lib/audit/api";
 import { getSectionNote, getSectionResponses } from "lib/audit/selectors";
-import {
-    clearPersistedAuditState,
-    readPersistedAuditState,
-    savePersistedAuditState,
-} from "lib/audit/storage";
+import { readPersistedAuditState, clearPersistedAuditState } from "lib/audit/storage";
 import type {
     AuditDraftPatch,
     AuditPreAuditValues,
@@ -22,83 +19,14 @@ import type {
     DirtySections,
     PersistedAuditState,
 } from "lib/audit/types";
-import i18n from "lib/i18n";
-import { PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { persistedAuditStateSchema } from "lib/audit/types";
+import { t } from "lib/i18n";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { mmkvStorage } from "lib/storage/mmkv";
 
-/** Debounce interval for disk persistence after local edits (ms). */
-const PERSIST_DEBOUNCE_MS = 500;
-
-let persistDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-let hydrateRequestCounter = 0;
-
-interface PlayspaceAuditStoreState {
-    readonly instrument: typeof PLAYSPACE_INSTRUMENT;
-    readonly sessionsByAuditId: Record<string, AuditSession>;
-    readonly sessionsByPlaceId: Record<string, AuditSession>;
-    readonly currentUserId: string | null;
-    readonly isHydrated: boolean;
-    readonly isLoadingAudit: boolean;
-    readonly isSavingDraft: boolean;
-    readonly isSyncing: boolean;
-    readonly errorMessage: string | null;
-    readonly lastSyncError: string | null;
-    readonly lastSuccessfulSyncAt: string | null;
-    readonly localChangeCounter: number;
-
-    /**
-     * Tracks which sections have locally-modified answers that have not yet
-     * been pushed to the backend. Keyed by audit_id → section_key → version.
-     */
-    readonly dirtySections: DirtySections;
-
-    /**
-     * Audit IDs whose pre-audit data has been locally modified but not yet
-     * pushed to the backend. Keyed by audit_id → version.
-     */
-    readonly dirtyPreAudit: DirtyPreAudit;
-
-    hydrate: (accountId?: string | null) => Promise<void>;
-    clearStoredState: (accountId?: string | null) => Promise<void>;
-
-    ensurePlaceAudit: (
-        session: AuthSession,
-        placeId: string,
-        executionMode?: "audit" | "survey" | "both",
-    ) => Promise<AuditSession>;
-
-    refreshAudit: (session: AuthSession, auditId: string) => Promise<AuditSession>;
-
-    /**
-     * Apply one question's processed answer map locally.
-     * Updates the typed section state in the in-memory session, marks the section as
-     * dirty, and schedules a debounced disk persist.
-     */
-    applyLocalQuestionAnswer: (
-        placeId: string,
-        sectionKey: string,
-        questionKey: string,
-        answers: Record<string, string>,
-    ) => void;
-
-    /**
-     * Apply a section note locally with the same offline-first semantics.
-     */
-    applyLocalSectionNote: (placeId: string, sectionKey: string, note: string) => void;
-
-    /**
-     * Apply pre-audit values locally with the same offline-first semantics.
-     */
-    applyLocalPreAudit: (placeId: string, values: Record<string, string | string[]>) => void;
-
-    /**
-     * Flush all dirty audits to the backend.  Silently swallows network
-     * errors so the call can be retried later by the next sync trigger.
-     */
-    flushPendingChanges: (session: AuthSession) => Promise<FlushPendingChangesResult>;
-
-    submitAuditSession: (session: AuthSession, auditId: string) => Promise<AuditSession>;
-    clearError: () => void;
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface FlushPendingChangesResult {
     readonly attemptedAuditIds: string[];
@@ -114,446 +42,217 @@ interface PendingAuditPatchSnapshot {
 }
 
 /**
- * Playspace audit store with offline-first local persistence and background sync.
+ * Public surface exposed by the compatibility hook. Mirrors the old Zustand
+ * store interface so existing selectors and `.getState()` callers keep working.
  */
-export const usePlayspaceAuditStore = create<PlayspaceAuditStoreState>((set, get) => ({
-    instrument: PLAYSPACE_INSTRUMENT,
-    sessionsByAuditId: {},
-    sessionsByPlaceId: {},
-    currentUserId: null,
-    isHydrated: false,
-    isLoadingAudit: false,
-    isSavingDraft: false,
-    isSyncing: false,
-    errorMessage: null,
-    lastSyncError: null,
-    lastSuccessfulSyncAt: null,
-    localChangeCounter: 0,
-    dirtySections: {},
-    dirtyPreAudit: {},
+interface PlayspaceAuditStoreState {
+    readonly instrument: typeof BASE_PLAYSPACE_INSTRUMENT;
+    readonly sessionsByAuditId: Record<string, AuditSession>;
+    readonly sessionsByPlaceId: Record<string, AuditSession>;
+    readonly currentUserId: string | null;
+    readonly isHydrated: boolean;
+    readonly isLoadingAudit: boolean;
+    readonly isSavingDraft: boolean;
+    readonly isSyncing: boolean;
+    readonly errorMessage: string | null;
+    readonly lastSyncError: string | null;
+    readonly lastSuccessfulSyncAt: string | null;
+    readonly localChangeCounter: number;
+    readonly dirtySections: DirtySections;
+    readonly dirtyPreAudit: DirtyPreAudit;
 
-    hydrate: async (accountId) => {
-        const targetUserId = normalizeOptionalUserId(accountId);
-        const state = get();
-        if (state.isHydrated && state.currentUserId === targetUserId) {
-            return;
-        }
-
-        clearPersistDebounceTimer();
-        const requestId = ++hydrateRequestCounter;
-        set(() => ({
-            instrument: PLAYSPACE_INSTRUMENT,
-            sessionsByAuditId: {},
-            sessionsByPlaceId: {},
-            currentUserId: targetUserId,
-            isHydrated: false,
-            errorMessage: null,
-            lastSyncError: null,
-            dirtySections: {},
-            dirtyPreAudit: {},
-            lastSuccessfulSyncAt: null,
-            localChangeCounter: 0,
-        }));
-
-        if (targetUserId === null) {
-            set(() => ({ isHydrated: true }));
-            return;
-        }
-
-        const persistedState = await readPersistedAuditState(targetUserId);
-        if (requestId !== hydrateRequestCounter) {
-            return;
-        }
-        if (persistedState === null) {
-            set(() => ({
-                currentUserId: targetUserId,
-                isHydrated: true,
-            }));
-            return;
-        }
-
-        set(() => ({
-            instrument: persistedState.instrument ?? PLAYSPACE_INSTRUMENT,
-            sessionsByAuditId: persistedState.sessions_by_audit_id,
-            sessionsByPlaceId: persistedState.sessions_by_place_id,
-            currentUserId: targetUserId,
-            dirtySections: persistedState.dirty_sections,
-            dirtyPreAudit: persistedState.dirty_pre_audit,
-            lastSuccessfulSyncAt: persistedState.last_successful_sync_at,
-            localChangeCounter: persistedState.local_change_counter,
-            isHydrated: true,
-        }));
-    },
-
-    clearStoredState: async (accountId) => {
-        clearPersistDebounceTimer();
-        hydrateRequestCounter += 1;
-        const targetUserId = normalizeOptionalUserId(accountId) ?? get().currentUserId;
-        if (targetUserId !== null) {
-            await clearPersistedAuditState(targetUserId);
-        }
-        set(() => ({
-            instrument: PLAYSPACE_INSTRUMENT,
-            sessionsByAuditId: {},
-            sessionsByPlaceId: {},
-            currentUserId: null,
-            dirtySections: {},
-            dirtyPreAudit: {},
-            isHydrated: true,
-            errorMessage: null,
-            lastSyncError: null,
-            lastSuccessfulSyncAt: null,
-            localChangeCounter: 0,
-        }));
-    },
-
-    ensurePlaceAudit: async (
+    hydrate: (accountId?: string | null) => Promise<void>;
+    clearStoredState: (accountId?: string | null) => Promise<void>;
+    ensurePlaceAudit: (
         session: AuthSession,
         placeId: string,
         executionMode?: "audit" | "survey" | "both",
-    ) => {
-        set(() => ({ isLoadingAudit: true, errorMessage: null }));
-
-        try {
-            const nextSession = await createOrResumeAudit(session, placeId, executionMode);
-            const mergedSession = mergeDirtyLocalDraftIntoServerSession(get(), nextSession);
-            set((state) =>
-                buildTrackedSessionState(state, mergedSession, {
-                    isLoadingAudit: false,
-                    errorMessage: null,
-                }),
-            );
-            await persistSnapshotNow(get());
-            return mergedSession;
-        } catch (error) {
-            const message = formatAuditErrorMessage(error, i18n.t("audit:errors.openFallback"));
-            set(() => ({ isLoadingAudit: false, errorMessage: message }));
-            throw error;
-        }
-    },
-
-    refreshAudit: async (session: AuthSession, auditId: string) => {
-        set(() => ({ isLoadingAudit: true, errorMessage: null }));
-
-        try {
-            const nextSession = await fetchAuditSession(session, auditId);
-            const mergedSession = mergeDirtyLocalDraftIntoServerSession(get(), nextSession);
-            set((state) =>
-                buildTrackedSessionState(state, mergedSession, {
-                    isLoadingAudit: false,
-                    errorMessage: null,
-                }),
-            );
-            await persistSnapshotNow(get());
-            return mergedSession;
-        } catch (error) {
-            const message = formatAuditErrorMessage(error, i18n.t("audit:errors.refreshFallback"));
-            set(() => ({ isLoadingAudit: false, errorMessage: message }));
-            throw error;
-        }
-    },
-
+    ) => Promise<AuditSession>;
+    refreshAudit: (session: AuthSession, auditId: string) => Promise<AuditSession>;
     applyLocalQuestionAnswer: (
         placeId: string,
         sectionKey: string,
         questionKey: string,
         answers: Record<string, string>,
-    ) => {
-        const state = get();
-        const session = state.sessionsByPlaceId[placeId];
-        if (session === undefined) {
-            return;
-        }
+    ) => void;
+    applyLocalSectionNote: (placeId: string, sectionKey: string, note: string) => void;
+    applyLocalPreAudit: (placeId: string, values: Record<string, string | string[]>) => void;
+    flushPendingChanges: (session: AuthSession) => Promise<FlushPendingChangesResult>;
+    submitAuditSession: (session: AuthSession, auditId: string) => Promise<AuditSession>;
+    clearError: () => void;
+}
 
-        const updatedSession = applyQuestionAnswerToSession(
-            session,
-            sectionKey,
-            questionKey,
-            answers,
-        );
-        const nextVersion = state.localChangeCounter + 1;
-        const nextDirty = markSectionDirty(
-            state.dirtySections,
-            session.audit_id,
-            sectionKey,
-            nextVersion,
-        );
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
-        set(() => ({
-            sessionsByAuditId: { ...state.sessionsByAuditId, [session.audit_id]: updatedSession },
-            sessionsByPlaceId: { ...state.sessionsByPlaceId, [placeId]: updatedSession },
-            dirtySections: nextDirty,
-            localChangeCounter: nextVersion,
-        }));
+const PERSIST_DEBOUNCE_MS = 500;
+const MMKV_KEY_PREFIX = "audit.state.v3";
 
-        scheduleDebouncedPersist(get);
-    },
+// ---------------------------------------------------------------------------
+// Observable state
+// ---------------------------------------------------------------------------
 
-    applyLocalSectionNote: (placeId: string, sectionKey: string, note: string) => {
-        const state = get();
-        const session = state.sessionsByPlaceId[placeId];
-        if (session === undefined) {
-            return;
-        }
+/** Persistent audit data — auto-saved to MMKV via an observer. */
+const auditData$ = observable({
+    sessions_by_audit_id: {} as Record<string, AuditSession>,
+    sessions_by_place_id: {} as Record<string, AuditSession>,
+    dirty_sections: {} as DirtySections,
+    dirty_pre_audit: {} as DirtyPreAudit,
+    local_change_counter: 0,
+    last_successful_sync_at: null as string | null,
+});
 
-        const updatedSession = applySectionNoteToSession(session, sectionKey, note);
-        const nextVersion = state.localChangeCounter + 1;
-        const nextDirty = markSectionDirty(
-            state.dirtySections,
-            session.audit_id,
-            sectionKey,
-            nextVersion,
-        );
+/** Transient UI state — not persisted across restarts. */
+const auditUI$ = observable({
+    currentUserId: null as string | null,
+    isHydrated: false,
+    isLoadingAudit: false,
+    isSavingDraft: false,
+    isSyncing: false,
+    errorMessage: null as string | null,
+    lastSyncError: null as string | null,
+});
 
-        set(() => ({
-            sessionsByAuditId: { ...state.sessionsByAuditId, [session.audit_id]: updatedSession },
-            sessionsByPlaceId: { ...state.sessionsByPlaceId, [placeId]: updatedSession },
-            dirtySections: nextDirty,
-            localChangeCounter: nextVersion,
-        }));
+// ---------------------------------------------------------------------------
+// Module-level bookkeeping
+// ---------------------------------------------------------------------------
 
-        scheduleDebouncedPersist(get);
-    },
+let autoSaveDisposer: (() => void) | null = null;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let hydrateRequestCounter = 0;
 
-    applyLocalPreAudit: (placeId: string, values: Record<string, string | string[]>) => {
-        const state = get();
-        const session = state.sessionsByPlaceId[placeId];
-        if (session === undefined) {
-            return;
-        }
+// ---------------------------------------------------------------------------
+// MMKV persistence infrastructure
+// ---------------------------------------------------------------------------
 
-        const updatedSession = applyPreAuditToSession(session, values);
-        const nextVersion = state.localChangeCounter + 1;
-        const nextDirtyPreAudit = markPreAuditDirty(
-            state.dirtyPreAudit,
-            session.audit_id,
-            nextVersion,
-        );
-
-        set(() => ({
-            sessionsByAuditId: { ...state.sessionsByAuditId, [session.audit_id]: updatedSession },
-            sessionsByPlaceId: { ...state.sessionsByPlaceId, [placeId]: updatedSession },
-            dirtyPreAudit: nextDirtyPreAudit,
-            localChangeCounter: nextVersion,
-        }));
-
-        scheduleDebouncedPersist(get);
-    },
-
-    flushPendingChanges: async (session: AuthSession) => {
-        const state = get();
-        if (state.isSyncing) {
-            return {
-                attemptedAuditIds: [],
-                failedAuditIds: [],
-                remainingDirtyAuditIds: getDirtyAuditIds(state),
-            };
-        }
-
-        const allDirtyAuditIds = getDirtyAuditIds(state);
-        if (allDirtyAuditIds.length === 0) {
-            return {
-                attemptedAuditIds: [],
-                failedAuditIds: [],
-                remainingDirtyAuditIds: [],
-            };
-        }
-
-        set(() => ({ isSyncing: true, lastSyncError: null }));
-        const failedAuditIds: string[] = [];
-
-        for (const auditId of allDirtyAuditIds) {
-            const currentState = get();
-            const auditSession = currentState.sessionsByAuditId[auditId];
-            if (auditSession === undefined) {
-                continue;
-            }
-
-            const patchSnapshot = buildPatchFromDirtyState(currentState, auditId, auditSession);
-            if (patchSnapshot === null) {
-                continue;
-            }
-
-            try {
-                const updatedSession = await saveAuditDraft(session, auditId, patchSnapshot.patch);
-
-                set((latestState) =>
-                    applySyncedAuditPatchState(latestState, updatedSession, patchSnapshot),
-                );
-            } catch (error) {
-                const message = formatAuditErrorMessage(error, i18n.t("audit:errors.syncFallback"));
-                set(() => ({ lastSyncError: message }));
-                failedAuditIds.push(auditId);
-            }
-        }
-
-        set(() => ({ isSyncing: false }));
-        await persistSnapshotNow(get());
-        const latestState = get();
-        return {
-            attemptedAuditIds: allDirtyAuditIds,
-            failedAuditIds,
-            remainingDirtyAuditIds: getDirtyAuditIds(latestState),
-        };
-    },
-
-    submitAuditSession: async (session: AuthSession, auditId: string) => {
-        const state = get();
-        set(() => ({ isSavingDraft: true, errorMessage: null }));
-
-        const auditSession = state.sessionsByAuditId[auditId];
-        if (auditSession !== undefined) {
-            const flushResult = await get().flushPendingChanges(session);
-            const hasFailedDraftSync = flushResult.failedAuditIds.includes(auditId);
-            const hasRemainingDirtyChanges = flushResult.remainingDirtyAuditIds.includes(auditId);
-            if (hasFailedDraftSync || hasRemainingDirtyChanges) {
-                const message = i18n.t("audit:errors.submitNeedsUploadedDraft");
-                set(() => ({
-                    isSavingDraft: false,
-                    errorMessage: message,
-                }));
-                throw new Error(message);
-            }
-        }
-
-        try {
-            const nextSession = await submitAudit(session, auditId);
-            set((s) =>
-                buildTrackedSessionState(s, nextSession, {
-                    isSavingDraft: false,
-                    errorMessage: null,
-                }),
-            );
-            await persistSnapshotNow(get());
-            return nextSession;
-        } catch (error) {
-            const message = formatAuditErrorMessage(error, i18n.t("audit:errors.submitFallback"));
-            set(() => ({ isSavingDraft: false, errorMessage: message }));
-            throw error;
-        }
-    },
-
-    clearError: () => {
-        set(() => ({ errorMessage: null }));
-    },
-}));
-
-type PartialStoreState = Partial<PlayspaceAuditStoreState>;
-
-/**
- * Track one updated session in both audit-id and place-id indexes.
- *
- * @param state Current store state.
- * @param auditSession Newly returned audit session.
- * @param extraFields Additional state fields to merge.
- * @returns Next partial store state.
- */
-function buildTrackedSessionState(
-    state: PlayspaceAuditStoreState,
-    auditSession: AuditSession,
-    extraFields: PartialStoreState,
-): PartialStoreState {
-    return {
-        ...extraFields,
-        sessionsByAuditId: {
-            ...state.sessionsByAuditId,
-            [auditSession.audit_id]: auditSession,
-        },
-        sessionsByPlaceId: {
-            ...state.sessionsByPlaceId,
-            [auditSession.place_id]: auditSession,
-        },
-    };
+function getStorageKey(userId: string): string {
+    return `${MMKV_KEY_PREFIX}.${encodeURIComponent(userId)}`;
 }
 
 /**
- * Persist the complete store snapshot to disk immediately (non-debounced).
- *
- * @param state Current store snapshot.
+ * Set up a debounced auto-save observer that writes the audit data
+ * observable to MMKV whenever any tracked field changes.
  */
-async function persistSnapshotNow(state: PlayspaceAuditStoreState): Promise<void> {
-    if (state.currentUserId === null) {
+function setupAutoSave(userId: string): void {
+    teardownAutoSave();
+    const storageKey = getStorageKey(userId);
+
+    autoSaveDisposer = observe(() => {
+        const snapshot = auditData$.get();
+
+        if (saveTimer !== null) {
+            clearTimeout(saveTimer);
+        }
+        saveTimer = setTimeout(() => {
+            try {
+                mmkvStorage.set(storageKey, JSON.stringify(snapshot));
+            } catch (err) {
+                console.error("[audit-store] auto-save failed", err);
+            }
+            saveTimer = null;
+        }, PERSIST_DEBOUNCE_MS);
+    });
+}
+
+function teardownAutoSave(): void {
+    if (autoSaveDisposer !== null) {
+        autoSaveDisposer();
+        autoSaveDisposer = null;
+    }
+    if (saveTimer !== null) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+    }
+}
+
+/**
+ * Flush the current observable state to MMKV immediately, bypassing debounce.
+ * Used after sync operations where durability matters.
+ */
+function saveNow(): void {
+    if (saveTimer !== null) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+    }
+    const userId = auditUI$.currentUserId.peek();
+    if (userId === null) {
         return;
     }
-
-    const snapshot: PersistedAuditState = {
-        storage_user_id: state.currentUserId,
-        instrument: state.instrument,
-        sessions_by_audit_id: state.sessionsByAuditId,
-        sessions_by_place_id: state.sessionsByPlaceId,
-        dirty_sections: state.dirtySections,
-        dirty_pre_audit: state.dirtyPreAudit,
-        local_change_counter: state.localChangeCounter,
-        last_successful_sync_at: state.lastSuccessfulSyncAt,
-    };
-    await savePersistedAuditState(state.currentUserId, snapshot);
-}
-
-/**
- * Schedule a debounced disk persist so rapid answer taps coalesce into one
- * write.  The get() call is deferred to the timer callback to capture the
- * latest state at flush time.
- *
- * @param getState Zustand getter.
- */
-function scheduleDebouncedPersist(getState: () => PlayspaceAuditStoreState): void {
-    clearPersistDebounceTimer();
-    persistDebounceTimer = setTimeout(() => {
-        void persistSnapshotNow(getState());
-        persistDebounceTimer = null;
-    }, PERSIST_DEBOUNCE_MS);
-}
-
-/**
- * Clear any pending debounced persist timer.
- */
-function clearPersistDebounceTimer(): void {
-    if (persistDebounceTimer !== null) {
-        clearTimeout(persistDebounceTimer);
-        persistDebounceTimer = null;
+    try {
+        mmkvStorage.set(getStorageKey(userId), JSON.stringify(auditData$.peek()));
+    } catch (err) {
+        console.error("[audit-store] immediate save failed", err);
     }
 }
 
 /**
- * Normalize optional user IDs to either a trimmed string or null.
- *
- * @param value Raw optional user identifier.
- * @returns Trimmed user identifier or null.
+ * Attempt to parse a raw MMKV string into validated audit data.
  */
+function parseStoredAuditData(
+    raw: string,
+): Pick<
+    PersistedAuditState,
+    | "sessions_by_audit_id"
+    | "sessions_by_place_id"
+    | "dirty_sections"
+    | "dirty_pre_audit"
+    | "local_change_counter"
+    | "last_successful_sync_at"
+> | null {
+    try {
+        const parsed = persistedAuditStateSchema.safeParse(JSON.parse(raw));
+        if (!parsed.success) {
+            return null;
+        }
+        return parsed.data;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Apply a persisted data snapshot into the audit data observable in a
+ * single batch to avoid multiple observer fires.
+ */
+function applyPersistedDataBatch(
+    data: Pick<
+        PersistedAuditState,
+        | "sessions_by_audit_id"
+        | "sessions_by_place_id"
+        | "dirty_sections"
+        | "dirty_pre_audit"
+        | "local_change_counter"
+        | "last_successful_sync_at"
+    >,
+): void {
+    batch(() => {
+        auditData$.sessions_by_audit_id.set(data.sessions_by_audit_id);
+        auditData$.sessions_by_place_id.set(data.sessions_by_place_id);
+        auditData$.dirty_sections.set(data.dirty_sections);
+        auditData$.dirty_pre_audit.set(data.dirty_pre_audit);
+        auditData$.local_change_counter.set(data.local_change_counter);
+        auditData$.last_successful_sync_at.set(data.last_successful_sync_at);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Pure domain helpers (ported from the previous Zustand store)
+// ---------------------------------------------------------------------------
+
 function normalizeOptionalUserId(value: string | null | undefined): string | null {
     if (typeof value !== "string") {
         return null;
     }
-
-    const trimmedValue = value.trim();
-    return trimmedValue.length > 0 ? trimmedValue : null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
 }
 
-/**
- * Return all audit IDs with pending local work.
- *
- * @param state Current store state.
- * @returns Unique audit IDs with dirty sections or pre-audit data.
- */
-function getDirtyAuditIds(
-    state: Pick<PlayspaceAuditStoreState, "dirtySections" | "dirtyPreAudit">,
-): string[] {
-    const auditIds = new Set<string>([
-        ...Object.keys(state.dirtySections),
-        ...Object.keys(state.dirtyPreAudit),
-    ]);
-    return [...auditIds];
+function getDirtyAuditIds(dirtySections: DirtySections, dirtyPreAudit: DirtyPreAudit): string[] {
+    const ids = new Set<string>([...Object.keys(dirtySections), ...Object.keys(dirtyPreAudit)]);
+    return [...ids];
 }
 
-/**
- * Mark a section as dirty for one audit, returning the next versioned record.
- *
- * @param current Current dirty sections record.
- * @param auditId Audit identifier.
- * @param sectionKey Section that was modified.
- * @param version Monotonic local change version.
- * @returns Updated dirty sections record.
- */
 function markSectionDirty(
     current: DirtySections,
     auditId: string,
@@ -563,59 +262,31 @@ function markSectionDirty(
     const existing = current[auditId] ?? {};
     return {
         ...current,
-        [auditId]: {
-            ...existing,
-            [sectionKey]: version,
-        },
+        [auditId]: { ...existing, [sectionKey]: version },
     };
 }
 
-/**
- * Mark pre-audit data as dirty for one audit, returning the next version map.
- *
- * @param current Current dirty pre-audit record.
- * @param auditId Audit identifier.
- * @param version Monotonic local change version.
- * @returns Updated dirty pre-audit record.
- */
 function markPreAuditDirty(
     current: DirtyPreAudit,
     auditId: string,
     version: number,
 ): DirtyPreAudit {
-    return {
-        ...current,
-        [auditId]: version,
-    };
+    return { ...current, [auditId]: version };
 }
 
-/**
- * Deep-clone one section's nested question-to-answer map.
- *
- * @param value Existing typed question responses.
- * @returns Cloned nested string record.
- */
 function cloneSectionResponses(
     value: Record<string, Record<string, string>> | undefined,
 ): Record<string, Record<string, string>> {
     if (value === undefined) {
         return {};
     }
-
-    const nextRecord: Record<string, Record<string, string>> = {};
-    for (const [questionKey, questionValue] of Object.entries(value)) {
-        nextRecord[questionKey] = { ...questionValue };
+    const next: Record<string, Record<string, string>> = {};
+    for (const [qKey, qVal] of Object.entries(value)) {
+        next[qKey] = { ...qVal };
     }
-    return nextRecord;
+    return next;
 }
 
-/**
- * Clone one typed section state while keeping nested responses independent.
- *
- * @param section Existing section state when available.
- * @param sectionKey Section identifier to preserve on empty state.
- * @returns Cloned section state.
- */
 function cloneSectionState(
     section: AuditSectionState | undefined,
     sectionKey: string,
@@ -627,12 +298,6 @@ function cloneSectionState(
     };
 }
 
-/**
- * Clone typed pre-audit values into a mutable copy.
- *
- * @param value Existing typed pre-audit values.
- * @returns Cloned pre-audit values.
- */
 function clonePreAuditValues(value: AuditPreAuditValues): AuditPreAuditValues {
     return {
         season: value.season,
@@ -644,16 +309,6 @@ function clonePreAuditValues(value: AuditPreAuditValues): AuditPreAuditValues {
     };
 }
 
-/**
- * Create a new AuditSession with one question's answers merged into
- * `sections[sectionKey].responses[questionKey]`.
- *
- * @param session Current audit session.
- * @param sectionKey Target section.
- * @param questionKey Target question.
- * @param answers Processed scale→option answer map.
- * @returns Cloned session with updated responses.
- */
 function applyQuestionAnswerToSession(
     session: AuditSession,
     sectionKey: string,
@@ -668,187 +323,125 @@ function applyQuestionAnswerToSession(
         ...session,
         sections: {
             ...session.sections,
-            [sectionKey]: {
-                ...section,
-                responses,
-            },
+            [sectionKey]: { ...section, responses },
         },
     };
 }
 
-/**
- * Create a new AuditSession with a section note merged into
- * `sections[sectionKey].note`.
- *
- * @param session Current audit session.
- * @param sectionKey Target section.
- * @param note New note text.
- * @returns Cloned session with updated note.
- */
 function applySectionNoteToSession(
     session: AuditSession,
     sectionKey: string,
     note: string,
 ): AuditSession {
     const section = cloneSectionState(session.sections[sectionKey], sectionKey);
-
     return {
         ...session,
         sections: {
             ...session.sections,
-            [sectionKey]: {
-                ...section,
-                note,
-            },
+            [sectionKey]: { ...section, note },
         },
     };
 }
 
-/**
- * Create a new AuditSession with pre-audit values merged into
- * `pre_audit`.
- *
- * @param session Current audit session.
- * @param values Pre-audit form values.
- * @returns Cloned session with updated pre-audit data.
- */
 function applyPreAuditToSession(
     session: AuditSession,
     values: Record<string, string | string[] | null>,
 ): AuditSession {
-    const currentPreAudit = clonePreAuditValues(session.pre_audit);
-    currentPreAudit.season = readNullableStringValue(values["season"], currentPreAudit.season);
-    currentPreAudit.weather_conditions = readStringArrayValue(
+    const cur = clonePreAuditValues(session.pre_audit);
+    cur.season = readNullableStringValue(values["season"], cur.season);
+    cur.weather_conditions = readStringArrayValue(
         values["weather_conditions"],
-        currentPreAudit.weather_conditions,
+        cur.weather_conditions,
     );
-    currentPreAudit.users_present = readStringArrayValue(
-        values["users_present"],
-        currentPreAudit.users_present,
-    );
-    currentPreAudit.user_count = readNullableStringValue(
-        values["user_count"],
-        currentPreAudit.user_count,
-    );
-    currentPreAudit.age_groups = readStringArrayValue(
-        values["age_groups"],
-        currentPreAudit.age_groups,
-    );
-    currentPreAudit.place_size = readNullableStringValue(
-        values["place_size"],
-        currentPreAudit.place_size,
-    );
+    cur.users_present = readStringArrayValue(values["users_present"], cur.users_present);
+    cur.user_count = readNullableStringValue(values["user_count"], cur.user_count);
+    cur.age_groups = readStringArrayValue(values["age_groups"], cur.age_groups);
+    cur.place_size = readNullableStringValue(values["place_size"], cur.place_size);
+    return { ...session, pre_audit: cur };
+}
 
+function applySectionResponsesToSession(
+    session: AuditSession,
+    sectionKey: string,
+    responses: Record<string, Record<string, string>>,
+): AuditSession {
+    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
     return {
         ...session,
-        pre_audit: currentPreAudit,
+        sections: {
+            ...session.sections,
+            [sectionKey]: { ...section, responses: cloneSectionResponses(responses) },
+        },
     };
 }
 
-/**
- * Merge the current local dirty fields into a freshly loaded server session so
- * unsynced device edits remain visible after refresh or reopen.
- *
- * @param state Current store state.
- * @param nextSession Newly loaded server session.
- * @returns Server session with local dirty draft fields re-applied.
- */
+function copySectionDraftFromSession(
+    source: AuditSession,
+    target: AuditSession,
+    sectionKey: string,
+): AuditSession {
+    const sourceSection = cloneSectionState(source.sections[sectionKey], sectionKey);
+    const sourceResponses = cloneSectionResponses(sourceSection.responses);
+    let next = applySectionResponsesToSession(target, sectionKey, sourceResponses);
+    next = applySectionNoteToSession(next, sectionKey, sourceSection.note ?? "");
+    return next;
+}
+
+function copyPreAuditDraftFromSession(source: AuditSession, target: AuditSession): AuditSession {
+    const preAudit = clonePreAuditValues(source.pre_audit);
+    return applyPreAuditToSession(target, preAudit);
+}
+
 function mergeDirtyLocalDraftIntoServerSession(
-    state: PlayspaceAuditStoreState,
+    sessionsById: Record<string, AuditSession>,
+    sessionsByPlace: Record<string, AuditSession>,
+    dirtySections: DirtySections,
+    dirtyPreAudit: DirtyPreAudit,
     nextSession: AuditSession,
 ): AuditSession {
     const localSession =
-        state.sessionsByAuditId[nextSession.audit_id] ??
-        state.sessionsByPlaceId[nextSession.place_id];
+        sessionsById[nextSession.audit_id] ?? sessionsByPlace[nextSession.place_id];
     if (localSession === undefined) {
         return nextSession;
     }
 
-    let mergedSession = nextSession;
-    const dirtySectionVersions = state.dirtySections[nextSession.audit_id] ?? {};
+    let merged = nextSession;
+    const dirtySectionVersions = dirtySections[nextSession.audit_id] ?? {};
     for (const sectionKey of Object.keys(dirtySectionVersions)) {
-        mergedSession = copySectionDraftFromSession(localSession, mergedSession, sectionKey);
+        merged = copySectionDraftFromSession(localSession, merged, sectionKey);
     }
 
-    if (state.dirtyPreAudit[nextSession.audit_id] !== undefined) {
-        mergedSession = copyPreAuditDraftFromSession(localSession, mergedSession);
+    if (dirtyPreAudit[nextSession.audit_id] !== undefined) {
+        merged = copyPreAuditDraftFromSession(localSession, merged);
     }
-
-    return mergedSession;
+    return merged;
 }
 
-/**
- * Apply a successful draft-sync response while preserving any new edits that
- * landed during the in-flight request.
- *
- * @param state Latest store state.
- * @param updatedSession Server-confirmed audit session.
- * @param patchSnapshot Versioned patch metadata used for the request.
- * @returns Next partial store state.
- */
-function applySyncedAuditPatchState(
-    state: PlayspaceAuditStoreState,
-    updatedSession: AuditSession,
-    patchSnapshot: PendingAuditPatchSnapshot,
-): PartialStoreState {
-    const mergedSession = mergeDirtyLocalDraftIntoServerSession(state, updatedSession);
-    const nextDirtySections = clearAcknowledgedDirtySections(state.dirtySections, patchSnapshot);
-    const nextDirtyPreAudit = clearAcknowledgedDirtyPreAudit(state.dirtyPreAudit, patchSnapshot);
-
-    return {
-        ...buildTrackedSessionState(state, mergedSession, {}),
-        dirtySections: nextDirtySections,
-        dirtyPreAudit: nextDirtyPreAudit,
-        lastSyncError: null,
-        lastSuccessfulSyncAt: new Date().toISOString(),
-    };
-}
-
-/**
- * Clear dirty section markers only for the versions acknowledged by the
- * current request. Newer local edits remain dirty.
- *
- * @param current Current dirty sections record.
- * @param patchSnapshot Versioned patch metadata used for the request.
- * @returns Updated dirty sections record.
- */
 function clearAcknowledgedDirtySections(
     current: DirtySections,
     patchSnapshot: PendingAuditPatchSnapshot,
 ): DirtySections {
-    const existingSections = current[patchSnapshot.auditId];
-    if (existingSections === undefined) {
+    const existing = current[patchSnapshot.auditId];
+    if (existing === undefined) {
         return current;
     }
 
-    const nextAuditSections: Record<string, number> = {};
-    for (const [sectionKey, version] of Object.entries(existingSections)) {
-        const acknowledgedVersion = patchSnapshot.sectionVersions[sectionKey];
-        if (acknowledgedVersion === undefined || version > acknowledgedVersion) {
-            nextAuditSections[sectionKey] = version;
+    const remaining: Record<string, number> = {};
+    for (const [sectionKey, version] of Object.entries(existing)) {
+        const acked = patchSnapshot.sectionVersions[sectionKey];
+        if (acked === undefined || version > acked) {
+            remaining[sectionKey] = version;
         }
     }
 
-    if (Object.keys(nextAuditSections).length === 0) {
-        const remainingSections = { ...current };
-        delete remainingSections[patchSnapshot.auditId];
-        return remainingSections;
+    if (Object.keys(remaining).length === 0) {
+        const next = { ...current };
+        delete next[patchSnapshot.auditId];
+        return next;
     }
-
-    return {
-        ...current,
-        [patchSnapshot.auditId]: nextAuditSections,
-    };
+    return { ...current, [patchSnapshot.auditId]: remaining };
 }
 
-/**
- * Clear a dirty pre-audit marker only when the acknowledged version matches
- * the current store state.
- *
- * @param current Current dirty pre-audit record.
- * @param patchSnapshot Versioned patch metadata used for the request.
- * @returns Updated dirty pre-audit record.
- */
 function clearAcknowledgedDirtyPreAudit(
     current: DirtyPreAudit,
     patchSnapshot: PendingAuditPatchSnapshot,
@@ -856,98 +449,24 @@ function clearAcknowledgedDirtyPreAudit(
     if (patchSnapshot.preAuditVersion === null) {
         return current;
     }
-
     const currentVersion = current[patchSnapshot.auditId];
     if (currentVersion === undefined || currentVersion > patchSnapshot.preAuditVersion) {
         return current;
     }
-
-    const remainingPreAudit = { ...current };
-    delete remainingPreAudit[patchSnapshot.auditId];
-    return remainingPreAudit;
+    const next = { ...current };
+    delete next[patchSnapshot.auditId];
+    return next;
 }
 
-/**
- * Copy one section's local draft from one session into another session.
- *
- * @param sourceSession Current local session with unsynced answers.
- * @param targetSession Fresh server session.
- * @param sectionKey Section to copy.
- * @returns Target session with the local section draft applied.
- */
-function copySectionDraftFromSession(
-    sourceSession: AuditSession,
-    targetSession: AuditSession,
-    sectionKey: string,
-): AuditSession {
-    const sourceSection = cloneSectionState(sourceSession.sections[sectionKey], sectionKey);
-    const sourceResponses = cloneSectionResponses(sourceSection.responses);
-    const sourceNote = sourceSection.note;
-
-    let nextSession = applySectionResponsesToSession(targetSession, sectionKey, sourceResponses);
-    nextSession = applySectionNoteToSession(nextSession, sectionKey, sourceNote ?? "");
-    return nextSession;
-}
-
-/**
- * Copy the local pre-audit draft from one session into another session.
- *
- * @param sourceSession Current local session with unsynced pre-audit values.
- * @param targetSession Fresh server session.
- * @returns Target session with the local pre-audit draft applied.
- */
-function copyPreAuditDraftFromSession(
-    sourceSession: AuditSession,
-    targetSession: AuditSession,
-): AuditSession {
-    const preAudit = clonePreAuditValues(sourceSession.pre_audit);
-    return applyPreAuditToSession(targetSession, preAudit);
-}
-
-/**
- * Create a new AuditSession with one section's full responses map replaced.
- *
- * @param session Current audit session.
- * @param sectionKey Target section.
- * @param responses Section response payload.
- * @returns Cloned session with updated section responses.
- */
-function applySectionResponsesToSession(
-    session: AuditSession,
-    sectionKey: string,
-    responses: Record<string, Record<string, string>>,
-): AuditSession {
-    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
-
-    return {
-        ...session,
-        sections: {
-            ...session.sections,
-            [sectionKey]: {
-                ...section,
-                responses: cloneSectionResponses(responses),
-            },
-        },
-    };
-}
-
-/**
- * Build an `AuditDraftPatch` and capture the dirty versions included in the
- * request so only acknowledged edits are cleared afterwards.
- *
- * @param state Current store state.
- * @param auditId Target audit.
- * @param session Current audit session payload.
- * @returns Patch snapshot to send, or null when nothing is dirty.
- */
 function buildPatchFromDirtyState(
-    state: PlayspaceAuditStoreState,
+    dirtySections: DirtySections,
+    dirtyPreAudit: DirtyPreAudit,
     auditId: string,
     session: AuditSession,
 ): PendingAuditPatchSnapshot | null {
-    const dirtySectionVersions = state.dirtySections[auditId] ?? {};
-    const dirtySectionKeys = Object.keys(dirtySectionVersions);
-    const preAuditVersion = state.dirtyPreAudit[auditId] ?? null;
+    const sectionVersions = dirtySections[auditId] ?? {};
+    const dirtySectionKeys = Object.keys(sectionVersions);
+    const preAuditVersion = dirtyPreAudit[auditId] ?? null;
     const hasPreAudit = preAuditVersion !== null;
 
     if (dirtySectionKeys.length === 0 && !hasPreAudit) {
@@ -965,7 +484,6 @@ function buildPatchFromDirtyState(
     }
 
     const patch: AuditDraftPatch = { sections };
-
     if (hasPreAudit) {
         patch.pre_audit = {
             season: session.pre_audit.season,
@@ -980,21 +498,14 @@ function buildPatchFromDirtyState(
     return {
         auditId,
         patch,
-        sectionVersions: dirtySectionKeys.reduce<Record<string, number>>((result, sectionKey) => {
-            result[sectionKey] = dirtySectionVersions[sectionKey] ?? 0;
+        sectionVersions: dirtySectionKeys.reduce<Record<string, number>>((result, key) => {
+            result[key] = sectionVersions[key] ?? 0;
             return result;
         }, {}),
         preAuditVersion,
     };
 }
 
-/**
- * Read a nullable string form value while preserving the current fallback.
- *
- * @param value Candidate input value.
- * @param fallback Existing field value.
- * @returns Normalized string-or-null value.
- */
 function readNullableStringValue(value: unknown, fallback: string | null): string | null {
     if (typeof value !== "string") {
         return fallback;
@@ -1002,13 +513,6 @@ function readNullableStringValue(value: unknown, fallback: string | null): strin
     return value.trim().length > 0 ? value : null;
 }
 
-/**
- * Read a string-array form value while preserving the current fallback.
- *
- * @param value Candidate input value.
- * @param fallback Existing field value.
- * @returns Normalized string array.
- */
 function readStringArrayValue(value: unknown, fallback: string[]): string[] {
     if (!Array.isArray(value)) {
         return [...fallback];
@@ -1016,47 +520,515 @@ function readStringArrayValue(value: unknown, fallback: string[]): string[] {
     return value.filter((entry): entry is string => typeof entry === "string");
 }
 
-/**
- * Convert raw API/store errors into a user-visible, debug-friendly message.
- *
- * @param error Unknown thrown value.
- * @param fallbackMessage Generic fallback message.
- * @returns Readable error message including status and details when available.
- */
 function formatAuditErrorMessage(error: unknown, fallbackMessage: string): string {
     if (error instanceof PlayspaceAuditApiError) {
         const detailsSuffix =
             typeof error.details === "string" && error.details.trim().length > 0
-                ? ` ${i18n.t("audit:errors.detailsLabel", {
-                      details: error.details.trim(),
-                  })}`
+                ? ` ${t("audit:errors.detailsLabel", { details: error.details.trim() })}`
                 : "";
 
         if (error.statusCode === 403) {
-            return `${i18n.t("audit:errors.accessDenied403")}${detailsSuffix}`;
+            return `${t("audit:errors.accessDenied403")}${detailsSuffix}`;
         }
-
         if (error.statusCode === 0) {
-            return i18n.t("audit:errors.offlineChangesSaved", {
-                message: fallbackMessage,
-            });
+            return t("audit:errors.offlineChangesSaved", { message: fallbackMessage });
         }
-
         if (error.statusCode > 0) {
-            return `${i18n.t("audit:errors.httpFallback", {
+            return `${t("audit:errors.httpFallback", {
                 message: fallbackMessage,
                 statusCode: error.statusCode,
             })}${detailsSuffix}`;
         }
-
-        return `${i18n.t("audit:errors.networkFallback", {
-            message: fallbackMessage,
-        })}${detailsSuffix}`;
+        return `${t("audit:errors.networkFallback", { message: fallbackMessage })}${detailsSuffix}`;
     }
 
     if (error instanceof Error && error.message.trim().length > 0) {
         return `${fallbackMessage} ${error.message.trim()}`;
     }
-
     return fallbackMessage;
 }
+
+// ---------------------------------------------------------------------------
+// Action functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Hydrate the audit observable for an authenticated user. Reads from MMKV
+ * first, falling back to legacy Secure Store for one-time migration.
+ */
+async function hydrate(accountId?: string | null): Promise<void> {
+    const targetUserId = normalizeOptionalUserId(accountId);
+    const currentUserId = auditUI$.currentUserId.peek();
+    const alreadyHydrated = auditUI$.isHydrated.peek();
+    if (alreadyHydrated && currentUserId === targetUserId) {
+        return;
+    }
+
+    teardownAutoSave();
+    const requestId = ++hydrateRequestCounter;
+
+    batch(() => {
+        auditData$.set({
+            sessions_by_audit_id: {},
+            sessions_by_place_id: {},
+            dirty_sections: {},
+            dirty_pre_audit: {},
+            local_change_counter: 0,
+            last_successful_sync_at: null,
+        });
+        auditUI$.set({
+            currentUserId: targetUserId,
+            isHydrated: false,
+            isLoadingAudit: false,
+            isSavingDraft: false,
+            isSyncing: false,
+            errorMessage: null,
+            lastSyncError: null,
+        });
+    });
+
+    if (targetUserId === null) {
+        auditUI$.isHydrated.set(true);
+        return;
+    }
+
+    const storageKey = getStorageKey(targetUserId);
+    const rawMmkv = mmkvStorage.getString(storageKey);
+
+    if (rawMmkv === undefined) {
+        const legacyState = await readPersistedAuditState(targetUserId);
+        if (requestId !== hydrateRequestCounter) return;
+        if (legacyState !== null) {
+            applyPersistedDataBatch(legacyState);
+            saveNow();
+            await clearPersistedAuditState(targetUserId);
+        }
+    } else {
+        if (requestId !== hydrateRequestCounter) return;
+        const data = parseStoredAuditData(rawMmkv);
+        if (data !== null) {
+            applyPersistedDataBatch(data);
+        }
+    }
+
+    if (requestId !== hydrateRequestCounter) return;
+    setupAutoSave(targetUserId);
+    auditUI$.isHydrated.set(true);
+}
+
+async function clearStoredState(accountId?: string | null): Promise<void> {
+    teardownAutoSave();
+    hydrateRequestCounter += 1;
+    const targetUserId = normalizeOptionalUserId(accountId) ?? auditUI$.currentUserId.peek();
+    if (targetUserId !== null) {
+        mmkvStorage.remove(getStorageKey(targetUserId));
+    }
+    batch(() => {
+        auditData$.set({
+            sessions_by_audit_id: {},
+            sessions_by_place_id: {},
+            dirty_sections: {},
+            dirty_pre_audit: {},
+            local_change_counter: 0,
+            last_successful_sync_at: null,
+        });
+        auditUI$.set({
+            currentUserId: null,
+            isHydrated: true,
+            isLoadingAudit: false,
+            isSavingDraft: false,
+            isSyncing: false,
+            errorMessage: null,
+            lastSyncError: null,
+        });
+    });
+}
+
+async function ensurePlaceAudit(
+    session: AuthSession,
+    placeId: string,
+    executionMode?: "audit" | "survey" | "both",
+): Promise<AuditSession> {
+    batch(() => {
+        auditUI$.isLoadingAudit.set(true);
+        auditUI$.errorMessage.set(null);
+    });
+
+    try {
+        const nextSession = await createOrResumeAudit(session, placeId, executionMode);
+        const data = auditData$.peek();
+        const merged = mergeDirtyLocalDraftIntoServerSession(
+            data.sessions_by_audit_id,
+            data.sessions_by_place_id,
+            data.dirty_sections,
+            data.dirty_pre_audit,
+            nextSession,
+        );
+        batch(() => {
+            auditData$.sessions_by_audit_id[merged.audit_id]?.set(merged);
+            auditData$.sessions_by_place_id[merged.place_id]?.set(merged);
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(null);
+        });
+        saveNow();
+        return merged;
+    } catch (error) {
+        const message = formatAuditErrorMessage(error, t("audit:errors.openFallback"));
+        batch(() => {
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(message);
+        });
+        throw error;
+    }
+}
+
+async function refreshAudit(session: AuthSession, auditId: string): Promise<AuditSession> {
+    batch(() => {
+        auditUI$.isLoadingAudit.set(true);
+        auditUI$.errorMessage.set(null);
+    });
+
+    try {
+        const nextSession = await fetchAuditSession(session, auditId);
+        const data = auditData$.peek();
+        const merged = mergeDirtyLocalDraftIntoServerSession(
+            data.sessions_by_audit_id,
+            data.sessions_by_place_id,
+            data.dirty_sections,
+            data.dirty_pre_audit,
+            nextSession,
+        );
+        batch(() => {
+            auditData$.sessions_by_audit_id[merged.audit_id]?.set(merged);
+            auditData$.sessions_by_place_id[merged.place_id]?.set(merged);
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(null);
+        });
+        saveNow();
+        return merged;
+    } catch (error) {
+        const message = formatAuditErrorMessage(error, t("audit:errors.refreshFallback"));
+        batch(() => {
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(message);
+        });
+        throw error;
+    }
+}
+
+function applyLocalQuestionAnswer(
+    placeId: string,
+    sectionKey: string,
+    questionKey: string,
+    answers: Record<string, string>,
+): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_place_id[placeId]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const updated = applyQuestionAnswerToSession(session, sectionKey, questionKey, answers);
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const nextDirty = markSectionDirty(
+        auditData$.dirty_sections.peek(),
+        session.audit_id,
+        sectionKey,
+        nextVersion,
+    );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(updated);
+        auditData$.sessions_by_place_id[placeId]?.set(updated);
+        auditData$.dirty_sections.set(nextDirty);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+function applyLocalSectionNote(placeId: string, sectionKey: string, note: string): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_place_id[placeId]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const updated = applySectionNoteToSession(session, sectionKey, note);
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const nextDirty = markSectionDirty(
+        auditData$.dirty_sections.peek(),
+        session.audit_id,
+        sectionKey,
+        nextVersion,
+    );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(updated);
+        auditData$.sessions_by_place_id[placeId]?.set(updated);
+        auditData$.dirty_sections.set(nextDirty);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+function applyLocalPreAudit(placeId: string, values: Record<string, string | string[]>): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_place_id[placeId]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const updated = applyPreAuditToSession(session, values);
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const nextDirtyPreAudit = markPreAuditDirty(
+        auditData$.dirty_pre_audit.peek(),
+        session.audit_id,
+        nextVersion,
+    );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(updated);
+        auditData$.sessions_by_place_id[placeId]?.set(updated);
+        auditData$.dirty_pre_audit.set(nextDirtyPreAudit);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+async function flushPendingChanges(session: AuthSession): Promise<FlushPendingChangesResult> {
+    if (auditUI$.isSyncing.peek()) {
+        return {
+            attemptedAuditIds: [],
+            failedAuditIds: [],
+            remainingDirtyAuditIds: getDirtyAuditIds(
+                auditData$.dirty_sections.peek(),
+                auditData$.dirty_pre_audit.peek(),
+            ),
+        };
+    }
+
+    const allDirtyAuditIds = getDirtyAuditIds(
+        auditData$.dirty_sections.peek(),
+        auditData$.dirty_pre_audit.peek(),
+    );
+    if (allDirtyAuditIds.length === 0) {
+        return { attemptedAuditIds: [], failedAuditIds: [], remainingDirtyAuditIds: [] };
+    }
+
+    batch(() => {
+        auditUI$.isSyncing.set(true);
+        auditUI$.lastSyncError.set(null);
+    });
+    const failedAuditIds: string[] = [];
+
+    for (const auditId of allDirtyAuditIds) {
+        const auditSession: AuditSession | undefined =
+            auditData$.sessions_by_audit_id[auditId]?.peek();
+        if (auditSession === undefined) {
+            continue;
+        }
+
+        const patchSnapshot = buildPatchFromDirtyState(
+            auditData$.dirty_sections.peek(),
+            auditData$.dirty_pre_audit.peek(),
+            auditId,
+            auditSession,
+        );
+        if (patchSnapshot === null) {
+            continue;
+        }
+
+        try {
+            const updatedSession = await saveAuditDraft(session, auditId, patchSnapshot.patch);
+            const data = auditData$.peek();
+            const merged = mergeDirtyLocalDraftIntoServerSession(
+                data.sessions_by_audit_id,
+                data.sessions_by_place_id,
+                data.dirty_sections,
+                data.dirty_pre_audit,
+                updatedSession,
+            );
+            const nextDirtySections = clearAcknowledgedDirtySections(
+                auditData$.dirty_sections.peek(),
+                patchSnapshot,
+            );
+            const nextDirtyPreAudit = clearAcknowledgedDirtyPreAudit(
+                auditData$.dirty_pre_audit.peek(),
+                patchSnapshot,
+            );
+
+            batch(() => {
+                auditData$.sessions_by_audit_id[merged.audit_id]?.set(merged);
+                auditData$.sessions_by_place_id[merged.place_id]?.set(merged);
+                auditData$.dirty_sections.set(nextDirtySections);
+                auditData$.dirty_pre_audit.set(nextDirtyPreAudit);
+                auditUI$.lastSyncError.set(null);
+                auditData$.last_successful_sync_at.set(new Date().toISOString());
+            });
+        } catch (error) {
+            console.error("[audit-store] sync failed", error);
+            const message = formatAuditErrorMessage(error, t("audit:errors.syncFallback"));
+            auditUI$.lastSyncError.set(message);
+            failedAuditIds.push(auditId);
+        }
+    }
+
+    auditUI$.isSyncing.set(false);
+    saveNow();
+
+    return {
+        attemptedAuditIds: allDirtyAuditIds,
+        failedAuditIds,
+        remainingDirtyAuditIds: getDirtyAuditIds(
+            auditData$.dirty_sections.peek(),
+            auditData$.dirty_pre_audit.peek(),
+        ),
+    };
+}
+
+async function submitAuditSession(session: AuthSession, auditId: string): Promise<AuditSession> {
+    auditUI$.isSavingDraft.set(true);
+    auditUI$.errorMessage.set(null);
+
+    const auditSession: AuditSession | undefined = auditData$.sessions_by_audit_id[auditId]?.peek();
+    if (auditSession !== undefined) {
+        const flushResult = await flushPendingChanges(session);
+        const hasFailedDraftSync = flushResult.failedAuditIds.includes(auditId);
+        const hasRemainingDirtyChanges = flushResult.remainingDirtyAuditIds.includes(auditId);
+        if (hasFailedDraftSync || hasRemainingDirtyChanges) {
+            const message = t("audit:errors.submitNeedsUploadedDraft");
+            batch(() => {
+                auditUI$.isSavingDraft.set(false);
+                auditUI$.errorMessage.set(message);
+            });
+            throw new Error(message);
+        }
+    }
+
+    try {
+        const nextSession = await submitAudit(session, auditId);
+        batch(() => {
+            auditData$.sessions_by_audit_id[nextSession.audit_id]?.set(nextSession);
+            auditData$.sessions_by_place_id[nextSession.place_id]?.set(nextSession);
+            auditUI$.isSavingDraft.set(false);
+            auditUI$.errorMessage.set(null);
+        });
+        saveNow();
+        return nextSession;
+    } catch (error) {
+        const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
+        batch(() => {
+            auditUI$.isSavingDraft.set(false);
+            auditUI$.errorMessage.set(message);
+        });
+        throw error;
+    }
+}
+
+function clearError(): void {
+    auditUI$.errorMessage.set(null);
+}
+
+// ---------------------------------------------------------------------------
+// Compatibility hook
+// ---------------------------------------------------------------------------
+
+/**
+ * Action map returned by the compatibility hook. Stable references so
+ * selectors that pick a single action don't cause extra re-renders.
+ */
+const actions = {
+    hydrate,
+    clearStoredState,
+    ensurePlaceAudit,
+    refreshAudit,
+    applyLocalQuestionAnswer,
+    applyLocalSectionNote,
+    applyLocalPreAudit,
+    flushPendingChanges,
+    submitAuditSession,
+    clearError,
+} as const;
+
+/**
+ * Data property getters that call `.get()` so Legend State can track them
+ * inside a `useSelector` callback. Each selector only accesses the
+ * properties it actually reads, preserving fine-grained reactivity.
+ */
+const dataGetters: Record<string, () => unknown> = {
+    instrument: () => BASE_PLAYSPACE_INSTRUMENT,
+    sessionsByAuditId: () => auditData$.sessions_by_audit_id.get(),
+    sessionsByPlaceId: () => auditData$.sessions_by_place_id.get(),
+    currentUserId: () => auditUI$.currentUserId.get(),
+    isHydrated: () => auditUI$.isHydrated.get(),
+    isLoadingAudit: () => auditUI$.isLoadingAudit.get(),
+    isSavingDraft: () => auditUI$.isSavingDraft.get(),
+    isSyncing: () => auditUI$.isSyncing.get(),
+    errorMessage: () => auditUI$.errorMessage.get(),
+    lastSyncError: () => auditUI$.lastSyncError.get(),
+    lastSuccessfulSyncAt: () => auditData$.last_successful_sync_at.get(),
+    localChangeCounter: () => auditData$.local_change_counter.get(),
+    dirtySections: () => auditData$.dirty_sections.get(),
+    dirtyPreAudit: () => auditData$.dirty_pre_audit.get(),
+};
+
+/**
+ * Proxy that lazily resolves observable values only when the selector
+ * actually accesses them, so Legend State's tracking stays fine-grained.
+ */
+function createLazyState(): PlayspaceAuditStoreState {
+    return new Proxy({} as PlayspaceAuditStoreState, {
+        get(_target, prop: string | symbol): unknown {
+            if (typeof prop === "symbol") {
+                return undefined;
+            }
+            if (prop in actions) {
+                return (actions as Record<string, unknown>)[prop];
+            }
+            const getter = dataGetters[prop];
+            if (getter !== undefined) {
+                return getter();
+            }
+            return undefined;
+        },
+    });
+}
+
+/**
+ * Eagerly build a full state snapshot for non-React callers (`.getState()`).
+ * Uses `.peek()` to read without tracking.
+ */
+function buildEagerState(): PlayspaceAuditStoreState {
+    return {
+        instrument: BASE_PLAYSPACE_INSTRUMENT,
+        sessionsByAuditId: auditData$.sessions_by_audit_id.peek(),
+        sessionsByPlaceId: auditData$.sessions_by_place_id.peek(),
+        currentUserId: auditUI$.currentUserId.peek(),
+        isHydrated: auditUI$.isHydrated.peek(),
+        isLoadingAudit: auditUI$.isLoadingAudit.peek(),
+        isSavingDraft: auditUI$.isSavingDraft.peek(),
+        isSyncing: auditUI$.isSyncing.peek(),
+        errorMessage: auditUI$.errorMessage.peek(),
+        lastSyncError: auditUI$.lastSyncError.peek(),
+        lastSuccessfulSyncAt: auditData$.last_successful_sync_at.peek(),
+        localChangeCounter: auditData$.local_change_counter.peek(),
+        dirtySections: auditData$.dirty_sections.peek(),
+        dirtyPreAudit: auditData$.dirty_pre_audit.peek(),
+        ...actions,
+    };
+}
+
+/**
+ * Zustand-compatible hook backed by Legend State observables.
+ *
+ * Usage is identical to the previous Zustand store:
+ * ```
+ * const session = usePlayspaceAuditStore(s => s.sessionsByPlaceId[placeId]);
+ * const hydrate = usePlayspaceAuditStore(s => s.hydrate);
+ * ```
+ *
+ * The Proxy-based lazy state ensures that only the observables accessed
+ * inside the selector are tracked for re-render, matching Zustand's
+ * fine-grained subscription behaviour.
+ */
+function usePlayspaceAuditStoreHook<T>(selector: (state: PlayspaceAuditStoreState) => T): T {
+    return useSelector(() => selector(createLazyState()));
+}
+
+usePlayspaceAuditStoreHook.getState = buildEagerState;
+
+export const usePlayspaceAuditStore = usePlayspaceAuditStoreHook;

@@ -1,9 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { ScrollView } from "react-native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowRight, CircleCheckBig, ClipboardList, Shapes } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { CollapsibleCard } from "components/ui/collapsible-card";
+import { FilterChip } from "components/ui/filter-chip";
 import { useDesignSystem } from "lib/design-system";
 import { getVisibleSections } from "lib/audit/selectors";
 import type { ExecutionMode } from "lib/audit/types";
@@ -12,6 +14,8 @@ import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import type { TFunction } from "i18next";
+
+type SectionVisibilityFilter = "all" | "incomplete" | "complete";
 
 /**
  * Place-scoped execute overview with preamble, mode selection, and section routing.
@@ -37,6 +41,7 @@ export default function ExecutePlaceScreen() {
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
     const dirtyPreAudit = usePlayspaceAuditStore((state) => state.dirtyPreAudit);
     const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
+    const [sectionFilter, setSectionFilter] = useState<SectionVisibilityFilter>("incomplete");
 
     const placeId = readSingleParam(params.placeId);
     const auditSession = placeId === null ? undefined : sessionsByPlaceId[placeId];
@@ -70,6 +75,40 @@ export default function ExecutePlaceScreen() {
         }
         return getVisibleSections(instrument, auditSession.selected_execution_mode);
     }, [auditSession, instrument]);
+    const sectionRows = useMemo(() => {
+        if (auditSession === undefined) {
+            return [];
+        }
+
+        const rows = visibleSections.map((section) => {
+            const progress = auditSession.progress.sections.find((entry) => {
+                return entry.section_key === section.section_key;
+            });
+            const isComplete = progress?.is_complete === true;
+            return {
+                section,
+                progress,
+                isComplete,
+            };
+        });
+
+        const filteredRows = rows.filter((row) => {
+            if (sectionFilter === "complete") {
+                return row.isComplete;
+            }
+            if (sectionFilter === "incomplete") {
+                return !row.isComplete;
+            }
+            return true;
+        });
+
+        return filteredRows.sort((leftRow, rightRow) => {
+            if (leftRow.isComplete !== rightRow.isComplete) {
+                return leftRow.isComplete ? 1 : -1;
+            }
+            return leftRow.section.title.localeCompare(rightRow.section.title);
+        });
+    }, [auditSession, sectionFilter, visibleSections]);
     const pendingSectionCount =
         auditSession === undefined
             ? 0
@@ -152,42 +191,50 @@ export default function ExecutePlaceScreen() {
                 lastSyncError={lastSyncError}
             />
 
-            <YStack
-                rounded={ds.radii.lg}
+            <Button
+                height={46}
+                rounded={ds.radii.md}
                 borderWidth={1}
                 borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p="$4"
-                gap="$3"
-                style={{
-                    boxShadow: ds.shadows.card,
+                bg={ds.colors.input}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={() => {
+                    router.push(`/place/${placeId}`);
                 }}
             >
                 <XStack items="center" gap="$2">
-                    <Shapes size={16} color={ds.colors.primary} />
                     <Text
-                        color={ds.colors.primary}
+                        color={ds.colors.foreground}
                         fontFamily={ds.fonts.bodyBold}
                         fontSize={ds.typography.labelMd.fontSize}
                         textTransform="uppercase"
-                        letterSpacing={1.2}
+                        letterSpacing={1.1}
                     >
-                        {t("overview.preamble", { ns: "audit" })}
+                        {t("overview.viewPlaceDetails", { ns: "audit" })}
                     </Text>
+                    <ArrowRight size={14} color={ds.colors.foreground} />
                 </XStack>
-                {instrument.preamble.map((paragraph) => {
-                    return (
-                        <Paragraph
-                            key={paragraph}
-                            color={ds.colors.secondaryForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyMd.fontSize}
-                        >
-                            {paragraph}
-                        </Paragraph>
-                    );
-                })}
-            </YStack>
+            </Button>
+
+            <CollapsibleCard
+                title={t("overview.preamble", { ns: "audit" })}
+                icon={<Shapes size={16} color={ds.colors.primary} />}
+            >
+                <YStack gap="$3">
+                    {instrument.preamble.map((paragraph) => {
+                        return (
+                            <Paragraph
+                                key={paragraph}
+                                color={ds.colors.secondaryForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {paragraph}
+                            </Paragraph>
+                        );
+                    })}
+                </YStack>
+            </CollapsibleCard>
 
             <YStack
                 rounded={ds.radii.lg}
@@ -380,80 +427,121 @@ export default function ExecutePlaceScreen() {
             </YStack>
 
             <YStack gap="$3">
-                {visibleSections.map((section) => {
-                    const progress = auditSession.progress.sections.find((entry) => {
-                        return entry.section_key === section.section_key;
-                    });
-                    const isComplete = progress?.is_complete === true;
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
+                >
+                    {t("overview.sections", { ns: "audit" })}
+                </Text>
 
-                    return (
-                        <YStack
-                            key={section.section_key}
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            p="$4"
-                            gap="$3"
-                            style={{
-                                boxShadow: ds.shadows.card,
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <XStack gap="$2">
+                        <FilterChip
+                            label={t("filters.incomplete", { ns: "common" })}
+                            isSelected={sectionFilter === "incomplete"}
+                            onPress={() => {
+                                setSectionFilter("incomplete");
                             }}
-                        >
-                            <XStack justify="space-between" items="flex-start" gap="$3">
-                                <YStack flex={1} gap="$1.5">
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.titleMd.fontSize}
-                                    >
-                                        {section.title}
-                                    </Text>
-                                    <Paragraph
-                                        color={ds.colors.mutedForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                    >
-                                        {t("section.answeredCount", {
-                                            ns: "audit",
-                                            answered: progress?.answered_question_count ?? 0,
-                                            total:
-                                                progress?.visible_question_count ??
-                                                section.questions.length,
-                                        })}
-                                    </Paragraph>
-                                </YStack>
-                                {isComplete ? (
-                                    <CircleCheckBig size={18} color={ds.colors.success} />
-                                ) : null}
-                            </XStack>
-                            <Button
-                                height={46}
-                                rounded={ds.radii.md}
+                        />
+                        <FilterChip
+                            label={t("filters.all", { ns: "common" })}
+                            isSelected={sectionFilter === "all"}
+                            onPress={() => {
+                                setSectionFilter("all");
+                            }}
+                        />
+                        <FilterChip
+                            label={t("filters.complete", { ns: "common" })}
+                            isSelected={sectionFilter === "complete"}
+                            onPress={() => {
+                                setSectionFilter("complete");
+                            }}
+                        />
+                    </XStack>
+                </ScrollView>
+
+                {sectionRows.length === 0 ? (
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyMd.fontSize}
+                    >
+                        {t("overview.sectionEmpty", { ns: "audit" })}
+                    </Paragraph>
+                ) : (
+                    sectionRows.map(({ section, progress, isComplete }) => {
+                        return (
+                            <YStack
+                                key={section.section_key}
+                                rounded={ds.radii.lg}
                                 borderWidth={1}
-                                borderColor={isComplete ? ds.colors.success : ds.colors.border}
-                                bg={isComplete ? ds.colors.successSoft : ds.colors.input}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={() => {
-                                    router.push(
-                                        `/(tabs)/execute/${placeId}/section/${section.section_key}`,
-                                    );
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.surface}
+                                p="$4"
+                                gap="$3"
+                                style={{
+                                    boxShadow: ds.shadows.card,
                                 }}
                             >
-                                <Text
-                                    color={isComplete ? ds.colors.success : ds.colors.foreground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelLg.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.2}
+                                <XStack justify="space-between" items="flex-start" gap="$3">
+                                    <YStack flex={1} gap="$1.5">
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.titleMd.fontSize}
+                                        >
+                                            {section.title}
+                                        </Text>
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                        >
+                                            {t("section.answeredCount", {
+                                                ns: "audit",
+                                                answered: progress?.answered_question_count ?? 0,
+                                                total:
+                                                    progress?.visible_question_count ??
+                                                    section.questions.length,
+                                            })}
+                                        </Paragraph>
+                                    </YStack>
+                                    {isComplete ? (
+                                        <CircleCheckBig size={18} color={ds.colors.success} />
+                                    ) : null}
+                                </XStack>
+                                <Button
+                                    height={46}
+                                    rounded={ds.radii.md}
+                                    borderWidth={1}
+                                    borderColor={isComplete ? ds.colors.success : ds.colors.border}
+                                    bg={isComplete ? ds.colors.successSoft : ds.colors.input}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={() => {
+                                        router.push(
+                                            `/(tabs)/execute/${placeId}/section/${section.section_key}`,
+                                        );
+                                    }}
                                 >
-                                    {isComplete
-                                        ? t("section.reviewSection", { ns: "audit" })
-                                        : t("section.openSection", { ns: "audit" })}
-                                </Text>
-                            </Button>
-                        </YStack>
-                    );
-                })}
+                                    <Text
+                                        color={
+                                            isComplete ? ds.colors.success : ds.colors.foreground
+                                        }
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelLg.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.2}
+                                    >
+                                        {isComplete
+                                            ? t("section.reviewSection", { ns: "audit" })
+                                            : t("section.openSection", { ns: "audit" })}
+                                    </Text>
+                                </Button>
+                            </YStack>
+                        );
+                    })
+                )}
             </YStack>
 
             {auditSession.progress.ready_to_submit ? (

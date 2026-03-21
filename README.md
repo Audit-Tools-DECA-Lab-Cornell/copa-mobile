@@ -117,8 +117,17 @@ bun run ci:quality
 - `app/` - Expo Router routes/screens
 - `components/` - shared UI components
 - `lib/` - domain logic (auth/api/demo data)
-- `stores/` - Zustand state stores
+- `lib/storage/` - MMKV storage instance and Legend State persistence plugin
+- `stores/` - state stores (Legend State for audit, Zustand for auth/places/preferences)
 - `assets/` - static app assets
+
+## Offline-First Architecture
+
+- **Audit state** is managed by Legend State observables (`@legendapp/state`) with automatic debounced persistence to MMKV (`react-native-mmkv`). The audit store (`stores/audit-store.ts`) exposes a Zustand-compatible selector hook backed by Legend State's fine-grained reactivity.
+- **Preferences** are persisted to MMKV via `lib/preferences/storage.ts`.
+- **Auth sessions** remain in Expo Secure Store for Keychain/Keystore security.
+- **Background sync** (`lib/audit/background-sync.ts`) and **foreground sync** (`lib/audit/use-audit-sync.ts`) flush dirty audit edits to the REST API when connectivity is available.
+- On first launch after migration, the hydrate flow reads legacy Secure Store data and migrates it to MMKV automatically.
 
 ## Playspace Data Contract And Scoring
 

@@ -9,6 +9,7 @@ import {
     type ExecutionMode,
 } from "lib/audit/types";
 import { z } from "zod";
+import { t } from "i18next";
 
 /**
  * Structured API error for playspace audit requests.
@@ -40,7 +41,11 @@ export async function createOrResumeAudit(
 ): Promise<AuditSession> {
     const payload = executionModeSchema.optional().safeParse(executionMode);
     if (!payload.success) {
-        throw new PlayspaceAuditApiError("Execution mode is invalid.", 400, payload.error.message);
+        throw new PlayspaceAuditApiError(
+            t("executionModeIsInvalid", "Execution mode is invalid."),
+            400,
+            payload.error.message,
+        );
     }
 
     const responsePayload = await requestJson(
@@ -56,7 +61,7 @@ export async function createOrResumeAudit(
     return parsePayload(
         responsePayload,
         auditSessionSchema,
-        "Audit session response shape is invalid.",
+        t("auditSessionResponseShapeIsInvalid", "Audit session response shape is invalid."),
     );
 }
 
@@ -92,7 +97,11 @@ export async function saveAuditDraft(
 ): Promise<AuditSession> {
     const parsedPatch = auditDraftPatchSchema.safeParse(patch);
     if (!parsedPatch.success) {
-        throw new PlayspaceAuditApiError("Draft patch is invalid.", 400, parsedPatch.error.message);
+        throw new PlayspaceAuditApiError(
+            t("draftPatchIsInvalid", "Draft patch is invalid."),
+            400,
+            parsedPatch.error.message,
+        );
     }
 
     const payload = await requestJson(
@@ -150,14 +159,21 @@ export async function requestJson(
             },
         });
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Network request failed.";
-        throw new PlayspaceAuditApiError("Unable to reach playspace audit service.", 0, message);
+        const message =
+            error instanceof Error
+                ? error.message
+                : t("networkRequestFailed", "Network request failed.");
+        throw new PlayspaceAuditApiError(
+            t("unableToReachPlayspaceAuditService", "Unable to reach playspace audit service."),
+            0,
+            message,
+        );
     }
 
     if (!response.ok) {
         const details = await readErrorDetails(response);
         throw new PlayspaceAuditApiError(
-            "Playspace audit request failed.",
+            t("playspaceAuditRequestFailed", "Playspace audit request failed."),
             response.status,
             details,
         );
@@ -166,7 +182,13 @@ export async function requestJson(
     try {
         return await response.json();
     } catch {
-        throw new PlayspaceAuditApiError("Playspace audit service returned invalid JSON.", 500);
+        throw new PlayspaceAuditApiError(
+            t(
+                "playspaceAuditServiceReturnedInvalidJson",
+                "Playspace audit service returned invalid JSON.",
+            ),
+            500,
+        );
     }
 }
 

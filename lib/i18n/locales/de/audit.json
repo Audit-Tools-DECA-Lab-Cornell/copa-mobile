@@ -2,8 +2,8 @@
     "autoValues": {
         "calculatedOnSubmit": "Wird bei der finalen Einreichung berechnet",
         "generatedOnSubmit": "Wird bei der finalen Einreichung erstellt",
-        "minutes_one": "TODO: autoValues.minutes_one",
-        "minutes_other": "TODO: autoValues.minutes_other"
+        "minutes_one": "",
+        "minutes_other": ""
     },
     "errors": {
         "accessDenied403": "Zugriff verweigert (403): Sie duerfen auf diesen Ort oder dieses Audit nicht zugreifen.",
@@ -19,10 +19,14 @@
     },
     "executeLanding": {
         "continueSelectedPlace": "Ausgewaehlten Ort fortsetzen",
+        "emptyMessage": "Versuchen Sie eine andere Such- oder Filterkombination.",
+        "emptyTitle": "Keine Prüfungen gefunden",
         "openSelectedAudit": "Ausgewaehltes Audit oeffnen",
+        "searchPlaceholder": "Orte oder Projekte suchen",
         "subtitle": "Waehlen Sie einen Ort, um den abschnittsweisen Playspace-Ablauf zu starten oder fortzusetzen.",
         "title": "Audit durchfuehren"
     },
+    "mode": "— {{mode}}",
     "overview": {
         "accessDeniedTitle": "Zugriff verweigert",
         "assignmentAllows": "Diese Ortszuweisung erlaubt derzeit:",
@@ -35,6 +39,8 @@
         "preamble": "Einleitung",
         "preparingAudit": "Der Playspace-Audit-Ablauf wird vorbereitet...",
         "preparingAuditTitle": "Audit wird vorbereitet",
+        "sectionEmpty": "Keine Abschnitte entsprechen dem aktuellen Filter.",
+        "sections": "Abschnitte",
         "roleFixesSubset": "Ihre Rolle legt bereits fest, welcher Teil der Fragen fuer diesen Ort sichtbar ist.",
         "syncStatus": {
             "pendingMessage": "Entwurfsaenderungen sind vorgemerkt und werden automatisch hochgeladen, sobald die App aktiv und online ist.",
@@ -42,8 +48,10 @@
             "retryTitle": "Upload pausiert",
             "syncingMessage": "Gespeicherte Aenderungen werden jetzt hochgeladen. Lassen Sie die App geoeffnet, wenn Sie direkt danach einreichen moechten.",
             "syncingTitle": "Aenderungen werden hochgeladen"
-        }
+        },
+        "viewPlaceDetails": "Ortsdetails anzeigen"
     },
+    "place_namesuffix": "{{place_name}}{{suffix}}",
     "preAudit": {
         "complete": "Vollstaendig",
         "description": "Erfassen Sie Jahreszeit, Wetter, anwesende Nutzer, Nutzeranzahl, Altersgruppen und Ortsgroesse vor der Abschnittsbewertung.",

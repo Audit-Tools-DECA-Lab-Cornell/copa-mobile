@@ -7,11 +7,34 @@
         "resume": "Reprendre",
         "retry": "Réessayer",
         "seeAll": "Voir tout",
-        "signOut": "Se déconnecter"
+        "signOut": "Se déconnecter",
+        "viewDetails": "Voir les détails",
+        "viewReport": "Voir le rapport"
     },
+    "assignedPlacesResponseShapeIsInvalid": "La forme de la réponse des lieux attribués est invalide.",
+    "auditorProfileResponseShapeIsInvalid": "La forme de la réponse du profil de l'auditeur est invalide.",
+    "auditSessionResponseShapeIsInvalid": "La forme de la réponse de la session d'audit est invalide.",
+    "authenticationRequestFailed": "La requête d'authentification a échoué.",
+    "authenticationResponseShapeIsInvalid": "La forme de la réponse d'authentification est invalide.",
+    "authenticationServiceReturnedInvalidJson": "Le service d'authentification a renvoyé un JSON invalide.",
+    "dontWorryWeveGotYourData": "Ne vous inquiétez pas, nous avons vos données.",
+    "draftPatchIsInvalid": "Le correctif provisoire est invalide.",
+    "executionModeIsInvalid": "Le mode d'exécution est invalide.",
+    "filters": {
+        "active": "Actif",
+        "all": "Tous",
+        "complete": "Terminé",
+        "incomplete": "Incomplet",
+        "notScored": "Non noté",
+        "scored": "Noté",
+        "submitted": "Soumis"
+    },
+    "networkRequestFailed": "La requête réseau a échoué.",
     "place": {
         "assignedPlace": "Lieu attribué"
     },
+    "playspaceAuditRequestFailed": "La requête d'audit Playspace a échoué.",
+    "playspaceAuditServiceReturnedInvalidJson": "Le service d'audit Playspace a renvoyé un JSON invalide.",
     "roles": {
         "auditor": "Auditeur",
         "auditorAndPlaceAdmin": "Auditeur et administrateur du lieu",
@@ -26,6 +49,12 @@
         "on": "ON",
         "submitted": "Soumis"
     },
+    "sort": {
+        "name": "Nom",
+        "progress": "Progression",
+        "recent": "Récent",
+        "score": "Score"
+    },
     "tabs": {
         "execute": "Exécuter",
         "home": "Accueil",
@@ -35,14 +64,23 @@
     },
     "time": {
         "dayAgo_one": "il y a 1 jour",
-        "dayAgo_many": "TODO: time.dayAgo_many common",
         "dayAgo_other": "il y a {{count}} jours",
         "hourAgo_one": "il y a 1 h",
-        "hourAgo_many": "TODO: time.hourAgo_many common",
         "hourAgo_other": "il y a {{count}} h",
         "justNow": "À l’instant",
         "minuteAgo_one": "il y a 1 min",
-        "minuteAgo_many": "TODO: time.minuteAgo_many common",
-        "minuteAgo_other": "il y a {{count}} min"
-    }
+        "minuteAgo_other": "il y a {{count}} min",
+        "dayAgo_many": "il y a {{count}} jours",
+        "hourAgo_many": "il y a {{count}} h",
+        "minuteAgo_many": "il y a {{count}} mins"
+    },
+    "toast": {
+        "demo": "Démo",
+        "hide": "Masquer",
+        "show": "Afficher",
+        "success": "Enregistré avec succès !"
+    },
+    "unableToLoadPlaces": "Impossible de charger les lieux.",
+    "unableToReachAuthenticationService": "Impossible de joindre le service d'authentification.",
+    "unableToReachPlayspaceAuditService": "Impossible de joindre le service d'audit Playspace."
 }

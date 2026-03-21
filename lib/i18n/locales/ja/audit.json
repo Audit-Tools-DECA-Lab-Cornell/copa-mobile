@@ -19,10 +19,14 @@
     },
     "executeLanding": {
         "continueSelectedPlace": "選択した場所を続行",
+        "emptyMessage": "別の検索条件またはフィルターの組み合わせをお試しください。",
+        "emptyTitle": "一致する監査はありません",
         "openSelectedAudit": "選択した監査を開く",
+        "searchPlaceholder": "場所またはプロジェクトを検索",
         "subtitle": "セクションごとのプレイスペース監査フローを開始または再開する場所を選択してください。",
         "title": "監査の実行"
     },
+    "mode": "— {{mode}}",
     "overview": {
         "accessDeniedTitle": "アクセスが拒否されました",
         "assignmentAllows": "この場所の割り当ては現在、以下を許可しています:",
@@ -35,6 +39,8 @@
         "preamble": "前置き",
         "preparingAudit": "プレイスペース監査フローを準備しています...",
         "preparingAuditTitle": "監査を準備中",
+        "sectionEmpty": "現在のフィルターに一致するセクションはありません。",
+        "sections": "セクション",
         "roleFixesSubset": "あなたの役割は、この場所で表示される質問の範囲をすでに固定しています。",
         "syncStatus": {
             "pendingMessage": "下書きの変更はキューに入り、アプリがアクティブでオンラインのときに自動的にアップロードされます。",
@@ -42,8 +48,10 @@
             "retryTitle": "アップロードが一時停止中",
             "syncingMessage": "保存された変更を現在アップロードしています。すぐに提出したい場合は、この処理が完了するまでアプリを開いたままにしてください。",
             "syncingTitle": "変更をアップロード中"
-        }
+        },
+        "viewPlaceDetails": "場所の詳細を表示"
     },
+    "place_namesuffix": "{{place_name}}{{suffix}}",
     "preAudit": {
         "complete": "完了",
         "description": "セクション採点を行う前に、季節、天候、出席者、ユーザー数、年齢層、場所の規模を記録します。",

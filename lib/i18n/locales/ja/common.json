@@ -7,11 +7,34 @@
         "resume": "再開",
         "retry": "再試行",
         "seeAll": "すべて表示",
-        "signOut": "ログアウト"
+        "signOut": "ログアウト",
+        "viewDetails": "詳細を表示",
+        "viewReport": "レポートを表示"
     },
+    "assignedPlacesResponseShapeIsInvalid": "割り当てられた場所のレスポンス形式が無効です。",
+    "auditorProfileResponseShapeIsInvalid": "監査担当者プロフィールのレスポンス形式が無効です。",
+    "auditSessionResponseShapeIsInvalid": "監査セッションのレスポンス形式が無効です。",
+    "authenticationRequestFailed": "認証リクエストに失敗しました。",
+    "authenticationResponseShapeIsInvalid": "認証レスポンスの形式が無効です。",
+    "authenticationServiceReturnedInvalidJson": "認証サービスが無効なJSONを返しました。",
+    "dontWorryWeveGotYourData": "ご安心ください。データは保存されています。",
+    "draftPatchIsInvalid": "下書きのパッチが無効です。",
+    "executionModeIsInvalid": "実行モードが無効です。",
+    "filters": {
+        "active": "アクティブ",
+        "all": "すべて",
+        "complete": "完了",
+        "incomplete": "未完了",
+        "notScored": "未採点",
+        "scored": "採点済み",
+        "submitted": "送信済み"
+    },
+    "networkRequestFailed": "ネットワークリクエストに失敗しました。",
     "place": {
         "assignedPlace": "割り当て場所"
     },
+    "playspaceAuditRequestFailed": "Playspace監査リクエストに失敗しました。",
+    "playspaceAuditServiceReturnedInvalidJson": "Playspace監査サービスが無効なJSONを返しました。",
     "roles": {
         "auditor": "監査人",
         "auditorAndPlaceAdmin": "監査人および場所管理者",
@@ -25,6 +48,12 @@
         "off": "オフ",
         "on": "オン",
         "submitted": "提出済み"
+    },
+    "sort": {
+        "name": "名前",
+        "progress": "進捗",
+        "recent": "最近",
+        "score": "スコア"
     },
     "tabs": {
         "execute": "実行",
@@ -41,5 +70,14 @@
         "justNow": "たった今",
         "minuteAgo_one": "1分前",
         "minuteAgo_other": "{{count}}分前"
-    }
+    },
+    "toast": {
+        "demo": "デモ",
+        "hide": "非表示",
+        "show": "表示",
+        "success": "正常に保存しました！"
+    },
+    "unableToLoadPlaces": "場所を読み込めません。",
+    "unableToReachAuthenticationService": "認証サービスに接続できません。",
+    "unableToReachPlayspaceAuditService": "Playspace監査サービスに接続できません。"
 }

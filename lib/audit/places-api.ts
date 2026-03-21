@@ -2,6 +2,7 @@ import type { AuthSession } from "lib/auth/types";
 import { parsePayload, requestJson } from "lib/audit/api";
 import { auditScoreTotalsSchema } from "lib/audit/types";
 import { z } from "zod";
+import { t } from "i18next";
 
 /**
  * Assignment roles an auditor can hold for a place.
@@ -61,6 +62,6 @@ export async function fetchAssignedPlaces(session: AuthSession): Promise<Auditor
     return parsePayload(
         payload,
         auditorPlacesResponseSchema,
-        "Assigned places response shape is invalid.",
+        t("assignedPlacesResponseShapeIsInvalid", "Assigned places response shape is invalid."),
     );
 }

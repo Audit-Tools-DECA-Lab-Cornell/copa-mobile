@@ -5,6 +5,7 @@ import {
     savePersistedPreferences,
     type PersistedLanguagePreference,
 } from "lib/preferences/storage";
+import { applyLanguagePreference } from "lib/i18n";
 
 /** User-selected theme preference. */
 export type ThemeMode = "system" | "light" | "dark";
@@ -68,6 +69,7 @@ function clampFontScale(scale: number): number {
  * @param state Current store snapshot.
  */
 function persistState(state: PreferencesStoreState): void {
+    applyLanguagePreference(state.languagePreference);
     savePersistedPreferences({
         theme_mode: state.themeMode,
         language: state.languagePreference,
@@ -84,7 +86,7 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
     themeMode: "system",
     resolvedTheme: resolveTheme("system"),
     languagePreference: "system",
-    fontScale: 1.0,
+    fontScale: 1,
     highContrast: false,
     dyslexicFont: false,
     isHydrated: false,

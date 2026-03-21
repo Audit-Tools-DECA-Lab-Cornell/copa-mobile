@@ -83,6 +83,7 @@ export function resolveLanguagePreference(preference: LanguagePreference): Suppo
 
 const i18nInstance = i18n;
 
+// void i18nInstance.changeLanguage(resolveLanguagePreference("system"));
 void i18nInstance.use(initReactI18next).init({
     lng: resolveLanguagePreference("system"),
     fallbackLng: FALLBACK_LANGUAGE,
@@ -178,4 +179,5 @@ export async function applyLanguagePreference(preference: LanguagePreference): P
 }
 
 export default i18nInstance;
+export const t = i18nInstance.t;
 export { SUPPORTED_LANGUAGES };

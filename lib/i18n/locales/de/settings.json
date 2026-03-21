@@ -32,7 +32,8 @@
         "hindi": "Hindi",
         "japanese": "Japanisch",
         "label": "Sprache",
-        "selection": "App-Sprache"
+        "selection": "App-Sprache",
+        "system": "System"
     },
     "profile": {
         "accountType": "Kontotyp",

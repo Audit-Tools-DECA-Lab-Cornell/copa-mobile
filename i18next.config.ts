@@ -1,6 +1,18 @@
 export default {
     locales: ["en", "de", "fr", "hi", "ja"],
     compatibilityJSON: "v4",
+    services: {
+        plural: {
+            pluralSeparator: "_",
+            pluralNeutral: "other",
+            pluralSameForm: false,
+            pluralNoPluralIfEmpty: false,
+            pluralNoPluralIfOne: false,
+            pluralNoPluralIfTwo: false,
+            pluralNoPluralIfFew: false,
+            pluralNoPluralIfMany: false,
+        },
+    },
     extract: {
         input: [
             "app/**/*.{ts,tsx,js,jsx,md}",
