@@ -5,6 +5,7 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getPreAuditValues } from "lib/audit/selectors";
 import type { PreAuditQuestion } from "lib/audit/types";
 import { formatLocalizedDate, formatLocalizedTime } from "lib/i18n/format";
@@ -25,18 +26,24 @@ export default function PreAuditScreen() {
     const router = useRouter();
     const { t, i18n } = useTranslation(["audit", "common"]);
     const instrument = useLocalizedInstrument();
-    const params = useLocalSearchParams<{ placeId?: string | string[] }>();
+    const params = useLocalSearchParams<{
+        placeId?: string | string[];
+        projectId?: string | string[];
+    }>();
     const authSession = useAuthStore((state) => state.session);
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
     const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
     const applyLocalPreAudit = usePlayspaceAuditStore((state) => state.applyLocalPreAudit);
-    const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
+    const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
 
     const placeId = readSingleParam(params.placeId);
-    const auditSession = placeId === null ? undefined : sessionsByPlaceId[placeId];
+    const projectId = readSingleParam(params.projectId);
+    const pairKey =
+        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
 
     const [formValues, setFormValues] = useState<Record<string, string | string[]>>({});
     const formValuesRef = useRef<Record<string, string | string[]>>({});
@@ -51,12 +58,13 @@ export default function PreAuditScreen() {
             !isHydrated ||
             authSession === null ||
             currentUserId !== authSession.user.id ||
-            placeId === null
+            placeId === null ||
+            projectId === null
         ) {
             return;
         }
-        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
-    }, [authSession, currentUserId, ensurePlaceAudit, isHydrated, placeId]);
+        ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
+    }, [authSession, currentUserId, ensurePlaceAudit, isHydrated, placeId, projectId]);
 
     useEffect(() => {
         formInitializedRef.current = false;
@@ -80,19 +88,19 @@ export default function PreAuditScreen() {
     }, [auditSession]);
 
     const flushToStore = useCallback(() => {
-        if (placeId !== null && formInitializedRef.current) {
-            applyLocalPreAudit(placeId, formValuesRef.current);
+        if (pairKey !== null && formInitializedRef.current) {
+            applyLocalPreAudit(pairKey, formValuesRef.current);
         }
-    }, [placeId, applyLocalPreAudit]);
+    }, [pairKey, applyLocalPreAudit]);
 
     useEffect(() => {
         return () => {
-            if (placeId !== null && formInitializedRef.current) {
-                applyLocalPreAudit(placeId, formValuesRef.current);
+            if (pairKey !== null && formInitializedRef.current) {
+                applyLocalPreAudit(pairKey, formValuesRef.current);
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [placeId]);
+    }, [pairKey]);
 
     /**
      * Helper to update local state AND the ref, then immediately flush to store.
@@ -104,22 +112,28 @@ export default function PreAuditScreen() {
                 formValuesRef.current = next;
                 return next;
             });
-            if (placeId !== null) {
+            if (pairKey !== null) {
                 const nextValues = { ...formValuesRef.current, [key]: value };
                 formValuesRef.current = nextValues;
-                applyLocalPreAudit(placeId, nextValues);
+                applyLocalPreAudit(pairKey, nextValues);
             }
         },
-        [placeId, applyLocalPreAudit],
+        [pairKey, applyLocalPreAudit],
     );
 
     if (
         placeId === null ||
+        projectId === null ||
         authSession === null ||
         currentUserId !== authSession.user.id ||
         auditSession === undefined
     ) {
-        if (placeId !== null && authSession !== null && errorMessage !== null) {
+        if (
+            placeId !== null &&
+            projectId !== null &&
+            authSession !== null &&
+            errorMessage !== null
+        ) {
             return (
                 <CenteredMessageCard
                     title={
@@ -130,7 +144,7 @@ export default function PreAuditScreen() {
                     message={errorMessage}
                     actionLabel={t("actions.retry", { ns: "common" })}
                     onAction={() => {
-                        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
+                        ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
                     }}
                 />
             );

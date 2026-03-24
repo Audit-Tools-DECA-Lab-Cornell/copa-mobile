@@ -7,10 +7,11 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { CollapsibleCard } from "components/ui/collapsible-card";
 import { FilterChip } from "components/ui/filter-chip";
 import { useDesignSystem } from "lib/design-system";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import { useNetworkOnline } from "lib/audit/use-network-online";
 import type { ExecutionMode } from "lib/audit/types";
-import { getAssignmentRolesLabel, getExecutionModeShortLabel } from "lib/i18n/format";
+import { getExecutionModeShortLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -27,7 +28,10 @@ export default function ExecutePlaceScreen() {
     const navigation = useNavigation();
     const { t } = useTranslation(["audit", "common"]);
     const instrument = useLocalizedInstrument();
-    const params = useLocalSearchParams<{ placeId?: string | string[] }>();
+    const params = useLocalSearchParams<{
+        placeId?: string | string[];
+        projectId?: string | string[];
+    }>();
     const authSession = useAuthStore((state) => state.session);
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
     const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
@@ -41,12 +45,15 @@ export default function ExecutePlaceScreen() {
     const lastSyncError = usePlayspaceAuditStore((state) => state.lastSyncError);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
     const dirtyPreAudit = usePlayspaceAuditStore((state) => state.dirtyPreAudit);
-    const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
+    const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const [sectionFilter, setSectionFilter] = useState<SectionVisibilityFilter>("incomplete");
     const isNetworkOnline = useNetworkOnline();
 
     const placeId = readSingleParam(params.placeId);
-    const auditSession = placeId === null ? undefined : sessionsByPlaceId[placeId];
+    const projectId = readSingleParam(params.projectId);
+    const pairKey =
+        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
     const isCurrentAuditUserReady = authSession !== null && currentUserId === authSession.user.id;
 
     useEffect(() => {
@@ -54,12 +61,12 @@ export default function ExecutePlaceScreen() {
     }, [authSession, hydrate]);
 
     useEffect(() => {
-        if (!isHydrated || !isCurrentAuditUserReady || placeId === null) {
+        if (!isHydrated || !isCurrentAuditUserReady || placeId === null || projectId === null) {
             return;
         }
 
-        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
-    }, [authSession, ensurePlaceAudit, isCurrentAuditUserReady, isHydrated, placeId]);
+        ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
+    }, [authSession, ensurePlaceAudit, isCurrentAuditUserReady, isHydrated, placeId, projectId]);
 
     useLayoutEffect(() => {
         if (auditSession !== undefined) {
@@ -125,7 +132,7 @@ export default function ExecutePlaceScreen() {
         auditSession !== undefined && dirtyPreAudit[auditSession.audit_id] !== undefined;
     const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
 
-    if (placeId === null) {
+    if (placeId === null || projectId === null) {
         return (
             <CenteredMessageCard
                 title={t("overview.placeNotFoundTitle", { ns: "audit" })}
@@ -144,7 +151,7 @@ export default function ExecutePlaceScreen() {
                     if (authSession === null) {
                         return;
                     }
-                    ensurePlaceAudit(authSession, placeId).catch(() => undefined);
+                    ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
                 }}
             />
         );
@@ -207,7 +214,7 @@ export default function ExecutePlaceScreen() {
                 bg={ds.colors.input}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
-                    router.push(`/place/${placeId}`);
+                    router.push(`/place/${placeId}?projectId=${encodeURIComponent(projectId)}`);
                 }}
             >
                 <XStack items="center" gap="$2">
@@ -273,96 +280,76 @@ export default function ExecutePlaceScreen() {
                     fontSize={ds.typography.bodyMd.fontSize}
                     lineHeight={ds.typography.bodyMd.lineHeight}
                 >
-                    {`${t("overview.assignmentAllows", { ns: "audit" })} `}
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                    >
-                        {getAssignmentRolesLabel(auditSession.assignment_roles, t)}
-                    </Text>
+                    {`Project ${auditSession.project_name}`}
                 </Paragraph>
 
-                {auditSession.allowed_execution_modes.length > 1 ? (
-                    <YStack gap="$2.5">
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyMd.fontSize}
-                            lineHeight={ds.typography.bodyMd.lineHeight}
-                        >
-                            {t("overview.chooseMode", { ns: "audit" })}
-                        </Paragraph>
-                        {instrument.execution_modes
-                            .filter((option) => {
-                                return auditSession.allowed_execution_modes.includes(
-                                    option.key as ExecutionMode,
-                                );
-                            })
-                            .map((option) => {
-                                const isSelected =
-                                    auditSession.selected_execution_mode === option.key;
-
-                                return (
-                                    <Button
-                                        key={option.key}
-                                        height="$space.15"
-                                        rounded={ds.radii.md}
-                                        borderWidth={1}
-                                        flex={1}
-                                        justify="flex-start"
-                                        borderColor={
-                                            isSelected ? ds.colors.primary : ds.colors.border
-                                        }
-                                        bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
-                                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                        onPress={() => {
-                                            if (authSession === null) {
-                                                return;
-                                            }
-                                            ensurePlaceAudit(
-                                                authSession,
-                                                placeId,
-                                                option.key as ExecutionMode,
-                                            ).catch(() => {});
-                                        }}
-                                    >
-                                        <YStack gap="$2" items="flex-start">
-                                            <Text
-                                                color={
-                                                    isSelected
-                                                        ? ds.colors.primary
-                                                        : ds.colors.foreground
-                                                }
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.bodyMd.fontSize}
-                                            >
-                                                {option.label}
-                                            </Text>
-                                            {option.description ? (
-                                                <Paragraph
-                                                    color={ds.colors.mutedForeground}
-                                                    fontFamily={ds.fonts.bodyMedium}
-                                                    fontSize={ds.typography.bodySm.fontSize}
-                                                >
-                                                    {option.description}
-                                                </Paragraph>
-                                            ) : null}
-                                        </YStack>
-                                    </Button>
-                                );
-                            })}
-                    </YStack>
-                ) : (
+                <YStack gap="$2.5">
                     <Paragraph
-                        color={ds.colors.secondaryForeground}
+                        color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyMd.fontSize}
                         lineHeight={ds.typography.bodyMd.lineHeight}
                     >
-                        {t("overview.roleFixesSubset", { ns: "audit" })}
+                        {t("overview.chooseMode", { ns: "audit" })}
                     </Paragraph>
-                )}
+                    {instrument.execution_modes
+                        .filter((option) => {
+                            return auditSession.allowed_execution_modes.includes(
+                                option.key as ExecutionMode,
+                            );
+                        })
+                        .map((option) => {
+                            const isSelected = auditSession.selected_execution_mode === option.key;
+
+                            return (
+                                <Button
+                                    key={option.key}
+                                    height="$space.15"
+                                    rounded={ds.radii.md}
+                                    borderWidth={1}
+                                    flex={1}
+                                    justify="flex-start"
+                                    borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                                    bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={() => {
+                                        if (authSession === null) {
+                                            return;
+                                        }
+                                        ensurePlaceAudit(
+                                            authSession,
+                                            projectId,
+                                            placeId,
+                                            option.key as ExecutionMode,
+                                        ).catch(() => {});
+                                    }}
+                                >
+                                    <YStack gap="$2" items="flex-start">
+                                        <Text
+                                            color={
+                                                isSelected
+                                                    ? ds.colors.primary
+                                                    : ds.colors.foreground
+                                            }
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.bodyMd.fontSize}
+                                        >
+                                            {option.label}
+                                        </Text>
+                                        {option.description ? (
+                                            <Paragraph
+                                                color={ds.colors.mutedForeground}
+                                                fontFamily={ds.fonts.bodyMedium}
+                                                fontSize={ds.typography.bodySm.fontSize}
+                                            >
+                                                {option.description}
+                                            </Paragraph>
+                                        ) : null}
+                                    </YStack>
+                                </Button>
+                            );
+                        })}
+                </YStack>
             </YStack>
 
             <YStack
@@ -416,7 +403,9 @@ export default function ExecutePlaceScreen() {
                     bg={ds.colors.input}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
-                        router.push(`/(tabs)/execute/${placeId}/pre-audit`);
+                        router.push(
+                            `/(tabs)/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}`,
+                        );
                     }}
                 >
                     <XStack items="center" gap="$2">
@@ -553,7 +542,7 @@ export default function ExecutePlaceScreen() {
                                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                         onPress={() => {
                                             router.push(
-                                                `/(tabs)/execute/${placeId}/section/${section.section_key}`,
+                                                `/(tabs)/execute/${placeId}/section/${section.section_key}?projectId=${encodeURIComponent(projectId)}`,
                                             );
                                         }}
                                     >

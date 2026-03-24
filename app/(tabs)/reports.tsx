@@ -23,6 +23,7 @@ import {
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     formatColumnSummary,
     formatConstructSummary,
@@ -298,7 +299,7 @@ export default function ReportsScreen() {
     return (
         <FlatList
             data={filteredReportPlaces}
-            keyExtractor={(item) => item.place_id}
+            keyExtractor={(item) => getProjectPlaceKey(item.project_id, item.place_id)}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{

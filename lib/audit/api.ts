@@ -31,12 +31,14 @@ export class PlayspaceAuditApiError extends Error {
  *
  * @param session Authenticated mobile session.
  * @param placeId UUID of the place being audited.
+ * @param projectId UUID of the project under which the audit is being run.
  * @param executionMode Optional user-selected execution mode.
  * @returns Validated audit session payload.
  */
 export async function createOrResumeAudit(
     session: AuthSession,
     placeId: string,
+    projectId: string,
     executionMode?: ExecutionMode,
 ): Promise<AuditSession> {
     const payload = executionModeSchema.optional().safeParse(executionMode);
@@ -54,6 +56,7 @@ export async function createOrResumeAudit(
         {
             method: "POST",
             body: JSON.stringify({
+                project_id: projectId,
                 execution_mode: payload.data ?? null,
             }),
         },

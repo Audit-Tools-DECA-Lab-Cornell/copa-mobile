@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { StatCard } from "components/ui/stat-card";
 import { deriveLocality, derivePlaceStatus } from "lib/audit/place-helpers";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     formatConstructSummary,
     formatScoreValue,
@@ -14,11 +15,7 @@ import {
 } from "lib/audit/score-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
-import {
-    formatRelativeTimeLabel,
-    getAssignmentRolesLabel,
-    getPlaceStatusLabel,
-} from "lib/i18n/format";
+import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 
@@ -29,19 +26,28 @@ export default function PlaceDetailScreen() {
     const ds = useDesignSystem();
     const router = useRouter();
     const { t, i18n } = useTranslation(["places", "common", "reports"]);
-    const params = useLocalSearchParams<{ placeId?: string | string[] }>();
+    const params = useLocalSearchParams<{
+        placeId?: string | string[];
+        projectId?: string | string[];
+    }>();
     const session = useAuthStore((state) => state.session);
     const places = usePlacesStore((state) => state.places);
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const placeId = readSingleParam(params.placeId);
+    const projectId = readSingleParam(params.projectId);
 
     const place = useMemo(() => {
-        if (placeId === null) {
+        if (placeId === null || projectId === null) {
             return undefined;
         }
-        return places.find((candidate) => candidate.place_id === placeId);
-    }, [placeId, places]);
+        return places.find((candidate) => {
+            return (
+                getProjectPlaceKey(candidate.project_id, candidate.place_id) ===
+                getProjectPlaceKey(projectId, placeId)
+            );
+        });
+    }, [placeId, places, projectId]);
 
     useEffect(() => {
         if (
@@ -96,7 +102,9 @@ export default function PlaceDetailScreen() {
                     place={place}
                     scoreSummaryLabels={scoreSummaryLabels}
                     onOpenAudit={() => {
-                        router.push(`/(tabs)/execute/${place.place_id}`);
+                        router.push(
+                            `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                        );
                     }}
                     onOpenReport={
                         place.audit_id === null
@@ -223,8 +231,8 @@ function PlaceDetailContent({
                     accentColor={ds.colors.primary}
                 />
                 <StatCard
-                    label={t("detail.assignment", { ns: "places" })}
-                    value={getAssignmentRolesLabel(place.assignment_roles, t)}
+                    label="Project"
+                    value={place.project_name}
                     accentColor={ds.colors.primary}
                 />
             </XStack>

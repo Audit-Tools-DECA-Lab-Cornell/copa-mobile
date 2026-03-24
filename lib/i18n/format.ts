@@ -1,4 +1,4 @@
-import type { AssignmentRoles, ExecutionMode } from "lib/audit/types";
+import type { ExecutionMode } from "lib/audit/types";
 import type { TFunction } from "i18next";
 
 /** Status labels used for place cards and summaries. */
@@ -139,26 +139,6 @@ export function getPlaceStatusLabel(status: LocalizedPlaceStatus, t: TFunction):
         default:
             return t("common:status.notStarted");
     }
-}
-
-/**
- * Format assignment roles for the execute overview.
- *
- * @param roles Roles granted for the current audit assignment.
- * @param t Translation function.
- * @returns Human-readable translated role label.
- */
-export function getAssignmentRolesLabel(roles: AssignmentRoles, t: TFunction): string {
-    const hasAuditor = roles.includes("auditor");
-    const hasPlaceAdmin = roles.includes("place_admin");
-
-    if (hasAuditor && hasPlaceAdmin) {
-        return t("common:roles.auditorAndPlaceAdmin");
-    }
-    if (hasPlaceAdmin) {
-        return t("common:roles.placeAdmin");
-    }
-    return t("common:roles.auditor");
 }
 
 /**

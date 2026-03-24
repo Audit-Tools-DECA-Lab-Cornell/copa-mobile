@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { useDesignSystem } from "lib/design-system";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getQuestionAnswers, getSectionNote, getVisibleSections } from "lib/audit/selectors";
 import type {
     ExecutionMode,
@@ -35,6 +36,7 @@ export default function ExecuteSectionScreen() {
     const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
+        projectId?: string | string[];
         sectionKey?: string | string[];
     }>();
     const authSession = useAuthStore((state) => state.session);
@@ -45,14 +47,17 @@ export default function ExecuteSectionScreen() {
         (state) => state.applyLocalQuestionAnswer,
     );
     const applyLocalSectionNote = usePlayspaceAuditStore((state) => state.applyLocalSectionNote);
-    const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
+    const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
 
     const placeId = readSingleParam(params.placeId);
+    const projectId = readSingleParam(params.projectId);
     const sectionKey = readSingleParam(params.sectionKey);
-    const auditSession = placeId === null ? undefined : sessionsByPlaceId[placeId];
+    const pairKey =
+        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
 
     const visibleSections = getVisibleSectionsStable(instrument, auditSession);
 
@@ -80,12 +85,13 @@ export default function ExecuteSectionScreen() {
             !isHydrated ||
             authSession === null ||
             currentUserId !== authSession.user.id ||
-            placeId === null
+            placeId === null ||
+            projectId === null
         ) {
             return;
         }
-        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
-    }, [authSession, currentUserId, ensurePlaceAudit, isHydrated, placeId]);
+        ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
+    }, [authSession, currentUserId, ensurePlaceAudit, isHydrated, placeId, projectId]);
 
     useEffect(() => {
         noteInitializedRef.current = false;
@@ -106,19 +112,19 @@ export default function ExecuteSectionScreen() {
     }, [auditSession, activeSection]);
 
     const flushNoteToStore = useCallback(() => {
-        if (placeId !== null && sectionKey !== null) {
-            applyLocalSectionNote(placeId, sectionKey, localNoteRef.current);
+        if (pairKey !== null && sectionKey !== null) {
+            applyLocalSectionNote(pairKey, sectionKey, localNoteRef.current);
         }
-    }, [placeId, sectionKey, applyLocalSectionNote]);
+    }, [pairKey, sectionKey, applyLocalSectionNote]);
 
     useEffect(() => {
         return () => {
-            if (placeId !== null && sectionKey !== null && noteInitializedRef.current) {
-                applyLocalSectionNote(placeId, sectionKey, localNoteRef.current);
+            if (pairKey !== null && sectionKey !== null && noteInitializedRef.current) {
+                applyLocalSectionNote(pairKey, sectionKey, localNoteRef.current);
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup must capture refs, not re-fire on every render
-    }, [placeId, sectionKey]);
+    }, [pairKey, sectionKey]);
 
     const handleNoteChange = useCallback((text: string) => {
         setLocalNote(text);
@@ -131,6 +137,8 @@ export default function ExecuteSectionScreen() {
 
     if (
         placeId === null ||
+        projectId === null ||
+        pairKey === null ||
         sectionKey === null ||
         authSession === null ||
         currentUserId !== authSession.user.id ||
@@ -139,6 +147,8 @@ export default function ExecuteSectionScreen() {
     ) {
         if (
             placeId !== null &&
+            projectId !== null &&
+            pairKey !== null &&
             sectionKey !== null &&
             authSession !== null &&
             errorMessage !== null
@@ -153,7 +163,7 @@ export default function ExecuteSectionScreen() {
                     message={errorMessage}
                     actionLabel={t("actions.retry", { ns: "common" })}
                     onAction={() => {
-                        ensurePlaceAudit(authSession, placeId).catch(() => undefined);
+                        ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
                     }}
                 />
             );
@@ -224,7 +234,7 @@ export default function ExecuteSectionScreen() {
                                     optionKey,
                                 );
                                 applyLocalQuestionAnswer(
-                                    placeId,
+                                    pairKey,
                                     activeSection.section_key,
                                     questionKey,
                                     nextAnswers,
@@ -337,11 +347,13 @@ export default function ExecuteSectionScreen() {
                     onPress={() => {
                         flushNoteToStore();
                         if (nextSection === undefined) {
-                            router.replace(`/(tabs)/execute/${placeId}`);
+                            router.replace(
+                                `/(tabs)/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`,
+                            );
                             return;
                         }
                         router.replace(
-                            `/(tabs)/execute/${placeId}/section/${nextSection.section_key}`,
+                            `/(tabs)/execute/${placeId}/section/${nextSection.section_key}?projectId=${encodeURIComponent(projectId)}`,
                         );
                     }}
                 >

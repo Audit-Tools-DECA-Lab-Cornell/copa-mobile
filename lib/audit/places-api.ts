@@ -5,11 +5,6 @@ import { z } from "zod";
 import { t } from "i18next";
 
 /**
- * Assignment roles an auditor can hold for a place.
- */
-const assignmentRoleSchema = z.enum(["auditor", "place_admin"]);
-
-/**
  * Audit lifecycle statuses returned by the backend.
  */
 const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
@@ -27,7 +22,6 @@ const auditorPlaceSchema = z.object({
     city: z.string().nullable(),
     province: z.string().nullable(),
     country: z.string().nullable(),
-    assignment_roles: z.array(assignmentRoleSchema),
     audit_status: auditStatusSchema.nullable(),
     audit_id: z.uuid().nullable(),
     started_at: z.string().nullable(),

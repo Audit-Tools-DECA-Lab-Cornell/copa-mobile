@@ -7,6 +7,7 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
 import { deriveLocality, matchesPlaceSearch } from "lib/audit/place-helpers";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { useDesignSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -27,7 +28,7 @@ export default function ExecuteIndexScreen() {
     const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const places = usePlacesStore((state) => state.places);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
-    const sessionsByPlaceId = usePlayspaceAuditStore((state) => state.sessionsByPlaceId);
+    const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const [searchQuery, setSearchQuery] = useState("");
     const [executeFilter, setExecuteFilter] = useState<ExecuteFilter>("active");
 
@@ -53,9 +54,14 @@ export default function ExecuteIndexScreen() {
 
         return visiblePlaces.sort((leftPlace, rightPlace) => {
             const leftHasSession =
-                hasHydratedCurrentUser && sessionsByPlaceId[leftPlace.place_id] !== undefined;
+                hasHydratedCurrentUser &&
+                sessionsByPairKey[getProjectPlaceKey(leftPlace.project_id, leftPlace.place_id)] !==
+                    undefined;
             const rightHasSession =
-                hasHydratedCurrentUser && sessionsByPlaceId[rightPlace.place_id] !== undefined;
+                hasHydratedCurrentUser &&
+                sessionsByPairKey[
+                    getProjectPlaceKey(rightPlace.project_id, rightPlace.place_id)
+                ] !== undefined;
 
             if (leftHasSession !== rightHasSession) {
                 return leftHasSession ? -1 : 1;
@@ -63,7 +69,7 @@ export default function ExecuteIndexScreen() {
 
             return leftPlace.place_name.localeCompare(rightPlace.place_name);
         });
-    }, [executeFilter, hasHydratedCurrentUser, places, searchQuery, sessionsByPlaceId]);
+    }, [executeFilter, hasHydratedCurrentUser, places, searchQuery, sessionsByPairKey]);
 
     const featuredPlace =
         searchQuery.trim().length === 0 && executeFilter === "active"
@@ -72,13 +78,18 @@ export default function ExecuteIndexScreen() {
     const listPlaces =
         featuredPlace === undefined
             ? filteredPlaces
-            : filteredPlaces.filter((place) => place.place_id !== featuredPlace.place_id);
+            : filteredPlaces.filter((place) => {
+                  return (
+                      getProjectPlaceKey(place.project_id, place.place_id) !==
+                      getProjectPlaceKey(featuredPlace.project_id, featuredPlace.place_id)
+                  );
+              });
     const hasActiveFilters = searchQuery.trim().length > 0 || executeFilter !== "active";
 
     return (
         <FlatList
             data={listPlaces}
-            keyExtractor={(item) => item.place_id}
+            keyExtractor={(item) => getProjectPlaceKey(item.project_id, item.place_id)}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
@@ -169,7 +180,9 @@ export default function ExecuteIndexScreen() {
                                 bg={ds.colors.primary}
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {
-                                    router.push(`/(tabs)/execute/${featuredPlace.place_id}`);
+                                    router.push(
+                                        `/(tabs)/execute/${featuredPlace.place_id}?projectId=${encodeURIComponent(featuredPlace.project_id)}`,
+                                    );
                                 }}
                             >
                                 <XStack items="center" gap="$2">
@@ -219,7 +232,7 @@ export default function ExecuteIndexScreen() {
             }
             renderItem={({ item: place }) => {
                 const activeSession = hasHydratedCurrentUser
-                    ? sessionsByPlaceId[place.place_id]
+                    ? sessionsByPairKey[getProjectPlaceKey(place.project_id, place.place_id)]
                     : undefined;
                 const hasActiveSession = activeSession !== undefined;
 
@@ -261,7 +274,9 @@ export default function ExecuteIndexScreen() {
                             bg={ds.colors.input}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
-                                router.push(`/(tabs)/execute/${place.place_id}`);
+                                router.push(
+                                    `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                                );
                             }}
                         >
                             <Text

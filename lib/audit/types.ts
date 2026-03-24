@@ -4,8 +4,6 @@ export type DirtySections = Record<string, Record<string, number>>;
 export type DirtyPreAudit = Record<string, number>;
 
 export const executionModeSchema = z.enum(["audit", "survey", "both"]);
-export const assignmentRoleSchema = z.enum(["auditor", "place_admin"]);
-export const assignmentRolesSchema = z.array(assignmentRoleSchema).min(1);
 export const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
 export const questionModeSchema = z.enum(["audit", "survey", "both"]);
 export const constructKeySchema = z.enum(["usability", "play_value"]);
@@ -140,10 +138,11 @@ export const auditScoresSchema = z.object({
 export const auditSessionSchema = z.object({
     audit_id: z.uuid(),
     audit_code: z.string().min(1),
+    project_id: z.uuid(),
+    project_name: z.string().min(1),
     place_id: z.uuid(),
     place_name: z.string().min(1),
     place_type: z.string().nullable(),
-    assignment_roles: assignmentRolesSchema,
     allowed_execution_modes: z.array(executionModeSchema),
     selected_execution_mode: executionModeSchema.nullable(),
     status: auditStatusSchema,
@@ -201,7 +200,7 @@ export const persistedAuditStateSchema = z.object({
     storage_user_id: z.string().min(1).nullable().default(null),
     instrument: playspaceInstrumentSchema.nullable(),
     sessions_by_audit_id: z.record(z.string(), auditSessionSchema),
-    sessions_by_place_id: z.record(z.string(), auditSessionSchema),
+    sessions_by_pair_key: z.record(z.string(), auditSessionSchema),
     dirty_sections: dirtySectionsSchema.default({}),
     dirty_pre_audit: dirtyPreAuditSchema.default({}),
     local_change_counter: z.number().int().nonnegative().default(0),
@@ -209,8 +208,6 @@ export const persistedAuditStateSchema = z.object({
 });
 
 export type ExecutionMode = z.infer<typeof executionModeSchema>;
-export type AssignmentRole = z.infer<typeof assignmentRoleSchema>;
-export type AssignmentRoles = z.infer<typeof assignmentRolesSchema>;
 export type AuditStatus = z.infer<typeof auditStatusSchema>;
 export type QuestionMode = z.infer<typeof questionModeSchema>;
 export type ConstructKey = z.infer<typeof constructKeySchema>;

@@ -76,14 +76,14 @@ export async function buildExportableAuditForPlace({
     }
 
     const auditSession =
-        cachedAudit !== undefined && cachedAudit.status === "SUBMITTED"
+        cachedAudit?.status === "SUBMITTED"
             ? cachedAudit
             : await fetchAuditSession(session, place.audit_id);
 
     return {
         auditSession,
         context: {
-            projectName: place.project_name,
+            projectName: auditSession.project_name,
             city: place.city,
             province: place.province,
             country: place.country,

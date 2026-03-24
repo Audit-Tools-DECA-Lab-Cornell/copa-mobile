@@ -202,8 +202,9 @@ function buildSingleAuditWorkbook(
     instrument: PlayspaceInstrument,
 ): WorkbookPayload {
     const auditCodeSegment = slugifySegment(exportableAudit.auditSession.audit_code);
+    const projectSegment = slugifySegment(exportableAudit.auditSession.project_name);
     return {
-        fileBaseName: `pvua-${auditCodeSegment}`,
+        fileBaseName: `pvua-${projectSegment}-${auditCodeSegment}`,
         title: `${instrument.instrument_name} Export - ${exportableAudit.auditSession.audit_code}`,
         tables: [
             buildSingleAuditOverviewTable(exportableAudit, instrument),
@@ -260,7 +261,7 @@ function buildSingleAuditOverviewTable(
             ["Instrument", `${instrument.instrument_name} v${instrument.instrument_version}`],
             ["Audit Code", auditSession.audit_code],
             ["Place Name", auditSession.place_name],
-            ["Project Name", context?.projectName ?? ""],
+            ["Project Name", auditSession.project_name],
             ["Locality", formatLocality(context)],
             ["Status", formatAuditStatusLabel(auditSession.status)],
             ["Execution Mode", formatExecutionModeLabel(auditSession, instrument)],

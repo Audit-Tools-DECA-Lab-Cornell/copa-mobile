@@ -12,6 +12,7 @@ import {
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     formatConstructSummary,
     formatScoreValue,
@@ -133,7 +134,7 @@ export default function PlacesScreen() {
     return (
         <FlatList
             data={filteredPlaces}
-            keyExtractor={(item) => item.place_id}
+            keyExtractor={(item) => getProjectPlaceKey(item.project_id, item.place_id)}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
@@ -305,7 +306,9 @@ export default function PlacesScreen() {
                     <Pressable
                         accessibilityRole="button"
                         onPress={() => {
-                            router.push(`/place/${place.place_id}`);
+                            router.push(
+                                `/place/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                            );
                         }}
                         style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1 })}
                     >

@@ -216,9 +216,21 @@ export default function AuditReportDetailScreen() {
                     .map((word) => word[0])
                     .join("")
                     .toUpperCase();
+                const projectAbbreviatedName = place.project_name
+                    .split(" ")
+                    .map((word) => word[0])
+                    .join("")
+                    .toUpperCase();
                 const auditorCode = auditorProfile?.auditorCode ?? "";
                 const userFriendlyFileName =
-                    "PVUA " + placeAbbreviatedName + " " + auditorCode + " " + format.toUpperCase();
+                    "PVUA " +
+                    projectAbbreviatedName +
+                    " " +
+                    placeAbbreviatedName +
+                    " " +
+                    auditorCode +
+                    " " +
+                    format.toUpperCase();
 
                 showExportSuccess(userFriendlyFileName);
             } catch (error) {

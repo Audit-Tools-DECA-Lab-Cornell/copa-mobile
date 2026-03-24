@@ -470,7 +470,9 @@ export default function DashboardScreen() {
                                 bg={ds.colors.primary}
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {
-                                    router.push(`/(tabs)/execute/${priorityPlace.place_id}`);
+                                    router.push(
+                                        `/(tabs)/execute/${priorityPlace.place_id}?projectId=${encodeURIComponent(priorityPlace.project_id)}`,
+                                    );
                                 }}
                             >
                                 <XStack items="center" gap="$2">
@@ -830,7 +832,9 @@ export default function DashboardScreen() {
                                         bg={ds.colors.primary}
                                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                         onPress={() => {
-                                            router.push(`/(tabs)/execute/${place.place_id}`);
+                                            router.push(
+                                                `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                                            );
                                         }}
                                     >
                                         <XStack items="center" gap="$1.5">
