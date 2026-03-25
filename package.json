@@ -16,6 +16,7 @@
         "doctor": "npx expo-doctor",
         "test": "npx playwright test",
         "test:web": "npx playwright test",
+        "test:contract": "node ./scripts/verify_audit_contract.mjs",
         "typecheck": "tsc --noEmit",
         "lint": "eslint . --cache",
         "lint:fix": "eslint . --cache --fix",

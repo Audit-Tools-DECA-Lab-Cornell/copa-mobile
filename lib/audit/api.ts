@@ -2,9 +2,11 @@ import type { AuthSession } from "lib/auth/types";
 import { getApiBaseUrl } from "lib/api-base-url";
 import {
     auditDraftPatchSchema,
+    auditDraftSaveSchema,
     auditSessionSchema,
     executionModeSchema,
     type AuditDraftPatch,
+    type AuditDraftSave,
     type AuditSession,
     type ExecutionMode,
 } from "lib/audit/types";
@@ -91,13 +93,13 @@ export async function fetchAuditSession(
  * @param session Authenticated mobile session.
  * @param auditId UUID of the audit session.
  * @param patch Typed draft patch.
- * @returns Validated updated audit session payload.
+ * @returns Validated draft-save acknowledgement payload.
  */
 export async function saveAuditDraft(
     session: AuthSession,
     auditId: string,
     patch: AuditDraftPatch,
-): Promise<AuditSession> {
+): Promise<AuditDraftSave> {
     const parsedPatch = auditDraftPatchSchema.safeParse(patch);
     if (!parsedPatch.success) {
         throw new PlayspaceAuditApiError(
@@ -115,7 +117,7 @@ export async function saveAuditDraft(
             body: JSON.stringify(parsedPatch.data),
         },
     );
-    return parsePayload(payload, auditSessionSchema, "Audit session response shape is invalid.");
+    return parsePayload(payload, auditDraftSaveSchema, "Audit draft save response shape is invalid.");
 }
 
 /**
@@ -123,15 +125,22 @@ export async function saveAuditDraft(
  *
  * @param session Authenticated mobile session.
  * @param auditId UUID of the audit session.
+ * @param expectedRevision Optional optimistic concurrency base revision.
  * @returns Validated submitted audit session payload.
  */
-export async function submitAudit(session: AuthSession, auditId: string): Promise<AuditSession> {
+export async function submitAudit(
+    session: AuthSession,
+    auditId: string,
+    expectedRevision?: number,
+): Promise<AuditSession> {
     const payload = await requestJson(
         session,
         `/playspace/audits/${encodeURIComponent(auditId)}/submit`,
         {
             method: "POST",
-            body: JSON.stringify({}),
+            body: JSON.stringify(
+                expectedRevision === undefined ? {} : { expected_revision: expectedRevision },
+            ),
         },
     );
     return parsePayload(payload, auditSessionSchema, "Audit session response shape is invalid.");

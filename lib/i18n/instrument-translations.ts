@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useTranslation } from "node_modules/react-i18next";
+import { useTranslation } from "react-i18next";
 
 import type {
     ChoiceOption,
@@ -13,6 +13,7 @@ import type {
     ScaleOption,
 } from "lib/audit/types";
 import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { usePlayspaceAuditStore } from "stores/audit-store";
 
 import { enInstrumentTranslations } from "./locales/en/instrument";
 import { deInstrumentTranslations } from "./locales/de/instrument";
@@ -401,9 +402,10 @@ export function localizeInstrument(
 export function useLocalizedInstrument(): PlayspaceInstrument {
     const { i18n } = useTranslation(["instrument"]);
     const activeLanguage = i18n.resolvedLanguage ?? i18n.language;
+    const baseInstrument = usePlayspaceAuditStore((state) => state.instrument);
 
     return useMemo(() => {
         const translations = getInstrumentTranslations(activeLanguage);
-        return localizeInstrument(BASE_PLAYSPACE_INSTRUMENT, translations);
-    }, [activeLanguage]);
+        return localizeInstrument(baseInstrument ?? BASE_PLAYSPACE_INSTRUMENT, translations);
+    }, [activeLanguage, baseInstrument]);
 }

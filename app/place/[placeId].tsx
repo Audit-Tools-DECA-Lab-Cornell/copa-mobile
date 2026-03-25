@@ -14,6 +14,7 @@ import {
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
+import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useAuthStore } from "stores/auth-store";
@@ -31,7 +32,7 @@ export default function PlaceDetailScreen() {
         projectId?: string | string[];
     }>();
     const session = useAuthStore((state) => state.session);
-    const places = usePlacesStore((state) => state.places);
+    const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const placeId = readSingleParam(params.placeId);

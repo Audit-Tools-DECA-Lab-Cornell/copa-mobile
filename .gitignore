@@ -54,3 +54,4 @@ credentials.json
 playspace-deca.json
 
 .agents
+.worktrees/

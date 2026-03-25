@@ -9,15 +9,17 @@ import {
     submitAudit,
 } from "lib/audit/api";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
-import { getSectionNote, getSectionResponses } from "lib/audit/selectors";
 import { readPersistedAuditState, clearPersistedAuditState } from "lib/audit/storage";
 import type {
+    AuditAggregate,
     AuditDraftPatch,
+    AuditDraftSave,
     AuditPreAuditValues,
     AuditSectionState,
     AuditSession,
     DirtyPreAudit,
     DirtySections,
+    PlayspaceInstrument,
     PersistedAuditState,
 } from "lib/audit/types";
 import { persistedAuditStateSchema } from "lib/audit/types";
@@ -47,7 +49,7 @@ interface PendingAuditPatchSnapshot {
  * store interface so existing selectors and `.getState()` callers keep working.
  */
 interface PlayspaceAuditStoreState {
-    readonly instrument: typeof BASE_PLAYSPACE_INSTRUMENT;
+    readonly instrument: PlayspaceInstrument;
     readonly sessionsByAuditId: Record<string, AuditSession>;
     readonly sessionsByPairKey: Record<string, AuditSession>;
     readonly currentUserId: string | null;
@@ -97,6 +99,7 @@ const MMKV_KEY_PREFIX = "audit.state.v3";
 
 /** Persistent audit data — auto-saved to MMKV via an observer. */
 const auditData$ = observable({
+    instrument: BASE_PLAYSPACE_INSTRUMENT,
     sessions_by_audit_id: {} as Record<string, AuditSession>,
     sessions_by_pair_key: {} as Record<string, AuditSession>,
     dirty_sections: {} as DirtySections,
@@ -195,6 +198,7 @@ function parseStoredAuditData(
     raw: string,
 ): Pick<
     PersistedAuditState,
+    | "instrument"
     | "sessions_by_audit_id"
     | "sessions_by_pair_key"
     | "dirty_sections"
@@ -220,6 +224,7 @@ function parseStoredAuditData(
 function applyPersistedDataBatch(
     data: Pick<
         PersistedAuditState,
+        | "instrument"
         | "sessions_by_audit_id"
         | "sessions_by_pair_key"
         | "dirty_sections"
@@ -229,6 +234,7 @@ function applyPersistedDataBatch(
     >,
 ): void {
     batch(() => {
+        auditData$.instrument.set(data.instrument ?? BASE_PLAYSPACE_INSTRUMENT);
         auditData$.sessions_by_audit_id.set(data.sessions_by_audit_id);
         auditData$.sessions_by_pair_key.set(data.sessions_by_pair_key);
         auditData$.dirty_sections.set(data.dirty_sections);
@@ -311,6 +317,51 @@ function clonePreAuditValues(value: AuditPreAuditValues): AuditPreAuditValues {
     };
 }
 
+function cloneSectionsMap(
+    sections: Record<string, AuditSectionState>,
+): Record<string, AuditSectionState> {
+    return Object.fromEntries(
+        Object.entries(sections).map(([sectionKey, sectionState]) => [
+            sectionKey,
+            cloneSectionState(sectionState, sectionKey),
+        ]),
+    );
+}
+
+function buildAggregateFromSession(session: AuditSession): AuditAggregate {
+    return {
+        schema_version: session.schema_version,
+        revision: session.revision,
+        meta: { ...session.meta },
+        pre_audit: clonePreAuditValues(session.pre_audit),
+        sections: cloneSectionsMap(session.sections),
+    };
+}
+
+function syncSessionAggregate(session: AuditSession): AuditSession {
+    return {
+        ...session,
+        aggregate: buildAggregateFromSession(session),
+    };
+}
+
+function applyServerRevisionToSession(
+    session: AuditSession,
+    schemaVersion: number,
+    revision: number,
+): AuditSession {
+    return {
+        ...session,
+        schema_version: schemaVersion,
+        revision,
+        aggregate: {
+            ...session.aggregate,
+            schema_version: schemaVersion,
+            revision,
+        },
+    };
+}
+
 function applyQuestionAnswerToSession(
     session: AuditSession,
     sectionKey: string,
@@ -321,13 +372,13 @@ function applyQuestionAnswerToSession(
     const responses = cloneSectionResponses(section.responses);
     responses[questionKey] = { ...answers };
 
-    return {
+    return syncSessionAggregate({
         ...session,
         sections: {
             ...session.sections,
             [sectionKey]: { ...section, responses },
         },
-    };
+    });
 }
 
 function applySectionNoteToSession(
@@ -336,13 +387,13 @@ function applySectionNoteToSession(
     note: string,
 ): AuditSession {
     const section = cloneSectionState(session.sections[sectionKey], sectionKey);
-    return {
+    return syncSessionAggregate({
         ...session,
         sections: {
             ...session.sections,
             [sectionKey]: { ...section, note },
         },
-    };
+    });
 }
 
 function applyPreAuditToSession(
@@ -359,7 +410,7 @@ function applyPreAuditToSession(
     cur.user_count = readNullableStringValue(values["user_count"], cur.user_count);
     cur.age_groups = readStringArrayValue(values["age_groups"], cur.age_groups);
     cur.place_size = readNullableStringValue(values["place_size"], cur.place_size);
-    return { ...session, pre_audit: cur };
+    return syncSessionAggregate({ ...session, pre_audit: cur });
 }
 
 function applySectionResponsesToSession(
@@ -368,13 +419,13 @@ function applySectionResponsesToSession(
     responses: Record<string, Record<string, string>>,
 ): AuditSession {
     const section = cloneSectionState(session.sections[sectionKey], sectionKey);
-    return {
+    return syncSessionAggregate({
         ...session,
         sections: {
             ...session.sections,
             [sectionKey]: { ...section, responses: cloneSectionResponses(responses) },
         },
-    };
+    });
 }
 
 function copySectionDraftFromSession(
@@ -460,6 +511,39 @@ function clearAcknowledgedDirtyPreAudit(
     return next;
 }
 
+function buildAggregateWriteFromSession(session: AuditSession): AuditDraftPatch["aggregate"] {
+    return {
+        schema_version: session.aggregate.schema_version,
+        meta: {
+            execution_mode: session.aggregate.meta.execution_mode,
+        },
+        pre_audit: {
+            season: session.aggregate.pre_audit.season,
+            weather_conditions: [...session.aggregate.pre_audit.weather_conditions],
+            users_present: [...session.aggregate.pre_audit.users_present],
+            user_count: session.aggregate.pre_audit.user_count,
+            age_groups: [...session.aggregate.pre_audit.age_groups],
+            place_size: session.aggregate.pre_audit.place_size,
+        },
+        sections: Object.fromEntries(
+            Object.entries(session.aggregate.sections).map(([sectionKey, sectionState]) => [
+                sectionKey,
+                {
+                    responses: cloneSectionResponses(sectionState.responses),
+                    note: sectionState.note,
+                },
+            ]),
+        ),
+    };
+}
+
+function applyDraftSaveAckToSession(
+    session: AuditSession,
+    saveResult: AuditDraftSave,
+): AuditSession {
+    return applyServerRevisionToSession(session, saveResult.schema_version, saveResult.revision);
+}
+
 function buildPatchFromDirtyState(
     dirtySections: DirtySections,
     dirtyPreAudit: DirtyPreAudit,
@@ -475,27 +559,11 @@ function buildPatchFromDirtyState(
         return null;
     }
 
-    const sections: Record<
-        string,
-        { responses: Record<string, Record<string, string>>; note: string | null }
-    > = {};
-    for (const sectionKey of dirtySectionKeys) {
-        const responses = getSectionResponses(session, sectionKey);
-        const note = getSectionNote(session, sectionKey);
-        sections[sectionKey] = { responses, note: note.length > 0 ? note : null };
-    }
-
-    const patch: AuditDraftPatch = { sections };
-    if (hasPreAudit) {
-        patch.pre_audit = {
-            season: session.pre_audit.season,
-            weather_conditions: [...session.pre_audit.weather_conditions],
-            users_present: [...session.pre_audit.users_present],
-            user_count: session.pre_audit.user_count,
-            age_groups: [...session.pre_audit.age_groups],
-            place_size: session.pre_audit.place_size,
-        };
-    }
+    const patch: AuditDraftPatch = {
+        expected_revision: session.revision,
+        aggregate: buildAggregateWriteFromSession(session),
+        sections: {},
+    };
 
     return {
         auditId,
@@ -571,6 +639,7 @@ async function hydrate(accountId?: string | null): Promise<void> {
 
     batch(() => {
         auditData$.set({
+            instrument: BASE_PLAYSPACE_INSTRUMENT,
             sessions_by_audit_id: {},
             sessions_by_pair_key: {},
             dirty_sections: {},
@@ -627,6 +696,7 @@ async function clearStoredState(accountId?: string | null): Promise<void> {
     }
     batch(() => {
         auditData$.set({
+            instrument: BASE_PLAYSPACE_INSTRUMENT,
             sessions_by_audit_id: {},
             sessions_by_pair_key: {},
             dirty_sections: {},
@@ -669,6 +739,7 @@ async function ensurePlaceAudit(
         );
         const pairKey = getProjectPlaceKey(merged.project_id, merged.place_id);
         batch(() => {
+            auditData$.instrument.set(merged.instrument);
             auditData$.sessions_by_audit_id[merged.audit_id]?.set(merged);
             auditData$.sessions_by_pair_key[pairKey]?.set(merged);
             auditUI$.isLoadingAudit.set(false);
@@ -704,6 +775,7 @@ async function refreshAudit(session: AuthSession, auditId: string): Promise<Audi
         );
         const pairKey = getProjectPlaceKey(merged.project_id, merged.place_id);
         batch(() => {
+            auditData$.instrument.set(merged.instrument);
             auditData$.sessions_by_audit_id[merged.audit_id]?.set(merged);
             auditData$.sessions_by_pair_key[pairKey]?.set(merged);
             auditUI$.isLoadingAudit.set(false);
@@ -837,35 +909,92 @@ async function flushPendingChanges(session: AuthSession): Promise<FlushPendingCh
             continue;
         }
 
-        try {
-            const updatedSession = await saveAuditDraft(session, auditId, patchSnapshot.patch);
-            const data = auditData$.peek();
-            const merged = mergeDirtyLocalDraftIntoServerSession(
-                data.sessions_by_audit_id,
-                data.sessions_by_pair_key,
-                data.dirty_sections,
-                data.dirty_pre_audit,
-                updatedSession,
+        const acknowledgeSave = (
+            currentSession: AuditSession,
+            saveResult: AuditDraftSave,
+            snapshot: PendingAuditPatchSnapshot,
+        ): void => {
+            const acknowledgedSession = applyDraftSaveAckToSession(currentSession, saveResult);
+            const pairKey = getProjectPlaceKey(
+                acknowledgedSession.project_id,
+                acknowledgedSession.place_id,
             );
-            const pairKey = getProjectPlaceKey(merged.project_id, merged.place_id);
             const nextDirtySections = clearAcknowledgedDirtySections(
                 auditData$.dirty_sections.peek(),
-                patchSnapshot,
+                snapshot,
             );
             const nextDirtyPreAudit = clearAcknowledgedDirtyPreAudit(
                 auditData$.dirty_pre_audit.peek(),
-                patchSnapshot,
+                snapshot,
             );
 
             batch(() => {
-                auditData$.sessions_by_audit_id[merged.audit_id]?.set(merged);
-                auditData$.sessions_by_pair_key[pairKey]?.set(merged);
+                auditData$.instrument.set(acknowledgedSession.instrument);
+                auditData$.sessions_by_audit_id[acknowledgedSession.audit_id]?.set(acknowledgedSession);
+                auditData$.sessions_by_pair_key[pairKey]?.set(acknowledgedSession);
                 auditData$.dirty_sections.set(nextDirtySections);
                 auditData$.dirty_pre_audit.set(nextDirtyPreAudit);
                 auditUI$.lastSyncError.set(null);
                 auditData$.last_successful_sync_at.set(new Date().toISOString());
             });
+        };
+
+        try {
+            const saveResult = await saveAuditDraft(session, auditId, patchSnapshot.patch);
+            const currentSession = auditData$.sessions_by_audit_id[auditId]?.peek() ?? auditSession;
+            acknowledgeSave(currentSession, saveResult, patchSnapshot);
         } catch (error) {
+            if (error instanceof PlayspaceAuditApiError && error.statusCode === 409) {
+                try {
+                    const latestSession = await fetchAuditSession(session, auditId);
+                    const data = auditData$.peek();
+                    const rebasedSession = mergeDirtyLocalDraftIntoServerSession(
+                        data.sessions_by_audit_id,
+                        data.sessions_by_pair_key,
+                        data.dirty_sections,
+                        data.dirty_pre_audit,
+                        latestSession,
+                    );
+                    const pairKey = getProjectPlaceKey(
+                        rebasedSession.project_id,
+                        rebasedSession.place_id,
+                    );
+
+                    batch(() => {
+                        auditData$.instrument.set(rebasedSession.instrument);
+                        auditData$.sessions_by_audit_id[rebasedSession.audit_id]?.set(rebasedSession);
+                        auditData$.sessions_by_pair_key[pairKey]?.set(rebasedSession);
+                    });
+
+                    const retrySnapshot = buildPatchFromDirtyState(
+                        auditData$.dirty_sections.peek(),
+                        auditData$.dirty_pre_audit.peek(),
+                        auditId,
+                        rebasedSession,
+                    );
+                    if (retrySnapshot !== null) {
+                        const retrySaveResult = await saveAuditDraft(
+                            session,
+                            auditId,
+                            retrySnapshot.patch,
+                        );
+                        const latestLocalSession =
+                            auditData$.sessions_by_audit_id[auditId]?.peek() ?? rebasedSession;
+                        acknowledgeSave(latestLocalSession, retrySaveResult, retrySnapshot);
+                        continue;
+                    }
+                } catch (recoveryError) {
+                    console.error("[audit-store] conflict recovery failed", recoveryError);
+                    const message = formatAuditErrorMessage(
+                        recoveryError,
+                        t("audit:errors.syncFallback"),
+                    );
+                    auditUI$.lastSyncError.set(message);
+                    failedAuditIds.push(auditId);
+                    continue;
+                }
+            }
+
             console.error("[audit-store] sync failed", error);
             const message = formatAuditErrorMessage(error, t("audit:errors.syncFallback"));
             auditUI$.lastSyncError.set(message);
@@ -906,9 +1035,11 @@ async function submitAuditSession(session: AuthSession, auditId: string): Promis
     }
 
     try {
-        const nextSession = await submitAudit(session, auditId);
+        const latestSession = auditData$.sessions_by_audit_id[auditId]?.peek();
+        const nextSession = await submitAudit(session, auditId, latestSession?.revision);
         const pairKey = getProjectPlaceKey(nextSession.project_id, nextSession.place_id);
         batch(() => {
+            auditData$.instrument.set(nextSession.instrument);
             auditData$.sessions_by_audit_id[nextSession.audit_id]?.set(nextSession);
             auditData$.sessions_by_pair_key[pairKey]?.set(nextSession);
             auditUI$.isSavingDraft.set(false);
@@ -957,7 +1088,7 @@ const actions = {
  * properties it actually reads, preserving fine-grained reactivity.
  */
 const dataGetters: Record<string, () => unknown> = {
-    instrument: () => BASE_PLAYSPACE_INSTRUMENT,
+    instrument: () => auditData$.instrument.get() ?? BASE_PLAYSPACE_INSTRUMENT,
     sessionsByAuditId: () => auditData$.sessions_by_audit_id.get(),
     sessionsByPairKey: () => auditData$.sessions_by_pair_key.get(),
     currentUserId: () => auditUI$.currentUserId.get(),
@@ -1001,7 +1132,7 @@ function createLazyState(): PlayspaceAuditStoreState {
  */
 function buildEagerState(): PlayspaceAuditStoreState {
     return {
-        instrument: BASE_PLAYSPACE_INSTRUMENT,
+        instrument: auditData$.instrument.peek() ?? BASE_PLAYSPACE_INSTRUMENT,
         sessionsByAuditId: auditData$.sessions_by_audit_id.peek(),
         sessionsByPairKey: auditData$.sessions_by_pair_key.peek(),
         currentUserId: auditUI$.currentUserId.peek(),

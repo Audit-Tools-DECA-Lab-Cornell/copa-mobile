@@ -18,6 +18,7 @@ import {
     formatScoreValue,
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
+import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem, type DesignTone } from "lib/design-system";
 import {
     formatRelativeTimeLabel,
@@ -40,7 +41,7 @@ export default function PlacesScreen() {
     const router = useRouter();
     const { t, i18n } = useTranslation(["places", "common"]);
     const session = useAuthStore((state) => state.session);
-    const places = usePlacesStore((state) => state.places);
+    const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const [searchQuery, setSearchQuery] = useState("");

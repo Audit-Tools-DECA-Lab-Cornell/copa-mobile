@@ -8,6 +8,7 @@ import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
 import { deriveLocality, matchesPlaceSearch } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
+import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem } from "lib/design-system";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -26,7 +27,7 @@ export default function ExecuteIndexScreen() {
     const session = useAuthStore((state) => state.session);
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
     const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
-    const places = usePlacesStore((state) => state.places);
+    const places = useLocalFirstPlaces();
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const [searchQuery, setSearchQuery] = useState("");

@@ -17,6 +17,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-helpers";
+import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import type { AuditorPlace } from "lib/audit/places-api";
@@ -67,7 +68,7 @@ export default function DashboardScreen() {
     const { t, i18n } = useTranslation(["dashboard", "common"]);
     const session = useAuthStore((state) => state.session);
     const logout = useAuthStore((state) => state.logout);
-    const places = usePlacesStore((state) => state.places);
+    const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
 
