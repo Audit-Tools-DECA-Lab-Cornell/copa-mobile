@@ -207,6 +207,34 @@ export const persistedAuditStateSchema = z.object({
     last_successful_sync_at: z.string().nullable().default(null),
 });
 
+/**
+ * Generic TypeScript shape for paginated API responses.
+ */
+export interface PaginatedResponse<TItem> {
+    items: TItem[];
+    total_count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
+
+/**
+ * Create a runtime schema for paginated API responses that wrap data in `items`.
+ *
+ * @param itemSchema Runtime schema for one item in the collection.
+ * @returns Runtime schema for the paginated response envelope.
+ */
+export const createPaginatedResponseSchema = <TItemSchema extends z.ZodType>(
+    itemSchema: TItemSchema,
+) =>
+    z.object({
+        items: z.array(itemSchema),
+        total_count: z.number().int().nonnegative(),
+        page: z.number().int().positive(),
+        page_size: z.number().int().positive(),
+        total_pages: z.number().int().positive(),
+    });
+
 export type ExecutionMode = z.infer<typeof executionModeSchema>;
 export type AuditStatus = z.infer<typeof auditStatusSchema>;
 export type QuestionMode = z.infer<typeof questionModeSchema>;

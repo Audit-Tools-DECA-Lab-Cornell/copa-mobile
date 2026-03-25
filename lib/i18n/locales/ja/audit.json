@@ -31,6 +31,7 @@
         "accessDeniedTitle": "アクセスが拒否されました",
         "assignmentAllows": "この場所の割り当ては現在、以下を許可しています:",
         "auditRole": "監査ロール",
+        "roleNotSelected": "役割が選択されていません",
         "auditUnavailableTitle": "監査は利用できません",
         "chooseMode": "この場所でツールのどの部分を完了するかを選択してください。",
         "loadingDraft": "現在のドラフトを読み込んでいます...",

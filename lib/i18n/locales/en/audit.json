@@ -31,6 +31,7 @@
         "accessDeniedTitle": "Access Denied",
         "assignmentAllows": "This place assignment currently allows:",
         "auditRole": "Audit Role",
+        "roleNotSelected": "Role not selected",
         "auditUnavailableTitle": "Audit Unavailable",
         "chooseMode": "Choose what part of the tool you will complete for this place.",
         "loadingDraft": "Loading your current draft...",

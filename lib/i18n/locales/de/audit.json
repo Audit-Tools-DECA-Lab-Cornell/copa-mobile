@@ -31,6 +31,7 @@
         "accessDeniedTitle": "Zugriff verweigert",
         "assignmentAllows": "Diese Ortszuweisung erlaubt derzeit:",
         "auditRole": "Audit-Rolle",
+        "roleNotSelected": "Rolle nicht ausgewaehlt",
         "auditUnavailableTitle": "Audit nicht verfuegbar",
         "chooseMode": "Waehlen Sie aus, welchen Teil des Instruments Sie fuer diesen Ort ausfuellen moechten.",
         "loadingDraft": "Ihr aktueller Entwurf wird geladen...",

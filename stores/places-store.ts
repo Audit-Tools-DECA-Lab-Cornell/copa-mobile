@@ -39,9 +39,9 @@ export const usePlacesStore = create<PlacesStoreState>((set) => ({
         }));
 
         try {
-            const places = await fetchAssignedPlaces(session);
+            const response = await fetchAssignedPlaces(session);
             set(() => ({
-                places,
+                places: response.items,
                 isLoading: false,
                 errorMessage: null,
             }));

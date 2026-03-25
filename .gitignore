@@ -52,3 +52,5 @@ android
 credentials.json
 *.apps.googleusercontent.com.json
 playspace-deca.json
+
+.agents

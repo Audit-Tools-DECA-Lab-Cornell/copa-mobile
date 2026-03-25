@@ -32,6 +32,7 @@
         "accessDeniedTitle": "Accès refusé",
         "assignmentAllows": "Cette affectation de lieu permet actuellement :",
         "auditRole": "Rôle dans l’audit",
+        "roleNotSelected": "Rôle non sélectionné",
         "auditUnavailableTitle": "Audit indisponible",
         "chooseMode": "Choisissez la partie de l’outil que vous allez remplir pour ce lieu.",
         "loadingDraft": "Chargement de votre brouillon actuel...",
