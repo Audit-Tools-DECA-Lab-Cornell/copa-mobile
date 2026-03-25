@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { FlatList, ScrollView } from "react-native";
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
+import type { AuditorPlace } from "lib/audit/places-api";
 import { deriveLocality, matchesPlaceSearch } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
@@ -86,12 +88,83 @@ export default function ExecuteIndexScreen() {
                   );
               });
     const hasActiveFilters = searchQuery.trim().length > 0 || executeFilter !== "active";
+    const keyExtractor = useCallback((item: AuditorPlace) => {
+        return getProjectPlaceKey(item.project_id, item.place_id);
+    }, []);
+    const renderSeparator = useCallback(() => {
+        return <YStack height={12} />;
+    }, []);
+    const renderItem = useCallback(
+        ({ item: place }: ListRenderItemInfo<AuditorPlace>) => {
+            const activeSession = hasHydratedCurrentUser
+                ? sessionsByPairKey[getProjectPlaceKey(place.project_id, place.place_id)]
+                : undefined;
+            const hasActiveSession = activeSession !== undefined;
+
+            return (
+                <YStack
+                    rounded={ds.radii.lg}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.surface}
+                    p="$4"
+                    gap="$2.5"
+                    style={{ boxShadow: ds.shadows.card }}
+                >
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.titleMd.fontSize}
+                    >
+                        {place.place_name}
+                    </Text>
+                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
+                        {place.project_name}
+                    </Paragraph>
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {deriveLocality(place, t("place.assignedPlace", { ns: "common" }))}
+                    </Paragraph>
+                    <Button
+                        height={42}
+                        rounded={ds.radii.md}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.input}
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={() => {
+                            router.push(
+                                `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                            );
+                        }}
+                    >
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            {hasActiveSession
+                                ? t("resumeAudit", { ns: "audit" })
+                                : t("startAudit", { ns: "audit" })}
+                        </Text>
+                    </Button>
+                </YStack>
+            );
+        },
+        [ds, hasHydratedCurrentUser, router, sessionsByPairKey, t],
+    );
 
     return (
-        <FlatList
+        <FlashList<AuditorPlace>
             data={listPlaces}
-            keyExtractor={(item) => getProjectPlaceKey(item.project_id, item.place_id)}
+            keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"
+            maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
                 paddingHorizontal: ds.spacing.screenPaddingHorizontal,
@@ -204,7 +277,7 @@ export default function ExecuteIndexScreen() {
                 </YStack>
             }
             ListHeaderComponentStyle={{ marginBottom: 20 }}
-            ItemSeparatorComponent={() => <YStack height={12} />}
+            ItemSeparatorComponent={renderSeparator}
             ListEmptyComponent={
                 <YStack
                     rounded={ds.radii.lg}
@@ -231,70 +304,7 @@ export default function ExecuteIndexScreen() {
                     </Paragraph>
                 </YStack>
             }
-            renderItem={({ item: place }) => {
-                const activeSession = hasHydratedCurrentUser
-                    ? sessionsByPairKey[getProjectPlaceKey(place.project_id, place.place_id)]
-                    : undefined;
-                const hasActiveSession = activeSession !== undefined;
-
-                return (
-                    <YStack
-                        rounded={ds.radii.lg}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
-                        p="$4"
-                        gap="$2.5"
-                        style={{ boxShadow: ds.shadows.card }}
-                    >
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleMd.fontSize}
-                        >
-                            {place.place_name}
-                        </Text>
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                        >
-                            {place.project_name}
-                        </Paragraph>
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {deriveLocality(place, t("place.assignedPlace", { ns: "common" }))}
-                        </Paragraph>
-                        <Button
-                            height={42}
-                            rounded={ds.radii.md}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.input}
-                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                            onPress={() => {
-                                router.push(
-                                    `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
-                                );
-                            }}
-                        >
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelMd.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.2}
-                            >
-                                {hasActiveSession
-                                    ? t("resumeAudit", { ns: "audit" })
-                                    : t("startAudit", { ns: "audit" })}
-                            </Text>
-                        </Button>
-                    </YStack>
-                );
-            }}
+            renderItem={renderItem}
         />
     );
 }

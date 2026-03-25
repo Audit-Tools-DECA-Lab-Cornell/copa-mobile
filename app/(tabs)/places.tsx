@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, ScrollView } from "react-native";
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, Clock3, MapPin } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
+import type { AuditorPlace } from "lib/audit/places-api";
 import {
     deriveLocality,
     derivePlaceStatus,
@@ -69,14 +71,16 @@ export default function PlacesScreen() {
         );
     }, [places]);
 
-    const scoreSummaryLabels: ScoreSummaryLabels = {
-        playValueShort: t("playValueShort"),
-        usabilityShort: t("usabilityShort"),
-        sociabilityShort: t("sociabilityShort"),
-        quantityShort: t("quantityShort"),
-        diversityShort: t("diversityShort"),
-        challengeShort: t("challengeShort"),
-    };
+    const scoreSummaryLabels = useMemo<ScoreSummaryLabels>(() => {
+        return {
+            playValueShort: t("playValueShort"),
+            usabilityShort: t("usabilityShort"),
+            sociabilityShort: t("sociabilityShort"),
+            quantityShort: t("quantityShort"),
+            diversityShort: t("diversityShort"),
+            challengeShort: t("challengeShort"),
+        };
+    }, [t]);
 
     const filteredPlaces = useMemo(() => {
         const visiblePlaces = places.filter((place) => {
@@ -116,6 +120,177 @@ export default function PlacesScreen() {
     }, [places, searchQuery, sortOption, statusFilter]);
 
     const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== "all";
+    const keyExtractor = useCallback((item: AuditorPlace) => {
+        return getProjectPlaceKey(item.project_id, item.place_id);
+    }, []);
+    const renderSeparator = useCallback(() => {
+        return <YStack height={12} />;
+    }, []);
+    const renderItem = useCallback(
+        ({ item: place }: ListRenderItemInfo<AuditorPlace>) => {
+            const status = derivePlaceStatus(place.audit_status);
+            const placeTone = getPlaceStatusTone(status, ds.colors);
+            const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+            const auditScoreLabel =
+                place.score_totals === null
+                    ? place.summary_score === null
+                        ? "--"
+                        : formatScoreValue(place.summary_score)
+                    : formatConstructSummary(place.score_totals, scoreSummaryLabels);
+            const progressPercent = place.progress_percent ?? 0;
+            const updatedLabel = formatRelativeTimeLabel(
+                place.started_at,
+                place.submitted_at,
+                i18n.language,
+                t,
+            );
+
+            return (
+                <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                        router.push(
+                            `/place/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                        );
+                    }}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1 })}
+                >
+                    <YStack
+                        rounded={ds.radii.lg}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surface}
+                        overflow="hidden"
+                        style={{ boxShadow: ds.shadows.card }}
+                    >
+                        <XStack>
+                            <YStack width={4} style={{ backgroundColor: placeTone.accent }} />
+
+                            <YStack flex={1} p="$4" gap="$3">
+                                <XStack justify="space-between" items="flex-start" gap="$3">
+                                    <YStack flex={1} gap="$1">
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.titleLg.fontSize}
+                                            lineHeight={ds.typography.titleLg.lineHeight}
+                                        >
+                                            {place.place_name}
+                                        </Text>
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodyXs.fontSize}
+                                        >
+                                            {place.project_name}
+                                        </Paragraph>
+                                    </YStack>
+                                    <YStack
+                                        rounded={ds.radii.full}
+                                        px="$3"
+                                        py="$1"
+                                        style={{ backgroundColor: placeTone.surface }}
+                                    >
+                                        <Text
+                                            style={{ color: placeTone.text }}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelXs.fontSize}
+                                            textTransform="uppercase"
+                                            letterSpacing={1}
+                                        >
+                                            {getPlaceStatusLabel(status, t)}
+                                        </Text>
+                                    </YStack>
+                                </XStack>
+
+                                <XStack items="center" gap="$2">
+                                    <MapPin size={14} color={ds.colors.mutedForeground} />
+                                    <Paragraph
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodySm.fontSize}
+                                    >
+                                        {locality}
+                                    </Paragraph>
+                                </XStack>
+
+                                <XStack gap="$3">
+                                    <ScoreTile
+                                        label={t("scoreSummary", { ns: "places" })}
+                                        value={auditScoreLabel}
+                                        valueColor={ds.colors.primary}
+                                    />
+                                </XStack>
+
+                                <YStack gap="$2">
+                                    <XStack justify="space-between" items="center">
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                        >
+                                            {t("mandatoryCompletion", { ns: "places" })}
+                                        </Paragraph>
+                                        <Text
+                                            color={ds.colors.primary}
+                                            fontFamily={ds.fonts.monoBold}
+                                            fontSize={ds.typography.labelLg.fontSize}
+                                        >
+                                            {progressPercent}%
+                                        </Text>
+                                    </XStack>
+                                    <YStack
+                                        height={6}
+                                        rounded={ds.radii.full}
+                                        bg={ds.colors.mutedSurface}
+                                        overflow="hidden"
+                                    >
+                                        <YStack
+                                            height={6}
+                                            rounded={ds.radii.full}
+                                            bg={ds.colors.primary}
+                                            width={`${progressPercent}%`}
+                                        />
+                                    </YStack>
+                                </YStack>
+
+                                <XStack justify="space-between" items="center" gap="$3">
+                                    <XStack
+                                        items="center"
+                                        gap="$1.5"
+                                        flex={1}
+                                        style={{ minWidth: 0 }}
+                                    >
+                                        <Clock3 size={14} color={ds.colors.mutedForeground} />
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                        >
+                                            {updatedLabel}
+                                        </Paragraph>
+                                    </XStack>
+                                    <XStack items="center" gap="$1.5">
+                                        <Text
+                                            color={ds.colors.primary}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelMd.fontSize}
+                                            textTransform="uppercase"
+                                            letterSpacing={1.1}
+                                        >
+                                            {t("actions.viewDetails", { ns: "common" })}
+                                        </Text>
+                                        <ArrowRight size={14} color={ds.colors.primary} />
+                                    </XStack>
+                                </XStack>
+                            </YStack>
+                        </XStack>
+                    </YStack>
+                </Pressable>
+            );
+        },
+        [ds, i18n.language, router, scoreSummaryLabels, t],
+    );
 
     if (isLoading && places.length === 0) {
         return (
@@ -133,10 +308,11 @@ export default function PlacesScreen() {
     }
 
     return (
-        <FlatList
+        <FlashList<AuditorPlace>
             data={filteredPlaces}
-            keyExtractor={(item) => getProjectPlaceKey(item.project_id, item.place_id)}
+            keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"
+            maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
                 paddingHorizontal: ds.spacing.screenPaddingHorizontal,
@@ -258,7 +434,7 @@ export default function PlacesScreen() {
                 </YStack>
             }
             ListHeaderComponentStyle={{ marginBottom: 24 }}
-            ItemSeparatorComponent={() => <YStack height={12} />}
+            ItemSeparatorComponent={renderSeparator}
             ListEmptyComponent={
                 <YStack
                     rounded={ds.radii.lg}
@@ -285,168 +461,7 @@ export default function PlacesScreen() {
                     </Paragraph>
                 </YStack>
             }
-            renderItem={({ item: place }) => {
-                const status = derivePlaceStatus(place.audit_status);
-                const placeTone = getPlaceStatusTone(status, ds.colors);
-                const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-                const auditScoreLabel =
-                    place.score_totals === null
-                        ? place.summary_score === null
-                            ? "--"
-                            : formatScoreValue(place.summary_score)
-                        : formatConstructSummary(place.score_totals, scoreSummaryLabels);
-                const progressPercent = place.progress_percent ?? 0;
-                const updatedLabel = formatRelativeTimeLabel(
-                    place.started_at,
-                    place.submitted_at,
-                    i18n.language,
-                    t,
-                );
-
-                return (
-                    <Pressable
-                        accessibilityRole="button"
-                        onPress={() => {
-                            router.push(
-                                `/place/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
-                            );
-                        }}
-                        style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1 })}
-                    >
-                        <YStack
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            overflow="hidden"
-                            style={{ boxShadow: ds.shadows.card }}
-                        >
-                            <XStack>
-                                <YStack width={4} style={{ backgroundColor: placeTone.accent }} />
-
-                                <YStack flex={1} p="$4" gap="$3">
-                                    <XStack justify="space-between" items="flex-start" gap="$3">
-                                        <YStack flex={1} gap="$1">
-                                            <Text
-                                                color={ds.colors.foreground}
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.titleLg.fontSize}
-                                                lineHeight={ds.typography.titleLg.lineHeight}
-                                            >
-                                                {place.place_name}
-                                            </Text>
-                                            <Paragraph
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodyXs.fontSize}
-                                            >
-                                                {place.project_name}
-                                            </Paragraph>
-                                        </YStack>
-                                        <YStack
-                                            rounded={ds.radii.full}
-                                            px="$3"
-                                            py="$1"
-                                            style={{ backgroundColor: placeTone.surface }}
-                                        >
-                                            <Text
-                                                style={{ color: placeTone.text }}
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.labelXs.fontSize}
-                                                textTransform="uppercase"
-                                                letterSpacing={1}
-                                            >
-                                                {getPlaceStatusLabel(status, t)}
-                                            </Text>
-                                        </YStack>
-                                    </XStack>
-
-                                    <XStack items="center" gap="$2">
-                                        <MapPin size={14} color={ds.colors.mutedForeground} />
-                                        <Paragraph
-                                            color={ds.colors.mutedForeground}
-                                            fontFamily={ds.fonts.bodyMedium}
-                                            fontSize={ds.typography.bodySm.fontSize}
-                                        >
-                                            {locality}
-                                        </Paragraph>
-                                    </XStack>
-
-                                    <XStack gap="$3">
-                                        <ScoreTile
-                                            label={t("scoreSummary", { ns: "places" })}
-                                            value={auditScoreLabel}
-                                            valueColor={ds.colors.primary}
-                                        />
-                                    </XStack>
-
-                                    <YStack gap="$2">
-                                        <XStack justify="space-between" items="center">
-                                            <Paragraph
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodySm.fontSize}
-                                            >
-                                                {t("mandatoryCompletion", { ns: "places" })}
-                                            </Paragraph>
-                                            <Text
-                                                color={ds.colors.primary}
-                                                fontFamily={ds.fonts.monoBold}
-                                                fontSize={ds.typography.labelLg.fontSize}
-                                            >
-                                                {progressPercent}%
-                                            </Text>
-                                        </XStack>
-                                        <YStack
-                                            height={6}
-                                            rounded={ds.radii.full}
-                                            bg={ds.colors.mutedSurface}
-                                            overflow="hidden"
-                                        >
-                                            <YStack
-                                                height={6}
-                                                rounded={ds.radii.full}
-                                                bg={ds.colors.primary}
-                                                width={`${progressPercent}%`}
-                                            />
-                                        </YStack>
-                                    </YStack>
-
-                                    <XStack justify="space-between" items="center" gap="$3">
-                                        <XStack
-                                            items="center"
-                                            gap="$1.5"
-                                            flex={1}
-                                            style={{ minWidth: 0 }}
-                                        >
-                                            <Clock3 size={14} color={ds.colors.mutedForeground} />
-                                            <Paragraph
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodySm.fontSize}
-                                            >
-                                                {updatedLabel}
-                                            </Paragraph>
-                                        </XStack>
-                                        <XStack items="center" gap="$1.5">
-                                            <Text
-                                                color={ds.colors.primary}
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.labelMd.fontSize}
-                                                textTransform="uppercase"
-                                                letterSpacing={1.1}
-                                            >
-                                                {t("actions.viewDetails", { ns: "common" })}
-                                            </Text>
-                                            <ArrowRight size={14} color={ds.colors.primary} />
-                                        </XStack>
-                                    </XStack>
-                                </YStack>
-                            </XStack>
-                        </YStack>
-                    </Pressable>
-                );
-            }}
+            renderItem={renderItem}
         />
     );
 }

@@ -1,5 +1,6 @@
+import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, ScrollView } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { TriangleAlert, ArrowRight, Clock3, FileBarChart, MapPin } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
@@ -81,14 +82,16 @@ export default function ReportsScreen() {
         return placesWithScores.filter((place) => place.audit_id !== null);
     }, [placesWithScores]);
 
-    const scoreSummaryLabels: ScoreSummaryLabels = {
-        playValueShort: t("playValueShort"),
-        usabilityShort: t("usabilityShort"),
-        sociabilityShort: t("sociabilityShort"),
-        quantityShort: t("quantityShort"),
-        diversityShort: t("diversityShort"),
-        challengeShort: t("challengeShort"),
-    };
+    const scoreSummaryLabels = useMemo<ScoreSummaryLabels>(() => {
+        return {
+            playValueShort: t("playValueShort"),
+            usabilityShort: t("usabilityShort"),
+            sociabilityShort: t("sociabilityShort"),
+            quantityShort: t("quantityShort"),
+            diversityShort: t("diversityShort"),
+            challengeShort: t("challengeShort"),
+        };
+    }, [t]);
 
     const averageCombinedConstructScore = useMemo(() => {
         if (placesWithScores.length === 0) {
@@ -296,12 +299,182 @@ export default function ReportsScreen() {
     );
 
     const hasActiveFilters = searchQuery.trim().length > 0 || reportFilter !== "all";
+    const keyExtractor = useCallback((item: AuditorPlace) => {
+        return getProjectPlaceKey(item.project_id, item.place_id);
+    }, []);
+    const renderSeparator = useCallback(() => {
+        return <YStack height={12} />;
+    }, []);
+    const renderItem = useCallback(
+        ({ item: place }: ListRenderItemInfo<AuditorPlace>) => {
+            const status = derivePlaceStatus(place.audit_status);
+            const statusTone = getPlaceStatusTone(status, ds.colors);
+            const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+            const hasScore = place.score_totals !== null;
+            const combinedConstructScore = getCombinedConstructScore(place.score_totals);
+            const barWidth =
+                hasScore && combinedConstructScore !== null && maxCombinedConstructScore > 0
+                    ? `${Math.max((combinedConstructScore / maxCombinedConstructScore) * 100, 6)}%`
+                    : "0%";
+            const updatedLabel = formatRelativeTimeLabel(
+                place.started_at,
+                place.submitted_at,
+                i18n.language,
+                t,
+            );
+
+            return (
+                <Pressable
+                    accessibilityRole="button"
+                    onPress={() => {
+                        if (place.audit_id !== null) {
+                            router.push(`/report/${place.audit_id}`);
+                        }
+                    }}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1 })}
+                >
+                    <YStack
+                        rounded={ds.radii.lg}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surface}
+                        p="$4"
+                        gap="$3"
+                        style={{ boxShadow: ds.shadows.card }}
+                    >
+                        <XStack justify="space-between" items="flex-start" gap="$3">
+                            <YStack flex={1} gap="$1">
+                                <Text
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.titleMd.fontSize}
+                                >
+                                    {place.place_name}
+                                </Text>
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                >
+                                    {place.project_name}
+                                </Paragraph>
+                            </YStack>
+                            <YStack items="flex-end" gap="$2">
+                                <YStack
+                                    rounded={ds.radii.full}
+                                    px="$3"
+                                    py="$1"
+                                    style={{ backgroundColor: statusTone.surface }}
+                                >
+                                    <Text
+                                        style={{ color: statusTone.text }}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelXs.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={1}
+                                    >
+                                        {getPlaceStatusLabel(status, t)}
+                                    </Text>
+                                </YStack>
+                                <Paragraph
+                                    color={hasScore ? ds.colors.primary : ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.bodyLg.fontSize}
+                                >
+                                    {hasScore
+                                        ? formatScoreValue(combinedConstructScore ?? 0)
+                                        : t("notScored")}
+                                </Paragraph>
+                            </YStack>
+                        </XStack>
+
+                        <XStack items="center" gap="$2">
+                            <MapPin size={14} color={ds.colors.mutedForeground} />
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                            >
+                                {locality}
+                            </Paragraph>
+                        </XStack>
+
+                        <XStack items="center" gap="$2">
+                            <Clock3 size={14} color={ds.colors.mutedForeground} />
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                            >
+                                {updatedLabel}
+                            </Paragraph>
+                        </XStack>
+
+                        {hasScore ? (
+                            <YStack gap="$1.5">
+                                <Paragraph
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodyXs.fontSize}
+                                >
+                                    {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
+                                </Paragraph>
+                                <Paragraph
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodyXs.fontSize}
+                                >
+                                    {formatColumnSummary(place.score_totals, scoreSummaryLabels)}
+                                </Paragraph>
+                                <YStack
+                                    height={6}
+                                    rounded={ds.radii.full}
+                                    bg={ds.colors.mutedSurface}
+                                    overflow="hidden"
+                                >
+                                    <YStack
+                                        height={6}
+                                        rounded={ds.radii.full}
+                                        bg={ds.colors.primary}
+                                        style={{ width: barWidth }}
+                                    />
+                                </YStack>
+                            </YStack>
+                        ) : (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                            >
+                                {t("detail.scorePending", { ns: "reports" })}
+                            </Paragraph>
+                        )}
+
+                        <XStack justify="flex-end" items="center" gap="$1.5">
+                            <Text
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelMd.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.1}
+                            >
+                                {t("actions.viewDetails", { ns: "common" })}
+                            </Text>
+                            <ArrowRight size={14} color={ds.colors.primary} />
+                        </XStack>
+                    </YStack>
+                </Pressable>
+            );
+        },
+        [ds, i18n.language, maxCombinedConstructScore, router, scoreSummaryLabels, t],
+    );
 
     return (
-        <FlatList
+        <FlashList<AuditorPlace>
             data={filteredReportPlaces}
-            keyExtractor={(item) => getProjectPlaceKey(item.project_id, item.place_id)}
+            keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"
+            maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={{
                 paddingHorizontal: ds.spacing.screenPaddingHorizontal,
@@ -439,7 +612,7 @@ export default function ReportsScreen() {
                 </YStack>
             }
             ListHeaderComponentStyle={{ marginBottom: 24 }}
-            ItemSeparatorComponent={() => <YStack height={12} />}
+            ItemSeparatorComponent={renderSeparator}
             ListEmptyComponent={
                 <YStack
                     rounded={ds.radii.lg}
@@ -665,174 +838,7 @@ export default function ReportsScreen() {
                 </YStack>
             }
             ListFooterComponentStyle={{ marginTop: 24 }}
-            renderItem={({ item: place }) => {
-                const status = derivePlaceStatus(place.audit_status);
-                const statusTone = getPlaceStatusTone(status, ds.colors);
-                const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-                const hasScore = place.score_totals !== null;
-                const combinedConstructScore = getCombinedConstructScore(place.score_totals);
-                const barWidth =
-                    hasScore && combinedConstructScore !== null && maxCombinedConstructScore > 0
-                        ? `${Math.max((combinedConstructScore / maxCombinedConstructScore) * 100, 6)}%`
-                        : "0%";
-                const updatedLabel = formatRelativeTimeLabel(
-                    place.started_at,
-                    place.submitted_at,
-                    i18n.language,
-                    t,
-                );
-
-                return (
-                    <Pressable
-                        accessibilityRole="button"
-                        onPress={() => {
-                            if (place.audit_id !== null) {
-                                router.push(`/report/${place.audit_id}`);
-                            }
-                        }}
-                        style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1 })}
-                    >
-                        <YStack
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            p="$4"
-                            gap="$3"
-                            style={{ boxShadow: ds.shadows.card }}
-                        >
-                            <XStack justify="space-between" items="flex-start" gap="$3">
-                                <YStack flex={1} gap="$1">
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.titleMd.fontSize}
-                                    >
-                                        {place.place_name}
-                                    </Text>
-                                    <Paragraph
-                                        color={ds.colors.mutedForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                    >
-                                        {place.project_name}
-                                    </Paragraph>
-                                </YStack>
-                                <YStack items="flex-end" gap="$2">
-                                    <YStack
-                                        rounded={ds.radii.full}
-                                        px="$3"
-                                        py="$1"
-                                        style={{ backgroundColor: statusTone.surface }}
-                                    >
-                                        <Text
-                                            style={{ color: statusTone.text }}
-                                            fontFamily={ds.fonts.bodyBold}
-                                            fontSize={ds.typography.labelXs.fontSize}
-                                            textTransform="uppercase"
-                                            letterSpacing={1}
-                                        >
-                                            {getPlaceStatusLabel(status, t)}
-                                        </Text>
-                                    </YStack>
-                                    <Paragraph
-                                        color={
-                                            hasScore ? ds.colors.primary : ds.colors.mutedForeground
-                                        }
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.bodyLg.fontSize}
-                                    >
-                                        {hasScore
-                                            ? formatScoreValue(combinedConstructScore ?? 0)
-                                            : t("notScored")}
-                                    </Paragraph>
-                                </YStack>
-                            </XStack>
-
-                            <XStack items="center" gap="$2">
-                                <MapPin size={14} color={ds.colors.mutedForeground} />
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                >
-                                    {locality}
-                                </Paragraph>
-                            </XStack>
-
-                            <XStack items="center" gap="$2">
-                                <Clock3 size={14} color={ds.colors.mutedForeground} />
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                >
-                                    {updatedLabel}
-                                </Paragraph>
-                            </XStack>
-
-                            {hasScore ? (
-                                <YStack gap="$1.5">
-                                    <Paragraph
-                                        color={ds.colors.primary}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodyXs.fontSize}
-                                    >
-                                        {formatConstructSummary(
-                                            place.score_totals,
-                                            scoreSummaryLabels,
-                                        )}
-                                    </Paragraph>
-                                    <Paragraph
-                                        color={ds.colors.primary}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodyXs.fontSize}
-                                    >
-                                        {formatColumnSummary(
-                                            place.score_totals,
-                                            scoreSummaryLabels,
-                                        )}
-                                    </Paragraph>
-                                    <YStack
-                                        height={6}
-                                        rounded={ds.radii.full}
-                                        bg={ds.colors.mutedSurface}
-                                        overflow="hidden"
-                                    >
-                                        <YStack
-                                            height={6}
-                                            rounded={ds.radii.full}
-                                            bg={ds.colors.primary}
-                                            style={{ width: barWidth }}
-                                        />
-                                    </YStack>
-                                </YStack>
-                            ) : (
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                >
-                                    {t("detail.scorePending", { ns: "reports" })}
-                                </Paragraph>
-                            )}
-
-                            <XStack justify="flex-end" items="center" gap="$1.5">
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelMd.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.1}
-                                >
-                                    {t("actions.viewDetails", { ns: "common" })}
-                                </Text>
-                                <ArrowRight size={14} color={ds.colors.primary} />
-                            </XStack>
-                        </YStack>
-                    </Pressable>
-                );
-            }}
+            renderItem={renderItem}
         />
     );
 }
