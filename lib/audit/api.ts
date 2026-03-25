@@ -117,7 +117,11 @@ export async function saveAuditDraft(
             body: JSON.stringify(parsedPatch.data),
         },
     );
-    return parsePayload(payload, auditDraftSaveSchema, "Audit draft save response shape is invalid.");
+    return parsePayload(
+        payload,
+        auditDraftSaveSchema,
+        "Audit draft save response shape is invalid.",
+    );
 }
 
 /**

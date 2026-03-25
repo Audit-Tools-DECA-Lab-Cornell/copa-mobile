@@ -930,7 +930,9 @@ async function flushPendingChanges(session: AuthSession): Promise<FlushPendingCh
 
             batch(() => {
                 auditData$.instrument.set(acknowledgedSession.instrument);
-                auditData$.sessions_by_audit_id[acknowledgedSession.audit_id]?.set(acknowledgedSession);
+                auditData$.sessions_by_audit_id[acknowledgedSession.audit_id]?.set(
+                    acknowledgedSession,
+                );
                 auditData$.sessions_by_pair_key[pairKey]?.set(acknowledgedSession);
                 auditData$.dirty_sections.set(nextDirtySections);
                 auditData$.dirty_pre_audit.set(nextDirtyPreAudit);
@@ -962,7 +964,9 @@ async function flushPendingChanges(session: AuthSession): Promise<FlushPendingCh
 
                     batch(() => {
                         auditData$.instrument.set(rebasedSession.instrument);
-                        auditData$.sessions_by_audit_id[rebasedSession.audit_id]?.set(rebasedSession);
+                        auditData$.sessions_by_audit_id[rebasedSession.audit_id]?.set(
+                            rebasedSession,
+                        );
                         auditData$.sessions_by_pair_key[pairKey]?.set(rebasedSession);
                     });
 
