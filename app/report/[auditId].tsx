@@ -27,6 +27,7 @@ import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatLocalizedDate, formatLocalizedTime, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -44,6 +45,7 @@ interface SectionReportRow {
  */
 export default function AuditReportDetailScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t, i18n } = useTranslation(["reports", "common", "places"]);
     const toast = useToastController();
     const instrument = useLocalizedInstrument();
@@ -282,12 +284,10 @@ export default function AuditReportDetailScreen() {
                 <ScrollView
                     contentInsetAdjustmentBehavior="automatic"
                     style={{ backgroundColor: ds.colors.background }}
-                    contentContainerStyle={{
-                        paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                        paddingTop: ds.spacing.screenPaddingVertical,
-                        paddingBottom: 112,
-                        gap: 20,
-                    }}
+                    contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                        bottomPadding: 112,
+                        gap: layout.sectionGap,
+                    })}
                 >
                     <AuditHeader
                         auditSession={auditSession}
@@ -302,7 +302,7 @@ export default function AuditReportDetailScreen() {
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
-                        p="$4"
+                        p={layout.cardPadding}
                         gap="$3"
                         style={{ boxShadow: ds.shadows.card }}
                     >
@@ -355,7 +355,7 @@ export default function AuditReportDetailScreen() {
                             borderWidth={1}
                             borderColor={ds.colors.border}
                             bg={ds.colors.surface}
-                            p="$4"
+                            p={layout.cardPadding}
                             gap="$4"
                             style={{ boxShadow: ds.shadows.card }}
                         >
@@ -404,7 +404,7 @@ export default function AuditReportDetailScreen() {
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
-                        p="$4"
+                        p={layout.cardPadding}
                         gap="$3"
                         style={{ boxShadow: ds.shadows.card }}
                     >
@@ -527,6 +527,7 @@ interface AuditHeaderProps {
  */
 function AuditHeader({ auditSession, place, language }: Readonly<AuditHeaderProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation(["reports", "common"]);
     const status = derivePlaceStatus(place?.audit_status ?? auditSession.status);
     const statusTone = getPlaceStatusTone(status, ds.colors);
@@ -542,8 +543,16 @@ function AuditHeader({ auditSession, place, language }: Readonly<AuditHeaderProp
                     <Text
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.headingBold}
-                        fontSize={ds.typography.metricMd.fontSize}
-                        lineHeight={ds.typography.metricMd.lineHeight}
+                        fontSize={
+                            layout.isTablet
+                                ? ds.typography.metricLg.fontSize
+                                : ds.typography.metricMd.fontSize
+                        }
+                        lineHeight={
+                            layout.isTablet
+                                ? ds.typography.metricLg.lineHeight
+                                : ds.typography.metricMd.lineHeight
+                        }
                     >
                         {place?.place_name ?? auditSession.place_name}
                     </Text>
@@ -576,7 +585,7 @@ function AuditHeader({ auditSession, place, language }: Readonly<AuditHeaderProp
             </XStack>
             {locality === null ? null : (
                 <XStack items="center" gap="$2">
-                    <MapPin size={16} color={ds.colors.mutedForeground} />
+                    <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
@@ -695,9 +704,17 @@ interface DetailStateCardProps {
  */
 function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailStateCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
-        <YStack flex={1} justify="center" px={ds.spacing.screenPaddingHorizontal}>
+        <YStack
+            flex={1}
+            justify="center"
+            px={layout.screenPaddingHorizontal}
+            bg={ds.colors.background}
+        >
             <YStack
+                width="100%"
+                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
                 rounded={ds.radii.lg}
                 borderWidth={1}
                 borderColor={ds.colors.border}

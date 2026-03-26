@@ -2,6 +2,7 @@ import { ActivityIndicator } from "react-native";
 import { Download } from "@tamagui/lucide-icons";
 import { Button, Text, XStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface ActionButtonProps {
     readonly label: string;
@@ -25,11 +26,14 @@ export function ActionButton({
     isLoading = false,
 }: Readonly<ActionButtonProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const isPrimary = variant === "primary";
 
     return (
         <Button
             flex={1}
+            height={layout.controlHeight}
+            px={layout.isTablet ? "$4" : "$3"}
             rounded={ds.radii.md}
             borderWidth={isPrimary ? 0 : 1}
             borderColor={ds.colors.border}
@@ -46,14 +50,18 @@ export function ActionButton({
                     />
                 ) : (
                     <Download
-                        size={16}
+                        size={layout.isTablet ? 18 : 16}
                         color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
                     />
                 )}
                 <Text
                     color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.labelLg.fontSize
+                            : ds.typography.labelMd.fontSize
+                    }
                     letterSpacing={1.2}
                 >
                     {label}

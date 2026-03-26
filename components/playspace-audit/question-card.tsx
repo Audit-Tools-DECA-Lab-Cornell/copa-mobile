@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 import type { InstrumentQuestion, QuestionScale } from "lib/audit/types";
 
 /**
@@ -49,6 +50,7 @@ export function QuestionCard({
     onSelectAnswer,
 }: Readonly<QuestionCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
     const quantityScale = question.scales[0];
     const selectedQuantityKey =
@@ -65,8 +67,8 @@ export function QuestionCard({
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            p="$4"
-            gap="$3.5"
+            p={layout.cardPadding}
+            gap={layout.isTablet ? "$4" : "$3.5"}
             style={{
                 boxShadow: ds.shadows.card,
             }}
@@ -74,13 +76,25 @@ export function QuestionCard({
             <Text
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.titleSm.fontSize}
-                lineHeight={ds.typography.titleSm.lineHeight}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.titleMd.fontSize
+                        : ds.typography.titleSm.fontSize
+                }
+                lineHeight={
+                    layout.isTablet
+                        ? ds.typography.titleMd.lineHeight
+                        : ds.typography.titleSm.lineHeight
+                }
             >
                 <Text
                     color={ds.colors.secondaryForeground}
                     fontFamily={ds.fonts.bodySemiBold}
-                    fontSize={ds.typography.bodyLg.fontSize}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.titleSm.fontSize
+                            : ds.typography.bodyLg.fontSize
+                    }
                 >
                     {`${t("thisPlayspace")}\n`}
                 </Text>
@@ -88,7 +102,11 @@ export function QuestionCard({
                     <Fragment key={`${question.question_key}-seg-${index.toString()}`}>
                         <Text
                             fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
-                            fontSize={ds.typography.titleSm.fontSize}
+                            fontSize={
+                                layout.isTablet
+                                    ? ds.typography.titleMd.fontSize
+                                    : ds.typography.titleSm.fontSize
+                            }
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                         >
                             {segment.text}
@@ -146,20 +164,25 @@ function ScaleSelector({
     onSelectAnswer,
 }: Readonly<ScaleSelectorProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
         <YStack
             rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.input}
-            p="$3"
-            gap="$2.5"
+            p={layout.isTablet ? 16 : 12}
+            gap={layout.isTablet ? "$3" : "$2.5"}
         >
             <YStack gap="$1">
                 <Text
                     color={ds.colors.primary}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleSm.fontSize}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.titleMd.fontSize
+                            : ds.typography.titleSm.fontSize
+                    }
                     textTransform="uppercase"
                     letterSpacing={1.2}
                 >
@@ -168,7 +191,11 @@ function ScaleSelector({
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.bodyMd.fontSize
+                            : ds.typography.bodySm.fontSize
+                    }
                 >
                     {scale.prompt}
                 </Paragraph>
@@ -183,7 +210,7 @@ function ScaleSelector({
                             key={`${scale.key}.${option.key}`}
                             width="48.5%"
                             rounded={ds.radii.md}
-                            height={42}
+                            height={layout.isTablet ? 48 : 42}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
@@ -195,7 +222,11 @@ function ScaleSelector({
                             <Text
                                 color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
+                                fontSize={
+                                    layout.isTablet
+                                        ? ds.typography.bodyMd.fontSize
+                                        : ds.typography.bodySm.fontSize
+                                }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
                             >

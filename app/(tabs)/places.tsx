@@ -27,6 +27,7 @@ import {
     getPlaceStatusLabel,
     type LocalizedPlaceStatus,
 } from "lib/i18n/format";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 
@@ -40,6 +41,7 @@ type PlaceSortOption = "recent" | "progress" | "name";
  */
 export default function PlacesScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["places", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -124,8 +126,8 @@ export default function PlacesScreen() {
         return getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
     const renderSeparator = useCallback(() => {
-        return <YStack height={12} />;
-    }, []);
+        return <YStack height={layout.isTablet ? 16 : 12} />;
+    }, [layout.isTablet]);
     const renderItem = useCallback(
         ({ item: place }: ListRenderItemInfo<AuditorPlace>) => {
             const status = derivePlaceStatus(place.audit_status);
@@ -166,7 +168,7 @@ export default function PlacesScreen() {
                         <XStack>
                             <YStack width={4} style={{ backgroundColor: placeTone.accent }} />
 
-                            <YStack flex={1} p="$4" gap="$3">
+                            <YStack flex={1} p={layout.cardPadding} gap="$3">
                                 <XStack justify="space-between" items="flex-start" gap="$3">
                                     <YStack flex={1} gap="$1">
                                         <Text
@@ -289,7 +291,7 @@ export default function PlacesScreen() {
                 </Pressable>
             );
         },
-        [ds, i18n.language, router, scoreSummaryLabels, t],
+        [ds, i18n.language, layout.cardPadding, router, scoreSummaryLabels, t],
     );
 
     if (isLoading && places.length === 0) {
@@ -314,11 +316,9 @@ export default function PlacesScreen() {
             contentInsetAdjustmentBehavior="automatic"
             maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 92,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 92,
+            })}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <YStack gap="$4">
@@ -326,8 +326,16 @@ export default function PlacesScreen() {
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.displayMd.fontSize}
-                            lineHeight={ds.typography.displayMd.lineHeight}
+                            fontSize={
+                                layout.isTablet
+                                    ? ds.typography.displayLg.fontSize
+                                    : ds.typography.displayMd.fontSize
+                            }
+                            lineHeight={
+                                layout.isTablet
+                                    ? ds.typography.displayLg.lineHeight
+                                    : ds.typography.displayMd.lineHeight
+                            }
                             letterSpacing={-0.7}
                         >
                             {t("title", { ns: "places" })}
@@ -433,7 +441,7 @@ export default function PlacesScreen() {
                     </YStack>
                 </YStack>
             }
-            ListHeaderComponentStyle={{ marginBottom: 24 }}
+            ListHeaderComponentStyle={{ marginBottom: layout.isTablet ? 28 : 24 }}
             ItemSeparatorComponent={renderSeparator}
             ListEmptyComponent={
                 <YStack
@@ -480,6 +488,7 @@ interface SummaryTileProps {
  */
 function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const tileTone = tone ?? {
         accent: ds.colors.primary,
         surface: ds.colors.primarySoft,
@@ -494,12 +503,17 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
             justify="space-between"
-            p="$3"
+            p={layout.isTablet ? 16 : 12}
+            style={{ minHeight: layout.isTablet ? 116 : undefined }}
         >
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.labelXs.fontSize}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.labelSm.fontSize
+                        : ds.typography.labelXs.fontSize
+                }
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -507,7 +521,11 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
             </Paragraph>
             <Text
                 fontFamily={ds.fonts.headingBold}
-                fontSize={ds.typography.metricMd.fontSize}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.metricLg.fontSize
+                        : ds.typography.metricMd.fontSize
+                }
                 mt="$2"
                 style={{ color: tileTone.text }}
             >
@@ -531,6 +549,7 @@ interface ScoreTileProps {
  */
 function ScoreTile({ label, value, valueColor }: Readonly<ScoreTileProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
         <YStack
             flex={1}
@@ -538,12 +557,16 @@ function ScoreTile({ label, value, valueColor }: Readonly<ScoreTileProps>) {
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.input}
-            p="$3"
+            p={layout.isTablet ? 16 : 12}
         >
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.labelSm.fontSize}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.labelMd.fontSize
+                        : ds.typography.labelSm.fontSize
+                }
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -551,7 +574,11 @@ function ScoreTile({ label, value, valueColor }: Readonly<ScoreTileProps>) {
             </Paragraph>
             <Text
                 fontFamily={ds.fonts.headingBold}
-                fontSize={ds.typography.metricSm.fontSize}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.metricMd.fontSize
+                        : ds.typography.metricSm.fontSize
+                }
                 mt="$2"
                 style={{ color: valueColor }}
             >

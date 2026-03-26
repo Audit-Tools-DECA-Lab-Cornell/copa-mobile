@@ -1,5 +1,6 @@
 import { Paragraph, Text, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface StatCardProps {
     readonly label: string;
@@ -16,6 +17,7 @@ interface StatCardProps {
  */
 export function StatCard({ label, value, accentColor, helperText }: Readonly<StatCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
 
     return (
         <YStack
@@ -24,24 +26,40 @@ export function StatCard({ label, value, accentColor, helperText }: Readonly<Sta
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            px="$4"
-            py="$3"
-            gap="$1"
-            style={{ boxShadow: ds.shadows.card }}
+            px={layout.cardPadding}
+            py={layout.isTablet ? 18 : 12}
+            gap={layout.isTablet ? 8 : 4}
+            style={{
+                minHeight: layout.statCardMinHeight,
+                boxShadow: ds.shadows.card,
+            }}
         >
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.labelMd.fontSize}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.labelLg.fontSize
+                        : ds.typography.labelMd.fontSize
+                }
                 textTransform="uppercase"
-                letterSpacing={0.7}
+                letterSpacing={layout.isTablet ? 0.9 : 0.7}
             >
                 {label}
             </Paragraph>
             <Text
                 fontFamily={ds.fonts.headingBold}
-                fontSize={ds.typography.metricXs.fontSize}
-                style={{ color: accentColor }}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.metricSm.fontSize
+                        : ds.typography.metricXs.fontSize
+                }
+                lineHeight={
+                    layout.isTablet
+                        ? ds.typography.metricSm.lineHeight
+                        : ds.typography.metricXs.lineHeight
+                }
+                style={{ color: accentColor, flexShrink: 1 }}
             >
                 {value}
             </Text>
@@ -49,7 +67,16 @@ export function StatCard({ label, value, accentColor, helperText }: Readonly<Sta
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyXs.fontSize}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.bodySm.fontSize
+                            : ds.typography.bodyXs.fontSize
+                    }
+                    lineHeight={
+                        layout.isTablet
+                            ? ds.typography.bodySm.lineHeight
+                            : ds.typography.bodyXs.lineHeight
+                    }
                 >
                     {helperText}
                 </Paragraph>

@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useDesignSystem } from "lib/design-system";
 import { useAuditSync } from "lib/audit/use-audit-sync";
+import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface TabIconProps {
     readonly focused: boolean;
@@ -21,6 +22,7 @@ interface TabIconProps {
 export default function TabLayout() {
     useAuditSync();
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation("common");
 
     return (
@@ -35,12 +37,14 @@ export default function TabLayout() {
                 tabBarStyle: {
                     backgroundColor: ds.colors.overlay,
                     borderTopColor: ds.colors.border,
-                    height: 78,
-                    paddingTop: 8,
-                    paddingBottom: 12,
+                    height: layout.isTablet ? 86 : 78,
+                    paddingTop: layout.isTablet ? 10 : 8,
+                    paddingBottom: layout.isTablet ? 14 : 12,
                 },
                 tabBarLabelStyle: {
-                    fontSize: ds.typography.labelXs.fontSize,
+                    fontSize: layout.isTablet
+                        ? ds.typography.labelSm.fontSize
+                        : ds.typography.labelXs.fontSize,
                     fontFamily: ds.fonts.bodyBold,
                     color: ds.colors.primary,
                     letterSpacing: 1,

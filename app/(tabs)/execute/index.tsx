@@ -12,6 +12,7 @@ import { deriveLocality, matchesPlaceSearch } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem } from "lib/design-system";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
@@ -24,6 +25,7 @@ type ExecuteFilter = "active" | "all";
  */
 export default function ExecuteIndexScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation(["audit", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -92,8 +94,8 @@ export default function ExecuteIndexScreen() {
         return getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
     const renderSeparator = useCallback(() => {
-        return <YStack height={12} />;
-    }, []);
+        return <YStack height={layout.isTablet ? 16 : 12} />;
+    }, [layout.isTablet]);
     const renderItem = useCallback(
         ({ item: place }: ListRenderItemInfo<AuditorPlace>) => {
             const activeSession = hasHydratedCurrentUser
@@ -107,7 +109,7 @@ export default function ExecuteIndexScreen() {
                     borderWidth={1}
                     borderColor={ds.colors.border}
                     bg={ds.colors.surface}
-                    p="$4"
+                    p={layout.cardPadding}
                     gap="$2.5"
                     style={{ boxShadow: ds.shadows.card }}
                 >
@@ -129,7 +131,7 @@ export default function ExecuteIndexScreen() {
                         {deriveLocality(place, t("place.assignedPlace", { ns: "common" }))}
                     </Paragraph>
                     <Button
-                        height={42}
+                        height={layout.isTablet ? 46 : 42}
                         rounded={ds.radii.md}
                         borderWidth={1}
                         borderColor={ds.colors.border}
@@ -156,7 +158,15 @@ export default function ExecuteIndexScreen() {
                 </YStack>
             );
         },
-        [ds, hasHydratedCurrentUser, router, sessionsByPairKey, t],
+        [
+            ds,
+            hasHydratedCurrentUser,
+            layout.cardPadding,
+            layout.isTablet,
+            router,
+            sessionsByPairKey,
+            t,
+        ],
     );
 
     return (
@@ -166,11 +176,9 @@ export default function ExecuteIndexScreen() {
             contentInsetAdjustmentBehavior="automatic"
             maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 92,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 92,
+            })}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <YStack gap="$4">
@@ -178,8 +186,16 @@ export default function ExecuteIndexScreen() {
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.displayMd.fontSize}
-                            lineHeight={ds.typography.displayMd.lineHeight}
+                            fontSize={
+                                layout.isTablet
+                                    ? ds.typography.displayLg.fontSize
+                                    : ds.typography.displayMd.fontSize
+                            }
+                            lineHeight={
+                                layout.isTablet
+                                    ? ds.typography.displayLg.lineHeight
+                                    : ds.typography.displayMd.lineHeight
+                            }
                         >
                             {t("executeLanding.title", { ns: "audit" })}
                         </Text>
@@ -276,7 +292,7 @@ export default function ExecuteIndexScreen() {
                     )}
                 </YStack>
             }
-            ListHeaderComponentStyle={{ marginBottom: 20 }}
+            ListHeaderComponentStyle={{ marginBottom: layout.isTablet ? 24 : 20 }}
             ItemSeparatorComponent={renderSeparator}
             ListEmptyComponent={
                 <YStack
@@ -321,13 +337,14 @@ interface FeaturedPlaceCardProps {
  */
 function FeaturedPlaceCard({ children }: Readonly<FeaturedPlaceCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
         <YStack
             rounded={ds.radii.lg}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            p="$4"
+            p={layout.cardPadding}
             gap="$3"
             style={{ boxShadow: ds.shadows.card }}
         >

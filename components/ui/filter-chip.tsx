@@ -1,5 +1,6 @@
 import { Button, Text } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface FilterChipProps {
     readonly label: string;
@@ -15,11 +16,12 @@ interface FilterChipProps {
  */
 export function FilterChip({ label, isSelected, onPress }: Readonly<FilterChipProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
 
     return (
         <Button
-            height={36}
-            px="$3"
+            height={layout.compactControlHeight}
+            px={layout.isTablet ? "$3.5" : "$3"}
             rounded={ds.radii.full}
             borderWidth={1}
             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
@@ -30,7 +32,11 @@ export function FilterChip({ label, isSelected, onPress }: Readonly<FilterChipPr
             <Text
                 color={isSelected ? ds.colors.primary : ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.labelMd.fontSize}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.labelLg.fontSize
+                        : ds.typography.labelMd.fontSize
+                }
             >
                 {label}
             </Text>

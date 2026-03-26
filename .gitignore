@@ -80,6 +80,7 @@ playspace-deca.json
 .agents
 .worktrees/
 docs/superpowers/
+.superpowers/
 
 # Scripts
 scripts/screenshots/*

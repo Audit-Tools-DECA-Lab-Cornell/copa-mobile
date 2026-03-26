@@ -3,6 +3,7 @@ import { Pressable } from "react-native";
 import { ChevronDown } from "@tamagui/lucide-icons";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface CollapsibleCardProps {
     readonly title: string;
@@ -26,6 +27,7 @@ export function CollapsibleCard({
     children,
 }: Readonly<CollapsibleCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
     return (
@@ -34,8 +36,8 @@ export function CollapsibleCard({
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            p="$4"
-            gap="$3"
+            p={layout.cardPadding}
+            gap={layout.isTablet ? "$4" : "$3"}
             style={{ boxShadow: ds.shadows.card }}
         >
             <Pressable
@@ -49,7 +51,11 @@ export function CollapsibleCard({
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleMd.fontSize}
+                            fontSize={
+                                layout.isTablet
+                                    ? ds.typography.titleLg.fontSize
+                                    : ds.typography.titleMd.fontSize
+                            }
                         >
                             {title}
                         </Text>
@@ -57,14 +63,18 @@ export function CollapsibleCard({
                             <Paragraph
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
+                                fontSize={
+                                    layout.isTablet
+                                        ? ds.typography.bodyMd.fontSize
+                                        : ds.typography.bodySm.fontSize
+                                }
                             >
                                 {subtitle}
                             </Paragraph>
                         )}
                     </YStack>
                     <ChevronDown
-                        size={18}
+                        size={layout.isTablet ? 20 : 18}
                         color={ds.colors.mutedForeground}
                         style={{
                             transform: isExpanded ? [{ rotate: "180deg" }] : [{ rotate: "0deg" }],

@@ -26,6 +26,7 @@ import {
     type MyAccount,
     type MyAuditorProfile,
 } from "lib/audit/profile-api";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import {
     usePreferencesStore,
@@ -89,6 +90,7 @@ function resolveAppLanguage(languageTag: string | undefined): ResolvedAppLanguag
  */
 export default function SettingsScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["settings", "common"]);
     const instrument = useLocalizedInstrument();
@@ -168,19 +170,26 @@ export default function SettingsScreen() {
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 92,
-                gap: 24,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 92,
+                gap: layout.isTablet ? 28 : 24,
+                maxWidth: layout.formMaxWidth,
+            })}
         >
             <YStack gap="$2">
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={ds.typography.displayMd.fontSize}
-                    lineHeight={ds.typography.displayMd.lineHeight}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.displayLg.fontSize
+                            : ds.typography.displayMd.fontSize
+                    }
+                    lineHeight={
+                        layout.isTablet
+                            ? ds.typography.displayLg.lineHeight
+                            : ds.typography.displayMd.lineHeight
+                    }
                 >
                     {t("title", { ns: "settings" })}
                 </Text>
@@ -255,7 +264,7 @@ export default function SettingsScreen() {
                 </Paragraph>
 
                 <Button
-                    height={46}
+                    height={layout.isTablet ? 50 : 46}
                     rounded={ds.radii.md}
                     borderWidth={1}
                     borderColor={ds.colors.danger}
@@ -310,7 +319,7 @@ export default function SettingsScreen() {
                             <Button
                                 key={option.key}
                                 flex={1}
-                                height={56}
+                                height={layout.isTablet ? 64 : 56}
                                 rounded={ds.radii.md}
                                 borderWidth={1}
                                 borderColor={isSelected ? ds.colors.primary : ds.colors.border}
@@ -434,7 +443,7 @@ export default function SettingsScreen() {
                 </YStack>
                 <Button
                     width="100%"
-                    height={52}
+                    height={layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={1}
                     borderColor={isLanguageMenuOpen ? ds.colors.primary : ds.colors.border}
@@ -477,7 +486,7 @@ export default function SettingsScreen() {
                                 <Button
                                     key={option.key}
                                     justify="space-between"
-                                    height={46}
+                                    height={layout.isTablet ? 50 : 46}
                                     rounded={ds.radii.md}
                                     borderWidth={1}
                                     borderColor={isSelected ? ds.colors.primary : "transparent"}
@@ -566,16 +575,16 @@ interface SettingsSkeletonScreenProps {
  * Skeleton version of the settings screen shown while profile data loads.
  */
 function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
+    const layout = useResponsiveLayout();
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 92,
-                gap: 24,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 92,
+                gap: layout.isTablet ? 28 : 24,
+                maxWidth: layout.formMaxWidth,
+            })}
         >
             <YStack gap="$2">
                 <SkeletonBlock ds={ds} width="42%" height={34} rounded={ds.radii.sm} />
@@ -628,13 +637,14 @@ interface SettingsCardSkeletonProps {
  * Placeholder card wrapper that mirrors the spacing of a real settings card.
  */
 function SettingsCardSkeleton({ ds, labelWidth, children }: SettingsCardSkeletonProps) {
+    const layout = useResponsiveLayout();
     return (
         <YStack
             rounded={ds.radii.lg}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            p="$4"
+            p={layout.cardPadding}
             gap="$3"
             style={{ boxShadow: ds.shadows.card }}
         >
@@ -702,13 +712,14 @@ interface SettingsCardProps {
  * Reusable settings section card with a header label and icon.
  */
 function SettingsCard({ ds, label, Icon, children }: SettingsCardProps) {
+    const layout = useResponsiveLayout();
     return (
         <YStack
             rounded={ds.radii.lg}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            p="$4"
+            p={layout.cardPadding}
             gap="$3"
             style={{ boxShadow: ds.shadows.card }}
         >
@@ -785,6 +796,7 @@ function ToggleRow({
     isEnabled,
     onToggle,
 }: ToggleRowProps) {
+    const layout = useResponsiveLayout();
     const { t } = useTranslation("common");
     return (
         <YStack gap="$1.5">
@@ -800,7 +812,7 @@ function ToggleRow({
                     </Text>
                 </XStack>
                 <Button
-                    height={32}
+                    height={layout.isTablet ? 36 : 32}
                     px="$3"
                     rounded={ds.radii.full}
                     borderWidth={1}

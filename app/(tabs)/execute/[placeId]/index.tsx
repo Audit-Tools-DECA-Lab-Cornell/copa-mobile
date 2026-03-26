@@ -13,6 +13,7 @@ import { useNetworkOnline } from "lib/audit/use-network-online";
 import type { ExecutionMode } from "lib/audit/types";
 import { getExecutionModeShortLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import type { TFunction } from "i18next";
@@ -24,6 +25,7 @@ type SectionVisibilityFilter = "all" | "incomplete" | "complete";
  */
 export default function ExecutePlaceScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const navigation = useNavigation();
     const { t } = useTranslation(["audit", "common"]);
@@ -174,19 +176,26 @@ export default function ExecutePlaceScreen() {
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 132,
-                gap: 20,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 132,
+                gap: layout.sectionGap,
+                maxWidth: layout.formMaxWidth,
+            })}
         >
             <YStack gap="$3">
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={ds.typography.displayMd.fontSize}
-                    lineHeight={ds.typography.displayMd.lineHeight}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.displayLg.fontSize
+                            : ds.typography.displayMd.fontSize
+                    }
+                    lineHeight={
+                        layout.isTablet
+                            ? ds.typography.displayLg.lineHeight
+                            : ds.typography.displayMd.lineHeight
+                    }
                 >
                     {auditSession.place_name}
                 </Text>
@@ -207,7 +216,7 @@ export default function ExecutePlaceScreen() {
             />
 
             <Button
-                height={46}
+                height={layout.isTablet ? 50 : 46}
                 rounded={ds.radii.md}
                 borderWidth={1}
                 borderColor={ds.colors.border}
@@ -256,7 +265,7 @@ export default function ExecutePlaceScreen() {
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.surface}
-                p="$4"
+                p={layout.cardPadding}
                 gap="$3"
                 style={{
                     boxShadow: ds.shadows.card,
@@ -357,7 +366,7 @@ export default function ExecutePlaceScreen() {
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.surface}
-                p="$4"
+                p={layout.cardPadding}
                 gap="$3"
                 style={{
                     boxShadow: ds.shadows.card,
@@ -396,7 +405,7 @@ export default function ExecutePlaceScreen() {
                     {t("preAudit.description", { ns: "audit" })}
                 </Paragraph>
                 <Button
-                    height={48}
+                    height={layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={1}
                     borderColor={ds.colors.border}
@@ -476,7 +485,7 @@ export default function ExecutePlaceScreen() {
                                     borderWidth={1}
                                     borderColor={ds.colors.border}
                                     bg={ds.colors.surface}
-                                    p="$4"
+                                    p={layout.cardPadding}
                                     gap="$3"
                                     style={{
                                         boxShadow: ds.shadows.card,
@@ -532,7 +541,7 @@ export default function ExecutePlaceScreen() {
                                         </XStack>
                                     </XStack>
                                     <Button
-                                        height={46}
+                                        height={layout.isTablet ? 50 : 46}
                                         rounded={ds.radii.md}
                                         borderWidth={1}
                                         borderColor={
@@ -571,7 +580,7 @@ export default function ExecutePlaceScreen() {
 
             {auditSession.progress.ready_to_submit ? (
                 <Button
-                    height={52}
+                    height={layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={0}
                     bg={ds.colors.primary}
@@ -627,6 +636,7 @@ function AuditSyncStatusCard({
     lastSyncError,
 }: Readonly<AuditSyncStatusCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
     const hasSyncFailure = lastSyncError !== null;
     const shouldShowCard = hasPendingLocalChanges || hasSyncFailure;
@@ -657,7 +667,7 @@ function AuditSyncStatusCard({
             borderWidth={1}
             borderColor={tone}
             bg={ds.colors.surface}
-            p="$4"
+            p={layout.cardPadding}
             gap="$2"
             style={{ boxShadow: ds.shadows.card }}
         >
@@ -702,14 +712,17 @@ function CenteredMessageCard({
     onAction,
 }: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
         <YStack
             flex={1}
             justify="center"
-            px={ds.spacing.screenPaddingHorizontal}
+            px={layout.screenPaddingHorizontal}
             bg={ds.colors.background}
         >
             <YStack
+                width="100%"
+                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
                 rounded={ds.radii.lg}
                 borderWidth={1}
                 borderColor={ds.colors.border}

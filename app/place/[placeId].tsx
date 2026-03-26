@@ -17,6 +17,7 @@ import type { AuditorPlace } from "lib/audit/places-api";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 
@@ -143,6 +144,7 @@ function PlaceDetailContent({
     language,
 }: Readonly<PlaceDetailContentProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation(["places", "common", "reports"]);
     const status = derivePlaceStatus(place.audit_status);
     const statusTone = getPlaceStatusTone(status, ds.colors);
@@ -156,12 +158,10 @@ function PlaceDetailContent({
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 112,
-                gap: 20,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 112,
+                gap: layout.sectionGap,
+            })}
         >
             <YStack gap="$3">
                 <XStack justify="space-between" items="flex-start" gap="$3">
@@ -169,8 +169,16 @@ function PlaceDetailContent({
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.metricMd.fontSize}
-                            lineHeight={ds.typography.metricMd.lineHeight}
+                            fontSize={
+                                layout.isTablet
+                                    ? ds.typography.metricLg.fontSize
+                                    : ds.typography.metricMd.fontSize
+                            }
+                            lineHeight={
+                                layout.isTablet
+                                    ? ds.typography.metricLg.lineHeight
+                                    : ds.typography.metricMd.lineHeight
+                            }
                         >
                             {place.place_name}
                         </Text>
@@ -201,7 +209,7 @@ function PlaceDetailContent({
                 </XStack>
 
                 <XStack items="center" gap="$2">
-                    <MapPin size={16} color={ds.colors.mutedForeground} />
+                    <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
@@ -243,7 +251,7 @@ function PlaceDetailContent({
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.surface}
-                p="$4"
+                p={layout.cardPadding}
                 gap="$3"
                 style={{ boxShadow: ds.shadows.card }}
             >
@@ -295,7 +303,7 @@ function PlaceDetailContent({
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.surface}
-                p="$4"
+                p={layout.cardPadding}
                 gap="$2"
                 style={{ boxShadow: ds.shadows.card }}
             >
@@ -314,7 +322,7 @@ function PlaceDetailContent({
                     {t("detail.openAuditHelper", { ns: "places" })}
                 </Paragraph>
                 <Button
-                    height={48}
+                    height={layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={0}
                     bg={ds.colors.primary}
@@ -336,7 +344,7 @@ function PlaceDetailContent({
                 </Button>
                 {onOpenReport === undefined ? null : (
                     <Button
-                        height={48}
+                        height={layout.controlHeight}
                         rounded={ds.radii.md}
                         borderWidth={1}
                         borderColor={ds.colors.border}
@@ -378,9 +386,17 @@ interface DetailStateCardProps {
  */
 function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailStateCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
-        <YStack flex={1} justify="center" px={ds.spacing.screenPaddingHorizontal}>
+        <YStack
+            flex={1}
+            justify="center"
+            px={layout.screenPaddingHorizontal}
+            bg={ds.colors.background}
+        >
             <YStack
+                width="100%"
+                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
                 rounded={ds.radii.lg}
                 borderWidth={1}
                 borderColor={ds.colors.border}

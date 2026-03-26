@@ -10,6 +10,7 @@ import { getPreAuditValues } from "lib/audit/selectors";
 import type { PreAuditQuestion } from "lib/audit/types";
 import { formatLocalizedDate, formatLocalizedTime } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -23,6 +24,7 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
  */
 export default function PreAuditScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["audit", "common"]);
     const instrument = useLocalizedInstrument();
@@ -162,19 +164,26 @@ export default function PreAuditScreen() {
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 132,
-                gap: 20,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 132,
+                gap: layout.sectionGap,
+                maxWidth: layout.formMaxWidth,
+            })}
         >
             <YStack gap="$3">
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={ds.typography.displayMd.fontSize}
-                    lineHeight={ds.typography.displayMd.lineHeight}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.displayLg.fontSize
+                            : ds.typography.displayMd.fontSize
+                    }
+                    lineHeight={
+                        layout.isTablet
+                            ? ds.typography.displayLg.lineHeight
+                            : ds.typography.displayMd.lineHeight
+                    }
                 >
                     {t("preAudit.title", { ns: "audit" })}
                 </Text>
@@ -231,7 +240,7 @@ export default function PreAuditScreen() {
             )}
 
             <Button
-                height={52}
+                height={layout.controlHeight}
                 rounded={ds.radii.md}
                 borderWidth={0}
                 bg={ds.colors.primary}
@@ -303,6 +312,7 @@ function ChoiceFieldCard({
     onToggleSelect,
 }: Readonly<ChoiceFieldCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const selectedValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
 
     return (
@@ -315,7 +325,7 @@ function ChoiceFieldCard({
                         <Button
                             key={`${question.key}.${option.key}`}
                             width="48.5%"
-                            height={42}
+                            height={layout.isTablet ? 48 : 42}
                             rounded={ds.radii.md}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
@@ -332,7 +342,11 @@ function ChoiceFieldCard({
                             <Text
                                 color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
+                                fontSize={
+                                    layout.isTablet
+                                        ? ds.typography.bodyMd.fontSize
+                                        : ds.typography.bodySm.fontSize
+                                }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
                             >
@@ -358,13 +372,14 @@ interface FieldCardProps {
  */
 function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
         <YStack
             rounded={ds.radii.lg}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            p="$4"
+            p={layout.cardPadding}
             gap="$3"
             style={{ boxShadow: ds.shadows.card }}
         >
@@ -372,7 +387,11 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.titleLg.fontSize
+                            : ds.typography.titleMd.fontSize
+                    }
                 >
                     {title}
                 </Text>
@@ -380,7 +399,11 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodySm.fontSize}
+                        fontSize={
+                            layout.isTablet
+                                ? ds.typography.bodyMd.fontSize
+                                : ds.typography.bodySm.fontSize
+                        }
                     >
                         {description}
                     </Paragraph>
@@ -409,14 +432,17 @@ function CenteredMessageCard({
     onAction,
 }: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     return (
         <YStack
             flex={1}
             justify="center"
-            px={ds.spacing.screenPaddingHorizontal}
+            px={layout.screenPaddingHorizontal}
             bg={ds.colors.background}
         >
             <YStack
+                width="100%"
+                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
                 rounded={ds.radii.lg}
                 borderWidth={1}
                 borderColor={ds.colors.border}

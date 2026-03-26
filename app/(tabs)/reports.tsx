@@ -36,6 +36,7 @@ import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
@@ -49,6 +50,7 @@ type ReportSortOption = "score" | "recent" | "name";
  */
 export default function ReportsScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["reports", "common"]);
     const instrument = useLocalizedInstrument();
@@ -303,8 +305,8 @@ export default function ReportsScreen() {
         return getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
     const renderSeparator = useCallback(() => {
-        return <YStack height={12} />;
-    }, []);
+        return <YStack height={layout.isTablet ? 16 : 12} />;
+    }, [layout.isTablet]);
     const renderItem = useCallback(
         ({ item: place }: ListRenderItemInfo<AuditorPlace>) => {
             const status = derivePlaceStatus(place.audit_status);
@@ -338,7 +340,7 @@ export default function ReportsScreen() {
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
-                        p="$4"
+                        p={layout.cardPadding}
                         gap="$3"
                         style={{ boxShadow: ds.shadows.card }}
                     >
@@ -466,7 +468,15 @@ export default function ReportsScreen() {
                 </Pressable>
             );
         },
-        [ds, i18n.language, maxCombinedConstructScore, router, scoreSummaryLabels, t],
+        [
+            ds,
+            i18n.language,
+            layout.cardPadding,
+            maxCombinedConstructScore,
+            router,
+            scoreSummaryLabels,
+            t,
+        ],
     );
 
     return (
@@ -476,11 +486,9 @@ export default function ReportsScreen() {
             contentInsetAdjustmentBehavior="automatic"
             maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 92,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 92,
+            })}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <YStack gap="$4">
@@ -488,8 +496,16 @@ export default function ReportsScreen() {
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.displayMd.fontSize}
-                            lineHeight={ds.typography.displayMd.lineHeight}
+                            fontSize={
+                                layout.isTablet
+                                    ? ds.typography.displayLg.fontSize
+                                    : ds.typography.displayMd.fontSize
+                            }
+                            lineHeight={
+                                layout.isTablet
+                                    ? ds.typography.displayLg.lineHeight
+                                    : ds.typography.displayMd.lineHeight
+                            }
                             letterSpacing={-0.7}
                         >
                             {t("title")}
@@ -611,7 +627,7 @@ export default function ReportsScreen() {
                     </YStack>
                 </YStack>
             }
-            ListHeaderComponentStyle={{ marginBottom: 24 }}
+            ListHeaderComponentStyle={{ marginBottom: layout.isTablet ? 28 : 24 }}
             ItemSeparatorComponent={renderSeparator}
             ListEmptyComponent={
                 <YStack
@@ -642,7 +658,7 @@ export default function ReportsScreen() {
                         borderWidth={1}
                         borderColor={ds.colors.warning}
                         bg={ds.colors.warningSoft}
-                        p="$4"
+                        p={layout.cardPadding}
                         gap="$3"
                     >
                         <XStack items="center" gap="$2" width="100%">
@@ -793,7 +809,7 @@ export default function ReportsScreen() {
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
-                        p="$4"
+                        p={layout.cardPadding}
                         gap="$4"
                         style={{ boxShadow: ds.shadows.card }}
                     >
@@ -837,7 +853,7 @@ export default function ReportsScreen() {
                     </YStack>
                 </YStack>
             }
-            ListFooterComponentStyle={{ marginTop: 24 }}
+            ListFooterComponentStyle={{ marginTop: layout.isTablet ? 28 : 24 }}
             renderItem={renderItem}
         />
     );

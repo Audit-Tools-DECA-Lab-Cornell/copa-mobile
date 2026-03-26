@@ -1,6 +1,7 @@
 import { Search } from "@tamagui/lucide-icons";
 import { Input, XStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface SearchInputProps {
     readonly value: string;
@@ -16,19 +17,20 @@ interface SearchInputProps {
  */
 export function SearchInput({ value, onChangeText, placeholder }: Readonly<SearchInputProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
 
     return (
         <XStack
             items="center"
             gap="$3"
             px="$4"
-            height={52}
+            height={layout.controlHeight}
             rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.input}
         >
-            <Search size={16} color={ds.colors.mutedForeground} />
+            <Search size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
             <Input
                 unstyled
                 flex={1}
@@ -40,7 +42,9 @@ export function SearchInput({ value, onChangeText, placeholder }: Readonly<Searc
                 placeholderTextColor="$placeholderColor"
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodyMd.fontSize}
+                fontSize={
+                    layout.isTablet ? ds.typography.bodyLg.fontSize : ds.typography.bodyMd.fontSize
+                }
             />
         </XStack>
     );

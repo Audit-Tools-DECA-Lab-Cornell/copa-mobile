@@ -20,6 +20,7 @@ import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-hel
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -64,6 +65,7 @@ function deriveLocality(place: AuditorPlace, fallbackLabel: string): string {
  */
 export default function DashboardScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["dashboard", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -171,19 +173,17 @@ export default function DashboardScreen() {
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={{
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
-                paddingTop: ds.spacing.screenPaddingVertical,
-                paddingBottom: 92,
-                gap: 28,
-            }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 92,
+                gap: layout.isTablet ? 32 : 28,
+            })}
         >
             <YStack gap="$6">
                 <XStack justify="space-between" items="center" gap="$3">
                     <XStack items="center" gap="$3" flex={1}>
                         <YStack
-                            width={44}
-                            height={44}
+                            width={layout.isTablet ? 52 : 44}
+                            height={layout.isTablet ? 52 : 44}
                             items="center"
                             justify="center"
                             rounded={ds.radii.md}
@@ -191,7 +191,7 @@ export default function DashboardScreen() {
                             borderColor={ds.colors.border}
                             bg={ds.colors.surfaceMuted}
                         >
-                            <UserRound size={20} color={ds.colors.primary} />
+                            <UserRound size={layout.isTablet ? 22 : 20} color={ds.colors.primary} />
                         </YStack>
                         <YStack flex={1} gap="$0.5">
                             <Paragraph
@@ -215,8 +215,8 @@ export default function DashboardScreen() {
 
                     <XStack gap="$2">
                         <YStack
-                            width={42}
-                            height={42}
+                            width={layout.isTablet ? 46 : 42}
+                            height={layout.isTablet ? 46 : 42}
                             items="center"
                             justify="center"
                             rounded={ds.radii.full}
@@ -224,11 +224,11 @@ export default function DashboardScreen() {
                             borderColor={ds.colors.border}
                             bg={ds.colors.surfaceMuted}
                         >
-                            <Bell size={18} color={ds.colors.foreground} />
+                            <Bell size={layout.isTablet ? 20 : 18} color={ds.colors.foreground} />
                         </YStack>
                         <Button
-                            width={42}
-                            height={42}
+                            width={layout.isTablet ? 46 : 42}
+                            height={layout.isTablet ? 46 : 42}
                             p={0}
                             rounded={ds.radii.full}
                             borderWidth={1}
@@ -237,7 +237,7 @@ export default function DashboardScreen() {
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={logout}
                         >
-                            <LogOut size={16} color={ds.colors.foreground} />
+                            <LogOut size={layout.isTablet ? 18 : 16} color={ds.colors.foreground} />
                         </Button>
                     </XStack>
                 </XStack>
@@ -260,13 +260,13 @@ export default function DashboardScreen() {
                 <XStack gap="$3">
                     <YStack
                         flex={1}
-                        height={128}
+                        height={layout.isTablet ? 144 : 128}
                         justify="space-between"
                         rounded={ds.radii.lg}
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
-                        p="$4"
+                        p={layout.cardPadding}
                         style={{
                             boxShadow: ds.shadows.card,
                         }}
@@ -290,18 +290,21 @@ export default function DashboardScreen() {
                                 {t("status.assigned", { ns: "common" })}
                             </Paragraph>
                         </YStack>
-                        <MapPinned size={28} color="rgba(255, 107, 0, 0.25)" />
+                        <MapPinned
+                            size={layout.isTablet ? 32 : 28}
+                            color="rgba(255, 107, 0, 0.25)"
+                        />
                     </YStack>
 
                     <YStack
                         flex={1}
-                        height={128}
+                        height={layout.isTablet ? 144 : 128}
                         justify="space-between"
                         rounded={ds.radii.lg}
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
-                        p="$4"
+                        p={layout.cardPadding}
                         style={{
                             boxShadow: ds.shadows.card,
                         }}
@@ -325,7 +328,10 @@ export default function DashboardScreen() {
                                 {t("status.completed", { ns: "common" })}
                             </Paragraph>
                         </YStack>
-                        <ShieldCheck size={28} color="rgba(16, 185, 129, 0.28)" />
+                        <ShieldCheck
+                            size={layout.isTablet ? 32 : 28}
+                            color="rgba(16, 185, 129, 0.28)"
+                        />
                     </YStack>
                 </XStack>
             </YStack>
@@ -431,7 +437,7 @@ export default function DashboardScreen() {
                         <XStack
                             items="center"
                             gap="$4"
-                            p="$4"
+                            p={layout.cardPadding}
                             borderTopWidth={1}
                             borderTopColor={ds.colors.border}
                         >
@@ -464,7 +470,7 @@ export default function DashboardScreen() {
                                 </Text>
                             </YStack>
                             <Button
-                                height={40}
+                                height={layout.isTablet ? 46 : 40}
                                 px="$4"
                                 rounded={ds.radii.sm}
                                 borderWidth={0}
@@ -497,7 +503,7 @@ export default function DashboardScreen() {
             <XStack gap="$3">
                 <Button
                     flex={1}
-                    height={48}
+                    height={layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={1}
                     borderColor={ds.colors.border}
@@ -523,7 +529,7 @@ export default function DashboardScreen() {
 
                 <Button
                     flex={1}
-                    height={48}
+                    height={layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={0}
                     bg={ds.colors.primary}
@@ -548,7 +554,7 @@ export default function DashboardScreen() {
 
                 <Button
                     flex={1}
-                    height={48}
+                    height={layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={1}
                     borderColor={ds.colors.border}
@@ -588,7 +594,7 @@ export default function DashboardScreen() {
                     borderWidth={1}
                     borderColor={ds.colors.border}
                     rounded={ds.radii.lg}
-                    p="$4"
+                    p={layout.cardPadding}
                     gap="$3"
                     bg={ds.colors.surfaceMuted}
                     style={{
@@ -597,14 +603,14 @@ export default function DashboardScreen() {
                 >
                     <XStack items="center" gap="$3">
                         <YStack
-                            width={44}
-                            height={44}
+                            width={layout.isTablet ? 52 : 44}
+                            height={layout.isTablet ? 52 : 44}
                             items="center"
                             justify="center"
                             rounded={ds.radii.md}
                             bg={ds.colors.successSoft}
                         >
-                            <WifiOff size={22} color={ds.colors.success} />
+                            <WifiOff size={layout.isTablet ? 24 : 22} color={ds.colors.success} />
                         </YStack>
                         <YStack flex={1} gap="$1">
                             <Text
@@ -661,7 +667,7 @@ export default function DashboardScreen() {
                                 borderColor={ds.colors.border}
                                 bg={ds.colors.surface}
                                 justify="space-between"
-                                p="$2.5"
+                                p={layout.isTablet ? 16 : 10}
                             >
                                 <Paragraph
                                     color={ds.colors.mutedForeground}
@@ -736,7 +742,7 @@ export default function DashboardScreen() {
                                 borderWidth={1}
                                 borderColor={ds.colors.border}
                                 bg={ds.colors.surface}
-                                p="$4"
+                                p={layout.cardPadding}
                                 gap="$3"
                                 style={{
                                     boxShadow: ds.shadows.card,
@@ -826,7 +832,7 @@ export default function DashboardScreen() {
                                         </Paragraph>
                                     </XStack>
                                     <Button
-                                        height={32}
+                                        height={layout.isTablet ? 38 : 32}
                                         px="$4"
                                         rounded={ds.radii.sm}
                                         borderWidth={0}
