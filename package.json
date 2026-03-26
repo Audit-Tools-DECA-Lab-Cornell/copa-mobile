@@ -4,6 +4,7 @@
     "private": true,
     "main": "expo-router/entry",
     "scripts": {
+        "dev": "bunx expo start --dev-client --tunnel",
         "upgrade:tamagui": "bunx npm-check-updates -u '*tamagui*' '@tamagui/*' && bun install",
         "start": "bunx expo start -c",
         "android": "expo run:android",
@@ -52,6 +53,7 @@
         "expo-background-task": "~55.0.10",
         "expo-build-properties": "~55.0.10",
         "expo-constants": "~55.0.9",
+        "expo-dev-client": "~55.0.18",
         "expo-file-system": "~55.0.11",
         "expo-font": "~55.0.4",
         "expo-linking": "~55.0.8",

@@ -35,6 +35,8 @@
             "favicon": "./assets/images/favicon.png"
         },
         "plugins": [
+            "./plugins/withFmtFix",
+            "./plugins/withExpoProjectRootFix",
             "expo-router",
             "expo-font",
             [
