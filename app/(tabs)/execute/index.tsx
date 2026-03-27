@@ -12,6 +12,7 @@ import { deriveLocality, matchesPlaceSearch } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem } from "lib/design-system";
+import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -89,85 +90,240 @@ export default function ExecuteIndexScreen() {
                       getProjectPlaceKey(featuredPlace.project_id, featuredPlace.place_id)
                   );
               });
+    const tabletRows = useMemo(() => {
+        return buildPairGridRows(listPlaces, (place) => {
+            return getProjectPlaceKey(place.project_id, place.place_id);
+        });
+    }, [listPlaces]);
     const hasActiveFilters = searchQuery.trim().length > 0 || executeFilter !== "active";
     const keyExtractor = useCallback((item: AuditorPlace) => {
         return getProjectPlaceKey(item.project_id, item.place_id);
+    }, []);
+    const tabletRowKeyExtractor = useCallback((item: PairGridRow<AuditorPlace>) => {
+        return item.id;
     }, []);
     const renderSeparator = useCallback(() => {
         return <YStack height={layout.isTablet ? 16 : 12} />;
     }, [layout.isTablet]);
     const renderItem = useCallback(
         ({ item: place }: ListRenderItemInfo<AuditorPlace>) => {
-            const activeSession = hasHydratedCurrentUser
-                ? sessionsByPairKey[getProjectPlaceKey(place.project_id, place.place_id)]
-                : undefined;
-            const hasActiveSession = activeSession !== undefined;
-
             return (
-                <YStack
-                    rounded={ds.radii.lg}
-                    borderWidth={1}
-                    borderColor={ds.colors.border}
-                    bg={ds.colors.surface}
-                    p={layout.cardPadding}
-                    gap="$2.5"
-                    style={{ boxShadow: ds.shadows.card }}
-                >
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleMd.fontSize}
-                    >
-                        {place.place_name}
-                    </Text>
-                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                        {place.project_name}
-                    </Paragraph>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodySm.fontSize}
-                    >
-                        {deriveLocality(place, t("place.assignedPlace", { ns: "common" }))}
-                    </Paragraph>
-                    <Button
-                        height={layout.isTablet ? 46 : 42}
-                        rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.input}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                <ExecuteQueueCard
+                    place={place}
+                    hasHydratedCurrentUser={hasHydratedCurrentUser}
+                    sessionsByPairKey={sessionsByPairKey}
+                    onPress={() => {
+                        router.push(
+                            `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                        );
+                    }}
+                />
+            );
+        },
+        [hasHydratedCurrentUser, router, sessionsByPairKey],
+    );
+    const renderTabletRow = useCallback(
+        ({ item }: ListRenderItemInfo<PairGridRow<AuditorPlace>>) => {
+            const rightPlace = item.right;
+
+            if (rightPlace === null) {
+                return (
+                    <ExecuteQueueCard
+                        place={item.left}
+                        hasHydratedCurrentUser={hasHydratedCurrentUser}
+                        sessionsByPairKey={sessionsByPairKey}
                         onPress={() => {
                             router.push(
-                                `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                                `/(tabs)/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
                             );
                         }}
-                    >
+                    />
+                );
+            }
+
+            return (
+                <XStack gap="$3" items="stretch">
+                    <ExecuteQueueCard
+                        place={item.left}
+                        hasHydratedCurrentUser={hasHydratedCurrentUser}
+                        sessionsByPairKey={sessionsByPairKey}
+                        onPress={() => {
+                            router.push(
+                                `/(tabs)/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
+                            );
+                        }}
+                    />
+                    <ExecuteQueueCard
+                        place={rightPlace}
+                        hasHydratedCurrentUser={hasHydratedCurrentUser}
+                        sessionsByPairKey={sessionsByPairKey}
+                        onPress={() => {
+                            router.push(
+                                `/(tabs)/execute/${rightPlace.place_id}?projectId=${encodeURIComponent(rightPlace.project_id)}`,
+                            );
+                        }}
+                    />
+                </XStack>
+            );
+        },
+        [hasHydratedCurrentUser, router, sessionsByPairKey],
+    );
+
+    const headerComponent = (
+        <YStack gap="$4">
+            <YStack gap="$3">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.headingBold}
+                    fontSize={
+                        layout.isTablet
+                            ? ds.typography.displayLg.fontSize
+                            : ds.typography.displayMd.fontSize
+                    }
+                    lineHeight={
+                        layout.isTablet
+                            ? ds.typography.displayLg.lineHeight
+                            : ds.typography.displayMd.lineHeight
+                    }
+                >
+                    {t("executeLanding.title", { ns: "audit" })}
+                </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
+                >
+                    {t("executeLanding.subtitle", { ns: "audit" })}
+                </Paragraph>
+            </YStack>
+
+            <SearchInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder={t("executeLanding.searchPlaceholder", { ns: "audit" })}
+            />
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <XStack gap="$2">
+                    <FilterChip
+                        label={t("filters.active", { ns: "common" })}
+                        isSelected={executeFilter === "active"}
+                        onPress={() => {
+                            setExecuteFilter("active");
+                        }}
+                    />
+                    <FilterChip
+                        label={t("filters.all", { ns: "common" })}
+                        isSelected={executeFilter === "all"}
+                        onPress={() => {
+                            setExecuteFilter("all");
+                        }}
+                    />
+                </XStack>
+            </ScrollView>
+
+            {featuredPlace === undefined ? null : (
+                <FeaturedPlaceCard>
+                    <XStack items="center" gap="$2">
+                        <ClipboardCheck size={16} color={ds.colors.primary} />
                         <Text
-                            color={ds.colors.foreground}
+                            color={ds.colors.primary}
                             fontFamily={ds.fonts.bodyBold}
                             fontSize={ds.typography.labelMd.fontSize}
                             textTransform="uppercase"
                             letterSpacing={1.2}
                         >
-                            {hasActiveSession
-                                ? t("resumeAudit", { ns: "audit" })
-                                : t("startAudit", { ns: "audit" })}
+                            {t("executeLanding.continueSelectedPlace", { ns: "audit" })}
                         </Text>
+                    </XStack>
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={ds.typography.titleLg.fontSize}
+                    >
+                        {featuredPlace.place_name}
+                    </Text>
+
+                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
+                        {deriveLocality(featuredPlace, t("place.assignedPlace", { ns: "common" }))}
+                    </Paragraph>
+                    <Button
+                        height={layout.isTablet ? layout.buttonHeight : 48}
+                        rounded={ds.radii.md}
+                        borderWidth={0}
+                        bg={ds.colors.primary}
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={() => {
+                            router.push(
+                                `/(tabs)/execute/${featuredPlace.place_id}?projectId=${encodeURIComponent(featuredPlace.project_id)}`,
+                            );
+                        }}
+                    >
+                        <XStack items="center" gap="$2">
+                            <Text
+                                color={ds.colors.primaryForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelLg.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.2}
+                            >
+                                {t("executeLanding.openSelectedAudit", { ns: "audit" })}
+                            </Text>
+                            <ArrowRight size={16} color={ds.colors.primaryForeground} />
+                        </XStack>
                     </Button>
-                </YStack>
-            );
-        },
-        [
-            ds,
-            hasHydratedCurrentUser,
-            layout.cardPadding,
-            layout.isTablet,
-            router,
-            sessionsByPairKey,
-            t,
-        ],
+                </FeaturedPlaceCard>
+            )}
+        </YStack>
     );
+
+    const emptyComponent = (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p="$4"
+            gap="$2"
+            style={{ boxShadow: ds.shadows.card }}
+        >
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.titleLg.fontSize}
+            >
+                {hasActiveFilters
+                    ? t("executeLanding.emptyTitle", { ns: "audit" })
+                    : t("executeLanding.title", { ns: "audit" })}
+            </Text>
+            <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
+                {hasActiveFilters
+                    ? t("executeLanding.emptyMessage", { ns: "audit" })
+                    : t("executeLanding.subtitle", { ns: "audit" })}
+            </Paragraph>
+        </YStack>
+    );
+
+    if (layout.isTablet) {
+        return (
+            <FlashList<PairGridRow<AuditorPlace>>
+                data={tabletRows}
+                keyExtractor={tabletRowKeyExtractor}
+                contentInsetAdjustmentBehavior="automatic"
+                maintainVisibleContentPosition={{ disabled: true }}
+                style={{ backgroundColor: ds.colors.background }}
+                contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                    bottomPadding: 92,
+                })}
+                showsVerticalScrollIndicator={false}
+                ListHeaderComponent={headerComponent}
+                ListHeaderComponentStyle={{ marginBottom: 24 }}
+                ItemSeparatorComponent={renderSeparator}
+                ListEmptyComponent={emptyComponent}
+                renderItem={renderTabletRow}
+            />
+        );
+    }
 
     return (
         <FlashList<AuditorPlace>
@@ -180,148 +336,102 @@ export default function ExecuteIndexScreen() {
                 bottomPadding: 92,
             })}
             showsVerticalScrollIndicator={false}
-            ListHeaderComponent={
-                <YStack gap="$4">
-                    <YStack gap="$3">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={
-                                layout.isTablet
-                                    ? ds.typography.displayLg.fontSize
-                                    : ds.typography.displayMd.fontSize
-                            }
-                            lineHeight={
-                                layout.isTablet
-                                    ? ds.typography.displayLg.lineHeight
-                                    : ds.typography.displayMd.lineHeight
-                            }
-                        >
-                            {t("executeLanding.title", { ns: "audit" })}
-                        </Text>
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyLg.fontSize}
-                        >
-                            {t("executeLanding.subtitle", { ns: "audit" })}
-                        </Paragraph>
-                    </YStack>
-
-                    <SearchInput
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        placeholder={t("executeLanding.searchPlaceholder", { ns: "audit" })}
-                    />
-
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <XStack gap="$2">
-                            <FilterChip
-                                label={t("filters.active", { ns: "common" })}
-                                isSelected={executeFilter === "active"}
-                                onPress={() => {
-                                    setExecuteFilter("active");
-                                }}
-                            />
-                            <FilterChip
-                                label={t("filters.all", { ns: "common" })}
-                                isSelected={executeFilter === "all"}
-                                onPress={() => {
-                                    setExecuteFilter("all");
-                                }}
-                            />
-                        </XStack>
-                    </ScrollView>
-
-                    {featuredPlace === undefined ? null : (
-                        <FeaturedPlaceCard>
-                            <XStack items="center" gap="$2">
-                                <ClipboardCheck size={16} color={ds.colors.primary} />
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelMd.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.2}
-                                >
-                                    {t("executeLanding.continueSelectedPlace", { ns: "audit" })}
-                                </Text>
-                            </XStack>
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.titleLg.fontSize}
-                            >
-                                {featuredPlace.place_name}
-                            </Text>
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                            >
-                                {deriveLocality(
-                                    featuredPlace,
-                                    t("place.assignedPlace", { ns: "common" }),
-                                )}
-                            </Paragraph>
-                            <Button
-                                height={48}
-                                rounded={ds.radii.md}
-                                borderWidth={0}
-                                bg={ds.colors.primary}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={() => {
-                                    router.push(
-                                        `/(tabs)/execute/${featuredPlace.place_id}?projectId=${encodeURIComponent(featuredPlace.project_id)}`,
-                                    );
-                                }}
-                            >
-                                <XStack items="center" gap="$2">
-                                    <Text
-                                        color={ds.colors.primaryForeground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.labelLg.fontSize}
-                                        textTransform="uppercase"
-                                        letterSpacing={1.2}
-                                    >
-                                        {t("executeLanding.openSelectedAudit", { ns: "audit" })}
-                                    </Text>
-                                    <ArrowRight size={16} color={ds.colors.primaryForeground} />
-                                </XStack>
-                            </Button>
-                        </FeaturedPlaceCard>
-                    )}
-                </YStack>
-            }
-            ListHeaderComponentStyle={{ marginBottom: layout.isTablet ? 24 : 20 }}
+            ListHeaderComponent={headerComponent}
+            ListHeaderComponentStyle={{ marginBottom: 20 }}
             ItemSeparatorComponent={renderSeparator}
-            ListEmptyComponent={
-                <YStack
-                    rounded={ds.radii.lg}
-                    borderWidth={1}
-                    borderColor={ds.colors.border}
-                    bg={ds.colors.surface}
-                    p="$4"
-                    gap="$2"
-                    style={{ boxShadow: ds.shadows.card }}
-                >
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleLg.fontSize}
-                    >
-                        {hasActiveFilters
-                            ? t("executeLanding.emptyTitle", { ns: "audit" })
-                            : t("executeLanding.title", { ns: "audit" })}
-                    </Text>
-                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                        {hasActiveFilters
-                            ? t("executeLanding.emptyMessage", { ns: "audit" })
-                            : t("executeLanding.subtitle", { ns: "audit" })}
-                    </Paragraph>
-                </YStack>
-            }
+            ListEmptyComponent={emptyComponent}
             renderItem={renderItem}
         />
+    );
+}
+
+interface ExecuteQueueCardProps {
+    readonly place: AuditorPlace;
+    readonly hasHydratedCurrentUser: boolean;
+    readonly sessionsByPairKey: Record<string, unknown>;
+    readonly onPress: () => void;
+}
+
+function ExecuteQueueCard({
+    place,
+    hasHydratedCurrentUser,
+    sessionsByPairKey,
+    onPress,
+}: Readonly<ExecuteQueueCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["audit", "common"]);
+    const activeSession = hasHydratedCurrentUser
+        ? sessionsByPairKey[getProjectPlaceKey(place.project_id, place.place_id)]
+        : undefined;
+    const hasActiveSession = activeSession !== undefined;
+
+    return (
+        <YStack
+            flex={1}
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$3.5"
+            justify="space-between"
+            style={{
+                minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
+                boxShadow: ds.shadows.card,
+            }}
+        >
+            <YStack gap="$2.5">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.headingBold}
+                    fontSize={
+                        layout.isWideTablet
+                            ? ds.typography.titleLg.fontSize
+                            : ds.typography.titleMd.fontSize
+                    }
+                    lineHeight={
+                        layout.isWideTablet
+                            ? ds.typography.titleLg.lineHeight
+                            : ds.typography.titleMd.lineHeight
+                    }
+                >
+                    {place.place_name}
+                </Text>
+                <Paragraph color={ds.colors.secondaryForeground} fontFamily={ds.fonts.bodyMedium}>
+                    {place.project_name}
+                </Paragraph>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                >
+                    {deriveLocality(place, t("place.assignedPlace", { ns: "common" }))}
+                </Paragraph>
+            </YStack>
+
+            <Button
+                height={layout.isTablet ? layout.buttonHeight : 42}
+                rounded={ds.radii.md}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.input}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={onPress}
+            >
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelMd.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.2}
+                >
+                    {hasActiveSession
+                        ? t("resumeAudit", { ns: "audit" })
+                        : t("startAudit", { ns: "audit" })}
+                </Text>
+            </Button>
+        </YStack>
     );
 }
 

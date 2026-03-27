@@ -29,6 +29,7 @@ interface PreferencesStoreState {
     readonly fontScale: number;
     readonly highContrast: boolean;
     readonly dyslexicFont: boolean;
+    readonly fieldMode: boolean;
     readonly isHydrated: boolean;
 
     hydrate: () => Promise<void>;
@@ -37,6 +38,7 @@ interface PreferencesStoreState {
     setFontScale: (scale: number) => void;
     setHighContrast: (enabled: boolean) => void;
     setDyslexicFont: (enabled: boolean) => void;
+    setFieldMode: (enabled: boolean) => void;
 }
 
 /**
@@ -76,6 +78,7 @@ function persistState(state: PreferencesStoreState): void {
         font_scale: state.fontScale,
         high_contrast: state.highContrast,
         dyslexic_font: state.dyslexicFont,
+        field_mode: state.fieldMode,
     }).catch(() => undefined);
 }
 
@@ -89,6 +92,7 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
     fontScale: 1,
     highContrast: false,
     dyslexicFont: false,
+    fieldMode: false,
     isHydrated: false,
 
     hydrate: async () => {
@@ -105,6 +109,7 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
                 fontScale: clampFontScale(persisted.font_scale),
                 highContrast: persisted.high_contrast,
                 dyslexicFont: persisted.dyslexic_font,
+                fieldMode: persisted.field_mode,
                 isHydrated: true,
             }));
         } catch {
@@ -136,6 +141,11 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
 
     setDyslexicFont: (enabled: boolean) => {
         set(() => ({ dyslexicFont: enabled }));
+        persistState(get());
+    },
+
+    setFieldMode: (enabled: boolean) => {
+        set(() => ({ fieldMode: enabled }));
         persistState(get());
     },
 }));

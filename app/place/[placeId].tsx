@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { ActivityIndicator, ScrollView } from "react-native";
+import { ActivityIndicator, Linking, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
@@ -17,6 +17,7 @@ import type { AuditorPlace } from "lib/audit/places-api";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { createMetricDisplayState } from "lib/metric-display";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -152,7 +153,226 @@ function PlaceDetailContent({
     const combinedConstructScore = getCombinedConstructScore(place.score_totals);
     const summaryScore =
         combinedConstructScore ?? (place.summary_score === null ? null : place.summary_score);
+    const summaryMetric = createMetricDisplayState({
+        pendingText: t("detail.pendingMetric", { ns: "reports" }),
+        value: summaryScore,
+        formatValue: formatScoreValue,
+    });
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, language, t);
+    const mapsQuery = encodeURIComponent(`${place.place_name}, ${locality}`);
+    const metricsGrid = (
+        <YStack gap="$3">
+            <XStack gap="$3">
+                <StatCard
+                    label={t("mandatoryCompletion", { ns: "places" })}
+                    value={`${place.progress_percent ?? 0}%`}
+                    accentColor={ds.colors.primary}
+                    minHeight={layout.summaryCardMinHeight}
+                />
+                <StatCard
+                    label={t("scoreSummary", { ns: "places" })}
+                    value={summaryMetric.value}
+                    accentColor={ds.colors.primary}
+                    helperText={summaryMetric.helperText}
+                    minHeight={layout.summaryCardMinHeight}
+                />
+            </XStack>
+            <XStack gap="$3">
+                <PlaceInfoCard
+                    label={t("detail.lastUpdated", { ns: "places" })}
+                    value={updatedLabel}
+                    minHeight={layout.summaryCardMinHeight}
+                />
+                <PlaceInfoCard
+                    label="Project"
+                    value={place.project_name}
+                    minHeight={layout.summaryCardMinHeight}
+                />
+            </XStack>
+        </YStack>
+    );
+    const currentAuditCard = (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$3"
+            style={{
+                minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
+                boxShadow: ds.shadows.card,
+            }}
+        >
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.titleMd.fontSize}
+            >
+                {t("detail.currentAudit", { ns: "places" })}
+            </Text>
+            {place.audit_id === null ? (
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                >
+                    {t("detail.auditUnavailable", { ns: "places" })}
+                </Paragraph>
+            ) : place.score_totals === null ? (
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                >
+                    {t("detail.reportUnavailable", { ns: "places" })}
+                </Paragraph>
+            ) : (
+                <YStack gap="$2">
+                    <Paragraph
+                        color={ds.colors.primary}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.titleLg.fontSize}
+                    >
+                        {formatScoreValue(summaryScore ?? 0)}
+                    </Paragraph>
+                    <Paragraph
+                        color={ds.colors.secondaryForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyMd.fontSize}
+                    >
+                        {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
+                    </Paragraph>
+                </YStack>
+            )}
+        </YStack>
+    );
+    const quickActionsCard = (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$2.5"
+            justify="space-between"
+            style={{
+                minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
+                boxShadow: ds.shadows.card,
+            }}
+        >
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.titleMd.fontSize}
+            >
+                {t("detail.quickActions", { ns: "places" })}
+            </Text>
+            <Paragraph
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodyMd.fontSize}
+            >
+                {t("detail.openAuditHelper", { ns: "places" })}
+            </Paragraph>
+            <Button
+                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                rounded={ds.radii.md}
+                borderWidth={0}
+                bg={ds.colors.primary}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={onOpenAudit}
+            >
+                <XStack items="center" gap="$2">
+                    <ClipboardCheck size={16} color={ds.colors.primaryForeground} />
+                    <Text
+                        color={ds.colors.primaryForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelLg.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        {t("actions.openAudit", { ns: "common" })}
+                    </Text>
+                </XStack>
+            </Button>
+            {onOpenReport === undefined ? null : (
+                <Button
+                    height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                    rounded={ds.radii.md}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.input}
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={onOpenReport}
+                >
+                    <XStack items="center" gap="$2">
+                        <FileBarChart size={16} color={ds.colors.foreground} />
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            {t("actions.viewReport", { ns: "common" })}
+                        </Text>
+                        <ArrowRight size={14} color={ds.colors.foreground} />
+                    </XStack>
+                </Button>
+            )}
+            <Button
+                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                rounded={ds.radii.md}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.input}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={() => {
+                    Linking.openURL(`http://maps.apple.com/?q=${mapsQuery}`).catch(() => undefined);
+                }}
+            >
+                <XStack items="center" gap="$2">
+                    <MapPin size={16} color={ds.colors.foreground} />
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelMd.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        Open in Apple Maps
+                    </Text>
+                </XStack>
+            </Button>
+            <Button
+                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                rounded={ds.radii.md}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.input}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={() => {
+                    Linking.openURL(
+                        `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`,
+                    ).catch(() => undefined);
+                }}
+            >
+                <XStack items="center" gap="$2">
+                    <MapPin size={16} color={ds.colors.foreground} />
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelMd.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        Open in Google Maps
+                    </Text>
+                </XStack>
+            </Button>
+        </YStack>
+    );
 
     return (
         <ScrollView
@@ -220,154 +440,23 @@ function PlaceDetailContent({
                 </XStack>
             </YStack>
 
-            <XStack gap="$3">
-                <StatCard
-                    label={t("mandatoryCompletion", { ns: "places" })}
-                    value={`${place.progress_percent ?? 0}%`}
-                    accentColor={ds.colors.primary}
-                />
-                <StatCard
-                    label={t("scoreSummary", { ns: "places" })}
-                    value={summaryScore === null ? "--" : formatScoreValue(summaryScore)}
-                    accentColor={ds.colors.primary}
-                />
-            </XStack>
-
-            <XStack gap="$3">
-                <StatCard
-                    label={t("detail.lastUpdated", { ns: "places" })}
-                    value={updatedLabel}
-                    accentColor={ds.colors.primary}
-                />
-                <StatCard
-                    label="Project"
-                    value={place.project_name}
-                    accentColor={ds.colors.primary}
-                />
-            </XStack>
-
-            <YStack
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p={layout.cardPadding}
-                gap="$3"
-                style={{ boxShadow: ds.shadows.card }}
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
-                >
-                    {t("detail.currentAudit", { ns: "places" })}
-                </Text>
-                {place.audit_id === null ? (
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                    >
-                        {t("detail.auditUnavailable", { ns: "places" })}
-                    </Paragraph>
-                ) : place.score_totals === null ? (
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                    >
-                        {t("detail.reportUnavailable", { ns: "places" })}
-                    </Paragraph>
-                ) : (
-                    <YStack gap="$2">
-                        <Paragraph
-                            color={ds.colors.primary}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleLg.fontSize}
-                        >
-                            {formatScoreValue(summaryScore ?? 0)}
-                        </Paragraph>
-                        <Paragraph
-                            color={ds.colors.secondaryForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyMd.fontSize}
-                        >
-                            {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
-                        </Paragraph>
+            {layout.isTablet ? (
+                <XStack gap={layout.twoPaneGap} items="flex-start">
+                    <YStack flex={1} gap="$3">
+                        {metricsGrid}
+                        {currentAuditCard}
                     </YStack>
-                )}
-            </YStack>
-
-            <YStack
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p={layout.cardPadding}
-                gap="$2"
-                style={{ boxShadow: ds.shadows.card }}
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
-                >
-                    {t("detail.quickActions", { ns: "places" })}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                >
-                    {t("detail.openAuditHelper", { ns: "places" })}
-                </Paragraph>
-                <Button
-                    height={layout.controlHeight}
-                    rounded={ds.radii.md}
-                    borderWidth={0}
-                    bg={ds.colors.primary}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={onOpenAudit}
-                >
-                    <XStack items="center" gap="$2">
-                        <ClipboardCheck size={16} color={ds.colors.primaryForeground} />
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelLg.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            {t("actions.openAudit", { ns: "common" })}
-                        </Text>
-                    </XStack>
-                </Button>
-                {onOpenReport === undefined ? null : (
-                    <Button
-                        height={layout.controlHeight}
-                        rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.input}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={onOpenReport}
-                    >
-                        <XStack items="center" gap="$2">
-                            <FileBarChart size={16} color={ds.colors.foreground} />
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelMd.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.2}
-                            >
-                                {t("actions.viewReport", { ns: "common" })}
-                            </Text>
-                            <ArrowRight size={14} color={ds.colors.foreground} />
-                        </XStack>
-                    </Button>
-                )}
-            </YStack>
+                    <YStack width={layout.supportRailWidth} gap="$3">
+                        {quickActionsCard}
+                    </YStack>
+                </XStack>
+            ) : (
+                <YStack gap="$3">
+                    {metricsGrid}
+                    {currentAuditCard}
+                    {quickActionsCard}
+                </YStack>
+            )}
         </ScrollView>
     );
 }
@@ -376,6 +465,59 @@ interface DetailStateCardProps {
     readonly title: string;
     readonly message: string;
     readonly isLoading?: boolean;
+}
+
+interface PlaceInfoCardProps {
+    readonly label: string;
+    readonly value: string;
+    readonly minHeight?: number;
+}
+
+function PlaceInfoCard({ label, value, minHeight }: Readonly<PlaceInfoCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+
+    return (
+        <YStack
+            flex={1}
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            justify="space-between"
+            p={layout.cardPadding}
+            style={{
+                minHeight,
+                boxShadow: ds.shadows.card,
+            }}
+        >
+            <Paragraph
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelMd.fontSize}
+                textTransform="uppercase"
+                letterSpacing={1}
+            >
+                {label}
+            </Paragraph>
+            <Text
+                color={ds.colors.primary}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={
+                    layout.isTablet
+                        ? ds.typography.titleLg.fontSize
+                        : ds.typography.titleMd.fontSize
+                }
+                lineHeight={
+                    layout.isTablet
+                        ? ds.typography.titleLg.lineHeight
+                        : ds.typography.titleMd.lineHeight
+                }
+            >
+                {value}
+            </Text>
+        </YStack>
+    );
 }
 
 /**

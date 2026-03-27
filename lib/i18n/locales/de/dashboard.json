@@ -9,7 +9,11 @@
     "mandatoryCompletion": "Pflichtfortschritt",
     "offlineReadyDescription": "Zugewiesene Auditdaten sind lokal gespeichert und fuer den Feldeinsatz bereit.",
     "offlineReadyTitle": "Offline bereit",
-    "priorityProgress": "{{percent}}% Fortschritt - {{code}}",
+    "priorityProgress": {
+        "inProgress": "{{percent}}% abgeschlossen · Aktualisiert {{updated}}",
+        "notStarted": "Nicht gestartet · Bereit zum Beginnen",
+        "submitted": "Eingereicht · Aktualisiert {{updated}}"
+    },
     "priorityTask": "Prioritaetsaufgabe",
     "readinessLabel": "{{percent}}% bereit",
     "title": "Felduebersicht",

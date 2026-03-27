@@ -13,6 +13,7 @@
         "loadingMessage": "Chargement du résumé de l’audit et des scores par section...",
         "loadingTitle": "Préparation du rapport d’audit",
         "overallScore": "Score global",
+        "pendingMetric": "En attente de soumission",
         "progress": "Progression",
         "project": "Projet",
         "screenTitle": "Détail de l’audit",

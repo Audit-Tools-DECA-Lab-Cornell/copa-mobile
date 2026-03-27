@@ -9,10 +9,14 @@
     "accessibility": {
         "dyslexicFont": "Dyslexia-Friendly Font",
         "dyslexicFontDescription": "Switch to OpenDyslexic for improved readability.",
+        "fieldMode": "Field Mode",
+        "fieldModeDescription": "Use the cooler outdoor palette, stronger contrast, and a larger minimum text scale for bright conditions.",
+        "fieldModeEffect": "Field Mode is currently keeping text at at least {{value}}x with boosted contrast.",
         "fontScaleDescription": "Adjust text size for field readability in bright sunlight or low light.",
         "fontScaleValue": "Font Scale: {{value}}x",
         "highContrast": "High Contrast",
         "highContrastDescription": "Boost contrast for outdoor/bright conditions.",
+        "highContrastManagedDescription": "Boost contrast for outdoor/bright conditions. Field Mode keeps this boosted while it is enabled.",
         "label": "Accessibility"
     },
     "appearance": {

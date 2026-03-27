@@ -13,6 +13,7 @@
         "loadingMessage": "Loading the audit summary and section scores...",
         "loadingTitle": "Preparing audit report",
         "overallScore": "Overall score",
+        "pendingMetric": "Pending submission",
         "progress": "Progress",
         "project": "Project",
         "screenTitle": "Audit detail",

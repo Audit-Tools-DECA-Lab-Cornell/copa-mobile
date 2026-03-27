@@ -13,6 +13,7 @@
         "loadingMessage": "Audit-Zusammenfassung und Abschnittspunktzahlen werden geladen...",
         "loadingTitle": "Audit-Bericht wird vorbereitet",
         "overallScore": "Gesamtpunktzahl",
+        "pendingMetric": "Wartet auf Einreichung",
         "progress": "Fortschritt",
         "project": "Projekt",
         "screenTitle": "Audit-Details",

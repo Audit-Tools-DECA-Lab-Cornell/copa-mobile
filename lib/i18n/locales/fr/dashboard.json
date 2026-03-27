@@ -9,7 +9,11 @@
     "mandatoryCompletion": "Achèvement obligatoire",
     "offlineReadyDescription": "Les données d’audit attribuées sont stockées localement et prêtes à être utilisées sur le terrain.",
     "offlineReadyTitle": "Prêt hors ligne",
-    "priorityProgress": "{{percent}}% de progression - {{code}}",
+    "priorityProgress": {
+        "inProgress": "{{percent}}% terminés · Mis à jour {{updated}}",
+        "notStarted": "Pas commencé · Prêt à démarrer",
+        "submitted": "Envoyé · Mis à jour {{updated}}"
+    },
     "priorityTask": "Tâche prioritaire",
     "readinessLabel": "{{percent}}% prêt",
     "title": "Tableau de bord terrain",

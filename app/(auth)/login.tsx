@@ -13,6 +13,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -22,6 +23,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export default function LoginScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation(["auth", "common"]);
     const login = useAuthStore((state) => state.login);
@@ -77,12 +79,16 @@ export default function LoginScreen() {
                 contentInsetAdjustmentBehavior="automatic"
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{
-                    paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                    paddingHorizontal: layout.screenPaddingHorizontal,
                     paddingVertical: 48,
                     justifyContent: "center",
                 }}
             >
-                <YStack gap="$6" width="100%" style={{ maxWidth: 440, alignSelf: "center" }}>
+                <YStack
+                    gap="$6"
+                    width="100%"
+                    style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
+                >
                     <YStack items="center" gap="$4">
                         <YStack
                             width={88}

@@ -9,10 +9,14 @@
     "accessibility": {
         "dyslexicFont": "डिस्लेक्सिया-अनुकूल फ़ॉन्ट",
         "dyslexicFontDescription": "बेहतर पठनीयता के लिए OpenDyslexic पर स्विच करें।",
+        "fieldMode": "फील्ड मोड",
+        "fieldModeDescription": "तेज़ रोशनी में उपयोग के लिए ठंडा आउटडोर पैलेट, अधिक कंट्रास्ट, और बड़ा न्यूनतम टेक्स्ट स्केल इस्तेमाल करें।",
+        "fieldModeEffect": "फील्ड मोड अभी टेक्स्ट को कम से कम {{value}}x पर और अधिक कंट्रास्ट के साथ रख रहा है।",
         "fontScaleDescription": "तेज़ धूप या कम रोशनी में बेहतर पठनीयता के लिए टेक्स्ट आकार समायोजित करें।",
         "fontScaleValue": "फ़ॉन्ट स्केल: {{value}}x",
         "highContrast": "उच्च कंट्रास्ट",
         "highContrastDescription": "बाहरी/तेज़ रोशनी की स्थितियों के लिए कंट्रास्ट बढ़ाएँ।",
+        "highContrastManagedDescription": "बाहरी/तेज़ रोशनी की स्थितियों के लिए कंट्रास्ट बढ़ाएँ। फील्ड मोड चालू रहने पर यह प्रभाव सक्रिय रहता है।",
         "label": "सुगम्यता"
     },
     "appearance": {

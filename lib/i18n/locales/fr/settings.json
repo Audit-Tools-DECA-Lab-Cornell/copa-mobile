@@ -9,10 +9,14 @@
     "accessibility": {
         "dyslexicFont": "Police adaptée à la dyslexie",
         "dyslexicFontDescription": "Passez à OpenDyslexic pour une meilleure lisibilité.",
+        "fieldMode": "Mode terrain",
+        "fieldModeDescription": "Utilise une palette extérieure plus froide, un contraste renforcé et une taille de texte minimale plus grande pour les conditions lumineuses.",
+        "fieldModeEffect": "Le mode terrain maintient actuellement le texte à au moins {{value}}x avec un contraste renforcé.",
         "fontScaleDescription": "Ajustez la taille du texte pour une meilleure lisibilité sur le terrain, en plein soleil ou en faible luminosité.",
         "fontScaleValue": "Échelle de police : {{value}}x",
         "highContrast": "Contraste élevé",
         "highContrastDescription": "Renforce le contraste pour les conditions extérieures ou lumineuses.",
+        "highContrastManagedDescription": "Renforce le contraste pour les conditions extérieures ou lumineuses. Le mode terrain garde cet effet actif tant qu’il est activé.",
         "label": "Accessibilité"
     },
     "appearance": {

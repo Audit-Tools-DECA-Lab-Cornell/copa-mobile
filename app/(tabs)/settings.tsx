@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FC, type ReactNode } from "react";
 import { ScrollView, TextStyle, type DimensionValue } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -20,13 +20,19 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Slider, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { getSettingsPageMaxWidth } from "lib/ipad-polish";
+import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import {
     fetchMyAccount,
     fetchMyAuditorProfile,
     type MyAccount,
     type MyAuditorProfile,
 } from "lib/audit/profile-api";
-import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import {
+    getResponsiveContentContainerStyle,
+    ResponsiveLayout,
+    useResponsiveLayout,
+} from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import {
     usePreferencesStore,
@@ -99,6 +105,7 @@ export default function SettingsScreen() {
 
     const themeMode = usePreferencesStore((state) => state.themeMode);
     const setThemeMode = usePreferencesStore((state) => state.setThemeMode);
+    const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     const languagePreference = usePreferencesStore((state) => state.languagePreference);
     const setLanguagePreference = usePreferencesStore((state) => state.setLanguagePreference);
     const fontScale = usePreferencesStore((state) => state.fontScale);
@@ -107,6 +114,16 @@ export default function SettingsScreen() {
     const setHighContrast = usePreferencesStore((state) => state.setHighContrast);
     const dyslexicFont = usePreferencesStore((state) => state.dyslexicFont);
     const setDyslexicFont = usePreferencesStore((state) => state.setDyslexicFont);
+    const fieldMode = usePreferencesStore((state) => state.fieldMode);
+    const setFieldMode = usePreferencesStore((state) => state.setFieldMode);
+    const fieldModePresentation = useMemo(() => {
+        return resolveFieldModePresentation({
+            fieldMode,
+            fontScale,
+            highContrast,
+            theme: resolvedTheme,
+        });
+    }, [fieldMode, fontScale, highContrast, resolvedTheme]);
 
     const [account, setAccount] = useState<MyAccount | null>(null);
     const [profile, setProfile] = useState<MyAuditorProfile | null>(null);
@@ -161,6 +178,171 @@ export default function SettingsScreen() {
         return t(`language.${matchingOption.translationKey}`, { ns: "settings" });
     };
     const selectedLanguageLabel = getLanguageOptionLabel(languagePreference);
+    const settingsPageMaxWidth = getSettingsPageMaxWidth({
+        isTablet: layout.isTablet,
+        contentMaxWidth: layout.contentMaxWidth,
+        formMaxWidth: layout.formMaxWidth,
+    });
+    const appearanceCard = (
+        <SettingsCard
+            ds={ds}
+            label={t("appearance.label", { ns: "settings" })}
+            Icon={Sun}
+            stretch={layout.isTablet}
+        >
+            <YStack gap="$1.5">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
+                >
+                    {t("appearance.theme", { ns: "settings" })}
+                </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                >
+                    {t("appearance.themeDescription", { ns: "settings" })}
+                </Paragraph>
+            </YStack>
+            <XStack gap="$2">
+                {THEME_OPTIONS.map((option) => {
+                    const isSelected = themeMode === option.key;
+                    const OptionIcon = option.Icon;
+                    return (
+                        <Button
+                            key={option.key}
+                            flex={1}
+                            height={layout.isTablet ? 64 : 56}
+                            rounded={ds.radii.md}
+                            borderWidth={1}
+                            borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                            bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
+                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            onPress={() => setThemeMode(option.key)}
+                        >
+                            <YStack items="center" gap="$1">
+                                <OptionIcon
+                                    size={18}
+                                    color={
+                                        isSelected ? ds.colors.primary : ds.colors.mutedForeground
+                                    }
+                                />
+                                <Text
+                                    color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                    fontFamily={
+                                        isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium
+                                    }
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                >
+                                    {t(`appearance.${option.key}`, { ns: "settings" })}
+                                </Text>
+                            </YStack>
+                        </Button>
+                    );
+                })}
+            </XStack>
+        </SettingsCard>
+    );
+    const accessibilityCard = (
+        <SettingsCard
+            ds={ds}
+            label={t("accessibility.label", { ns: "settings" })}
+            Icon={Accessibility}
+            stretch={layout.isTablet}
+        >
+            <YStack gap="$4">
+                <XStack items="center" gap="$2">
+                    <Type size={14} color={ds.colors.primary} />
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.bodyMd.fontSize}
+                    >
+                        {t("accessibility.fontScaleValue", {
+                            ns: "settings",
+                            value: fieldModePresentation.effectiveFontScale.toFixed(2),
+                        })}
+                    </Text>
+                </XStack>
+                <Slider
+                    value={[fontScale]}
+                    min={0.85}
+                    max={1.3}
+                    step={0.05}
+                    onValueChange={(values: number[]) => {
+                        const nextValue = values[0];
+                        if (typeof nextValue === "number") {
+                            setFontScale(nextValue);
+                        }
+                    }}
+                >
+                    <Slider.Track bg={ds.colors.border}>
+                        <Slider.TrackActive bg={ds.colors.primary} />
+                    </Slider.Track>
+                    <Slider.Thumb index={0} size="$1" bg={ds.colors.primary} circular />
+                </Slider>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                >
+                    {t("accessibility.fontScaleDescription", { ns: "settings" })}
+                </Paragraph>
+                {fieldMode ? (
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {t("accessibility.fieldModeEffect", {
+                            ns: "settings",
+                            value: fieldModePresentation.effectiveFontScale.toFixed(2),
+                        })}
+                    </Paragraph>
+                ) : null}
+            </YStack>
+
+            <Separator borderColor={ds.colors.border} />
+
+            <ToggleRow
+                ds={ds}
+                label={t("accessibility.fieldMode", { ns: "settings" })}
+                description={t("accessibility.fieldModeDescription", { ns: "settings" })}
+                icon={Sun}
+                isEnabled={fieldMode}
+                onToggle={() => setFieldMode(!fieldMode)}
+            />
+
+            <Separator borderColor={ds.colors.border} />
+
+            <ToggleRow
+                ds={ds}
+                label={t("accessibility.highContrast", { ns: "settings" })}
+                description={t(
+                    fieldMode
+                        ? "accessibility.highContrastManagedDescription"
+                        : "accessibility.highContrastDescription",
+                    { ns: "settings" },
+                )}
+                icon={Eye}
+                isEnabled={highContrast || fieldMode}
+                onToggle={() => setHighContrast(!highContrast)}
+            />
+
+            <Separator borderColor={ds.colors.border} />
+
+            <ToggleRow
+                ds={ds}
+                label={t("accessibility.dyslexicFont", { ns: "settings" })}
+                description={t("accessibility.dyslexicFontDescription", { ns: "settings" })}
+                icon={Type}
+                isEnabled={dyslexicFont}
+                onToggle={() => setDyslexicFont(!dyslexicFont)}
+            />
+        </SettingsCard>
+    );
 
     if (isLoading) {
         return <SettingsSkeletonScreen ds={ds} />;
@@ -173,10 +355,10 @@ export default function SettingsScreen() {
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 92,
                 gap: layout.isTablet ? 28 : 24,
-                maxWidth: layout.formMaxWidth,
+                maxWidth: settingsPageMaxWidth,
             })}
         >
-            <YStack gap="$2">
+            <YStack gap="$3">
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
@@ -196,7 +378,7 @@ export default function SettingsScreen() {
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
+                    fontSize={ds.typography.bodyLg.fontSize}
                 >
                     {t("subtitle", { ns: "settings" })}
                 </Paragraph>
@@ -293,135 +475,17 @@ export default function SettingsScreen() {
                 </Button>
             </SettingsCard>
 
-            {/* Appearance Card */}
-            <SettingsCard ds={ds} label={t("appearance.label", { ns: "settings" })} Icon={Sun}>
-                <YStack gap="$1.5">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleMd.fontSize}
-                    >
-                        {t("appearance.theme", { ns: "settings" })}
-                    </Text>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodySm.fontSize}
-                    >
-                        {t("appearance.themeDescription", { ns: "settings" })}
-                    </Paragraph>
-                </YStack>
-                <XStack gap="$2">
-                    {THEME_OPTIONS.map((option) => {
-                        const isSelected = themeMode === option.key;
-                        const OptionIcon = option.Icon;
-                        return (
-                            <Button
-                                key={option.key}
-                                flex={1}
-                                height={layout.isTablet ? 64 : 56}
-                                rounded={ds.radii.md}
-                                borderWidth={1}
-                                borderColor={isSelected ? ds.colors.primary : ds.colors.border}
-                                bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={() => setThemeMode(option.key)}
-                            >
-                                <YStack items="center" gap="$1">
-                                    <OptionIcon
-                                        size={18}
-                                        color={
-                                            isSelected
-                                                ? ds.colors.primary
-                                                : ds.colors.mutedForeground
-                                        }
-                                    />
-                                    <Text
-                                        color={
-                                            isSelected ? ds.colors.primary : ds.colors.foreground
-                                        }
-                                        fontFamily={
-                                            isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium
-                                        }
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                    >
-                                        {t(`appearance.${option.key}`, { ns: "settings" })}
-                                    </Text>
-                                </YStack>
-                            </Button>
-                        );
-                    })}
+            {layout.isTablet ? (
+                <XStack gap="$3" items="stretch">
+                    <YStack flex={1}>{appearanceCard}</YStack>
+                    <YStack flex={1}>{accessibilityCard}</YStack>
                 </XStack>
-            </SettingsCard>
-
-            {/* Accessibility Card */}
-            <SettingsCard
-                ds={ds}
-                label={t("accessibility.label", { ns: "settings" })}
-                Icon={Accessibility}
-            >
-                <YStack gap="$4">
-                    <XStack items="center" gap="$2">
-                        <Type size={14} color={ds.colors.primary} />
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyMd.fontSize}
-                        >
-                            {t("accessibility.fontScaleValue", {
-                                ns: "settings",
-                                value: fontScale.toFixed(2),
-                            })}
-                        </Text>
-                    </XStack>
-                    <Slider
-                        value={[fontScale]}
-                        min={0.85}
-                        max={1.3}
-                        step={0.05}
-                        onValueChange={(values: number[]) => {
-                            const nextValue = values[0];
-                            if (typeof nextValue === "number") {
-                                setFontScale(nextValue);
-                            }
-                        }}
-                    >
-                        <Slider.Track bg={ds.colors.border}>
-                            <Slider.TrackActive bg={ds.colors.primary} />
-                        </Slider.Track>
-                        <Slider.Thumb index={0} size="$1" bg={ds.colors.primary} circular />
-                    </Slider>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodySm.fontSize}
-                    >
-                        {t("accessibility.fontScaleDescription", { ns: "settings" })}
-                    </Paragraph>
-                </YStack>
-
-                <Separator borderColor={ds.colors.border} />
-
-                <ToggleRow
-                    ds={ds}
-                    label={t("accessibility.highContrast", { ns: "settings" })}
-                    description={t("accessibility.highContrastDescription", { ns: "settings" })}
-                    icon={Eye}
-                    isEnabled={highContrast}
-                    onToggle={() => setHighContrast(!highContrast)}
-                />
-
-                <Separator borderColor={ds.colors.border} />
-
-                <ToggleRow
-                    ds={ds}
-                    label={t("accessibility.dyslexicFont", { ns: "settings" })}
-                    description={t("accessibility.dyslexicFontDescription", { ns: "settings" })}
-                    icon={Type}
-                    isEnabled={dyslexicFont}
-                    onToggle={() => setDyslexicFont(!dyslexicFont)}
-                />
-            </SettingsCard>
+            ) : (
+                <>
+                    {appearanceCard}
+                    {accessibilityCard}
+                </>
+            )}
 
             {/* Language Card */}
             <SettingsCard ds={ds} label={t("language.label", { ns: "settings" })} Icon={Globe}>
@@ -582,47 +646,120 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 92,
-                gap: layout.isTablet ? 28 : 24,
-                maxWidth: layout.formMaxWidth,
+                gap: layout.isTablet ? 32 : 24,
+                maxWidth: getSettingsPageMaxWidth({
+                    isTablet: layout.isTablet,
+                    contentMaxWidth: layout.contentMaxWidth,
+                    formMaxWidth: layout.formMaxWidth,
+                }),
             })}
         >
-            <YStack gap="$2">
-                <SkeletonBlock ds={ds} width="42%" height={34} rounded={ds.radii.sm} />
-                <SkeletonBlock ds={ds} width="68%" height={18} rounded={ds.radii.sm} />
+            <YStack gap="$3">
+                <SkeletonBlock
+                    ds={ds}
+                    width="36%"
+                    height={layout.isWideTablet ? 52 : layout.isTablet ? 40 : 28}
+                    rounded={ds.radii.sm}
+                />
+                <SkeletonBlock
+                    ds={ds}
+                    width="68%"
+                    height={layout.isWideTablet ? 32 : layout.isTablet ? 28 : 18}
+                    rounded={ds.radii.sm}
+                />
             </YStack>
 
             <SettingsCardSkeleton ds={ds} labelWidth="26%">
-                <ProfileSkeletonRow ds={ds} labelWidth="26%" valueWidth="38%" />
+                <ProfileSkeletonRow ds={ds} labelWidth="26%" valueWidth="38%" layout={layout} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileSkeletonRow ds={ds} labelWidth="24%" valueWidth="46%" />
+                <ProfileSkeletonRow ds={ds} labelWidth="24%" valueWidth="46%" layout={layout} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileSkeletonRow ds={ds} labelWidth="32%" valueWidth="34%" />
+                <ProfileSkeletonRow ds={ds} labelWidth="32%" valueWidth="34%" layout={layout} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileSkeletonRow ds={ds} labelWidth="30%" valueWidth="28%" />
-                <SkeletonBlock ds={ds} width="78%" height={16} rounded={ds.radii.sm} />
-                <SkeletonBlock ds={ds} width="100%" height={46} />
+                <ProfileSkeletonRow ds={ds} labelWidth="30%" valueWidth="28%" layout={layout} />
+                <SkeletonBlock
+                    ds={ds}
+                    width="78%"
+                    height={layout.isWideTablet ? 36 : layout.isTablet ? 28 : 18}
+                    rounded={ds.radii.sm}
+                />
+                <SkeletonBlock
+                    ds={ds}
+                    width="100%"
+                    height={layout.isWideTablet ? 72 : layout.isTablet ? 64 : 48}
+                />
             </SettingsCardSkeleton>
 
-            <SettingsCardSkeleton ds={ds} labelWidth="34%">
-                <YStack gap="$1.5">
-                    <SkeletonBlock ds={ds} width="34%" height={20} rounded={ds.radii.sm} />
-                    <SkeletonBlock ds={ds} width="72%" height={16} rounded={ds.radii.sm} />
-                </YStack>
-                <XStack gap="$2">
-                    <SkeletonBlock ds={ds} flex={1} height={56} />
-                    <SkeletonBlock ds={ds} flex={1} height={56} />
-                    <SkeletonBlock ds={ds} flex={1} height={56} />
+            {layout.isTablet ? (
+                <XStack gap="$3" items="stretch">
+                    <YStack flex={1}>
+                        <SettingsCardSkeleton ds={ds} labelWidth="48%" stretch>
+                            <YStack gap="$3.5">
+                                <SkeletonBlock
+                                    ds={ds}
+                                    width="52%"
+                                    height={36}
+                                    rounded={ds.radii.sm}
+                                />
+                                <SkeletonBlock
+                                    ds={ds}
+                                    width="72%"
+                                    height={36}
+                                    rounded={ds.radii.sm}
+                                />
+                            </YStack>
+                            <XStack gap="$2">
+                                <SkeletonBlock ds={ds} flex={1} height={72} />
+                                <SkeletonBlock ds={ds} flex={1} height={72} />
+                            </XStack>
+                        </SettingsCardSkeleton>
+                    </YStack>
+                    <YStack flex={1}>
+                        <SettingsCardSkeleton ds={ds} labelWidth="48%" stretch>
+                            <YStack gap="$3.5">
+                                <SkeletonBlock
+                                    ds={ds}
+                                    width="52%"
+                                    height={48}
+                                    rounded={ds.radii.sm}
+                                />
+                                <SkeletonBlock
+                                    ds={ds}
+                                    width="96%"
+                                    height={36}
+                                    rounded={ds.radii.sm}
+                                />
+                            </YStack>
+                            <SkeletonBlock ds={ds} width="100%" height={96} />
+                            <SkeletonBlock ds={ds} width="100%" height={72} />
+                            <SkeletonBlock ds={ds} width="100%" height={72} />
+                        </SettingsCardSkeleton>
+                    </YStack>
                 </XStack>
-            </SettingsCardSkeleton>
+            ) : (
+                <>
+                    <SettingsCardSkeleton ds={ds} labelWidth="34%">
+                        <YStack gap="$1.5">
+                            <SkeletonBlock ds={ds} width="34%" height={20} rounded={ds.radii.sm} />
+                            <SkeletonBlock ds={ds} width="72%" height={16} rounded={ds.radii.sm} />
+                        </YStack>
+                        <XStack gap="$2">
+                            <SkeletonBlock ds={ds} flex={1} height={56} />
+                            <SkeletonBlock ds={ds} flex={1} height={56} />
+                            <SkeletonBlock ds={ds} flex={1} height={56} />
+                        </XStack>
+                    </SettingsCardSkeleton>
 
-            <SettingsCardSkeleton ds={ds} labelWidth="28%">
-                <YStack gap="$1.5">
-                    <SkeletonBlock ds={ds} width="38%" height={20} rounded={ds.radii.sm} />
-                    <SkeletonBlock ds={ds} width="70%" height={16} rounded={ds.radii.sm} />
-                </YStack>
-                <SkeletonBlock ds={ds} width="100%" height={52} />
-                <SkeletonBlock ds={ds} width="58%" height={16} rounded={ds.radii.sm} />
-            </SettingsCardSkeleton>
+                    <SettingsCardSkeleton ds={ds} labelWidth="28%">
+                        <YStack gap="$1.5">
+                            <SkeletonBlock ds={ds} width="38%" height={20} rounded={ds.radii.sm} />
+                            <SkeletonBlock ds={ds} width="70%" height={16} rounded={ds.radii.sm} />
+                        </YStack>
+                        <SkeletonBlock ds={ds} width="100%" height={52} />
+                        <SkeletonBlock ds={ds} width="58%" height={16} rounded={ds.radii.sm} />
+                    </SettingsCardSkeleton>
+                </>
+            )}
         </ScrollView>
     );
 }
@@ -631,15 +768,22 @@ interface SettingsCardSkeletonProps {
     readonly ds: DesignSystemTheme;
     readonly labelWidth: DimensionValue;
     readonly children: ReactNode;
+    readonly stretch?: boolean;
 }
 
 /**
  * Placeholder card wrapper that mirrors the spacing of a real settings card.
  */
-function SettingsCardSkeleton({ ds, labelWidth, children }: SettingsCardSkeletonProps) {
+function SettingsCardSkeleton({
+    ds,
+    labelWidth,
+    children,
+    stretch = false,
+}: SettingsCardSkeletonProps) {
     const layout = useResponsiveLayout();
     return (
         <YStack
+            flex={stretch ? 1 : undefined}
             rounded={ds.radii.lg}
             borderWidth={1}
             borderColor={ds.colors.border}
@@ -649,8 +793,18 @@ function SettingsCardSkeleton({ ds, labelWidth, children }: SettingsCardSkeleton
             style={{ boxShadow: ds.shadows.card }}
         >
             <XStack items="center" gap="$2">
-                <SkeletonBlock ds={ds} width={16} height={16} rounded={ds.radii.full} />
-                <SkeletonBlock ds={ds} width={labelWidth} height={12} rounded={ds.radii.sm} />
+                <SkeletonBlock
+                    ds={ds}
+                    width={layout.isWideTablet ? 28 : layout.isTablet ? 20 : 16}
+                    height={layout.isWideTablet ? 28 : layout.isTablet ? 20 : 16}
+                    rounded={ds.radii.full}
+                />
+                <SkeletonBlock
+                    ds={ds}
+                    width={labelWidth}
+                    height={layout.isWideTablet ? 24 : layout.isTablet ? 18 : 12}
+                    rounded={ds.radii.sm}
+                />
             </XStack>
             {children}
         </YStack>
@@ -687,16 +841,27 @@ interface ProfileSkeletonRowProps {
     readonly ds: DesignSystemTheme;
     readonly labelWidth: DimensionValue;
     readonly valueWidth: DimensionValue;
+    readonly layout: ResponsiveLayout;
 }
 
 /**
  * Placeholder row matching the read-only profile and about sections.
  */
-function ProfileSkeletonRow({ ds, labelWidth, valueWidth }: ProfileSkeletonRowProps) {
+function ProfileSkeletonRow({ ds, labelWidth, valueWidth, layout }: ProfileSkeletonRowProps) {
     return (
-        <XStack justify="space-between" items="center" py="$1.5">
-            <SkeletonBlock ds={ds} width={labelWidth} height={16} rounded={ds.radii.sm} />
-            <SkeletonBlock ds={ds} width={valueWidth} height={16} rounded={ds.radii.sm} />
+        <XStack justify="space-between" items="center" py="$3.5">
+            <SkeletonBlock
+                ds={ds}
+                width={labelWidth}
+                height={layout.isWideTablet ? 48 : layout.isTablet ? 28 : 18}
+                rounded={ds.radii.sm}
+            />
+            <SkeletonBlock
+                ds={ds}
+                width={valueWidth}
+                height={layout.isWideTablet ? 48 : layout.isTablet ? 28 : 18}
+                rounded={ds.radii.sm}
+            />
         </XStack>
     );
 }
@@ -706,15 +871,17 @@ interface SettingsCardProps {
     readonly label: string;
     readonly Icon: FC<IconProps>;
     readonly children: ReactNode;
+    readonly stretch?: boolean;
 }
 
 /**
  * Reusable settings section card with a header label and icon.
  */
-function SettingsCard({ ds, label, Icon, children }: SettingsCardProps) {
+function SettingsCard({ ds, label, Icon, children, stretch = false }: SettingsCardProps) {
     const layout = useResponsiveLayout();
     return (
         <YStack
+            flex={stretch ? 1 : undefined}
             rounded={ds.radii.lg}
             borderWidth={1}
             borderColor={ds.colors.border}

@@ -4,12 +4,14 @@ import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 
 /**
  * Signup route shares auditor access setup guidance.
  */
 export default function SignupScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation("auth");
 
@@ -18,13 +20,17 @@ export default function SignupScreen() {
             contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={{
                 flexGrow: 1,
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                paddingHorizontal: layout.screenPaddingHorizontal,
                 paddingVertical: 32,
                 justifyContent: "center",
                 backgroundColor: ds.colors.background,
             }}
         >
-            <YStack gap="$6" width="100%" style={{ maxWidth: 440, alignSelf: "center" }}>
+            <YStack
+                gap="$6"
+                width="100%"
+                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
+            >
                 <YStack items="center" gap="$4">
                     <YStack
                         width={88}

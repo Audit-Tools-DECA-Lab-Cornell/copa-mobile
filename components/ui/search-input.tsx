@@ -23,8 +23,8 @@ export function SearchInput({ value, onChangeText, placeholder }: Readonly<Searc
         <XStack
             items="center"
             gap="$3"
-            px="$4"
-            height={layout.controlHeight}
+            px={layout.isWideTablet ? "$4.5" : "$4"}
+            height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
             rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
@@ -43,7 +43,11 @@ export function SearchInput({ value, onChangeText, placeholder }: Readonly<Searc
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
                 fontSize={
-                    layout.isTablet ? ds.typography.bodyLg.fontSize : ds.typography.bodyMd.fontSize
+                    layout.isWideTablet
+                        ? ds.typography.titleSm.fontSize
+                        : layout.isTablet
+                          ? ds.typography.bodyLg.fontSize
+                          : ds.typography.bodyMd.fontSize
                 }
             />
         </XStack>
