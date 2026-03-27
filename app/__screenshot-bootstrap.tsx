@@ -13,11 +13,24 @@ interface ScreenshotBootstrapParams {
     readonly skipLogin?: string | string[];
 }
 
+const SCREENSHOT_AUTOMATION_ENABLED = __DEV__;
+
 /**
  * Deep-linkable helper route that prepares auth state before opening a target
  * screen for simulator screenshot automation.
  */
 export default function ScreenshotBootstrapScreen() {
+    if (!SCREENSHOT_AUTOMATION_ENABLED) {
+        return <ScreenshotBootstrapUnavailableScreen />;
+    }
+
+    return <EnabledScreenshotBootstrapScreen />;
+}
+
+/**
+ * Screenshot bootstrap implementation used only in development builds.
+ */
+function EnabledScreenshotBootstrapScreen() {
     const router = useRouter();
     const ds = useDesignSystem();
     const params = useLocalSearchParams() as ScreenshotBootstrapParams;
@@ -193,6 +206,44 @@ export default function ScreenshotBootstrapScreen() {
                         {errorMessage}
                     </Paragraph>
                 )}
+            </YStack>
+        </>
+    );
+}
+
+/**
+ * Production-safe fallback that prevents screenshot automation from running in
+ * non-development builds.
+ */
+function ScreenshotBootstrapUnavailableScreen() {
+    const ds = useDesignSystem();
+
+    return (
+        <>
+            <Stack.Screen options={{ headerShown: false }} />
+            <YStack
+                flex={1}
+                items="center"
+                justify="center"
+                gap="$4"
+                px="$5"
+                bg={ds.colors.background}
+            >
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleLg.fontSize}
+                    style={{ textAlign: "center" }}
+                >
+                    Route Unavailable
+                </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    style={{ textAlign: "center" }}
+                >
+                    Screenshot automation is disabled in this build.
+                </Paragraph>
             </YStack>
         </>
     );

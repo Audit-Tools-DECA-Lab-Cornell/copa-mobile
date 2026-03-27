@@ -37,6 +37,8 @@ import { usePreferencesStore } from "stores/preferences-store";
 
 export { ErrorBoundary } from "expo-router";
 
+const SCREENSHOT_AUTOMATION_ENABLED = __DEV__;
+
 export const unstable_settings = {
     initialRouteName: "(auth)",
 };
@@ -188,10 +190,12 @@ function RootLayoutNav() {
 
         const inAuthGroup = segments[0] === "(auth)";
         const isScreenshotAutomationRoute = String(segments[0] ?? "") === "__screenshot-bootstrap";
+        const canBypassAuthForScreenshotAutomation =
+            SCREENSHOT_AUTOMATION_ENABLED && isScreenshotAutomationRoute;
 
         // Allow the screenshot bootstrap route to manage auth state and
         // redirection itself so simulator automation can open any target page.
-        if (isScreenshotAutomationRoute) {
+        if (canBypassAuthForScreenshotAutomation) {
             return;
         }
 
