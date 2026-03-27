@@ -1,3 +1,4 @@
+import { useCallback, useRef } from "react";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons";
@@ -5,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 
 /**
  * Signup route shares auditor access setup guidance.
@@ -14,9 +16,20 @@ export default function SignupScreen() {
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation("auth");
+    const scrollViewRef = useRef<ScrollView | null>(null);
+
+    const scrollSignupToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: true,
+        scrollToOffset: scrollSignupToOffset,
+    });
 
     return (
         <ScrollView
+            ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={{
                 flexGrow: 1,

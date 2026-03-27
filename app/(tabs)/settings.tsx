@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FC, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from "react";
 import { ScrollView, TextStyle, type DimensionValue } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -33,6 +33,7 @@ import {
     ResponsiveLayout,
     useResponsiveLayout,
 } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import {
     usePreferencesStore,
@@ -130,6 +131,7 @@ export default function SettingsScreen() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+    const scrollViewRef = useRef<ScrollView | null>(null);
 
     useEffect(() => {
         if (session === null) {
@@ -163,6 +165,16 @@ export default function SettingsScreen() {
             isSubscribed = false;
         };
     }, [session]);
+
+    const scrollSettingsToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: !isLoading,
+        rerunKey: session?.user.id ?? "settings",
+        scrollToOffset: scrollSettingsToOffset,
+    });
 
     const userName = account?.name ?? session?.user.name ?? "—";
     const userEmail = account?.email ?? session?.user.email ?? "—";
@@ -350,6 +362,7 @@ export default function SettingsScreen() {
 
     return (
         <ScrollView
+            ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {

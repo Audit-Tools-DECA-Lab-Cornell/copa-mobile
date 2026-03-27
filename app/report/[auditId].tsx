@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useToastController } from "@tamagui/toast";
@@ -29,6 +29,7 @@ import { formatLocalizedDate, formatLocalizedTime, getPlaceStatusLabel } from "l
 import { createMetricDisplayState } from "lib/metric-display";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -61,6 +62,7 @@ export default function AuditReportDetailScreen() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [activeExportKey, setActiveExportKey] = useState<string | null>(null);
     const auditId = readSingleParam(params.auditId);
+    const scrollViewRef = useRef<ScrollView | null>(null);
 
     const cachedAudit = auditId === null ? undefined : sessionsByAuditId[auditId];
     const place = useMemo(() => {
@@ -248,6 +250,16 @@ export default function AuditReportDetailScreen() {
         [cachedAudit, instrument, place, session, showExportError, showExportSuccess, t],
     );
 
+    const scrollReportDetailToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: auditSession !== null,
+        rerunKey: auditSession?.audit_id ?? auditId ?? "report-detail",
+        scrollToOffset: scrollReportDetailToOffset,
+    });
+
     const title =
         place?.place_name ?? auditSession?.place_name ?? t("detail.screenTitle", { ns: "reports" });
 
@@ -283,6 +295,7 @@ export default function AuditReportDetailScreen() {
                 />
             ) : (
                 <ScrollView
+                    ref={scrollViewRef}
                     contentInsetAdjustmentBehavior="automatic"
                     style={{ backgroundColor: ds.colors.background }}
                     contentContainerStyle={getResponsiveContentContainerStyle(layout, {

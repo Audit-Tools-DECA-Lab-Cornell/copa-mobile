@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
@@ -21,6 +21,7 @@ import { getExecutionModeShortLabel } from "lib/i18n/format";
 import { getExecuteSidebarTopPadding } from "lib/ipad-polish";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import type { TFunction } from "i18next";
@@ -57,6 +58,7 @@ export default function ExecutePlaceScreen() {
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const [sectionFilter, setSectionFilter] = useState<SectionVisibilityFilter>("incomplete");
     const isNetworkOnline = useNetworkOnline();
+    const scrollViewRef = useRef<ScrollView | null>(null);
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
@@ -142,6 +144,16 @@ export default function ExecutePlaceScreen() {
     const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
     const shouldShowSyncStatusCard = hasPendingLocalChanges || lastSyncError !== null;
     const executeSidebarTopPadding = getExecuteSidebarTopPadding(shouldShowSyncStatusCard);
+
+    const scrollExecutePlaceToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: auditSession !== undefined,
+        rerunKey: auditSession?.audit_id ?? placeId ?? "execute-place",
+        scrollToOffset: scrollExecutePlaceToOffset,
+    });
 
     if (placeId === null || projectId === null) {
         return (
@@ -603,6 +615,7 @@ export default function ExecutePlaceScreen() {
 
     return (
         <ScrollView
+            ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
@@ -800,35 +813,41 @@ export default function ExecutePlaceScreen() {
                                                 ).catch(() => {});
                                             }}
                                         >
-                                            <YStack gap="$2" items="flex-start">
-                                                <XStack items="center" gap="$2.5">
-                                                    <YStack
-                                                        width={20}
-                                                        height={20}
-                                                        items="center"
-                                                        justify="center"
-                                                        rounded={ds.radii.full}
-                                                        borderWidth={2}
-                                                        borderColor={
-                                                            isSelected
-                                                                ? ds.colors.primary
-                                                                : ds.colors.border
-                                                        }
-                                                        bg={
-                                                            isSelected
-                                                                ? ds.colors.primarySoft
-                                                                : ds.colors.surface
-                                                        }
-                                                    >
-                                                        {isSelected ? (
-                                                            <YStack
-                                                                width={8}
-                                                                height={8}
-                                                                rounded={ds.radii.full}
-                                                                bg={ds.colors.primary}
-                                                            />
-                                                        ) : null}
-                                                    </YStack>
+                                            <XStack
+                                                justify="center"
+                                                py="$4"
+                                                px="$2"
+                                                gap="$2"
+                                                flex={1}
+                                            >
+                                                <YStack
+                                                    width={20}
+                                                    height={20}
+                                                    items="center"
+                                                    justify="center"
+                                                    rounded={ds.radii.full}
+                                                    borderWidth={2}
+                                                    borderColor={
+                                                        isSelected
+                                                            ? ds.colors.primary
+                                                            : ds.colors.border
+                                                    }
+                                                    bg={
+                                                        isSelected
+                                                            ? ds.colors.primarySoft
+                                                            : ds.colors.surface
+                                                    }
+                                                >
+                                                    {isSelected ? (
+                                                        <YStack
+                                                            width={8}
+                                                            height={8}
+                                                            rounded={ds.radii.full}
+                                                            bg={ds.colors.primary}
+                                                        />
+                                                    ) : null}
+                                                </YStack>
+                                                <YStack justify="center" gap="$2.5">
                                                     <Text
                                                         color={
                                                             isSelected
@@ -837,20 +856,24 @@ export default function ExecutePlaceScreen() {
                                                         }
                                                         fontFamily={ds.fonts.bodyBold}
                                                         fontSize={ds.typography.bodyMd.fontSize}
+                                                        lineHeight={ds.typography.bodyMd.lineHeight}
                                                     >
                                                         {option.label}
                                                     </Text>
-                                                </XStack>
-                                                {option.description ? (
-                                                    <Paragraph
-                                                        color={ds.colors.mutedForeground}
-                                                        fontFamily={ds.fonts.bodyMedium}
-                                                        fontSize={ds.typography.bodySm.fontSize}
-                                                    >
-                                                        {option.description}
-                                                    </Paragraph>
-                                                ) : null}
-                                            </YStack>
+                                                    {option.description ? (
+                                                        <Paragraph
+                                                            color={ds.colors.mutedForeground}
+                                                            fontFamily={ds.fonts.bodyMedium}
+                                                            fontSize={ds.typography.bodyXs.fontSize}
+                                                            lineHeight={
+                                                                ds.typography.bodyXs.lineHeight
+                                                            }
+                                                        >
+                                                            {option.description}
+                                                        </Paragraph>
+                                                    ) : null}
+                                                </YStack>
+                                            </XStack>
                                         </Button>
                                     );
                                 })}

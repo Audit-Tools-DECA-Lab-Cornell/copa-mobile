@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -29,6 +29,7 @@ import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } fro
 import { getCardTextLineLimit } from "lib/ipad-polish";
 import { buildPairGridRows } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -81,12 +82,23 @@ export default function DashboardScreen() {
     const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
+    const scrollViewRef = useRef<ScrollView | null>(null);
 
     useEffect(() => {
         if (session !== null) {
             loadPlaces(session).catch(() => undefined);
         }
     }, [session, loadPlaces]);
+
+    const scrollDashboardToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: !isLoading || places.length > 0,
+        rerunKey: places.length,
+        scrollToOffset: scrollDashboardToOffset,
+    });
 
     const assignedCount = places.length;
 
@@ -666,6 +678,7 @@ export default function DashboardScreen() {
     if (layout.isTablet) {
         return (
             <ScrollView
+                ref={scrollViewRef}
                 contentInsetAdjustmentBehavior="automatic"
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
@@ -884,6 +897,7 @@ export default function DashboardScreen() {
 
     return (
         <ScrollView
+            ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {

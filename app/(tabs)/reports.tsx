@@ -1,5 +1,5 @@
-import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -46,6 +46,7 @@ import { getCardTextLineLimit } from "lib/ipad-polish";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
@@ -74,6 +75,7 @@ export default function ReportsScreen() {
     const [searchQuery, setSearchQuery] = useState("");
     const [reportFilter, setReportFilter] = useState<ReportFilter>("all");
     const [sortOption, setSortOption] = useState<ReportSortOption>("score");
+    const listRef = useRef<FlashListRef<ReportsListItem> | null>(null);
 
     useEffect(() => {
         if (session !== null) {
@@ -179,6 +181,16 @@ export default function ReportsScreen() {
         });
     }, [filteredReportPlaces]);
     const listItems: ReportsListItem[] = layout.isTablet ? tabletRows : filteredReportPlaces;
+
+    const scrollReportsToOffset = useCallback((offset: number) => {
+        listRef.current?.scrollToOffset({ animated: false, offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: true,
+        rerunKey: listItems.length,
+        scrollToOffset: scrollReportsToOffset,
+    });
 
     const previewPlace = useMemo(() => {
         const filteredScoredPlace = filteredReportPlaces.find(
@@ -351,6 +363,7 @@ export default function ReportsScreen() {
 
     return (
         <FlashList<ReportsListItem>
+            ref={listRef}
             data={listItems}
             keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"

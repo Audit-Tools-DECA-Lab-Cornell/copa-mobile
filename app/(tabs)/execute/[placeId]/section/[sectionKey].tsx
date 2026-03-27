@@ -15,6 +15,7 @@ import type {
 } from "lib/audit/types";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -78,6 +79,7 @@ export default function ExecuteSectionScreen() {
     const [isNoteFocused, setIsNoteFocused] = useState(false);
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
+    const scrollViewRef = useRef<ScrollView | null>(null);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -133,6 +135,16 @@ export default function ExecuteSectionScreen() {
         setLocalNote(text);
         localNoteRef.current = text;
     }, []);
+
+    const scrollSectionToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: auditSession !== undefined && activeSection !== undefined,
+        rerunKey: `${auditSession?.audit_id ?? "pending"}:${activeSection?.section_key ?? "none"}`,
+        scrollToOffset: scrollSectionToOffset,
+    });
 
     const hasPendingLocalChanges =
         auditSession !== undefined &&
@@ -295,6 +307,7 @@ export default function ExecuteSectionScreen() {
 
     return (
         <ScrollView
+            ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {

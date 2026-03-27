@@ -1,7 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Linking, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons";
+import MapView, { Marker } from "react-native-maps";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { StatCard } from "components/ui/stat-card";
@@ -19,6 +20,7 @@ import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { createMetricDisplayState } from "lib/metric-display";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 
@@ -160,6 +162,31 @@ function PlaceDetailContent({
     });
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, language, t);
     const mapsQuery = encodeURIComponent(`${place.place_name}, ${locality}`);
+    const placeCoordinate = useMemo(
+        () => getPlaceCoordinate(place.lat, place.lng),
+        [place.lat, place.lng],
+    );
+    const scrollViewRef = useRef<ScrollView | null>(null);
+    const mapRegion = useMemo(() => {
+        if (placeCoordinate === null) {
+            return null;
+        }
+        return {
+            ...placeCoordinate,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        };
+    }, [placeCoordinate]);
+
+    const scrollPlaceDetailToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: true,
+        rerunKey: place.place_id,
+        scrollToOffset: scrollPlaceDetailToOffset,
+    });
     const metricsGrid = (
         <YStack gap="$3">
             <XStack gap="$3">
@@ -373,9 +400,83 @@ function PlaceDetailContent({
             </Button>
         </YStack>
     );
+    const mapPreviewCard = (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$3"
+            style={{ boxShadow: ds.shadows.card }}
+        >
+            <YStack gap="$1.5">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
+                >
+                    Map
+                </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                >
+                    {locality}
+                </Paragraph>
+            </YStack>
+            {mapRegion === null || placeCoordinate === null ? (
+                <YStack
+                    height={layout.isTablet ? 280 : 220}
+                    rounded={ds.radii.md}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.input}
+                    justify="center"
+                    items="center"
+                    px="$4"
+                >
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyMd.fontSize}
+                        style={{ textAlign: "center" }}
+                    >
+                        Map preview is unavailable for this place because coordinates are missing.
+                    </Paragraph>
+                </YStack>
+            ) : (
+                <YStack
+                    rounded={ds.radii.md}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    style={{ overflow: "hidden" }}
+                >
+                    <MapView
+                        style={{ width: "100%", height: layout.isTablet ? 280 : 220 }}
+                        region={mapRegion}
+                        pointerEvents="auto"
+                        scrollEnabled={true}
+                        zoomEnabled={true}
+                        rotateEnabled={true}
+                        pitchEnabled={true}
+                        toolbarEnabled={true}
+                    >
+                        <Marker
+                            coordinate={placeCoordinate}
+                            title={place.place_name}
+                            description={locality}
+                        />
+                    </MapView>
+                </YStack>
+            )}
+        </YStack>
+    );
 
     return (
         <ScrollView
+            ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
@@ -440,6 +541,8 @@ function PlaceDetailContent({
                 </XStack>
             </YStack>
 
+            {mapPreviewCard}
+
             {layout.isTablet ? (
                 <XStack gap={layout.twoPaneGap} items="flex-start">
                     <YStack flex={1} gap="$3">
@@ -465,6 +568,11 @@ interface DetailStateCardProps {
     readonly title: string;
     readonly message: string;
     readonly isLoading?: boolean;
+}
+
+interface PlaceCoordinate {
+    readonly latitude: number;
+    readonly longitude: number;
 }
 
 interface PlaceInfoCardProps {
@@ -518,6 +626,36 @@ function PlaceInfoCard({ label, value, minHeight }: Readonly<PlaceInfoCardProps>
             </Text>
         </YStack>
     );
+}
+
+/**
+ * Validate and normalize place coordinates before they reach the map view.
+ *
+ * @param lat Optional latitude supplied by the backend.
+ * @param lng Optional longitude supplied by the backend.
+ * @returns Native map coordinate or null when the payload is incomplete or invalid.
+ */
+function getPlaceCoordinate(
+    lat: AuditorPlace["lat"],
+    lng: AuditorPlace["lng"],
+): PlaceCoordinate | null {
+    if (typeof lat !== "number" || !Number.isFinite(lat)) {
+        return null;
+    }
+    if (typeof lng !== "number" || !Number.isFinite(lng)) {
+        return null;
+    }
+    if (lat < -90 || lat > 90) {
+        return null;
+    }
+    if (lng < -180 || lng > 180) {
+        return null;
+    }
+
+    return {
+        latitude: lat,
+        longitude: lng,
+    };
 }
 
 /**

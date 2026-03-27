@@ -18,7 +18,7 @@ const withFmtFix = (config) => {
     fmt_base = File.join(installer.sandbox.pod_dir('fmt'), 'include', 'fmt', 'base.h')
     if File.exist?(fmt_base)
       content = File.read(fmt_base)
-      patched = content.gsub(/^#\\s*define FMT_USE_CONSTEVAL 1$/, '# define FMT_USE_CONSTEVAL 0')
+      patched = content.gsub(/FMT_USE_CONSTEVAL 1/, 'FMT_USE_CONSTEVAL 0')
       if patched != content
         File.chmod(0644, fmt_base)
         File.write(fmt_base, patched)

@@ -1,5 +1,5 @@
-import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck } from "@tamagui/lucide-icons";
@@ -14,6 +14,7 @@ import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem } from "lib/design-system";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
@@ -37,6 +38,8 @@ export default function ExecuteIndexScreen() {
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const [searchQuery, setSearchQuery] = useState("");
     const [executeFilter, setExecuteFilter] = useState<ExecuteFilter>("active");
+    const phoneListRef = useRef<FlashListRef<AuditorPlace> | null>(null);
+    const tabletListRef = useRef<FlashListRef<PairGridRow<AuditorPlace>> | null>(null);
 
     useEffect(() => {
         hydrate(session?.user.id ?? null).catch(() => undefined);
@@ -95,6 +98,24 @@ export default function ExecuteIndexScreen() {
             return getProjectPlaceKey(place.project_id, place.place_id);
         });
     }, [listPlaces]);
+
+    const scrollExecuteListToOffset = useCallback(
+        (offset: number) => {
+            if (layout.isTablet) {
+                tabletListRef.current?.scrollToOffset({ animated: false, offset });
+                return;
+            }
+
+            phoneListRef.current?.scrollToOffset({ animated: false, offset });
+        },
+        [layout.isTablet],
+    );
+
+    useScreenshotScrollAutomation({
+        contentReady: true,
+        rerunKey: layout.isTablet ? tabletRows.length : listPlaces.length,
+        scrollToOffset: scrollExecuteListToOffset,
+    });
     const hasActiveFilters = searchQuery.trim().length > 0 || executeFilter !== "active";
     const keyExtractor = useCallback((item: AuditorPlace) => {
         return getProjectPlaceKey(item.project_id, item.place_id);
@@ -307,6 +328,7 @@ export default function ExecuteIndexScreen() {
     if (layout.isTablet) {
         return (
             <FlashList<PairGridRow<AuditorPlace>>
+                ref={tabletListRef}
                 data={tabletRows}
                 keyExtractor={tabletRowKeyExtractor}
                 contentInsetAdjustmentBehavior="automatic"
@@ -327,6 +349,7 @@ export default function ExecuteIndexScreen() {
 
     return (
         <FlashList<AuditorPlace>
+            ref={phoneListRef}
             data={listPlaces}
             keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"

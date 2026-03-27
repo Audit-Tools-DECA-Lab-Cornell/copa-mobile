@@ -1,5 +1,5 @@
-import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, Clock3 } from "@tamagui/lucide-icons";
@@ -30,6 +30,7 @@ import {
 import { getCardTextLineLimit } from "lib/ipad-polish";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 
@@ -53,6 +54,8 @@ export default function PlacesScreen() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<PlaceStatusFilter>("all");
     const [sortOption, setSortOption] = useState<PlaceSortOption>("recent");
+    const phoneListRef = useRef<FlashListRef<AuditorPlace> | null>(null);
+    const tabletListRef = useRef<FlashListRef<PairGridRow<AuditorPlace>> | null>(null);
 
     useEffect(() => {
         if (session !== null) {
@@ -127,6 +130,24 @@ export default function PlacesScreen() {
             return getProjectPlaceKey(place.project_id, place.place_id);
         });
     }, [filteredPlaces]);
+
+    const scrollPlacesToOffset = useCallback(
+        (offset: number) => {
+            if (layout.isTablet) {
+                tabletListRef.current?.scrollToOffset({ animated: false, offset });
+                return;
+            }
+
+            phoneListRef.current?.scrollToOffset({ animated: false, offset });
+        },
+        [layout.isTablet],
+    );
+
+    useScreenshotScrollAutomation({
+        contentReady: !isLoading || places.length > 0,
+        rerunKey: layout.isTablet ? tabletRows.length : filteredPlaces.length,
+        scrollToOffset: scrollPlacesToOffset,
+    });
 
     const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== "all";
     const keyExtractor = useCallback((item: AuditorPlace) => {
@@ -383,6 +404,7 @@ export default function PlacesScreen() {
     if (layout.isTablet) {
         return (
             <FlashList<PairGridRow<AuditorPlace>>
+                ref={tabletListRef}
                 data={tabletRows}
                 keyExtractor={tabletRowKeyExtractor}
                 contentInsetAdjustmentBehavior="automatic"
@@ -403,6 +425,7 @@ export default function PlacesScreen() {
 
     return (
         <FlashList<AuditorPlace>
+            ref={phoneListRef}
             data={filteredPlaces}
             keyExtractor={keyExtractor}
             contentInsetAdjustmentBehavior="automatic"

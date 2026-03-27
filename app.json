@@ -38,6 +38,7 @@
             "./plugins/withFmtFix",
             "./plugins/withExpoProjectRootFix",
             "expo-router",
+            "react-native-maps",
             "expo-font",
             [
                 "expo-build-properties",

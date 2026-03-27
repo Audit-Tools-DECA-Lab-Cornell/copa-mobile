@@ -314,9 +314,10 @@ Dependabot is configured in `.github/dependabot.yml` for:
 
 ## Related Docs
 
-| File                                       | Description                         |
-| ------------------------------------------ | ----------------------------------- |
-| `../../PLANNING.md`                        | Cross-project status and priorities |
-| `../../instructions/playspace/PLANNING.md` | Playspace roadmap and boundaries    |
-| `../../instructions/playspace/SCORING.md`  | Current scoring rules               |
-| `MOBILE_OFFLINE_FLOW.mmd`                  | Local save and sync flow (Mermaid)  |
+| File                                       | Description                               |
+| ------------------------------------------ | ----------------------------------------- |
+| `../../PLANNING.md`                        | Cross-project status and priorities       |
+| `../../instructions/playspace/PLANNING.md` | Playspace roadmap and boundaries          |
+| `../../instructions/playspace/SCORING.md`  | Current scoring rules                     |
+| `IOS_BUILD_TROUBLESHOOTING.md`             | Native iOS build fixes and recovery steps |
+| `MOBILE_OFFLINE_FLOW.mmd`                  | Local save and sync flow (Mermaid)        |

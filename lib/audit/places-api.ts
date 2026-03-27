@@ -11,6 +11,16 @@ import { t } from "i18next";
 const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
 
 /**
+ * Accept coordinates when present while remaining backward compatible with
+ * older payloads until the mobile client and backend ship together.
+ */
+const nullableCoordinateSchema = z
+    .number()
+    .nullable()
+    .optional()
+    .transform((value): number | null => value ?? null);
+
+/**
  * Zod schema for the auditor place response returned by
  * `GET /playspace/auditor/me/places`.
  */
@@ -23,6 +33,8 @@ const auditorPlaceSchema = z.object({
     city: z.string().nullable(),
     province: z.string().nullable(),
     country: z.string().nullable(),
+    lat: nullableCoordinateSchema,
+    lng: nullableCoordinateSchema,
     audit_status: auditStatusSchema.nullable(),
     audit_id: z.uuid().nullable(),
     started_at: z.string().nullable(),
