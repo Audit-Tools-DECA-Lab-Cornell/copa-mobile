@@ -295,218 +295,500 @@ export default function AuditReportDetailScreen() {
                         language={i18n.language}
                     />
 
-                    <AuditMetrics auditSession={auditSession} />
+                    {layout.isTablet ? (
+                        <XStack gap={layout.twoPaneGap} items="flex-start">
+                            <YStack flex={1} gap="$3">
+                                <AuditMetrics auditSession={auditSession} />
+                                <YStack
+                                    rounded={ds.radii.lg}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surface}
+                                    p={layout.cardPadding}
+                                    gap="$3"
+                                    style={{ boxShadow: ds.shadows.card }}
+                                >
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.titleMd.fontSize}
+                                    >
+                                        {t("detail.sectionBreakdown", { ns: "reports" })}
+                                    </Text>
+                                    {sectionRows.length === 0 ? (
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodyMd.fontSize}
+                                        >
+                                            {t("detail.scorePending", { ns: "reports" })}
+                                        </Paragraph>
+                                    ) : (
+                                        <YStack gap="$3">
+                                            {sectionRows.map((sectionRow) => (
+                                                <YStack
+                                                    key={sectionRow.sectionKey}
+                                                    rounded={ds.radii.md}
+                                                    borderWidth={1}
+                                                    borderColor={ds.colors.border}
+                                                    bg={ds.colors.input}
+                                                    p="$4"
+                                                    gap="$2"
+                                                >
+                                                    <XStack
+                                                        justify="space-between"
+                                                        items="flex-start"
+                                                        gap="$3"
+                                                    >
+                                                        <YStack flex={1}>
+                                                            <Text
+                                                                color={ds.colors.foreground}
+                                                                fontFamily={ds.fonts.bodyBold}
+                                                                fontSize={
+                                                                    ds.typography.bodyLg.fontSize
+                                                                }
+                                                            >
+                                                                {sectionRow.title}
+                                                            </Text>
+                                                            <Paragraph
+                                                                color={ds.colors.mutedForeground}
+                                                                fontFamily={ds.fonts.bodyMedium}
+                                                                fontSize={
+                                                                    ds.typography.bodySm.fontSize
+                                                                }
+                                                            >
+                                                                {`${sectionRow.answeredCount}/${sectionRow.totalCount}`}
+                                                            </Paragraph>
+                                                        </YStack>
+                                                        <Text
+                                                            color={
+                                                                sectionRow.scoreTotals === null
+                                                                    ? ds.colors.mutedForeground
+                                                                    : ds.colors.primary
+                                                            }
+                                                            fontFamily={ds.fonts.bodyBold}
+                                                            fontSize={ds.typography.bodyMd.fontSize}
+                                                        >
+                                                            {sectionRow.scoreTotals === null
+                                                                ? "--"
+                                                                : formatScoreValue(
+                                                                      getCombinedConstructScore(
+                                                                          sectionRow.scoreTotals,
+                                                                      ) ?? 0,
+                                                                  )}
+                                                        </Text>
+                                                    </XStack>
+                                                    {sectionRow.scoreTotals === null ? (
+                                                        <Paragraph
+                                                            color={ds.colors.mutedForeground}
+                                                            fontFamily={ds.fonts.bodyMedium}
+                                                            fontSize={ds.typography.bodySm.fontSize}
+                                                        >
+                                                            {t("detail.scorePending", {
+                                                                ns: "reports",
+                                                            })}
+                                                        </Paragraph>
+                                                    ) : (
+                                                        <YStack gap="$1">
+                                                            <Paragraph
+                                                                color={ds.colors.primary}
+                                                                fontFamily={ds.fonts.bodyMedium}
+                                                                fontSize={
+                                                                    ds.typography.bodyXs.fontSize
+                                                                }
+                                                            >
+                                                                {formatConstructSummary(
+                                                                    sectionRow.scoreTotals,
+                                                                    scoreSummaryLabels,
+                                                                )}
+                                                            </Paragraph>
+                                                            <Paragraph
+                                                                color={ds.colors.primary}
+                                                                fontFamily={ds.fonts.bodyMedium}
+                                                                fontSize={
+                                                                    ds.typography.bodyXs.fontSize
+                                                                }
+                                                            >
+                                                                {formatColumnSummary(
+                                                                    sectionRow.scoreTotals,
+                                                                    scoreSummaryLabels,
+                                                                )}
+                                                            </Paragraph>
+                                                        </YStack>
+                                                    )}
+                                                </YStack>
+                                            ))}
+                                        </YStack>
+                                    )}
+                                </YStack>
+                            </YStack>
 
-                    <YStack
-                        rounded={ds.radii.lg}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
-                        p={layout.cardPadding}
-                        gap="$3"
-                        style={{ boxShadow: ds.shadows.card }}
-                    >
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleMd.fontSize}
-                        >
-                            {t("detail.auditMetadata", { ns: "reports" })}
-                        </Text>
-                        <MetadataRow
-                            label={t("detail.auditCode", { ns: "reports" })}
-                            value={auditSession.audit_code}
-                            selectable
-                        />
-                        <MetadataRow
-                            label={t("detail.status", { ns: "reports" })}
-                            value={getPlaceStatusLabel(
-                                derivePlaceStatus(place?.audit_status ?? auditSession.status),
-                                t,
-                            )}
-                        />
-                        {place === undefined ? null : (
-                            <MetadataRow
-                                label={t("detail.project", { ns: "reports" })}
-                                value={place.project_name}
-                            />
-                        )}
-                        <MetadataRow
-                            label={t("detail.startedAt", { ns: "reports" })}
-                            value={formatDateTime(auditSession.started_at, i18n.language)}
-                        />
-                        <MetadataRow
-                            label={t("detail.submittedAt", { ns: "reports" })}
-                            value={
-                                auditSession.submitted_at === null
-                                    ? t("filters.notScored", { ns: "common" })
-                                    : formatDateTime(auditSession.submitted_at, i18n.language)
-                            }
-                        />
-                        <MetadataRow
-                            label={t("detail.progress", { ns: "reports" })}
-                            value={`${auditSession.progress.answered_visible_questions}/${auditSession.progress.total_visible_questions}`}
-                        />
-                    </YStack>
+                            <YStack width={layout.supportRailWidth} gap="$3">
+                                <YStack
+                                    rounded={ds.radii.lg}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surface}
+                                    p={layout.cardPadding}
+                                    gap="$3"
+                                    style={{ boxShadow: ds.shadows.card }}
+                                >
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.titleMd.fontSize}
+                                    >
+                                        {t("detail.auditMetadata", { ns: "reports" })}
+                                    </Text>
+                                    <MetadataRow
+                                        label={t("detail.auditCode", { ns: "reports" })}
+                                        value={auditSession.audit_code}
+                                        selectable
+                                    />
+                                    <MetadataRow
+                                        label={t("detail.status", { ns: "reports" })}
+                                        value={getPlaceStatusLabel(
+                                            derivePlaceStatus(
+                                                place?.audit_status ?? auditSession.status,
+                                            ),
+                                            t,
+                                        )}
+                                    />
+                                    {place === undefined ? null : (
+                                        <MetadataRow
+                                            label={t("detail.project", { ns: "reports" })}
+                                            value={place.project_name}
+                                        />
+                                    )}
+                                    <MetadataRow
+                                        label={t("detail.startedAt", { ns: "reports" })}
+                                        value={formatDateTime(
+                                            auditSession.started_at,
+                                            i18n.language,
+                                        )}
+                                    />
+                                    <MetadataRow
+                                        label={t("detail.submittedAt", { ns: "reports" })}
+                                        value={
+                                            auditSession.submitted_at === null
+                                                ? t("filters.notScored", { ns: "common" })
+                                                : formatDateTime(
+                                                      auditSession.submitted_at,
+                                                      i18n.language,
+                                                  )
+                                        }
+                                    />
+                                    <MetadataRow
+                                        label={t("detail.progress", { ns: "reports" })}
+                                        value={`${auditSession.progress.answered_visible_questions}/${auditSession.progress.total_visible_questions}`}
+                                    />
+                                </YStack>
 
-                    {place === undefined ? null : (
-                        <YStack
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            p={layout.cardPadding}
-                            gap="$4"
-                            style={{ boxShadow: ds.shadows.card }}
-                        >
-                            <XStack items="center" gap="$2">
-                                <FileBarChart size={16} color={ds.colors.primary} />
+                                {place === undefined ? null : (
+                                    <YStack
+                                        rounded={ds.radii.lg}
+                                        borderWidth={1}
+                                        borderColor={ds.colors.border}
+                                        bg={ds.colors.surface}
+                                        p={layout.cardPadding}
+                                        gap="$4"
+                                        style={{ boxShadow: ds.shadows.card }}
+                                    >
+                                        <XStack items="center" gap="$2">
+                                            <FileBarChart size={16} color={ds.colors.primary} />
+                                            <Text
+                                                color={ds.colors.foreground}
+                                                fontFamily={ds.fonts.bodyBold}
+                                                fontSize={ds.typography.titleMd.fontSize}
+                                            >
+                                                {t("detail.exportThisAudit", { ns: "reports" })}
+                                            </Text>
+                                        </XStack>
+                                        <YStack gap="$2">
+                                            <ActionButton
+                                                label={t("exportPdf", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("pdf").catch(
+                                                        () => undefined,
+                                                    );
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={
+                                                    activeExportKey ===
+                                                    `single:${place.place_id}:pdf`
+                                                }
+                                            />
+                                            <ActionButton
+                                                label={t("exportCsv", { ns: "reports" })}
+                                                variant="primary"
+                                                onPress={() => {
+                                                    handleSingleAuditExport("csv").catch(
+                                                        () => undefined,
+                                                    );
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={
+                                                    activeExportKey ===
+                                                    `single:${place.place_id}:csv`
+                                                }
+                                            />
+                                            <ActionButton
+                                                label={t("exportExcel", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("xlsx").catch(
+                                                        () => undefined,
+                                                    );
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={
+                                                    activeExportKey ===
+                                                    `single:${place.place_id}:xlsx`
+                                                }
+                                            />
+                                        </YStack>
+                                    </YStack>
+                                )}
+                            </YStack>
+                        </XStack>
+                    ) : (
+                        <YStack gap="$3">
+                            <AuditMetrics auditSession={auditSession} />
+
+                            <YStack
+                                rounded={ds.radii.lg}
+                                borderWidth={1}
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.surface}
+                                p={layout.cardPadding}
+                                gap="$3"
+                                style={{ boxShadow: ds.shadows.card }}
+                            >
                                 <Text
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.bodyBold}
                                     fontSize={ds.typography.titleMd.fontSize}
                                 >
-                                    {t("detail.exportThisAudit", { ns: "reports" })}
+                                    {t("detail.auditMetadata", { ns: "reports" })}
                                 </Text>
-                            </XStack>
-                            <XStack gap="$2">
-                                <ActionButton
-                                    label={t("exportPdf", { ns: "reports" })}
-                                    onPress={() => {
-                                        handleSingleAuditExport("pdf").catch(() => undefined);
-                                    }}
-                                    disabled={activeExportKey !== null}
-                                    isLoading={activeExportKey === `single:${place.place_id}:pdf`}
+                                <MetadataRow
+                                    label={t("detail.auditCode", { ns: "reports" })}
+                                    value={auditSession.audit_code}
+                                    selectable
                                 />
-                                <ActionButton
-                                    label={t("exportCsv", { ns: "reports" })}
-                                    variant="primary"
-                                    onPress={() => {
-                                        handleSingleAuditExport("csv").catch(() => undefined);
-                                    }}
-                                    disabled={activeExportKey !== null}
-                                    isLoading={activeExportKey === `single:${place.place_id}:csv`}
+                                <MetadataRow
+                                    label={t("detail.status", { ns: "reports" })}
+                                    value={getPlaceStatusLabel(
+                                        derivePlaceStatus(
+                                            place?.audit_status ?? auditSession.status,
+                                        ),
+                                        t,
+                                    )}
                                 />
-                                <ActionButton
-                                    label={t("exportExcel", { ns: "reports" })}
-                                    onPress={() => {
-                                        handleSingleAuditExport("xlsx").catch(() => undefined);
-                                    }}
-                                    disabled={activeExportKey !== null}
-                                    isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
+                                {place === undefined ? null : (
+                                    <MetadataRow
+                                        label={t("detail.project", { ns: "reports" })}
+                                        value={place.project_name}
+                                    />
+                                )}
+                                <MetadataRow
+                                    label={t("detail.startedAt", { ns: "reports" })}
+                                    value={formatDateTime(auditSession.started_at, i18n.language)}
                                 />
-                            </XStack>
+                                <MetadataRow
+                                    label={t("detail.submittedAt", { ns: "reports" })}
+                                    value={
+                                        auditSession.submitted_at === null
+                                            ? t("filters.notScored", { ns: "common" })
+                                            : formatDateTime(
+                                                  auditSession.submitted_at,
+                                                  i18n.language,
+                                              )
+                                    }
+                                />
+                                <MetadataRow
+                                    label={t("detail.progress", { ns: "reports" })}
+                                    value={`${auditSession.progress.answered_visible_questions}/${auditSession.progress.total_visible_questions}`}
+                                />
+                            </YStack>
+
+                            {place === undefined ? null : (
+                                <YStack
+                                    rounded={ds.radii.lg}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surface}
+                                    p={layout.cardPadding}
+                                    gap="$4"
+                                    style={{ boxShadow: ds.shadows.card }}
+                                >
+                                    <XStack items="center" gap="$2">
+                                        <FileBarChart size={16} color={ds.colors.primary} />
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.titleMd.fontSize}
+                                        >
+                                            {t("detail.exportThisAudit", { ns: "reports" })}
+                                        </Text>
+                                    </XStack>
+                                    <XStack gap="$2">
+                                        <ActionButton
+                                            label={t("exportPdf", { ns: "reports" })}
+                                            onPress={() => {
+                                                handleSingleAuditExport("pdf").catch(
+                                                    () => undefined,
+                                                );
+                                            }}
+                                            disabled={activeExportKey !== null}
+                                            isLoading={
+                                                activeExportKey === `single:${place.place_id}:pdf`
+                                            }
+                                        />
+                                        <ActionButton
+                                            label={t("exportCsv", { ns: "reports" })}
+                                            variant="primary"
+                                            onPress={() => {
+                                                handleSingleAuditExport("csv").catch(
+                                                    () => undefined,
+                                                );
+                                            }}
+                                            disabled={activeExportKey !== null}
+                                            isLoading={
+                                                activeExportKey === `single:${place.place_id}:csv`
+                                            }
+                                        />
+                                        <ActionButton
+                                            label={t("exportExcel", { ns: "reports" })}
+                                            onPress={() => {
+                                                handleSingleAuditExport("xlsx").catch(
+                                                    () => undefined,
+                                                );
+                                            }}
+                                            disabled={activeExportKey !== null}
+                                            isLoading={
+                                                activeExportKey === `single:${place.place_id}:xlsx`
+                                            }
+                                        />
+                                    </XStack>
+                                </YStack>
+                            )}
+
+                            <YStack
+                                rounded={ds.radii.lg}
+                                borderWidth={1}
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.surface}
+                                p={layout.cardPadding}
+                                gap="$3"
+                                style={{ boxShadow: ds.shadows.card }}
+                            >
+                                <Text
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.titleMd.fontSize}
+                                >
+                                    {t("detail.sectionBreakdown", { ns: "reports" })}
+                                </Text>
+                                {sectionRows.length === 0 ? (
+                                    <Paragraph
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodyMd.fontSize}
+                                    >
+                                        {t("detail.scorePending", { ns: "reports" })}
+                                    </Paragraph>
+                                ) : (
+                                    <YStack gap="$3">
+                                        {sectionRows.map((sectionRow) => (
+                                            <YStack
+                                                key={sectionRow.sectionKey}
+                                                rounded={ds.radii.md}
+                                                borderWidth={1}
+                                                borderColor={ds.colors.border}
+                                                bg={ds.colors.input}
+                                                p="$4"
+                                                gap="$2"
+                                            >
+                                                <XStack
+                                                    justify="space-between"
+                                                    items="flex-start"
+                                                    gap="$3"
+                                                >
+                                                    <YStack flex={1}>
+                                                        <Text
+                                                            color={ds.colors.foreground}
+                                                            fontFamily={ds.fonts.bodyBold}
+                                                            fontSize={ds.typography.bodyLg.fontSize}
+                                                        >
+                                                            {sectionRow.title}
+                                                        </Text>
+                                                        <Paragraph
+                                                            color={ds.colors.mutedForeground}
+                                                            fontFamily={ds.fonts.bodyMedium}
+                                                            fontSize={ds.typography.bodySm.fontSize}
+                                                        >
+                                                            {`${sectionRow.answeredCount}/${sectionRow.totalCount}`}
+                                                        </Paragraph>
+                                                    </YStack>
+                                                    <Text
+                                                        color={
+                                                            sectionRow.scoreTotals === null
+                                                                ? ds.colors.mutedForeground
+                                                                : ds.colors.primary
+                                                        }
+                                                        fontFamily={ds.fonts.bodyBold}
+                                                        fontSize={ds.typography.bodyMd.fontSize}
+                                                    >
+                                                        {sectionRow.scoreTotals === null
+                                                            ? "--"
+                                                            : formatScoreValue(
+                                                                  getCombinedConstructScore(
+                                                                      sectionRow.scoreTotals,
+                                                                  ) ?? 0,
+                                                              )}
+                                                    </Text>
+                                                </XStack>
+                                                {sectionRow.scoreTotals === null ? (
+                                                    <Paragraph
+                                                        color={ds.colors.mutedForeground}
+                                                        fontFamily={ds.fonts.bodyMedium}
+                                                        fontSize={ds.typography.bodySm.fontSize}
+                                                    >
+                                                        {t("detail.scorePending", {
+                                                            ns: "reports",
+                                                        })}
+                                                    </Paragraph>
+                                                ) : (
+                                                    <YStack gap="$1">
+                                                        <Paragraph
+                                                            color={ds.colors.primary}
+                                                            fontFamily={ds.fonts.bodyMedium}
+                                                            fontSize={ds.typography.bodyXs.fontSize}
+                                                        >
+                                                            {formatConstructSummary(
+                                                                sectionRow.scoreTotals,
+                                                                scoreSummaryLabels,
+                                                            )}
+                                                        </Paragraph>
+                                                        <Paragraph
+                                                            color={ds.colors.primary}
+                                                            fontFamily={ds.fonts.bodyMedium}
+                                                            fontSize={ds.typography.bodyXs.fontSize}
+                                                        >
+                                                            {formatColumnSummary(
+                                                                sectionRow.scoreTotals,
+                                                                scoreSummaryLabels,
+                                                            )}
+                                                        </Paragraph>
+                                                    </YStack>
+                                                )}
+                                            </YStack>
+                                        ))}
+                                    </YStack>
+                                )}
+                            </YStack>
                         </YStack>
                     )}
-
-                    <YStack
-                        rounded={ds.radii.lg}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
-                        p={layout.cardPadding}
-                        gap="$3"
-                        style={{ boxShadow: ds.shadows.card }}
-                    >
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleMd.fontSize}
-                        >
-                            {t("detail.sectionBreakdown", { ns: "reports" })}
-                        </Text>
-                        {sectionRows.length === 0 ? (
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyMd.fontSize}
-                            >
-                                {t("detail.scorePending", { ns: "reports" })}
-                            </Paragraph>
-                        ) : (
-                            <YStack gap="$3">
-                                {sectionRows.map((sectionRow) => (
-                                    <YStack
-                                        key={sectionRow.sectionKey}
-                                        rounded={ds.radii.md}
-                                        borderWidth={1}
-                                        borderColor={ds.colors.border}
-                                        bg={ds.colors.input}
-                                        p="$4"
-                                        gap="$2"
-                                    >
-                                        <XStack justify="space-between" items="flex-start" gap="$3">
-                                            <YStack flex={1}>
-                                                <Text
-                                                    color={ds.colors.foreground}
-                                                    fontFamily={ds.fonts.bodyBold}
-                                                    fontSize={ds.typography.bodyLg.fontSize}
-                                                >
-                                                    {sectionRow.title}
-                                                </Text>
-                                                <Paragraph
-                                                    color={ds.colors.mutedForeground}
-                                                    fontFamily={ds.fonts.bodyMedium}
-                                                    fontSize={ds.typography.bodySm.fontSize}
-                                                >
-                                                    {`${sectionRow.answeredCount}/${sectionRow.totalCount}`}
-                                                </Paragraph>
-                                            </YStack>
-                                            <Text
-                                                color={
-                                                    sectionRow.scoreTotals === null
-                                                        ? ds.colors.mutedForeground
-                                                        : ds.colors.primary
-                                                }
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.bodyMd.fontSize}
-                                            >
-                                                {sectionRow.scoreTotals === null
-                                                    ? "--"
-                                                    : formatScoreValue(
-                                                          getCombinedConstructScore(
-                                                              sectionRow.scoreTotals,
-                                                          ) ?? 0,
-                                                      )}
-                                            </Text>
-                                        </XStack>
-                                        {sectionRow.scoreTotals === null ? (
-                                            <Paragraph
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodySm.fontSize}
-                                            >
-                                                {t("detail.scorePending", { ns: "reports" })}
-                                            </Paragraph>
-                                        ) : (
-                                            <YStack gap="$1">
-                                                <Paragraph
-                                                    color={ds.colors.primary}
-                                                    fontFamily={ds.fonts.bodyMedium}
-                                                    fontSize={ds.typography.bodyXs.fontSize}
-                                                >
-                                                    {formatConstructSummary(
-                                                        sectionRow.scoreTotals,
-                                                        scoreSummaryLabels,
-                                                    )}
-                                                </Paragraph>
-                                                <Paragraph
-                                                    color={ds.colors.primary}
-                                                    fontFamily={ds.fonts.bodyMedium}
-                                                    fontSize={ds.typography.bodyXs.fontSize}
-                                                >
-                                                    {formatColumnSummary(
-                                                        sectionRow.scoreTotals,
-                                                        scoreSummaryLabels,
-                                                    )}
-                                                </Paragraph>
-                                            </YStack>
-                                        )}
-                                    </YStack>
-                                ))}
-                            </YStack>
-                        )}
-                    </YStack>
                 </ScrollView>
             )}
         </>
@@ -618,6 +900,7 @@ interface AuditMetricsProps {
  */
 function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
     const overall = auditSession.scores.overall;
     const overallScore = overall === null ? null : getCombinedConstructScore(overall);
@@ -629,23 +912,27 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
                     label={t("detail.overallScore", { ns: "reports" })}
                     value={overallScore === null ? "--" : formatScoreValue(overallScore)}
                     accentColor={ds.colors.primary}
+                    minHeight={layout.summaryCardMinHeight}
                 />
                 <StatCard
-                    label={t("playValueShort", { ns: "reports" })}
+                    label="Play Value (PV)"
                     value={overall === null ? "--" : formatScoreValue(overall.play_value_total)}
                     accentColor={ds.colors.warning}
+                    minHeight={layout.summaryCardMinHeight}
                 />
             </XStack>
             <XStack gap="$3">
                 <StatCard
-                    label={t("usabilityShort", { ns: "reports" })}
+                    label="Usability (U)"
                     value={overall === null ? "--" : formatScoreValue(overall.usability_total)}
                     accentColor={ds.colors.primary}
+                    minHeight={layout.summaryCardMinHeight}
                 />
                 <StatCard
-                    label={t("sociabilityShort", { ns: "reports" })}
+                    label="Sociability (S)"
                     value={overall === null ? "--" : formatScoreValue(overall.sociability_total)}
                     accentColor={ds.colors.success}
+                    minHeight={layout.summaryCardMinHeight}
                 />
             </XStack>
         </YStack>

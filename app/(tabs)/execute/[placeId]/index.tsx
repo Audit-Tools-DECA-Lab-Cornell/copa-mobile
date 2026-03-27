@@ -172,6 +172,400 @@ export default function ExecutePlaceScreen() {
         );
     }
 
+    const viewPlaceDetailsButton = (
+        <Button
+            height={layout.isTablet ? layout.buttonHeight : 46}
+            rounded={ds.radii.md}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.input}
+            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            onPress={() => {
+                router.push(`/place/${placeId}?projectId=${encodeURIComponent(projectId)}`);
+            }}
+        >
+            <XStack items="center" gap="$2">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelMd.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.1}
+                >
+                    {t("overview.viewPlaceDetails", { ns: "audit" })}
+                </Text>
+                <ArrowRight size={14} color={ds.colors.foreground} />
+            </XStack>
+        </Button>
+    );
+
+    const preambleCard = (
+        <CollapsibleCard
+            title={t("overview.preamble", { ns: "audit" })}
+            icon={<Shapes size={16} color={ds.colors.primary} />}
+        >
+            <YStack gap="$3">
+                {instrument.preamble.map((paragraph) => {
+                    return (
+                        <Paragraph
+                            key={paragraph}
+                            color={ds.colors.secondaryForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyMd.fontSize}
+                        >
+                            {paragraph}
+                        </Paragraph>
+                    );
+                })}
+            </YStack>
+        </CollapsibleCard>
+    );
+
+    const auditRoleCard = (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$3"
+            style={{
+                boxShadow: ds.shadows.card,
+            }}
+        >
+            <XStack items="center" gap="$2">
+                <ClipboardList size={16} color={ds.colors.primary} />
+                <Text
+                    color={ds.colors.primary}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelMd.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.2}
+                >
+                    {t("overview.auditRole", { ns: "audit" })}
+                </Text>
+            </XStack>
+            <Paragraph
+                color={ds.colors.secondaryForeground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodyMd.fontSize}
+                lineHeight={ds.typography.bodyMd.lineHeight}
+            >
+                {`Project ${auditSession.project_name}`}
+            </Paragraph>
+
+            <YStack gap="$2.5">
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                    lineHeight={ds.typography.bodyMd.lineHeight}
+                >
+                    {t("overview.chooseMode", { ns: "audit" })}
+                </Paragraph>
+                {instrument.execution_modes
+                    .filter((option) => {
+                        return auditSession.allowed_execution_modes.includes(
+                            option.key as ExecutionMode,
+                        );
+                    })
+                    .map((option) => {
+                        const isSelected = auditSession.selected_execution_mode === option.key;
+
+                        return (
+                            <Button
+                                key={option.key}
+                                height={
+                                    layout.isTablet ? layout.heroCardMinHeight / 2 : "$space.15"
+                                }
+                                rounded={ds.radii.md}
+                                borderWidth={1}
+                                flex={1}
+                                justify="flex-start"
+                                borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                                bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
+                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                onPress={() => {
+                                    if (authSession === null) {
+                                        return;
+                                    }
+                                    ensurePlaceAudit(
+                                        authSession,
+                                        projectId,
+                                        placeId,
+                                        option.key as ExecutionMode,
+                                    ).catch(() => {});
+                                }}
+                            >
+                                <YStack gap="$2" items="flex-start">
+                                    <Text
+                                        color={
+                                            isSelected ? ds.colors.primary : ds.colors.foreground
+                                        }
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.bodyMd.fontSize}
+                                    >
+                                        {option.label}
+                                    </Text>
+                                    {option.description ? (
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                        >
+                                            {option.description}
+                                        </Paragraph>
+                                    ) : null}
+                                </YStack>
+                            </Button>
+                        );
+                    })}
+            </YStack>
+        </YStack>
+    );
+
+    const preAuditCard = (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$3"
+            style={{
+                boxShadow: ds.shadows.card,
+            }}
+        >
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.titleMd.fontSize}
+            >
+                {t("preAudit.title", { ns: "audit" })}
+            </Text>
+            <Paragraph
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodyMd.fontSize}
+                lineHeight={ds.typography.bodyMd.lineHeight}
+            >
+                {t("preAudit.description", { ns: "audit" })}
+            </Paragraph>
+            <Text
+                color={
+                    auditSession.progress.required_pre_audit_complete
+                        ? ds.colors.success
+                        : ds.colors.warning
+                }
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelMd.fontSize}
+                textTransform="uppercase"
+                letterSpacing={1.1}
+            >
+                {auditSession.progress.required_pre_audit_complete
+                    ? t("preAudit.complete", { ns: "audit" })
+                    : t("preAudit.needed", { ns: "audit" })}
+            </Text>
+            <Button
+                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                rounded={ds.radii.md}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.input}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={() => {
+                    router.push(
+                        `/(tabs)/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}`,
+                    );
+                }}
+            >
+                <XStack items="center" gap="$2">
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelLg.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        {t("preAudit.openPage", { ns: "audit" })}
+                    </Text>
+                    <ArrowRight size={16} color={ds.colors.foreground} />
+                </XStack>
+            </Button>
+        </YStack>
+    );
+
+    const sectionsContent = (
+        <YStack gap="$3">
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.titleMd.fontSize}
+            >
+                {t("overview.sections", { ns: "audit" })}
+            </Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <XStack gap="$2">
+                    <FilterChip
+                        label={t("filters.incomplete", { ns: "common" })}
+                        isSelected={sectionFilter === "incomplete"}
+                        onPress={() => {
+                            setSectionFilter("incomplete");
+                        }}
+                    />
+                    <FilterChip
+                        label={t("filters.all", { ns: "common" })}
+                        isSelected={sectionFilter === "all"}
+                        onPress={() => {
+                            setSectionFilter("all");
+                        }}
+                    />
+                    <FilterChip
+                        label={t("filters.complete", { ns: "common" })}
+                        isSelected={sectionFilter === "complete"}
+                        onPress={() => {
+                            setSectionFilter("complete");
+                        }}
+                    />
+                </XStack>
+            </ScrollView>
+
+            {sectionRows.length === 0 ? (
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                >
+                    {t("overview.sectionEmpty", { ns: "audit" })}
+                </Paragraph>
+            ) : (
+                sectionRows.map(({ section, localProgress, isComplete, showOnlineUploadHint }) => {
+                    return (
+                        <YStack
+                            key={section.section_key}
+                            rounded={ds.radii.lg}
+                            borderWidth={1}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
+                            p={layout.cardPadding}
+                            gap="$3"
+                            style={{
+                                minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
+                                boxShadow: ds.shadows.card,
+                            }}
+                        >
+                            <XStack justify="space-between" items="flex-start" gap="$3">
+                                <YStack flex={1} gap="$1.5">
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.titleMd.fontSize}
+                                    >
+                                        {section.title}
+                                    </Text>
+                                    <Paragraph
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodySm.fontSize}
+                                    >
+                                        {t("section.answeredCount", {
+                                            ns: "audit",
+                                            answered: localProgress.answeredQuestionCount,
+                                            total: localProgress.visibleQuestionCount,
+                                        })}
+                                    </Paragraph>
+                                </YStack>
+                                <XStack items="center" gap="$2" style={{ flexShrink: 0 }}>
+                                    {isComplete ? (
+                                        <CircleCheckBig size={18} color={ds.colors.success} />
+                                    ) : null}
+                                    {showOnlineUploadHint ? (
+                                        <XStack items="center" gap="$1.5">
+                                            <ActivityIndicator
+                                                size="small"
+                                                color={ds.colors.primary}
+                                            />
+                                            <Text
+                                                color={ds.colors.primary}
+                                                fontFamily={ds.fonts.bodyBold}
+                                                fontSize={ds.typography.labelXs.fontSize}
+                                                textTransform="uppercase"
+                                                letterSpacing={0.8}
+                                            >
+                                                {t("section.uploadingShort", { ns: "audit" })}
+                                            </Text>
+                                        </XStack>
+                                    ) : null}
+                                </XStack>
+                            </XStack>
+                            <Button
+                                height={layout.isTablet ? layout.buttonHeight : 46}
+                                rounded={ds.radii.md}
+                                borderWidth={1}
+                                borderColor={isComplete ? ds.colors.success : ds.colors.border}
+                                bg={isComplete ? ds.colors.successSoft : ds.colors.input}
+                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                onPress={() => {
+                                    router.push(
+                                        `/(tabs)/execute/${placeId}/section/${section.section_key}?projectId=${encodeURIComponent(projectId)}`,
+                                    );
+                                }}
+                            >
+                                <Text
+                                    color={isComplete ? ds.colors.success : ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelLg.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.2}
+                                >
+                                    {isComplete
+                                        ? t("section.reviewSection", { ns: "audit" })
+                                        : t("section.openSection", { ns: "audit" })}
+                                </Text>
+                            </Button>
+                        </YStack>
+                    );
+                })
+            )}
+        </YStack>
+    );
+
+    const submitButton = auditSession.progress.ready_to_submit ? (
+        <Button
+            height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+            rounded={ds.radii.md}
+            borderWidth={0}
+            bg={ds.colors.primary}
+            disabled={isSavingDraft || isSyncing}
+            opacity={isSavingDraft || isSyncing ? 0.7 : 1}
+            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            onPress={() => {
+                if (authSession === null) {
+                    return;
+                }
+                submitAuditSession(authSession, auditSession.audit_id).catch(() => undefined);
+            }}
+        >
+            <Text
+                color={ds.colors.primaryForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelLg.fontSize}
+                textTransform="uppercase"
+                letterSpacing={1.2}
+            >
+                {t("submit", { ns: "audit" })}
+            </Text>
+        </Button>
+    ) : null;
+
+    const errorText =
+        errorMessage === null ? null : (
+            <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
+                {errorMessage}
+            </Paragraph>
+        );
+
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
@@ -179,7 +573,7 @@ export default function ExecutePlaceScreen() {
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
-                maxWidth: layout.formMaxWidth,
+                maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
             })}
         >
             <YStack gap="$3">
@@ -209,409 +603,467 @@ export default function ExecutePlaceScreen() {
                 </Paragraph>
             </YStack>
 
-            <AuditSyncStatusCard
-                hasPendingLocalChanges={hasPendingLocalChanges}
-                isSyncing={isSyncing}
-                lastSyncError={lastSyncError}
-            />
-
-            <Button
-                height={layout.isTablet ? 50 : 46}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => {
-                    router.push(`/place/${placeId}?projectId=${encodeURIComponent(projectId)}`);
-                }}
-            >
-                <XStack items="center" gap="$2">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.1}
-                    >
-                        {t("overview.viewPlaceDetails", { ns: "audit" })}
-                    </Text>
-                    <ArrowRight size={14} color={ds.colors.foreground} />
-                </XStack>
-            </Button>
-
-            <CollapsibleCard
-                title={t("overview.preamble", { ns: "audit" })}
-                icon={<Shapes size={16} color={ds.colors.primary} />}
-            >
+            {layout.isTablet ? (
                 <YStack gap="$3">
-                    {instrument.preamble.map((paragraph) => {
-                        return (
+                    {preambleCard}
+                    <XStack gap={layout.twoPaneGap} items="flex-start">
+                        <YStack flex={1} gap="$3">
+                            {sectionsContent}
+                        </YStack>
+                        <YStack width={layout.supportRailWidth} gap="$3">
+                            <AuditSyncStatusCard
+                                hasPendingLocalChanges={hasPendingLocalChanges}
+                                isSyncing={isSyncing}
+                                lastSyncError={lastSyncError}
+                            />
+                            {viewPlaceDetailsButton}
+                            {auditRoleCard}
+                            {preAuditCard}
+                            {submitButton}
+                            {errorText}
+                        </YStack>
+                    </XStack>
+                </YStack>
+            ) : (
+                <>
+                    <AuditSyncStatusCard
+                        hasPendingLocalChanges={hasPendingLocalChanges}
+                        isSyncing={isSyncing}
+                        lastSyncError={lastSyncError}
+                    />
+
+                    <Button
+                        height={layout.isTablet ? 50 : 46}
+                        rounded={ds.radii.md}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.input}
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={() => {
+                            router.push(
+                                `/place/${placeId}?projectId=${encodeURIComponent(projectId)}`,
+                            );
+                        }}
+                    >
+                        <XStack items="center" gap="$2">
+                            <Text
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelMd.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.1}
+                            >
+                                {t("overview.viewPlaceDetails", { ns: "audit" })}
+                            </Text>
+                            <ArrowRight size={14} color={ds.colors.foreground} />
+                        </XStack>
+                    </Button>
+
+                    <CollapsibleCard
+                        title={t("overview.preamble", { ns: "audit" })}
+                        icon={<Shapes size={16} color={ds.colors.primary} />}
+                    >
+                        <YStack gap="$3">
+                            {instrument.preamble.map((paragraph) => {
+                                return (
+                                    <Paragraph
+                                        key={paragraph}
+                                        color={ds.colors.secondaryForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodyMd.fontSize}
+                                    >
+                                        {paragraph}
+                                    </Paragraph>
+                                );
+                            })}
+                        </YStack>
+                    </CollapsibleCard>
+
+                    <YStack
+                        rounded={ds.radii.lg}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surface}
+                        p={layout.cardPadding}
+                        gap="$3"
+                        style={{
+                            boxShadow: ds.shadows.card,
+                        }}
+                    >
+                        <XStack items="center" gap="$2">
+                            <ClipboardList size={16} color={ds.colors.primary} />
+                            <Text
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelMd.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.2}
+                            >
+                                {t("overview.auditRole", { ns: "audit" })}
+                            </Text>
+                        </XStack>
+                        <Paragraph
+                            color={ds.colors.secondaryForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyMd.fontSize}
+                            lineHeight={ds.typography.bodyMd.lineHeight}
+                        >
+                            {`Project ${auditSession.project_name}`}
+                        </Paragraph>
+
+                        <YStack gap="$2.5">
                             <Paragraph
-                                key={paragraph}
-                                color={ds.colors.secondaryForeground}
+                                color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
                                 fontSize={ds.typography.bodyMd.fontSize}
+                                lineHeight={ds.typography.bodyMd.lineHeight}
                             >
-                                {paragraph}
+                                {t("overview.chooseMode", { ns: "audit" })}
                             </Paragraph>
-                        );
-                    })}
-                </YStack>
-            </CollapsibleCard>
+                            {instrument.execution_modes
+                                .filter((option) => {
+                                    return auditSession.allowed_execution_modes.includes(
+                                        option.key as ExecutionMode,
+                                    );
+                                })
+                                .map((option) => {
+                                    const isSelected =
+                                        auditSession.selected_execution_mode === option.key;
 
-            <YStack
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p={layout.cardPadding}
-                gap="$3"
-                style={{
-                    boxShadow: ds.shadows.card,
-                }}
-            >
-                <XStack items="center" gap="$2">
-                    <ClipboardList size={16} color={ds.colors.primary} />
-                    <Text
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        {t("overview.auditRole", { ns: "audit" })}
-                    </Text>
-                </XStack>
-                <Paragraph
-                    color={ds.colors.secondaryForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                    lineHeight={ds.typography.bodyMd.lineHeight}
-                >
-                    {`Project ${auditSession.project_name}`}
-                </Paragraph>
-
-                <YStack gap="$2.5">
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                        lineHeight={ds.typography.bodyMd.lineHeight}
-                    >
-                        {t("overview.chooseMode", { ns: "audit" })}
-                    </Paragraph>
-                    {instrument.execution_modes
-                        .filter((option) => {
-                            return auditSession.allowed_execution_modes.includes(
-                                option.key as ExecutionMode,
-                            );
-                        })
-                        .map((option) => {
-                            const isSelected = auditSession.selected_execution_mode === option.key;
-
-                            return (
-                                <Button
-                                    key={option.key}
-                                    height="$space.15"
-                                    rounded={ds.radii.md}
-                                    borderWidth={1}
-                                    flex={1}
-                                    justify="flex-start"
-                                    borderColor={isSelected ? ds.colors.primary : ds.colors.border}
-                                    bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
-                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                    onPress={() => {
-                                        if (authSession === null) {
-                                            return;
-                                        }
-                                        ensurePlaceAudit(
-                                            authSession,
-                                            projectId,
-                                            placeId,
-                                            option.key as ExecutionMode,
-                                        ).catch(() => {});
-                                    }}
-                                >
-                                    <YStack gap="$2" items="flex-start">
-                                        <Text
-                                            color={
-                                                isSelected
-                                                    ? ds.colors.primary
-                                                    : ds.colors.foreground
+                                    return (
+                                        <Button
+                                            key={option.key}
+                                            height={
+                                                layout.isTablet
+                                                    ? layout.heroCardMinHeight / 2
+                                                    : "$space.15"
                                             }
-                                            fontFamily={ds.fonts.bodyBold}
-                                            fontSize={ds.typography.bodyMd.fontSize}
+                                            rounded={ds.radii.md}
+                                            borderWidth={1}
+                                            flex={1}
+                                            justify="flex-start"
+                                            borderColor={
+                                                isSelected ? ds.colors.primary : ds.colors.border
+                                            }
+                                            bg={
+                                                isSelected ? ds.colors.primarySoft : ds.colors.input
+                                            }
+                                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                            onPress={() => {
+                                                if (authSession === null) {
+                                                    return;
+                                                }
+                                                ensurePlaceAudit(
+                                                    authSession,
+                                                    projectId,
+                                                    placeId,
+                                                    option.key as ExecutionMode,
+                                                ).catch(() => {});
+                                            }}
                                         >
-                                            {option.label}
-                                        </Text>
-                                        {option.description ? (
-                                            <Paragraph
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodySm.fontSize}
-                                            >
-                                                {option.description}
-                                            </Paragraph>
-                                        ) : null}
-                                    </YStack>
-                                </Button>
-                            );
-                        })}
-                </YStack>
-            </YStack>
+                                            <YStack gap="$2" items="flex-start">
+                                                <Text
+                                                    color={
+                                                        isSelected
+                                                            ? ds.colors.primary
+                                                            : ds.colors.foreground
+                                                    }
+                                                    fontFamily={ds.fonts.bodyBold}
+                                                    fontSize={ds.typography.bodyMd.fontSize}
+                                                >
+                                                    {option.label}
+                                                </Text>
+                                                {option.description ? (
+                                                    <Paragraph
+                                                        color={ds.colors.mutedForeground}
+                                                        fontFamily={ds.fonts.bodyMedium}
+                                                        fontSize={ds.typography.bodySm.fontSize}
+                                                    >
+                                                        {option.description}
+                                                    </Paragraph>
+                                                ) : null}
+                                            </YStack>
+                                        </Button>
+                                    );
+                                })}
+                        </YStack>
+                    </YStack>
 
-            <YStack
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p={layout.cardPadding}
-                gap="$3"
-                style={{
-                    boxShadow: ds.shadows.card,
-                }}
-            >
-                <XStack items="center" justify="space-between">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleMd.fontSize}
+                    <YStack
+                        rounded={ds.radii.lg}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surface}
+                        p={layout.cardPadding}
+                        gap="$3"
+                        style={{
+                            boxShadow: ds.shadows.card,
+                        }}
                     >
-                        {t("preAudit.title", { ns: "audit" })}
-                    </Text>
-                    <Text
-                        color={
-                            auditSession.progress.required_pre_audit_complete
-                                ? ds.colors.success
-                                : ds.colors.warning
-                        }
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.1}
-                    >
-                        {auditSession.progress.required_pre_audit_complete
-                            ? t("preAudit.complete", { ns: "audit" })
-                            : t("preAudit.needed", { ns: "audit" })}
-                    </Text>
-                </XStack>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                    lineHeight={ds.typography.bodyMd.lineHeight}
-                >
-                    {t("preAudit.description", { ns: "audit" })}
-                </Paragraph>
-                <Button
-                    height={layout.controlHeight}
-                    rounded={ds.radii.md}
-                    borderWidth={1}
-                    borderColor={ds.colors.border}
-                    bg={ds.colors.input}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={() => {
-                        router.push(
-                            `/(tabs)/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}`,
-                        );
-                    }}
-                >
-                    <XStack items="center" gap="$2">
+                        <XStack items="center" justify="space-between">
+                            <Text
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.titleMd.fontSize}
+                            >
+                                {t("preAudit.title", { ns: "audit" })}
+                            </Text>
+                            <Text
+                                color={
+                                    auditSession.progress.required_pre_audit_complete
+                                        ? ds.colors.success
+                                        : ds.colors.warning
+                                }
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelMd.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.1}
+                            >
+                                {auditSession.progress.required_pre_audit_complete
+                                    ? t("preAudit.complete", { ns: "audit" })
+                                    : t("preAudit.needed", { ns: "audit" })}
+                            </Text>
+                        </XStack>
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyMd.fontSize}
+                            lineHeight={ds.typography.bodyMd.lineHeight}
+                        >
+                            {t("preAudit.description", { ns: "audit" })}
+                        </Paragraph>
+                        <Button
+                            height={layout.controlHeight}
+                            rounded={ds.radii.md}
+                            borderWidth={1}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.input}
+                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            onPress={() => {
+                                router.push(
+                                    `/(tabs)/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}`,
+                                );
+                            }}
+                        >
+                            <XStack items="center" gap="$2">
+                                <Text
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelLg.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.2}
+                                >
+                                    {t("preAudit.openPage", { ns: "audit" })}
+                                </Text>
+                                <ArrowRight size={16} color={ds.colors.foreground} />
+                            </XStack>
+                        </Button>
+                    </YStack>
+
+                    <YStack gap="$3">
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelLg.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
+                            fontSize={ds.typography.titleMd.fontSize}
                         >
-                            {t("preAudit.openPage", { ns: "audit" })}
+                            {t("overview.sections", { ns: "audit" })}
                         </Text>
-                        <ArrowRight size={16} color={ds.colors.foreground} />
-                    </XStack>
-                </Button>
-            </YStack>
 
-            <YStack gap="$3">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
-                >
-                    {t("overview.sections", { ns: "audit" })}
-                </Text>
-
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <XStack gap="$2">
-                        <FilterChip
-                            label={t("filters.incomplete", { ns: "common" })}
-                            isSelected={sectionFilter === "incomplete"}
-                            onPress={() => {
-                                setSectionFilter("incomplete");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("filters.all", { ns: "common" })}
-                            isSelected={sectionFilter === "all"}
-                            onPress={() => {
-                                setSectionFilter("all");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("filters.complete", { ns: "common" })}
-                            isSelected={sectionFilter === "complete"}
-                            onPress={() => {
-                                setSectionFilter("complete");
-                            }}
-                        />
-                    </XStack>
-                </ScrollView>
-
-                {sectionRows.length === 0 ? (
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                    >
-                        {t("overview.sectionEmpty", { ns: "audit" })}
-                    </Paragraph>
-                ) : (
-                    sectionRows.map(
-                        ({ section, localProgress, isComplete, showOnlineUploadHint }) => {
-                            return (
-                                <YStack
-                                    key={section.section_key}
-                                    rounded={ds.radii.lg}
-                                    borderWidth={1}
-                                    borderColor={ds.colors.border}
-                                    bg={ds.colors.surface}
-                                    p={layout.cardPadding}
-                                    gap="$3"
-                                    style={{
-                                        boxShadow: ds.shadows.card,
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <XStack gap="$2">
+                                <FilterChip
+                                    label={t("filters.incomplete", { ns: "common" })}
+                                    isSelected={sectionFilter === "incomplete"}
+                                    onPress={() => {
+                                        setSectionFilter("incomplete");
                                     }}
-                                >
-                                    <XStack justify="space-between" items="flex-start" gap="$3">
-                                        <YStack flex={1} gap="$1.5">
-                                            <Text
-                                                color={ds.colors.foreground}
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.titleMd.fontSize}
-                                            >
-                                                {section.title}
-                                            </Text>
-                                            <Paragraph
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodySm.fontSize}
-                                            >
-                                                {t("section.answeredCount", {
-                                                    ns: "audit",
-                                                    answered: localProgress.answeredQuestionCount,
-                                                    total: localProgress.visibleQuestionCount,
-                                                })}
-                                            </Paragraph>
-                                        </YStack>
-                                        <XStack items="center" gap="$2" style={{ flexShrink: 0 }}>
-                                            {isComplete ? (
-                                                <CircleCheckBig
-                                                    size={18}
-                                                    color={ds.colors.success}
-                                                />
-                                            ) : null}
-                                            {showOnlineUploadHint ? (
-                                                <XStack items="center" gap="$1.5">
-                                                    <ActivityIndicator
-                                                        size="small"
-                                                        color={ds.colors.primary}
-                                                    />
-                                                    <Text
-                                                        color={ds.colors.primary}
-                                                        fontFamily={ds.fonts.bodyBold}
-                                                        fontSize={ds.typography.labelXs.fontSize}
-                                                        textTransform="uppercase"
-                                                        letterSpacing={0.8}
-                                                    >
-                                                        {t("section.uploadingShort", {
-                                                            ns: "audit",
-                                                        })}
-                                                    </Text>
-                                                </XStack>
-                                            ) : null}
-                                        </XStack>
-                                    </XStack>
-                                    <Button
-                                        height={layout.isTablet ? 50 : 46}
-                                        rounded={ds.radii.md}
-                                        borderWidth={1}
-                                        borderColor={
-                                            isComplete ? ds.colors.success : ds.colors.border
-                                        }
-                                        bg={isComplete ? ds.colors.successSoft : ds.colors.input}
-                                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                        onPress={() => {
-                                            router.push(
-                                                `/(tabs)/execute/${placeId}/section/${section.section_key}?projectId=${encodeURIComponent(projectId)}`,
-                                            );
-                                        }}
-                                    >
-                                        <Text
-                                            color={
-                                                isComplete
-                                                    ? ds.colors.success
-                                                    : ds.colors.foreground
-                                            }
-                                            fontFamily={ds.fonts.bodyBold}
-                                            fontSize={ds.typography.labelLg.fontSize}
-                                            textTransform="uppercase"
-                                            letterSpacing={1.2}
+                                />
+                                <FilterChip
+                                    label={t("filters.all", { ns: "common" })}
+                                    isSelected={sectionFilter === "all"}
+                                    onPress={() => {
+                                        setSectionFilter("all");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("filters.complete", { ns: "common" })}
+                                    isSelected={sectionFilter === "complete"}
+                                    onPress={() => {
+                                        setSectionFilter("complete");
+                                    }}
+                                />
+                            </XStack>
+                        </ScrollView>
+
+                        {sectionRows.length === 0 ? (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {t("overview.sectionEmpty", { ns: "audit" })}
+                            </Paragraph>
+                        ) : (
+                            sectionRows.map(
+                                ({ section, localProgress, isComplete, showOnlineUploadHint }) => {
+                                    return (
+                                        <YStack
+                                            key={section.section_key}
+                                            rounded={ds.radii.lg}
+                                            borderWidth={1}
+                                            borderColor={ds.colors.border}
+                                            bg={ds.colors.surface}
+                                            p={layout.cardPadding}
+                                            gap="$3"
+                                            style={{
+                                                minHeight: layout.isTablet
+                                                    ? layout.queueCardMinHeight
+                                                    : undefined,
+                                                boxShadow: ds.shadows.card,
+                                            }}
                                         >
-                                            {isComplete
-                                                ? t("section.reviewSection", { ns: "audit" })
-                                                : t("section.openSection", { ns: "audit" })}
-                                        </Text>
-                                    </Button>
-                                </YStack>
-                            );
-                        },
-                    )
-                )}
-            </YStack>
+                                            <XStack
+                                                justify="space-between"
+                                                items="flex-start"
+                                                gap="$3"
+                                            >
+                                                <YStack flex={1} gap="$1.5">
+                                                    <Text
+                                                        color={ds.colors.foreground}
+                                                        fontFamily={ds.fonts.bodyBold}
+                                                        fontSize={ds.typography.titleMd.fontSize}
+                                                    >
+                                                        {section.title}
+                                                    </Text>
+                                                    <Paragraph
+                                                        color={ds.colors.mutedForeground}
+                                                        fontFamily={ds.fonts.bodyMedium}
+                                                        fontSize={ds.typography.bodySm.fontSize}
+                                                    >
+                                                        {t("section.answeredCount", {
+                                                            ns: "audit",
+                                                            answered:
+                                                                localProgress.answeredQuestionCount,
+                                                            total: localProgress.visibleQuestionCount,
+                                                        })}
+                                                    </Paragraph>
+                                                </YStack>
+                                                <XStack
+                                                    items="center"
+                                                    gap="$2"
+                                                    style={{ flexShrink: 0 }}
+                                                >
+                                                    {isComplete ? (
+                                                        <CircleCheckBig
+                                                            size={18}
+                                                            color={ds.colors.success}
+                                                        />
+                                                    ) : null}
+                                                    {showOnlineUploadHint ? (
+                                                        <XStack items="center" gap="$1.5">
+                                                            <ActivityIndicator
+                                                                size="small"
+                                                                color={ds.colors.primary}
+                                                            />
+                                                            <Text
+                                                                color={ds.colors.primary}
+                                                                fontFamily={ds.fonts.bodyBold}
+                                                                fontSize={
+                                                                    ds.typography.labelXs.fontSize
+                                                                }
+                                                                textTransform="uppercase"
+                                                                letterSpacing={0.8}
+                                                            >
+                                                                {t("section.uploadingShort", {
+                                                                    ns: "audit",
+                                                                })}
+                                                            </Text>
+                                                        </XStack>
+                                                    ) : null}
+                                                </XStack>
+                                            </XStack>
+                                            <Button
+                                                height={layout.isTablet ? 50 : 46}
+                                                rounded={ds.radii.md}
+                                                borderWidth={1}
+                                                borderColor={
+                                                    isComplete
+                                                        ? ds.colors.success
+                                                        : ds.colors.border
+                                                }
+                                                bg={
+                                                    isComplete
+                                                        ? ds.colors.successSoft
+                                                        : ds.colors.input
+                                                }
+                                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                                onPress={() => {
+                                                    router.push(
+                                                        `/(tabs)/execute/${placeId}/section/${section.section_key}?projectId=${encodeURIComponent(projectId)}`,
+                                                    );
+                                                }}
+                                            >
+                                                <Text
+                                                    color={
+                                                        isComplete
+                                                            ? ds.colors.success
+                                                            : ds.colors.foreground
+                                                    }
+                                                    fontFamily={ds.fonts.bodyBold}
+                                                    fontSize={ds.typography.labelLg.fontSize}
+                                                    textTransform="uppercase"
+                                                    letterSpacing={1.2}
+                                                >
+                                                    {isComplete
+                                                        ? t("section.reviewSection", {
+                                                              ns: "audit",
+                                                          })
+                                                        : t("section.openSection", { ns: "audit" })}
+                                                </Text>
+                                            </Button>
+                                        </YStack>
+                                    );
+                                },
+                            )
+                        )}
+                    </YStack>
 
-            {auditSession.progress.ready_to_submit ? (
-                <Button
-                    height={layout.controlHeight}
-                    rounded={ds.radii.md}
-                    borderWidth={0}
-                    bg={ds.colors.primary}
-                    disabled={isSavingDraft || isSyncing}
-                    opacity={isSavingDraft || isSyncing ? 0.7 : 1}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={() => {
-                        if (authSession === null) {
-                            return;
-                        }
-                        submitAuditSession(authSession, auditSession.audit_id).catch(
-                            () => undefined,
-                        );
-                    }}
-                >
-                    <Text
-                        color={ds.colors.primaryForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelLg.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        {t("submit", { ns: "audit" })}
-                    </Text>
-                </Button>
-            ) : null}
+                    {auditSession.progress.ready_to_submit ? (
+                        <Button
+                            height={layout.controlHeight}
+                            rounded={ds.radii.md}
+                            borderWidth={0}
+                            bg={ds.colors.primary}
+                            disabled={isSavingDraft || isSyncing}
+                            opacity={isSavingDraft || isSyncing ? 0.7 : 1}
+                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            onPress={() => {
+                                if (authSession === null) {
+                                    return;
+                                }
+                                submitAuditSession(authSession, auditSession.audit_id).catch(
+                                    () => undefined,
+                                );
+                            }}
+                        >
+                            <Text
+                                color={ds.colors.primaryForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelLg.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.2}
+                            >
+                                {t("submit", { ns: "audit" })}
+                            </Text>
+                        </Button>
+                    ) : null}
 
-            {errorMessage === null ? null : (
-                <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
-                    {errorMessage}
-                </Paragraph>
+                    {errorMessage === null ? null : (
+                        <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
+                            {errorMessage}
+                        </Paragraph>
+                    )}
+                </>
             )}
         </ScrollView>
     );

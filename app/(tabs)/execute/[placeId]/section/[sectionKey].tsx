@@ -180,6 +180,111 @@ export default function ExecuteSectionScreen() {
     }
 
     const nextSection = getNextSection(visibleSections, activeSection.section_key);
+    const notesPanel = (
+        <YStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$3"
+            style={{ boxShadow: ds.shadows.card }}
+        >
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.titleMd.fontSize}
+                lineHeight={ds.typography.titleMd.lineHeight}
+            >
+                {t("section.sectionNotes", { ns: "audit" })}
+            </Text>
+            <Paragraph
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodyLg.fontSize}
+                lineHeight={ds.typography.bodyLg.lineHeight}
+                marginBlockEnd={4}
+            >
+                {activeSection.notes_prompt ?? t("section.notesDefault", { ns: "audit" })}
+            </Paragraph>
+            <TextInput
+                multiline
+                value={localNote}
+                onChangeText={handleNoteChange}
+                onBlur={flushNoteToStore}
+                placeholder={t("section.notesPlaceholder", { ns: "audit" })}
+                placeholderTextColor={ds.colors.mutedForeground}
+                style={{
+                    minHeight: layout.isTablet ? 220 : 120,
+                    borderRadius: ds.radii.md,
+                    borderWidth: 1,
+                    borderColor: ds.colors.border,
+                    backgroundColor: ds.colors.input,
+                    color: ds.colors.foreground,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    textAlignVertical: "top",
+                }}
+            />
+        </YStack>
+    );
+    const actionButtons = (
+        <YStack gap="$2">
+            <Button
+                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                rounded={ds.radii.md}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.input}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={() => {
+                    flushNoteToStore();
+                    router.back();
+                }}
+            >
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelLg.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={0.5}
+                >
+                    {t("section.backToOverview", { ns: "audit" })}
+                </Text>
+            </Button>
+            <Button
+                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                rounded={ds.radii.md}
+                borderWidth={0}
+                bg={ds.colors.primary}
+                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                onPress={() => {
+                    flushNoteToStore();
+                    if (nextSection === undefined) {
+                        router.replace(
+                            `/(tabs)/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`,
+                        );
+                        return;
+                    }
+                    router.replace(
+                        `/(tabs)/execute/${placeId}/section/${nextSection.section_key}?projectId=${encodeURIComponent(projectId)}`,
+                    );
+                }}
+            >
+                <Text
+                    color={ds.colors.primaryForeground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelLg.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={0.7}
+                >
+                    {nextSection === undefined
+                        ? t("section.saveSection", { ns: "audit" })
+                        : t("section.saveAndNext", { ns: "audit" })}
+                </Text>
+            </Button>
+        </YStack>
+    );
 
     return (
         <ScrollView
@@ -188,7 +293,7 @@ export default function ExecuteSectionScreen() {
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 144,
                 gap: layout.sectionGap,
-                maxWidth: layout.formMaxWidth,
+                maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
             })}
         >
             <YStack gap="$3">
@@ -217,168 +322,129 @@ export default function ExecuteSectionScreen() {
                 </Paragraph>
             </YStack>
 
-            <YStack gap="$3">
-                {activeSection.questions.map((question) => {
-                    const selectedAnswers = getQuestionAnswers(
-                        auditSession,
-                        activeSection.section_key,
-                        question.question_key,
-                    );
-
-                    return (
-                        <QuestionCard
-                            key={question.question_key}
-                            question={question}
-                            selectedAnswers={selectedAnswers}
-                            onSelectAnswer={(questionKey, scaleKey, optionKey) => {
-                                const currentAnswers = getQuestionAnswers(
-                                    auditSession,
-                                    activeSection.section_key,
-                                    questionKey,
-                                );
-                                const nextAnswers = buildNextQuestionAnswers(
-                                    currentAnswers,
-                                    question,
-                                    scaleKey,
-                                    optionKey,
-                                );
-                                applyLocalQuestionAnswer(
-                                    pairKey,
-                                    activeSection.section_key,
-                                    questionKey,
-                                    nextAnswers,
-                                );
-                            }}
-                        />
-                    );
-                })}
-            </YStack>
-
-            <YStack
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p={layout.cardPadding}
-                gap="$3"
-                style={{ boxShadow: ds.shadows.card }}
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
-                    lineHeight={ds.typography.titleMd.lineHeight}
-                >
-                    {t("section.sectionNotes", { ns: "audit" })}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                    lineHeight={ds.typography.bodyLg.lineHeight}
-                    marginBlockEnd={4}
-                >
-                    {activeSection.notes_prompt ?? t("section.notesDefault", { ns: "audit" })}
-                </Paragraph>
-                <TextInput
-                    multiline
-                    value={localNote}
-                    onChangeText={handleNoteChange}
-                    onBlur={flushNoteToStore}
-                    placeholder={t("section.notesPlaceholder", { ns: "audit" })}
-                    placeholderTextColor={ds.colors.mutedForeground}
-                    style={{
-                        minHeight: layout.isTablet ? 144 : 120,
-                        borderRadius: ds.radii.md,
-                        borderWidth: 1,
-                        borderColor: ds.colors.border,
-                        backgroundColor: ds.colors.input,
-                        color: ds.colors.foreground,
-                        paddingHorizontal: 14,
-                        paddingVertical: 12,
-                        textAlignVertical: "top",
-                    }}
-                />
-            </YStack>
-
-            {hasPendingLocalChanges ? (
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
-                >
-                    {t("section.pendingSync", { ns: "audit" })}
-                </Paragraph>
-            ) : null}
-
-            {errorMessage === null ? null : (
-                <Paragraph
-                    color={ds.colors.warning}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
-                    lineHeight={ds.typography.bodySm.lineHeight}
-                >
-                    {errorMessage}
-                </Paragraph>
-            )}
-
-            <XStack gap="$2">
-                <Button
-                    flex={1}
-                    height={layout.controlHeight}
-                    rounded={ds.radii.md}
-                    borderWidth={1}
-                    borderColor={ds.colors.border}
-                    bg={ds.colors.input}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={() => {
-                        flushNoteToStore();
-                        router.back();
-                    }}
-                >
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelLg.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={0.5}
-                    >
-                        {t("section.backToOverview", { ns: "audit" })}
-                    </Text>
-                </Button>
-                <Button
-                    flex={1}
-                    height={layout.controlHeight}
-                    rounded={ds.radii.md}
-                    borderWidth={0}
-                    bg={ds.colors.primary}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={() => {
-                        flushNoteToStore();
-                        if (nextSection === undefined) {
-                            router.replace(
-                                `/(tabs)/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`,
+            {layout.isTablet ? (
+                <XStack gap={layout.twoPaneGap} items="flex-start">
+                    <YStack flex={1} gap="$3">
+                        {activeSection.questions.map((question) => {
+                            const selectedAnswers = getQuestionAnswers(
+                                auditSession,
+                                activeSection.section_key,
+                                question.question_key,
                             );
-                            return;
-                        }
-                        router.replace(
-                            `/(tabs)/execute/${placeId}/section/${nextSection.section_key}?projectId=${encodeURIComponent(projectId)}`,
-                        );
-                    }}
-                >
-                    <Text
-                        color={ds.colors.primaryForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelLg.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={0.7}
-                    >
-                        {nextSection === undefined
-                            ? t("section.saveSection", { ns: "audit" })
-                            : t("section.saveAndNext", { ns: "audit" })}
-                    </Text>
-                </Button>
-            </XStack>
+
+                            return (
+                                <QuestionCard
+                                    key={question.question_key}
+                                    question={question}
+                                    selectedAnswers={selectedAnswers}
+                                    onSelectAnswer={(questionKey, scaleKey, optionKey) => {
+                                        const currentAnswers = getQuestionAnswers(
+                                            auditSession,
+                                            activeSection.section_key,
+                                            questionKey,
+                                        );
+                                        const nextAnswers = buildNextQuestionAnswers(
+                                            currentAnswers,
+                                            question,
+                                            scaleKey,
+                                            optionKey,
+                                        );
+                                        applyLocalQuestionAnswer(
+                                            pairKey,
+                                            activeSection.section_key,
+                                            questionKey,
+                                            nextAnswers,
+                                        );
+                                    }}
+                                />
+                            );
+                        })}
+                    </YStack>
+                    <YStack width={layout.supportRailWidth} gap="$3">
+                        {notesPanel}
+                        {hasPendingLocalChanges ? (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                            >
+                                {t("section.pendingSync", { ns: "audit" })}
+                            </Paragraph>
+                        ) : null}
+                        {errorMessage === null ? null : (
+                            <Paragraph
+                                color={ds.colors.warning}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                                lineHeight={ds.typography.bodySm.lineHeight}
+                            >
+                                {errorMessage}
+                            </Paragraph>
+                        )}
+                        {actionButtons}
+                    </YStack>
+                </XStack>
+            ) : (
+                <YStack gap="$3">
+                    <YStack gap="$3">
+                        {activeSection.questions.map((question) => {
+                            const selectedAnswers = getQuestionAnswers(
+                                auditSession,
+                                activeSection.section_key,
+                                question.question_key,
+                            );
+
+                            return (
+                                <QuestionCard
+                                    key={question.question_key}
+                                    question={question}
+                                    selectedAnswers={selectedAnswers}
+                                    onSelectAnswer={(questionKey, scaleKey, optionKey) => {
+                                        const currentAnswers = getQuestionAnswers(
+                                            auditSession,
+                                            activeSection.section_key,
+                                            questionKey,
+                                        );
+                                        const nextAnswers = buildNextQuestionAnswers(
+                                            currentAnswers,
+                                            question,
+                                            scaleKey,
+                                            optionKey,
+                                        );
+                                        applyLocalQuestionAnswer(
+                                            pairKey,
+                                            activeSection.section_key,
+                                            questionKey,
+                                            nextAnswers,
+                                        );
+                                    }}
+                                />
+                            );
+                        })}
+                    </YStack>
+                    {notesPanel}
+                    {hasPendingLocalChanges ? (
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                        >
+                            {t("section.pendingSync", { ns: "audit" })}
+                        </Paragraph>
+                    ) : null}
+                    {errorMessage === null ? null : (
+                        <Paragraph
+                            color={ds.colors.warning}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                            lineHeight={ds.typography.bodySm.lineHeight}
+                        >
+                            {errorMessage}
+                        </Paragraph>
+                    )}
+                    {actionButtons}
+                </YStack>
+            )}
         </ScrollView>
     );
 }

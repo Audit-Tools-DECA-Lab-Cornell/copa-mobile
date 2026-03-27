@@ -68,7 +68,7 @@ export function QuestionCard({
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
             p={layout.cardPadding}
-            gap={layout.isTablet ? "$4" : "$3.5"}
+            gap={layout.isTablet ? "$4.5" : "$3.5"}
             style={{
                 boxShadow: ds.shadows.card,
             }}
@@ -77,23 +77,29 @@ export function QuestionCard({
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
                 fontSize={
-                    layout.isTablet
-                        ? ds.typography.titleMd.fontSize
-                        : ds.typography.titleSm.fontSize
+                    layout.isWideTablet
+                        ? ds.typography.titleLg.fontSize
+                        : layout.isTablet
+                          ? ds.typography.titleMd.fontSize
+                          : ds.typography.titleSm.fontSize
                 }
                 lineHeight={
-                    layout.isTablet
-                        ? ds.typography.titleMd.lineHeight
-                        : ds.typography.titleSm.lineHeight
+                    layout.isWideTablet
+                        ? ds.typography.titleLg.lineHeight
+                        : layout.isTablet
+                          ? ds.typography.titleMd.lineHeight
+                          : ds.typography.titleSm.lineHeight
                 }
             >
                 <Text
                     color={ds.colors.secondaryForeground}
                     fontFamily={ds.fonts.bodySemiBold}
                     fontSize={
-                        layout.isTablet
-                            ? ds.typography.titleSm.fontSize
-                            : ds.typography.bodyLg.fontSize
+                        layout.isWideTablet
+                            ? ds.typography.bodyLg.fontSize
+                            : layout.isTablet
+                              ? ds.typography.titleSm.fontSize
+                              : ds.typography.bodyLg.fontSize
                     }
                 >
                     {`${t("thisPlayspace")}\n`}
@@ -103,9 +109,11 @@ export function QuestionCard({
                         <Text
                             fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
                             fontSize={
-                                layout.isTablet
-                                    ? ds.typography.titleMd.fontSize
-                                    : ds.typography.titleSm.fontSize
+                                layout.isWideTablet
+                                    ? ds.typography.titleLg.fontSize
+                                    : layout.isTablet
+                                      ? ds.typography.titleMd.fontSize
+                                      : ds.typography.titleSm.fontSize
                             }
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                         >
@@ -179,9 +187,11 @@ function ScaleSelector({
                     color={ds.colors.primary}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={
-                        layout.isTablet
-                            ? ds.typography.titleMd.fontSize
-                            : ds.typography.titleSm.fontSize
+                        layout.isWideTablet
+                            ? ds.typography.titleLg.fontSize
+                            : layout.isTablet
+                              ? ds.typography.titleMd.fontSize
+                              : ds.typography.titleSm.fontSize
                     }
                     textTransform="uppercase"
                     letterSpacing={1.2}
@@ -192,9 +202,11 @@ function ScaleSelector({
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={
-                        layout.isTablet
-                            ? ds.typography.bodyMd.fontSize
-                            : ds.typography.bodySm.fontSize
+                        layout.isWideTablet
+                            ? ds.typography.bodyLg.fontSize
+                            : layout.isTablet
+                              ? ds.typography.bodyMd.fontSize
+                              : ds.typography.bodySm.fontSize
                     }
                 >
                     {scale.prompt}
@@ -210,7 +222,7 @@ function ScaleSelector({
                             key={`${scale.key}.${option.key}`}
                             width="48.5%"
                             rounded={ds.radii.md}
-                            height={layout.isTablet ? 48 : 42}
+                            height={layout.isTablet ? layout.formOptionHeight : 42}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
@@ -223,9 +235,11 @@ function ScaleSelector({
                                 color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isTablet
-                                        ? ds.typography.bodyMd.fontSize
-                                        : ds.typography.bodySm.fontSize
+                                    layout.isWideTablet
+                                        ? ds.typography.bodyLg.fontSize
+                                        : layout.isTablet
+                                          ? ds.typography.bodyMd.fontSize
+                                          : ds.typography.bodySm.fontSize
                                 }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}

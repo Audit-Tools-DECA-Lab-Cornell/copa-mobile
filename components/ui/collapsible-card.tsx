@@ -37,7 +37,7 @@ export function CollapsibleCard({
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
             p={layout.cardPadding}
-            gap={layout.isTablet ? "$4" : "$3"}
+            gap={layout.isTablet ? "$4.5" : "$3"}
             style={{ boxShadow: ds.shadows.card }}
         >
             <Pressable
@@ -52,9 +52,18 @@ export function CollapsibleCard({
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.bodyBold}
                             fontSize={
-                                layout.isTablet
+                                layout.isWideTablet
                                     ? ds.typography.titleLg.fontSize
-                                    : ds.typography.titleMd.fontSize
+                                    : layout.isTablet
+                                      ? ds.typography.titleLg.fontSize
+                                      : ds.typography.titleMd.fontSize
+                            }
+                            lineHeight={
+                                layout.isWideTablet
+                                    ? ds.typography.titleLg.lineHeight
+                                    : layout.isTablet
+                                      ? ds.typography.titleLg.lineHeight
+                                      : ds.typography.titleMd.lineHeight
                             }
                         >
                             {title}
@@ -64,9 +73,18 @@ export function CollapsibleCard({
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isTablet
-                                        ? ds.typography.bodyMd.fontSize
-                                        : ds.typography.bodySm.fontSize
+                                    layout.isWideTablet
+                                        ? ds.typography.bodyLg.fontSize
+                                        : layout.isTablet
+                                          ? ds.typography.bodyMd.fontSize
+                                          : ds.typography.bodySm.fontSize
+                                }
+                                lineHeight={
+                                    layout.isWideTablet
+                                        ? ds.typography.bodyLg.lineHeight
+                                        : layout.isTablet
+                                          ? ds.typography.bodyMd.lineHeight
+                                          : ds.typography.bodySm.lineHeight
                                 }
                             >
                                 {subtitle}

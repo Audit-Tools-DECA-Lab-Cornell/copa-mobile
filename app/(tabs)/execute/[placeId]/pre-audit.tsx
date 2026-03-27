@@ -159,6 +159,63 @@ export default function PreAuditScreen() {
             />
         );
     }
+    const preAuditCards = instrument.pre_audit_questions.map((question) => {
+        if (question.input_type === "auto_timestamp") {
+            return (
+                <AutoFieldCard
+                    key={question.key}
+                    question={question}
+                    auditSession={auditSession}
+                    language={i18n.language}
+                />
+            );
+        }
+
+        const questionValue = formValues[question.key];
+        return (
+            <ChoiceFieldCard
+                key={question.key}
+                question={question}
+                value={questionValue}
+                onSingleSelect={(nextValue) => {
+                    updateFormValue(question.key, nextValue);
+                }}
+                onToggleSelect={(nextValue) => {
+                    const currentValue = formValues[question.key];
+                    const currentItems = Array.isArray(currentValue)
+                        ? currentValue.filter((v) => typeof v === "string")
+                        : [];
+                    const nextItems = currentItems.includes(nextValue)
+                        ? currentItems.filter((v) => v !== nextValue)
+                        : [...currentItems, nextValue];
+                    updateFormValue(question.key, nextItems);
+                }}
+            />
+        );
+    });
+    const saveButton = (
+        <Button
+            height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+            rounded={ds.radii.md}
+            borderWidth={0}
+            bg={ds.colors.primary}
+            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            onPress={() => {
+                flushToStore();
+                router.back();
+            }}
+        >
+            <Text
+                color={ds.colors.primaryForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelLg.fontSize}
+                textTransform="uppercase"
+                letterSpacing={1.2}
+            >
+                {t("preAudit.saveAndContinue", { ns: "audit" })}
+            </Text>
+        </Button>
+    );
 
     return (
         <ScrollView
@@ -167,7 +224,7 @@ export default function PreAuditScreen() {
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
-                maxWidth: layout.formMaxWidth,
+                maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
             })}
         >
             <YStack gap="$3">
@@ -196,70 +253,75 @@ export default function PreAuditScreen() {
                 </Paragraph>
             </YStack>
 
-            <YStack gap="$3">
-                {instrument.pre_audit_questions.map((question) => {
-                    if (question.input_type === "auto_timestamp") {
-                        return (
-                            <AutoFieldCard
-                                key={question.key}
-                                question={question}
-                                auditSession={auditSession}
-                                language={i18n.language}
-                            />
-                        );
-                    }
-
-                    const questionValue = formValues[question.key];
-                    return (
-                        <ChoiceFieldCard
-                            key={question.key}
-                            question={question}
-                            value={questionValue}
-                            onSingleSelect={(nextValue) => {
-                                updateFormValue(question.key, nextValue);
-                            }}
-                            onToggleSelect={(nextValue) => {
-                                const currentValue = formValues[question.key];
-                                const currentItems = Array.isArray(currentValue)
-                                    ? currentValue.filter((v) => typeof v === "string")
-                                    : [];
-                                const nextItems = currentItems.includes(nextValue)
-                                    ? currentItems.filter((v) => v !== nextValue)
-                                    : [...currentItems, nextValue];
-                                updateFormValue(question.key, nextItems);
-                            }}
-                        />
-                    );
-                })}
-            </YStack>
-
-            {errorMessage === null ? null : (
-                <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
-                    {errorMessage}
-                </Paragraph>
+            {layout.isTablet ? (
+                <XStack gap={layout.twoPaneGap} items="flex-start">
+                    <YStack flex={1} gap="$3">
+                        {preAuditCards}
+                        {errorMessage === null ? null : (
+                            <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
+                                {errorMessage}
+                            </Paragraph>
+                        )}
+                    </YStack>
+                    <YStack width={layout.supportRailWidth} gap="$3">
+                        <FieldCard
+                            title={t("preAudit.title", { ns: "audit" })}
+                            description={t("preAudit.subtitle", { ns: "audit" })}
+                        >
+                            <YStack gap="$2.5">
+                                <Paragraph
+                                    color={ds.colors.secondaryForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                >
+                                    Review this place before finalising the setup flow.
+                                </Paragraph>
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                >
+                                    {`${instrument.pre_audit_questions.length} items in this setup flow`}
+                                </Paragraph>
+                                <Button
+                                    height={layout.buttonHeight}
+                                    rounded={ds.radii.md}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.input}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={() => {
+                                        router.push(
+                                            `/place/${placeId}?projectId=${encodeURIComponent(projectId)}`,
+                                        );
+                                    }}
+                                >
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelMd.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.1}
+                                    >
+                                        {t("overview.viewPlaceDetails", { ns: "audit" })}
+                                    </Text>
+                                </Button>
+                            </YStack>
+                        </FieldCard>
+                        {saveButton}
+                    </YStack>
+                </XStack>
+            ) : (
+                <YStack gap="$3">
+                    <YStack gap="$3">{preAuditCards}</YStack>
+                    {errorMessage === null ? null : (
+                        <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
+                            {errorMessage}
+                        </Paragraph>
+                    )}
+                    {saveButton}
+                </YStack>
             )}
-
-            <Button
-                height={layout.controlHeight}
-                rounded={ds.radii.md}
-                borderWidth={0}
-                bg={ds.colors.primary}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => {
-                    flushToStore();
-                    router.back();
-                }}
-            >
-                <Text
-                    color={ds.colors.primaryForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelLg.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    {t("preAudit.saveAndContinue", { ns: "audit" })}
-                </Text>
-            </Button>
         </ScrollView>
     );
 }
