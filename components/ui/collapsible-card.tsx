@@ -8,6 +8,7 @@ import { useResponsiveLayout } from "lib/responsive-layout";
 interface CollapsibleCardProps {
     readonly title: string;
     readonly subtitle?: string;
+    readonly collapsedHint?: string;
     readonly icon?: ReactNode;
     readonly defaultExpanded?: boolean;
     readonly children: ReactNode;
@@ -22,6 +23,7 @@ interface CollapsibleCardProps {
 export function CollapsibleCard({
     title,
     subtitle,
+    collapsedHint,
     icon,
     defaultExpanded = false,
     children,
@@ -29,6 +31,7 @@ export function CollapsibleCard({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+    const visibleCollapsedHint = isExpanded ? undefined : collapsedHint;
 
     return (
         <YStack
@@ -41,9 +44,16 @@ export function CollapsibleCard({
             style={{ boxShadow: ds.shadows.card }}
         >
             <Pressable
+                accessibilityRole="button"
                 onPress={() => {
                     setIsExpanded((currentValue) => !currentValue);
                 }}
+                style={({ pressed }) => ({
+                    borderRadius: ds.radii.md,
+                    paddingHorizontal: 4,
+                    paddingVertical: 4,
+                    backgroundColor: pressed ? ds.colors.surfaceMuted : "transparent",
+                })}
             >
                 <XStack items="center" gap="$3">
                     {icon}
@@ -90,9 +100,27 @@ export function CollapsibleCard({
                                 {subtitle}
                             </Paragraph>
                         )}
+                        {visibleCollapsedHint === undefined ? null : (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={
+                                    layout.isTablet
+                                        ? ds.typography.bodySm.fontSize
+                                        : ds.typography.bodyXs.fontSize
+                                }
+                                lineHeight={
+                                    layout.isTablet
+                                        ? ds.typography.bodySm.lineHeight
+                                        : ds.typography.bodyXs.lineHeight
+                                }
+                            >
+                                {visibleCollapsedHint}
+                            </Paragraph>
+                        )}
                     </YStack>
                     <ChevronDown
-                        size={layout.isTablet ? 20 : 18}
+                        size={layout.isTablet ? 22 : 18}
                         color={ds.colors.mutedForeground}
                         style={{
                             transform: isExpanded ? [{ rotate: "180deg" }] : [{ rotate: "0deg" }],

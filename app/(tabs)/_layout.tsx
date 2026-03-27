@@ -62,9 +62,8 @@ export default function TabLayout() {
                 sceneStyle: {
                     backgroundColor: ds.colors.background,
                 },
-                tabBarActiveTintColor,
-                tabBarInactiveTintColor,
-                tabBarActiveBackgroundColor: layout.isTablet ? ds.colors.primary : "transparent",
+                tabBarActiveTintColor: ds.colors.primary,
+                tabBarInactiveTintColor: ds.colors.mutedForeground,
                 tabBarStyle: {
                     backgroundColor: ds.colors.overlay,
                     borderTopColor: ds.colors.border,

@@ -6,7 +6,7 @@ interface StatCardProps {
     readonly label: string;
     readonly value: string;
     readonly accentColor: string;
-    readonly helperText?: string;
+    readonly helperText?: string | undefined;
     readonly minHeight?: number;
 }
 

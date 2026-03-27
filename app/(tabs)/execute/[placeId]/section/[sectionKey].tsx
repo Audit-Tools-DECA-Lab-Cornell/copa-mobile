@@ -75,6 +75,7 @@ export default function ExecuteSectionScreen() {
     }, [navigation, activeSection]);
 
     const [localNote, setLocalNote] = useState("");
+    const [isNoteFocused, setIsNoteFocused] = useState(false);
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
 
@@ -211,11 +212,17 @@ export default function ExecuteSectionScreen() {
                 multiline
                 value={localNote}
                 onChangeText={handleNoteChange}
-                onBlur={flushNoteToStore}
+                onFocus={() => {
+                    setIsNoteFocused(true);
+                }}
+                onBlur={() => {
+                    setIsNoteFocused(false);
+                    flushNoteToStore();
+                }}
                 placeholder={t("section.notesPlaceholder", { ns: "audit" })}
                 placeholderTextColor={ds.colors.mutedForeground}
                 style={{
-                    minHeight: layout.isTablet ? 220 : 120,
+                    minHeight: layout.isTablet ? (isNoteFocused ? 200 : 112) : 120,
                     borderRadius: ds.radii.md,
                     borderWidth: 1,
                     borderColor: ds.colors.border,
@@ -361,7 +368,6 @@ export default function ExecuteSectionScreen() {
                         })}
                     </YStack>
                     <YStack width={layout.supportRailWidth} gap="$3">
-                        {notesPanel}
                         {hasPendingLocalChanges ? (
                             <Paragraph
                                 color={ds.colors.mutedForeground}
@@ -382,6 +388,7 @@ export default function ExecuteSectionScreen() {
                             </Paragraph>
                         )}
                         {actionButtons}
+                        {notesPanel}
                     </YStack>
                 </XStack>
             ) : (
@@ -422,7 +429,6 @@ export default function ExecuteSectionScreen() {
                             );
                         })}
                     </YStack>
-                    {notesPanel}
                     {hasPendingLocalChanges ? (
                         <Paragraph
                             color={ds.colors.mutedForeground}
@@ -443,6 +449,7 @@ export default function ExecuteSectionScreen() {
                         </Paragraph>
                     )}
                     {actionButtons}
+                    {notesPanel}
                 </YStack>
             )}
         </ScrollView>

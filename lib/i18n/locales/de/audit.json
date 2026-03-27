@@ -27,17 +27,23 @@
         "title": "Audit durchfuehren"
     },
     "mode": "— {{mode}}",
+    "modeShort": {
+        "audit": "Nur vor Ort",
+        "both": "Umfrage und vor Ort",
+        "survey": "Nur Umfrage"
+    },
     "overview": {
         "accessDeniedTitle": "Zugriff verweigert",
         "assignmentAllows": "Diese Ortszuweisung erlaubt derzeit:",
-        "auditRole": "Audit-Rolle",
-        "roleNotSelected": "Rolle nicht ausgewaehlt",
+        "auditRole": "Ausführungsmodus",
+        "roleNotSelected": "Modus nicht ausgewaehlt",
         "auditUnavailableTitle": "Audit nicht verfuegbar",
         "chooseMode": "Waehlen Sie aus, welchen Teil des Instruments Sie fuer diesen Ort ausfuellen moechten.",
         "loadingDraft": "Ihr aktueller Entwurf wird geladen...",
         "placeNotFound": "Die ausgewaehlte Ortsroute ist ungueltig. Kehren Sie zum Durchfuehren-Tab zurueck und waehlen Sie erneut einen Ort.",
         "placeNotFoundTitle": "Ort nicht gefunden",
         "preamble": "Einleitung",
+        "tapToExpand": "Zum Aufklappen tippen",
         "preparingAudit": "Der Playspace-Audit-Ablauf wird vorbereitet...",
         "preparingAuditTitle": "Audit wird vorbereitet",
         "sectionEmpty": "Keine Abschnitte entsprechen dem aktuellen Filter.",

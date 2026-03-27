@@ -26,6 +26,7 @@ import type { AuditScoreTotals, AuditSession } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatLocalizedDate, formatLocalizedTime, getPlaceStatusLabel } from "lib/i18n/format";
+import { createMetricDisplayState } from "lib/metric-display";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
@@ -444,6 +445,7 @@ export default function AuditReportDetailScreen() {
                                         label={t("detail.auditCode", { ns: "reports" })}
                                         value={auditSession.audit_code}
                                         selectable
+                                        isCode
                                     />
                                     <MetadataRow
                                         label={t("detail.status", { ns: "reports" })}
@@ -574,6 +576,7 @@ export default function AuditReportDetailScreen() {
                                     label={t("detail.auditCode", { ns: "reports" })}
                                     value={auditSession.audit_code}
                                     selectable
+                                    isCode
                                 />
                                 <MetadataRow
                                     label={t("detail.status", { ns: "reports" })}
@@ -904,34 +907,59 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const { t } = useTranslation("reports");
     const overall = auditSession.scores.overall;
     const overallScore = overall === null ? null : getCombinedConstructScore(overall);
+    const pendingMetricText = t("detail.pendingMetric", { ns: "reports" });
+    const overallMetric = createMetricDisplayState({
+        pendingText: pendingMetricText,
+        value: overallScore,
+        formatValue: formatScoreValue,
+    });
+    const playValueMetric = createMetricDisplayState({
+        pendingText: pendingMetricText,
+        value: overall?.play_value_total ?? null,
+        formatValue: formatScoreValue,
+    });
+    const usabilityMetric = createMetricDisplayState({
+        pendingText: pendingMetricText,
+        value: overall?.usability_total ?? null,
+        formatValue: formatScoreValue,
+    });
+    const sociabilityMetric = createMetricDisplayState({
+        pendingText: pendingMetricText,
+        value: overall?.sociability_total ?? null,
+        formatValue: formatScoreValue,
+    });
 
     return (
         <YStack gap="$3">
             <XStack gap="$3">
                 <StatCard
                     label={t("detail.overallScore", { ns: "reports" })}
-                    value={overallScore === null ? "--" : formatScoreValue(overallScore)}
+                    value={overallMetric.value}
                     accentColor={ds.colors.primary}
+                    helperText={overallMetric.helperText}
                     minHeight={layout.summaryCardMinHeight}
                 />
                 <StatCard
                     label="Play Value (PV)"
-                    value={overall === null ? "--" : formatScoreValue(overall.play_value_total)}
+                    value={playValueMetric.value}
                     accentColor={ds.colors.warning}
+                    helperText={playValueMetric.helperText}
                     minHeight={layout.summaryCardMinHeight}
                 />
             </XStack>
             <XStack gap="$3">
                 <StatCard
                     label="Usability (U)"
-                    value={overall === null ? "--" : formatScoreValue(overall.usability_total)}
+                    value={usabilityMetric.value}
                     accentColor={ds.colors.primary}
+                    helperText={usabilityMetric.helperText}
                     minHeight={layout.summaryCardMinHeight}
                 />
                 <StatCard
                     label="Sociability (S)"
-                    value={overall === null ? "--" : formatScoreValue(overall.sociability_total)}
+                    value={sociabilityMetric.value}
                     accentColor={ds.colors.success}
+                    helperText={sociabilityMetric.helperText}
                     minHeight={layout.summaryCardMinHeight}
                 />
             </XStack>
@@ -943,6 +971,7 @@ interface MetadataRowProps {
     readonly label: string;
     readonly value: string;
     readonly selectable?: boolean;
+    readonly isCode?: boolean;
 }
 
 /**
@@ -951,8 +980,18 @@ interface MetadataRowProps {
  * @param props Metadata label and value.
  * @returns Horizontal metadata row.
  */
-function MetadataRow({ label, value, selectable = false }: Readonly<MetadataRowProps>) {
+function MetadataRow({
+    label,
+    value,
+    selectable = false,
+    isCode = false,
+}: Readonly<MetadataRowProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const valueFontSize = isCode ? ds.typography.bodyXs.fontSize : ds.typography.bodySm.fontSize;
+    const valueLineHeight = isCode
+        ? ds.typography.bodyXs.lineHeight
+        : ds.typography.bodySm.lineHeight;
     return (
         <XStack justify="space-between" items="flex-start" gap="$3">
             <Paragraph
@@ -963,16 +1002,44 @@ function MetadataRow({ label, value, selectable = false }: Readonly<MetadataRowP
             >
                 {label}
             </Paragraph>
-            <Text
-                selectable={selectable}
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodySm.fontSize}
-                flex={1}
-                style={{ textAlign: "right" }}
-            >
-                {value}
-            </Text>
+            {isCode ? (
+                <YStack flex={1}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{
+                            flexGrow: 1,
+                            justifyContent: "flex-end",
+                        }}
+                    >
+                        <Text
+                            selectable={selectable}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.monoMedium}
+                            fontSize={valueFontSize}
+                            lineHeight={valueLineHeight}
+                            style={{
+                                minWidth: layout.isTablet ? layout.supportRailWidth - 48 : 0,
+                                textAlign: "right",
+                            }}
+                        >
+                            {value}
+                        </Text>
+                    </ScrollView>
+                </YStack>
+            ) : (
+                <Text
+                    selectable={selectable}
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={valueFontSize}
+                    lineHeight={valueLineHeight}
+                    flex={1}
+                    style={{ textAlign: "right" }}
+                >
+                    {value}
+                </Text>
+            )}
         </XStack>
     );
 }

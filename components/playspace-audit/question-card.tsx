@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { getOptionGridItemWidth } from "lib/option-grid";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import type { InstrumentQuestion, QuestionScale } from "lib/audit/types";
 
@@ -173,6 +174,7 @@ function ScaleSelector({
 }: Readonly<ScaleSelectorProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const optionWidth = getOptionGridItemWidth(scale.options.length);
     return (
         <YStack
             rounded={ds.radii.md}
@@ -220,7 +222,7 @@ function ScaleSelector({
                     return (
                         <Button
                             key={`${scale.key}.${option.key}`}
-                            width="48.5%"
+                            width={optionWidth}
                             rounded={ds.radii.md}
                             height={layout.isTablet ? layout.formOptionHeight : 42}
                             borderWidth={1}

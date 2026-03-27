@@ -17,6 +17,7 @@ import type { AuditorPlace } from "lib/audit/places-api";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { createMetricDisplayState } from "lib/metric-display";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -152,6 +153,11 @@ function PlaceDetailContent({
     const combinedConstructScore = getCombinedConstructScore(place.score_totals);
     const summaryScore =
         combinedConstructScore ?? (place.summary_score === null ? null : place.summary_score);
+    const summaryMetric = createMetricDisplayState({
+        pendingText: t("detail.pendingMetric", { ns: "reports" }),
+        value: summaryScore,
+        formatValue: formatScoreValue,
+    });
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, language, t);
     const mapsQuery = encodeURIComponent(`${place.place_name}, ${locality}`);
     const metricsGrid = (
@@ -165,8 +171,9 @@ function PlaceDetailContent({
                 />
                 <StatCard
                     label={t("scoreSummary", { ns: "places" })}
-                    value={summaryScore === null ? "Pending score" : formatScoreValue(summaryScore)}
+                    value={summaryMetric.value}
                     accentColor={ds.colors.primary}
+                    helperText={summaryMetric.helperText}
                     minHeight={layout.summaryCardMinHeight}
                 />
             </XStack>

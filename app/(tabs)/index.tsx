@@ -8,6 +8,7 @@ import {
     ClipboardCheck,
     Clock3,
     LogOut,
+    MapPin,
     MapPinned,
     Play,
     ShieldCheck,
@@ -18,8 +19,14 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
+import {
+    createActiveAuditMetricState,
+    formatPriorityProgressLabel,
+    getVisibleProgressBarWidth,
+} from "lib/dashboard-progress";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { getCardTextLineLimit } from "lib/ipad-polish";
 import { buildPairGridRows } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import type { AuditorPlace } from "lib/audit/places-api";
@@ -155,10 +162,50 @@ export default function DashboardScreen() {
 
     const activeAuditorName =
         session?.user.name ?? session?.user.email ?? t("activeAuditor", { ns: "dashboard" });
+    const blockHeaderMinHeight = ds.typography.labelSm.lineHeight;
 
     const dateLabel = useMemo(() => {
         return formatLongDateLabel(i18n.language);
     }, [i18n.language]);
+
+    const priorityPlaceStatus = useMemo<DerivedPlaceStatus | null>(() => {
+        if (priorityPlace === undefined) {
+            return null;
+        }
+
+        return derivePlaceStatus(priorityPlace.audit_status);
+    }, [priorityPlace]);
+    const priorityProgressLabel = useMemo(() => {
+        if (priorityPlace === undefined || priorityPlaceStatus === null) {
+            return "";
+        }
+
+        return formatPriorityProgressLabel({
+            progressPercent: priorityPlace.progress_percent ?? 0,
+            status: priorityPlaceStatus,
+            updatedLabel: formatRelativeTimeLabel(
+                priorityPlace.started_at,
+                priorityPlace.submitted_at,
+                i18n.language,
+                t,
+            ),
+            translate: (key, values) => {
+                if (values === undefined) {
+                    return t(key, { ns: "dashboard" });
+                }
+
+                return t(key, { ns: "dashboard", ...values });
+            },
+        });
+    }, [i18n.language, priorityPlace, priorityPlaceStatus, t]);
+
+    const priorityProgressBarWidth = useMemo(() => {
+        if (priorityPlace === undefined) {
+            return 4;
+        }
+
+        return getVisibleProgressBarWidth(priorityPlace.progress_percent ?? 0);
+    }, [priorityPlace]);
 
     const quickActionsBlock = (
         <YStack
@@ -310,11 +357,16 @@ export default function DashboardScreen() {
 
     const fieldPrioritiesBlock = (
         <YStack gap="$3">
-            <XStack justify="space-between" items="center">
+            <XStack
+                justify="space-between"
+                items="center"
+                style={{ minHeight: blockHeaderMinHeight }}
+            >
                 <Text
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={ds.typography.labelSm.fontSize}
+                    lineHeight={ds.typography.labelSm.lineHeight}
                     textTransform="uppercase"
                     letterSpacing={1.6}
                 >
@@ -324,6 +376,7 @@ export default function DashboardScreen() {
                     color={ds.colors.primary}
                     fontFamily={ds.fonts.monoBold}
                     fontSize={ds.typography.labelSm.fontSize}
+                    lineHeight={ds.typography.labelSm.lineHeight}
                     textTransform="uppercase"
                     letterSpacing={1.1}
                 >
@@ -360,6 +413,7 @@ export default function DashboardScreen() {
                                 color={ds.colors.foreground}
                                 fontFamily={ds.fonts.headingBold}
                                 fontSize={ds.typography.metricMd.fontSize}
+                                lineHeight={ds.typography.metricMd.lineHeight}
                                 mt="$2"
                             >
                                 {item.value}
@@ -373,30 +427,37 @@ export default function DashboardScreen() {
 
     const priorityTaskBlock = (
         <YStack gap="$3">
-            <XStack justify="space-between" items="center">
+            <XStack
+                justify="space-between"
+                items="center"
+                style={{ minHeight: blockHeaderMinHeight }}
+            >
                 <Text
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={ds.typography.labelSm.fontSize}
+                    lineHeight={ds.typography.labelSm.lineHeight}
                     textTransform="uppercase"
                     letterSpacing={1.6}
                 >
                     {t("priorityTask", { ns: "dashboard" })}
                 </Text>
-                <Paragraph
+                <Text
                     color={ds.colors.danger}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={ds.typography.labelSm.fontSize}
+                    lineHeight={ds.typography.labelSm.lineHeight}
                     textTransform="uppercase"
                     letterSpacing={1.3}
                 >
                     {t("dueToday", { ns: "dashboard" })}
-                </Paragraph>
+                </Text>
             </XStack>
 
             {priorityPlace === undefined ? null : (
                 <YStack
                     rounded={ds.radii.lg}
+                    gap="$4"
                     borderWidth={2}
                     borderColor={ds.colors.primary}
                     bg={ds.colors.surface}
@@ -415,7 +476,7 @@ export default function DashboardScreen() {
                         }}
                     >
                         <XStack gap="$2" items="center" flexWrap="wrap">
-                            <YStack rounded={ds.radii.sm} px="$2" py="$1" bg={ds.colors.primary}>
+                            <YStack rounded={ds.radii.sm} px="$2" py="$2" bg={ds.colors.primary}>
                                 <Text
                                     color={ds.colors.primaryForeground}
                                     fontFamily={ds.fonts.bodyBold}
@@ -426,40 +487,46 @@ export default function DashboardScreen() {
                                     {t("urgentAudit", { ns: "dashboard" })}
                                 </Text>
                             </YStack>
-                            <YStack
+                            <XStack
+                                items="center"
+                                gap="$2"
                                 rounded={ds.radii.sm}
                                 px="$2"
-                                py="$1"
-                                bg={ds.colors.surfaceMuted}
+                                py="$2"
+                                bg={ds.colors.primarySoft}
                             >
+                                <MapPin size={14} color={ds.colors.primary} />
                                 <Text
                                     color={ds.colors.secondaryForeground}
                                     fontFamily={ds.fonts.bodyBold}
                                     fontSize={ds.typography.labelXs.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.3}
+                                    numberOfLines={getCardTextLineLimit("meta")}
                                 >
                                     {deriveLocality(
                                         priorityPlace,
                                         t("place.assignedPlace", { ns: "common" }),
                                     )}
                                 </Text>
-                            </YStack>
+                            </XStack>
                         </XStack>
 
-                        <YStack gap="$1">
+                        <YStack gap="$1.5" style={{ minWidth: 0 }}>
                             <Text
                                 color={ds.colors.foreground}
                                 fontFamily={ds.fonts.headingBold}
                                 fontSize={ds.typography.titleLg.fontSize}
                                 lineHeight={ds.typography.titleLg.lineHeight}
+                                numberOfLines={getCardTextLineLimit("title")}
                             >
                                 {priorityPlace.place_name}
                             </Text>
                             <Paragraph
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.titleSm.fontSize}
+                                fontSize={ds.typography.bodySm.fontSize}
+                                numberOfLines={getCardTextLineLimit("supporting")}
                             >
                                 {priorityPlace.project_name}
                             </Paragraph>
@@ -484,26 +551,21 @@ export default function DashboardScreen() {
                                     height={6}
                                     rounded={ds.radii.full}
                                     bg={ds.colors.primary}
-                                    width={`${priorityPlace.progress_percent ?? 0}%`}
+                                    width={priorityProgressBarWidth}
                                 />
                             </YStack>
                             <Text
                                 color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.monoBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.1}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.bodySm.fontSize}
+                                lineHeight={ds.typography.bodySm.lineHeight}
                             >
-                                {t("priorityProgress", {
-                                    ns: "dashboard",
-                                    percent: priorityPlace.progress_percent ?? 0,
-                                    code: priorityPlace.place_id.slice(-8).toUpperCase(),
-                                })}
+                                {priorityProgressLabel}
                             </Text>
                         </YStack>
                         <Button
                             height={layout.isTablet ? layout.buttonHeight : 40}
-                            px="$4"
+                            px="$6"
                             rounded={ds.radii.sm}
                             borderWidth={0}
                             bg={ds.colors.primary}
@@ -534,7 +596,7 @@ export default function DashboardScreen() {
     );
 
     const activeWorkBlock = (
-        <YStack gap="$3">
+        <YStack gap="$1.5">
             <XStack justify="space-between" items="center">
                 <Text
                     color={ds.colors.mutedForeground}
@@ -569,9 +631,7 @@ export default function DashboardScreen() {
                         return (
                             <XStack key={row.id} gap="$3">
                                 <DashboardActiveWorkCard place={row.left} />
-                                {row.right === null ? (
-                                    <YStack flex={1} />
-                                ) : (
+                                {row.right === null ? null : (
                                     <DashboardActiveWorkCard place={row.right} />
                                 )}
                             </XStack>
@@ -617,8 +677,8 @@ export default function DashboardScreen() {
                     <XStack justify="space-between" items="center" gap="$3">
                         <XStack items="center" gap="$3" flex={1}>
                             <YStack
-                                width={52}
-                                height={52}
+                                width={64}
+                                height={64}
                                 items="center"
                                 justify="center"
                                 rounded={ds.radii.md}
@@ -626,13 +686,13 @@ export default function DashboardScreen() {
                                 borderColor={ds.colors.border}
                                 bg={ds.colors.surfaceMuted}
                             >
-                                <UserRound size={22} color={ds.colors.primary} />
+                                <UserRound size={32} color={ds.colors.primary} />
                             </YStack>
-                            <YStack flex={1} gap="$0.5">
+                            <YStack flex={1} gap="$1.5">
                                 <Paragraph
                                     color={ds.colors.mutedForeground}
                                     fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelXs.fontSize}
+                                    fontSize={ds.typography.labelMd.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1.4}
                                 >
@@ -641,7 +701,8 @@ export default function DashboardScreen() {
                                 <Text
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.bodyLg.fontSize}
+                                    fontSize={ds.typography.displaySm.fontSize}
+                                    lineHeight={ds.typography.displaySm.lineHeight}
                                 >
                                     {activeAuditorName}
                                 </Text>
@@ -811,7 +872,7 @@ export default function DashboardScreen() {
                         {priorityTaskBlock}
                         {activeWorkBlock}
                     </YStack>
-                    <YStack width={layout.supportRailWidth} gap="$3">
+                    <YStack width={layout.homePageSupportRailWidth} gap="$3">
                         {fieldPrioritiesBlock}
                         {connectivityBlock}
                         {quickActionsBlock}
@@ -1036,7 +1097,7 @@ export default function DashboardScreen() {
                                 <YStack
                                     rounded={ds.radii.sm}
                                     px="$2"
-                                    py="$1"
+                                    py="$2"
                                     bg={ds.colors.primary}
                                 >
                                     <Text
@@ -1049,12 +1110,15 @@ export default function DashboardScreen() {
                                         {t("urgentAudit", { ns: "dashboard" })}
                                     </Text>
                                 </YStack>
-                                <YStack
+                                <XStack
                                     rounded={ds.radii.sm}
                                     px="$2"
-                                    py="$1"
-                                    bg={ds.colors.surfaceMuted}
+                                    py="$2"
+                                    bg={ds.colors.primarySoft}
+                                    items="center"
+                                    gap="$2"
                                 >
+                                    <MapPin size={14} color={ds.colors.primary} />
                                     <Text
                                         color={ds.colors.secondaryForeground}
                                         fontFamily={ds.fonts.bodyBold}
@@ -1067,10 +1131,10 @@ export default function DashboardScreen() {
                                             t("place.assignedPlace", { ns: "common" }),
                                         )}
                                     </Text>
-                                </YStack>
+                                </XStack>
                             </XStack>
 
-                            <YStack gap="$1">
+                            <YStack gap="$1.5">
                                 <Text
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.headingBold}
@@ -1082,7 +1146,9 @@ export default function DashboardScreen() {
                                 <Paragraph
                                     color={ds.colors.mutedForeground}
                                     fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.titleSm.fontSize}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    numberOfLines={1}
+                                    ellipsizeMode="tail"
                                 >
                                     {priorityPlace.project_name}
                                 </Paragraph>
@@ -1107,21 +1173,16 @@ export default function DashboardScreen() {
                                         height={6}
                                         rounded={ds.radii.full}
                                         bg={ds.colors.primary}
-                                        width={`${priorityPlace.progress_percent ?? 0}%`}
+                                        width={priorityProgressBarWidth}
                                     />
                                 </YStack>
                                 <Text
                                     color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.monoBold}
-                                    fontSize={ds.typography.labelSm.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.1}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    lineHeight={ds.typography.bodySm.lineHeight}
                                 >
-                                    {t("priorityProgress", {
-                                        ns: "dashboard",
-                                        percent: priorityPlace.progress_percent ?? 0,
-                                        code: priorityPlace.place_id.slice(-8).toUpperCase(),
-                                    })}
+                                    {priorityProgressLabel}
                                 </Text>
                             </YStack>
                             <Button
@@ -1337,6 +1398,7 @@ export default function DashboardScreen() {
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.headingBold}
                                     fontSize={ds.typography.metricMd.fontSize}
+                                    lineHeight={ds.typography.metricMd.lineHeight}
                                     mt="$2"
                                 >
                                     {item.value}
@@ -1347,7 +1409,7 @@ export default function DashboardScreen() {
                 </XStack>
             </YStack>
 
-            <YStack gap="$3">
+            <YStack gap="$1.5">
                 <XStack justify="space-between" items="center">
                     <Text
                         color={ds.colors.mutedForeground}
@@ -1423,6 +1485,13 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
         i18n.language,
         t,
     );
+    const progressBarWidth = getVisibleProgressBarWidth(progressPercent);
+    const activeAuditMetricState = createActiveAuditMetricState({
+        combinedConstructScore,
+        progressPercent,
+        formatScoreValue,
+        translateConstructLabel: () => t("constructScore", { ns: "dashboard" }),
+    });
 
     return (
         <YStack
@@ -1458,7 +1527,7 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                     </Text>
                 </YStack>
 
-                <YStack gap="$2">
+                <YStack gap="$2" pb="$4" style={{ minWidth: 0 }}>
                     <Text
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.headingBold}
@@ -1472,13 +1541,15 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                                 ? ds.typography.titleLg.lineHeight
                                 : ds.typography.titleMd.lineHeight
                         }
+                        numberOfLines={2}
                     >
                         {place.place_name}
                     </Text>
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyMd.fontSize}
+                        fontSize={ds.typography.bodySm.fontSize}
+                        numberOfLines={1}
                     >
                         {place.project_name}
                     </Paragraph>
@@ -1489,21 +1560,19 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyMd.fontSize}
+                        numberOfLines={1}
                     >
-                        {`${t("mandatoryCompletion", {
+                        {t("mandatoryCompletion", {
                             ns: "dashboard",
-                        })} ${progressPercent}%`}
+                        })}
                     </Paragraph>
                     <Paragraph
-                        color={ds.colors.primary}
+                        color={ds.colors.foreground}
                         fontFamily={ds.fonts.bodyBold}
                         fontSize={ds.typography.bodyMd.fontSize}
+                        numberOfLines={1}
                     >
-                        {combinedConstructScore === null
-                            ? "--"
-                            : `${t("constructScore", {
-                                  ns: "dashboard",
-                              })} ${formatScoreValue(combinedConstructScore)}`}
+                        {activeAuditMetricState.completionValue}
                     </Paragraph>
                 </XStack>
 
@@ -1517,18 +1586,29 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                         height={6}
                         rounded={ds.radii.full}
                         bg={ds.colors.primary}
-                        width={`${progressPercent}%`}
+                        width={progressBarWidth}
                     />
                 </YStack>
+                {activeAuditMetricState.constructSummary === undefined ? null : (
+                    <Paragraph
+                        color={ds.colors.primary}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                        numberOfLines={1}
+                    >
+                        {activeAuditMetricState.constructSummary}
+                    </Paragraph>
+                )}
             </YStack>
 
-            <YStack gap="$2">
+            <YStack gap="$3">
                 <XStack items="center" gap="$1.5">
                     <Clock3 size={13} color={ds.colors.mutedForeground} />
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyMd.fontSize}
+                        numberOfLines={getCardTextLineLimit("meta")}
                     >
                         {updatedLabel}
                     </Paragraph>

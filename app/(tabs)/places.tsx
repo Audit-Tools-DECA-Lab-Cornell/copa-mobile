@@ -27,6 +27,7 @@ import {
     getPlaceStatusLabel,
     type LocalizedPlaceStatus,
 } from "lib/i18n/format";
+import { getCardTextLineLimit } from "lib/ipad-polish";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
@@ -214,7 +215,7 @@ export default function PlacesScreen() {
 
     const headerComponent = (
         <YStack gap="$4">
-            <YStack gap="$1.5">
+            <YStack gap="$3">
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
@@ -228,11 +229,14 @@ export default function PlacesScreen() {
                             ? ds.typography.displayLg.lineHeight
                             : ds.typography.displayMd.lineHeight
                     }
-                    letterSpacing={-0.7}
                 >
                     {t("title", { ns: "places" })}
                 </Text>
-                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyLg.fontSize}
+                >
                     {t("subtitle", { ns: "places" })}
                 </Paragraph>
             </YStack>
@@ -466,7 +470,7 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                     <YStack flex={1} justify="space-between" p={layout.cardPadding} gap="$3.5">
                         <YStack gap="$3">
                             <XStack justify="space-between" items="flex-start" gap="$3">
-                                <YStack flex={1} gap="$1.5">
+                                <YStack flex={1} gap="$1.5" style={{ minWidth: 0 }}>
                                     <Text
                                         color={ds.colors.foreground}
                                         fontFamily={ds.fonts.headingBold}
@@ -480,6 +484,7 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                                                 ? ds.typography.titleLg.lineHeight
                                                 : ds.typography.titleMd.lineHeight
                                         }
+                                        numberOfLines={getCardTextLineLimit("title")}
                                     >
                                         {place.place_name}
                                     </Text>
@@ -487,6 +492,7 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                                         color={ds.colors.secondaryForeground}
                                         fontFamily={ds.fonts.bodyMedium}
                                         fontSize={ds.typography.bodySm.fontSize}
+                                        numberOfLines={getCardTextLineLimit("supporting")}
                                     >
                                         {place.project_name}
                                     </Paragraph>
@@ -513,6 +519,7 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
                                 fontSize={ds.typography.bodySm.fontSize}
+                                numberOfLines={getCardTextLineLimit("supporting")}
                             >
                                 {locality}
                             </Paragraph>
@@ -564,6 +571,7 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                                         color={ds.colors.mutedForeground}
                                         fontFamily={ds.fonts.bodyMedium}
                                         fontSize={ds.typography.bodySm.fontSize}
+                                        numberOfLines={getCardTextLineLimit("meta")}
                                     >
                                         {updatedLabel}
                                     </Paragraph>
@@ -638,8 +646,13 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
                 fontFamily={ds.fonts.headingBold}
                 fontSize={
                     layout.isTablet
-                        ? ds.typography.metricLg.fontSize
-                        : ds.typography.metricMd.fontSize
+                        ? ds.typography.metricMd.fontSize
+                        : ds.typography.metricSm.fontSize
+                }
+                lineHeight={
+                    layout.isTablet
+                        ? ds.typography.metricMd.lineHeight
+                        : ds.typography.metricSm.lineHeight
                 }
                 mt="$2"
                 style={{ color: tileTone.text }}
@@ -691,11 +704,17 @@ function ScoreTile({ label, value, valueColor }: Readonly<ScoreTileProps>) {
                 fontFamily={ds.fonts.headingBold}
                 fontSize={
                     layout.isTablet
-                        ? ds.typography.metricMd.fontSize
-                        : ds.typography.metricSm.fontSize
+                        ? ds.typography.metricSm.fontSize
+                        : ds.typography.metricXs.fontSize
+                }
+                lineHeight={
+                    layout.isTablet
+                        ? ds.typography.metricSm.lineHeight
+                        : ds.typography.metricXs.lineHeight
                 }
                 mt="$2"
                 style={{ color: valueColor }}
+                numberOfLines={getCardTextLineLimit("meta")}
             >
                 {value}
             </Text>

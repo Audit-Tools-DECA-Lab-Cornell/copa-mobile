@@ -27,17 +27,23 @@
         "title": "監査の実行"
     },
     "mode": "— {{mode}}",
+    "modeShort": {
+        "audit": "現地のみ",
+        "both": "調査と現地",
+        "survey": "調査のみ"
+    },
     "overview": {
         "accessDeniedTitle": "アクセスが拒否されました",
         "assignmentAllows": "この場所の割り当ては現在、以下を許可しています:",
-        "auditRole": "監査ロール",
-        "roleNotSelected": "役割が選択されていません",
+        "auditRole": "実行モード",
+        "roleNotSelected": "モードが選択されていません",
         "auditUnavailableTitle": "監査は利用できません",
         "chooseMode": "この場所でツールのどの部分を完了するかを選択してください。",
         "loadingDraft": "現在のドラフトを読み込んでいます...",
         "placeNotFound": "選択した場所のルートが無効です。実行タブに戻り、場所をもう一度選択してください。",
         "placeNotFoundTitle": "場所が見つかりません",
         "preamble": "前置き",
+        "tapToExpand": "タップして展開",
         "preparingAudit": "プレイスペース監査フローを準備しています...",
         "preparingAuditTitle": "監査を準備中",
         "sectionEmpty": "現在のフィルターに一致するセクションはありません。",

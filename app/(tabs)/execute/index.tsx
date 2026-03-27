@@ -243,6 +243,7 @@ export default function ExecuteIndexScreen() {
                     >
                         {featuredPlace.place_name}
                     </Text>
+
                     <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                         {deriveLocality(featuredPlace, t("place.assignedPlace", { ns: "common" }))}
                     </Paragraph>

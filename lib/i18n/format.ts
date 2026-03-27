@@ -5,6 +5,12 @@ import type { TFunction } from "i18next";
 export type LocalizedPlaceStatus = "not_started" | "in_progress" | "submitted";
 type RelativeTimeUnit = "minute" | "hour" | "day";
 
+const EXECUTION_MODE_SHORT_FALLBACKS: Record<ExecutionMode, string> = {
+    audit: "Onsite only",
+    survey: "Survey only",
+    both: "Survey & onsite",
+};
+
 const LANGUAGE_LOCALE_MAP = {
     en: "en-NZ",
     de: "de-DE",
@@ -152,7 +158,15 @@ export function getExecutionModeShortLabel(mode: ExecutionMode | null, t: TFunct
     if (mode === null) {
         return "";
     }
-    return t(`audit:modeShort.${mode}`);
+
+    const translationKey = `audit:modeShort.${mode}`;
+    const translatedLabel = t(translationKey);
+
+    if (translatedLabel === translationKey || translatedLabel.trim().length === 0) {
+        return EXECUTION_MODE_SHORT_FALLBACKS[mode];
+    }
+
+    return translatedLabel;
 }
 
 /**

@@ -10,6 +10,7 @@ import { getPreAuditValues } from "lib/audit/selectors";
 import type { PreAuditQuestion } from "lib/audit/types";
 import { formatLocalizedDate, formatLocalizedTime } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { getOptionGridItemWidth } from "lib/option-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -376,6 +377,7 @@ function ChoiceFieldCard({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const selectedValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+    const optionWidth = getOptionGridItemWidth(question.options.length);
 
     return (
         <FieldCard title={question.label} description={question.description ?? null}>
@@ -386,7 +388,7 @@ function ChoiceFieldCard({
                     return (
                         <Button
                             key={`${question.key}.${option.key}`}
-                            width="48.5%"
+                            width={optionWidth}
                             height={layout.isTablet ? 48 : 42}
                             rounded={ds.radii.md}
                             borderWidth={1}

@@ -28,17 +28,23 @@
         "title": "Exécution de l’audit"
     },
     "mode": "— {{mode}}",
+    "modeShort": {
+        "audit": "Sur site uniquement",
+        "both": "Enquête et sur site",
+        "survey": "Enquête uniquement"
+    },
     "overview": {
         "accessDeniedTitle": "Accès refusé",
         "assignmentAllows": "Cette affectation de lieu permet actuellement :",
-        "auditRole": "Rôle dans l’audit",
-        "roleNotSelected": "Rôle non sélectionné",
+        "auditRole": "Mode d’exécution",
+        "roleNotSelected": "Mode non sélectionné",
         "auditUnavailableTitle": "Audit indisponible",
         "chooseMode": "Choisissez la partie de l’outil que vous allez remplir pour ce lieu.",
         "loadingDraft": "Chargement de votre brouillon actuel...",
         "placeNotFound": "L’itinéraire du lieu sélectionné n’est pas valide. Revenez à l’onglet Exécuter et choisissez à nouveau un lieu.",
         "placeNotFoundTitle": "Lieu introuvable",
         "preamble": "Préambule",
+        "tapToExpand": "Touchez pour développer",
         "preparingAudit": "Préparation du flux d’audit playspace...",
         "preparingAuditTitle": "Préparation de l’audit",
         "sectionEmpty": "Aucune section ne correspond au filtre actuel.",

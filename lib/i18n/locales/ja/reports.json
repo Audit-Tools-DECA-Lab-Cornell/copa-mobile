@@ -13,6 +13,7 @@
         "loadingMessage": "監査の概要とセクションスコアを読み込んでいます...",
         "loadingTitle": "監査レポートを準備中",
         "overallScore": "総合スコア",
+        "pendingMetric": "提出待ち",
         "progress": "進捗",
         "project": "プロジェクト",
         "screenTitle": "監査詳細",

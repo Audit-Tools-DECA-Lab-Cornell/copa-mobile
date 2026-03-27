@@ -2,7 +2,14 @@ import { FlashList, type ListRenderItemInfo } from "@shopify/flash-list";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { TriangleAlert, ArrowRight, Clock3, FileBarChart } from "@tamagui/lucide-icons";
+import {
+    TriangleAlert,
+    ArrowRight,
+    Clock3,
+    FileBarChart,
+    MapPin,
+    Dot,
+} from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { useToastController } from "@tamagui/toast";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
@@ -35,6 +42,7 @@ import {
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { getCardTextLineLimit } from "lib/ipad-polish";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -354,7 +362,7 @@ export default function ReportsScreen() {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <YStack gap="$4">
-                    <YStack gap="$1.5">
+                    <YStack gap="$3">
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
@@ -375,6 +383,7 @@ export default function ReportsScreen() {
                         <Paragraph
                             color={ds.colors.mutedForeground}
                             fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyLg.fontSize}
                         >
                             {t("subtitle")}
                         </Paragraph>
@@ -846,7 +855,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
             >
                 <YStack gap="$3">
                     <XStack justify="space-between" items="flex-start" gap="$3">
-                        <YStack flex={1} gap="$1.5">
+                        <YStack flex={1} gap="$1.5" style={{ minWidth: 0 }}>
                             <Text
                                 color={ds.colors.foreground}
                                 fontFamily={ds.fonts.headingBold}
@@ -860,6 +869,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                         ? ds.typography.titleLg.lineHeight
                                         : ds.typography.titleMd.lineHeight
                                 }
+                                numberOfLines={getCardTextLineLimit("title")}
                             >
                                 {place.place_name}
                             </Text>
@@ -867,6 +877,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                 color={ds.colors.secondaryForeground}
                                 fontFamily={ds.fonts.bodyMedium}
                                 fontSize={ds.typography.bodySm.fontSize}
+                                numberOfLines={getCardTextLineLimit("supporting")}
                             >
                                 {place.project_name}
                             </Paragraph>
@@ -881,7 +892,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                 <Text
                                     style={{ color: statusTone.text }}
                                     fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelXs.fontSize}
+                                    fontSize={ds.typography.labelMd.fontSize}
                                     textTransform="uppercase"
                                     letterSpacing={1}
                                 >
@@ -890,53 +901,73 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                             </YStack>
                             <Paragraph
                                 color={hasScore ? ds.colors.primary : ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.bodyLg.fontSize}
+                                fontFamily={ds.fonts.headingBold}
+                                fontSize={
+                                    layout.isTablet
+                                        ? ds.typography.metricSm.fontSize
+                                        : ds.typography.metricXs.fontSize
+                                }
+                                lineHeight={
+                                    layout.isTablet
+                                        ? ds.typography.metricSm.lineHeight
+                                        : ds.typography.metricXs.lineHeight
+                                }
+                                numberOfLines={getCardTextLineLimit("meta")}
                             >
-                                {hasScore
-                                    ? formatScoreValue(combinedConstructScore ?? 0)
-                                    : "Pending score"}
+                                {hasScore && formatScoreValue(combinedConstructScore ?? 0)}
                             </Paragraph>
                         </YStack>
                     </XStack>
 
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodySm.fontSize}
-                    >
-                        {locality}
-                    </Paragraph>
+                    <XStack items="center" gap="$2" bg="$background" p="$2" rounded={ds.radii.sm}>
+                        <MapPin size={14} color={ds.colors.mutedForeground} />
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                            lineHeight={ds.typography.bodySm.lineHeight}
+                            numberOfLines={getCardTextLineLimit("supporting")}
+                        >
+                            {locality}
+                        </Paragraph>
+                    </XStack>
 
-                    <XStack items="center" gap="$2">
+                    <XStack items="center" gap="$2" px="$2">
                         <Clock3 size={14} color={ds.colors.mutedForeground} />
                         <Paragraph
                             color={ds.colors.mutedForeground}
                             fontFamily={ds.fonts.bodyMedium}
                             fontSize={ds.typography.bodySm.fontSize}
+                            numberOfLines={getCardTextLineLimit("meta")}
                         >
                             {updatedLabel}
                         </Paragraph>
                     </XStack>
 
                     {hasScore ? (
-                        <YStack gap="$1.5">
-                            <Paragraph
-                                color={ds.colors.primary}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyXs.fontSize}
-                            >
-                                {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
-                            </Paragraph>
-                            <Paragraph
-                                color={ds.colors.primary}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyXs.fontSize}
-                            >
-                                {formatColumnSummary(place.score_totals, scoreSummaryLabels)}
-                            </Paragraph>
+                        <YStack gap="$1.5" height={52}>
+                            <XStack items="center" gap="$2" justify="flex-start">
+                                <Paragraph
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodyXs.fontSize}
+                                    numberOfLines={getCardTextLineLimit("meta")}
+                                >
+                                    {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
+                                </Paragraph>
+                                <Dot size={14} color={ds.colors.primary} />
+                                <Paragraph
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodyXs.fontSize}
+                                    numberOfLines={getCardTextLineLimit("meta")}
+                                >
+                                    {formatColumnSummary(place.score_totals, scoreSummaryLabels)}
+                                </Paragraph>
+                            </XStack>
                             <YStack
                                 height={6}
+                                mt="$3"
                                 rounded={ds.radii.full}
                                 bg={ds.colors.mutedSurface}
                                 overflow="hidden"
@@ -950,13 +981,17 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                             </YStack>
                         </YStack>
                     ) : (
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {t("detail.scorePending", { ns: "reports" })}
-                        </Paragraph>
+                        <YStack height={52}>
+                            <Paragraph
+                                mt="$3"
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                                numberOfLines={getCardTextLineLimit("meta")}
+                            >
+                                {t("detail.scorePending", { ns: "reports" })}
+                            </Paragraph>
+                        </YStack>
                     )}
                 </YStack>
 

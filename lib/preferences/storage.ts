@@ -1,4 +1,14 @@
 import { mmkvStorage } from "lib/storage/mmkv";
+import {
+    DEFAULT_PERSISTED_PREFERENCES,
+    normalizePersistedPreferences,
+    type PersistedPreferences,
+} from "lib/preferences/storage-schema";
+
+export type {
+    PersistedLanguagePreference,
+    PersistedPreferences,
+} from "lib/preferences/storage-schema";
 
 /**
  * Device-local persistence for user preferences (theme, language, accessibility).
@@ -6,26 +16,6 @@ import { mmkvStorage } from "lib/storage/mmkv";
  */
 
 const PREFS_STORAGE_KEY = "playspace.preferences.v1";
-
-/** Allowed persisted language values. */
-export type PersistedLanguagePreference = "system" | "en" | "de" | "fr" | "hi" | "ja";
-
-/** Serializable shape written to device storage. */
-export interface PersistedPreferences {
-    readonly theme_mode: "system" | "light" | "dark";
-    readonly language: PersistedLanguagePreference;
-    readonly font_scale: number;
-    readonly high_contrast: boolean;
-    readonly dyslexic_font: boolean;
-}
-
-const DEFAULT_PREFERENCES: PersistedPreferences = {
-    theme_mode: "system",
-    language: "system",
-    font_scale: 1,
-    high_contrast: false,
-    dyslexic_font: false,
-};
 
 let memoryCache: PersistedPreferences | null = null;
 
@@ -55,7 +45,7 @@ export async function readPersistedPreferences(): Promise<PersistedPreferences> 
         /* fall through to defaults */
     }
 
-    return DEFAULT_PREFERENCES;
+    return DEFAULT_PERSISTED_PREFERENCES;
 }
 
 /**
@@ -73,57 +63,6 @@ export async function savePersistedPreferences(prefs: PersistedPreferences): Pro
 }
 
 /**
- * Apply defaults for any missing fields in a stored preference blob.
- *
- * @param value Unknown parsed JSON.
- * @returns Complete PersistedPreferences with defaults for missing fields.
- */
-function applyDefaults(value: unknown): PersistedPreferences {
-    if (!isRecord(value)) {
-        return DEFAULT_PREFERENCES;
-    }
-
-    const themeMode = value["theme_mode"];
-    const validThemeMode =
-        themeMode === "system" || themeMode === "light" || themeMode === "dark"
-            ? themeMode
-            : DEFAULT_PREFERENCES.theme_mode;
-
-    const languagePreference = value["language"];
-    const validLanguagePreference =
-        languagePreference === "system" ||
-        languagePreference === "en" ||
-        languagePreference === "de" ||
-        languagePreference === "fr" ||
-        languagePreference === "hi" ||
-        languagePreference === "ja"
-            ? languagePreference
-            : DEFAULT_PREFERENCES.language;
-
-    const fontScale = value["font_scale"];
-    const validFontScale =
-        typeof fontScale === "number" && Number.isFinite(fontScale)
-            ? fontScale
-            : DEFAULT_PREFERENCES.font_scale;
-
-    const highContrast = value["high_contrast"];
-    const validHighContrast =
-        typeof highContrast === "boolean" ? highContrast : DEFAULT_PREFERENCES.high_contrast;
-
-    const dyslexicFont = value["dyslexic_font"];
-    const validDyslexicFont =
-        typeof dyslexicFont === "boolean" ? dyslexicFont : DEFAULT_PREFERENCES.dyslexic_font;
-
-    return {
-        theme_mode: validThemeMode,
-        language: validLanguagePreference,
-        font_scale: validFontScale,
-        high_contrast: validHighContrast,
-        dyslexic_font: validDyslexicFont,
-    };
-}
-
-/**
  * Parse and validate a serialized preferences payload.
  *
  * @param rawValue Raw JSON payload.
@@ -135,16 +74,8 @@ function parsePersistedPreferences(rawValue: string | null): PersistedPreference
     }
 
     try {
-        return applyDefaults(JSON.parse(rawValue));
+        return normalizePersistedPreferences(JSON.parse(rawValue));
     } catch {
         return null;
     }
-}
-
-/**
- * @param value Unknown value.
- * @returns True when the value is a non-null record.
- */
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null;
 }
