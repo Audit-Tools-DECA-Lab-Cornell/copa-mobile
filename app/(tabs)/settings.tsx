@@ -344,7 +344,7 @@ export default function SettingsScreen() {
         </SettingsCard>
     );
 
-    if (!isLoading) {
+    if (isLoading) {
         return <SettingsSkeletonScreen ds={ds} />;
     }
 
