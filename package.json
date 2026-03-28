@@ -48,7 +48,7 @@
         "@tamagui/lucide-icons": "^2.0.0-rc.22",
         "@tamagui/toast": "^2.0.0-rc.22",
         "babel-preset-expo": "~55.0.8",
-        "burnt": "^0.12.2",
+        "burnt": "^0.13.0",
         "expo": "~55.0.9",
         "expo-background-task": "~55.0.10",
         "expo-build-properties": "~55.0.10",
