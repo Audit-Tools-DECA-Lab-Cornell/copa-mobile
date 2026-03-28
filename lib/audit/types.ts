@@ -3,6 +3,7 @@ import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 
 export type DirtySections = Record<string, Record<string, number>>;
 export type DirtyPreAudit = Record<string, number>;
+export type DirtyMeta = Record<string, number>;
 
 export const executionModeSchema = z.enum(["audit", "survey", "both"]);
 export const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
@@ -279,6 +280,30 @@ const dirtyPreAuditSchema = z
     .union([z.array(z.string()), z.record(z.string(), z.number().int().nonnegative())])
     .transform<DirtyPreAudit>((value) => normalizeDirtyPreAudit(value));
 
+const dirtyMetaSchema = z.record(z.string(), z.number().int().nonnegative());
+
+export const auditSyncPhaseSchema = z.enum([
+    "idle",
+    "dirty",
+    "saving",
+    "conflict",
+    "submitting",
+    "resolving_submit",
+    "submitted",
+    "blocked_network",
+    "blocked_auth",
+    "blocked_validation",
+    "blocked_server",
+]);
+
+export const auditSyncStateSchema = z.object({
+    phase: auditSyncPhaseSchema,
+    detail: z.string().nullable().default(null),
+    updated_at: z.iso.datetime(),
+});
+
+export const auditSyncStateByAuditIdSchema = z.record(z.string(), auditSyncStateSchema);
+
 export const persistedAuditStateSchema = z.object({
     storage_user_id: z.string().min(1).nullable().default(null),
     instrument: playspaceInstrumentSchema.nullable(),
@@ -286,6 +311,8 @@ export const persistedAuditStateSchema = z.object({
     sessions_by_pair_key: z.record(z.string(), auditSessionSchema),
     dirty_sections: dirtySectionsSchema.default({}),
     dirty_pre_audit: dirtyPreAuditSchema.default({}),
+    dirty_meta: dirtyMetaSchema.default({}),
+    sync_state_by_audit_id: auditSyncStateByAuditIdSchema.default({}),
     local_change_counter: z.number().int().nonnegative().default(0),
     last_successful_sync_at: z.string().nullable().default(null),
 });
@@ -351,6 +378,9 @@ export type SectionDraftPatch = z.infer<typeof sectionDraftPatchSchema>;
 export type AuditAggregateWrite = z.infer<typeof auditAggregateWriteSchema>;
 export type AuditDraftPatch = z.infer<typeof auditDraftPatchSchema>;
 export type AuditDraftSave = z.infer<typeof auditDraftSaveSchema>;
+export type AuditSyncPhase = z.infer<typeof auditSyncPhaseSchema>;
+export type AuditSyncState = z.infer<typeof auditSyncStateSchema>;
+export type AuditSyncStateByAuditId = z.infer<typeof auditSyncStateByAuditIdSchema>;
 export type PersistedAuditState = z.infer<typeof persistedAuditStateSchema>;
 
 /**

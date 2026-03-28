@@ -9,6 +9,7 @@ import {
     getExecuteFlowSubject,
     type ExecuteOverviewSectionInput,
 } from "lib/audit/execute-flow";
+import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -56,6 +57,9 @@ export default function ExecutePlaceScreen() {
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
     const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
+    const applyLocalExecutionMode = usePlayspaceAuditStore(
+        (state) => state.applyLocalExecutionMode,
+    );
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const isLoadingAudit = usePlayspaceAuditStore((state) => state.isLoadingAudit);
     const isSyncing = usePlayspaceAuditStore((state) => state.isSyncing);
@@ -63,6 +67,7 @@ export default function ExecutePlaceScreen() {
     const lastSyncError = usePlayspaceAuditStore((state) => state.lastSyncError);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
     const dirtyPreAudit = usePlayspaceAuditStore((state) => state.dirtyPreAudit);
+    const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const scrollViewRef = useRef<ScrollView | null>(null);
 
@@ -120,6 +125,12 @@ export default function ExecutePlaceScreen() {
     const hasPendingPreAudit =
         auditSession !== undefined && dirtyPreAudit[auditSession.audit_id] !== undefined;
     const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
+    const canEditInputs =
+        auditSession !== undefined &&
+        canEditAuditInputs({
+            session: auditSession,
+            phase: syncStateByAuditId[auditSession.audit_id]?.phase,
+        });
     const preambleBlocks = instrument.preamble.map(parsePreambleBlock);
     const placeLocality = getPlaceLocality(auditSession, t);
     const selectedMode = auditSession?.selected_execution_mode ?? null;
@@ -218,11 +229,12 @@ export default function ExecutePlaceScreen() {
             allowedModes={auditSession.allowed_execution_modes}
             projectName={auditSession.project_name}
             isLoading={isLoadingAudit}
+            isEditable={canEditInputs}
             onSelectMode={(mode) => {
-                if (authSession === null) {
+                if (pairKey === null) {
                     return;
                 }
-                ensurePlaceAudit(authSession, projectId, placeId, mode).catch(() => undefined);
+                applyLocalExecutionMode(pairKey, mode);
             }}
         />
     );
@@ -441,6 +453,7 @@ interface ExecutionModeCardProps {
     readonly allowedModes: readonly ExecutionMode[];
     readonly projectName: string;
     readonly isLoading: boolean;
+    readonly isEditable: boolean;
     readonly onSelectMode: (mode: ExecutionMode) => void;
 }
 
@@ -452,6 +465,7 @@ function ExecutionModeCard({
     allowedModes,
     projectName,
     isLoading,
+    isEditable,
     onSelectMode,
 }: Readonly<ExecutionModeCardProps>) {
     const ds = useDesignSystem();
@@ -510,11 +524,13 @@ function ExecutionModeCard({
                                 key={option.key}
                                 height="auto"
                                 rounded={ds.radii.md}
+                                disabled={!isEditable || isLoading}
                                 borderWidth={isSelected ? 2 : 1}
                                 items="flex-start"
                                 justify="flex-start"
                                 borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                                 bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
+                                opacity={!isEditable || isLoading ? 0.6 : 1}
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {
                                     onSelectMode(option.key as ExecutionMode);

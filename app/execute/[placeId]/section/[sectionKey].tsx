@@ -6,6 +6,7 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
+import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getQuestionAnswers, getSectionNote, getVisibleSections } from "lib/audit/selectors";
@@ -58,6 +59,7 @@ export default function ExecuteSectionScreen() {
     const submitAuditSession = usePlayspaceAuditStore((state) => state.submitAuditSession);
     const isSavingDraft = usePlayspaceAuditStore((state) => state.isSavingDraft);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
+    const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
@@ -81,6 +83,8 @@ export default function ExecuteSectionScreen() {
     const [isNoteFocused, setIsNoteFocused] = useState(false);
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
+    const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
+    const canEditInputsRef = useRef(false);
     const scrollViewRef = useRef<ScrollView | null>(null);
 
     const themedHeaderOptions = useMemo(
@@ -130,6 +134,21 @@ export default function ExecuteSectionScreen() {
         noteInitializedRef.current = false;
     }, [activeSection?.section_key, auditSession?.audit_id]);
 
+    const canEditInputs =
+        auditSession !== undefined &&
+        canEditAuditInputs({
+            session: auditSession,
+            phase: syncStateByAuditId[auditSession.audit_id]?.phase,
+        });
+
+    useEffect(() => {
+        latestAuditSessionRef.current = auditSession;
+    }, [auditSession]);
+
+    useEffect(() => {
+        canEditInputsRef.current = canEditInputs;
+    }, [canEditInputs]);
+
     useEffect(() => {
         if (
             noteInitializedRef.current ||
@@ -145,19 +164,34 @@ export default function ExecuteSectionScreen() {
     }, [auditSession, activeSection]);
 
     const flushNoteToStore = useCallback(() => {
-        if (pairKey !== null && sectionKey !== null) {
-            applyLocalSectionNote(pairKey, sectionKey, localNoteRef.current);
+        const latestAuditSession = latestAuditSessionRef.current;
+        if (
+            pairKey === null ||
+            sectionKey === null ||
+            latestAuditSession === undefined ||
+            !noteInitializedRef.current ||
+            !canEditInputsRef.current
+        ) {
+            return;
         }
+
+        if (
+            !shouldPersistCleanupWrite({
+                currentValue: getSectionNote(latestAuditSession, sectionKey),
+                nextValue: localNoteRef.current,
+            })
+        ) {
+            return;
+        }
+
+        applyLocalSectionNote(pairKey, sectionKey, localNoteRef.current);
     }, [pairKey, sectionKey, applyLocalSectionNote]);
 
     useEffect(() => {
         return () => {
-            if (pairKey !== null && sectionKey !== null && noteInitializedRef.current) {
-                applyLocalSectionNote(pairKey, sectionKey, localNoteRef.current);
-            }
+            flushNoteToStore();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup must capture refs, not re-fire on every render
-    }, [pairKey, sectionKey]);
+    }, [flushNoteToStore]);
 
     const handleNoteChange = useCallback((text: string) => {
         setLocalNote(text);
@@ -276,6 +310,10 @@ export default function ExecuteSectionScreen() {
         scaleKey: string,
         optionKey: string,
     ) => {
+        if (!canEditInputs) {
+            return;
+        }
+
         const currentAnswers = getQuestionAnswers(
             resolvedAuditSession,
             resolvedActiveSection.section_key,
@@ -320,6 +358,7 @@ export default function ExecuteSectionScreen() {
                 multiline
                 value={localNote}
                 onChangeText={handleNoteChange}
+                editable={canEditInputs}
                 onFocus={() => {
                     setIsNoteFocused(true);
                 }}
@@ -374,8 +413,8 @@ export default function ExecuteSectionScreen() {
                 rounded={ds.radii.md}
                 borderWidth={0}
                 bg={ds.colors.primary}
-                disabled={isSavingDraft}
-                opacity={isSavingDraft ? 0.7 : 1}
+                disabled={isSavingDraft || (!canEditInputs && nextSection === undefined)}
+                opacity={isSavingDraft || (!canEditInputs && nextSection === undefined) ? 0.7 : 1}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
                     void handlePrimaryAction();
@@ -443,6 +482,7 @@ export default function ExecuteSectionScreen() {
                     <YStack flex={1} gap="$3">
                         <SectionQuestionTable
                             rows={questionRows}
+                            disabled={!canEditInputs}
                             onSelectAnswer={(questionKey, scaleKey, optionKey) => {
                                 const question = questionByKey.get(questionKey);
                                 if (question === undefined) {
@@ -484,7 +524,11 @@ export default function ExecuteSectionScreen() {
                                 key={question.question_key}
                                 question={question}
                                 selectedAnswers={selectedAnswers}
+                                disabled={!canEditInputs}
                                 onChangeAnswers={(questionKey, nextAnswers) => {
+                                    if (!canEditInputs) {
+                                        return;
+                                    }
                                     applyLocalQuestionAnswer(
                                         resolvedPairKey,
                                         resolvedActiveSection.section_key,

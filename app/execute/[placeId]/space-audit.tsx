@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
+import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
@@ -38,6 +39,7 @@ interface FieldCardProps {
 interface ChoiceFieldCardProps {
     readonly question: PreAuditQuestion;
     readonly value: string | string[] | undefined;
+    readonly disabled: boolean;
     readonly onSingleSelect: (nextValue: string) => void;
     readonly onToggleSelect: (nextValue: string) => void;
 }
@@ -45,6 +47,7 @@ interface ChoiceFieldCardProps {
 interface MatrixFieldCardProps {
     readonly questions: readonly PreAuditQuestion[];
     readonly values: Readonly<Record<string, string | string[]>>;
+    readonly disabled: boolean;
     readonly onSelectValue: (questionKey: string, optionKey: string) => void;
 }
 
@@ -68,6 +71,7 @@ export default function SpaceAuditScreen() {
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
     const applyLocalPreAudit = usePlayspaceAuditStore((state) => state.applyLocalPreAudit);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
+    const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
 
@@ -79,6 +83,8 @@ export default function SpaceAuditScreen() {
     const [formValues, setFormValues] = useState<Record<string, string | string[]>>({});
     const formValuesRef = useRef<Record<string, string | string[]>>({});
     const formInitializedRef = useRef(false);
+    const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
+    const canEditInputsRef = useRef(false);
     const scrollViewRef = useRef<ScrollView | null>(null);
 
     const themedHeaderOptions = useMemo(
@@ -120,6 +126,21 @@ export default function SpaceAuditScreen() {
         formInitializedRef.current = false;
     }, [auditSession?.audit_id]);
 
+    const canEditInputs =
+        auditSession !== undefined &&
+        canEditAuditInputs({
+            session: auditSession,
+            phase: syncStateByAuditId[auditSession.audit_id]?.phase,
+        });
+
+    useEffect(() => {
+        latestAuditSessionRef.current = auditSession;
+    }, [auditSession]);
+
+    useEffect(() => {
+        canEditInputsRef.current = canEditInputs;
+    }, [canEditInputs]);
+
     useEffect(() => {
         if (auditSession === undefined) {
             formInitializedRef.current = false;
@@ -155,22 +176,40 @@ export default function SpaceAuditScreen() {
     }, [themedHeaderOptions, navigation, auditSession]);
 
     const flushToStore = useCallback(() => {
-        if (pairKey !== null && formInitializedRef.current) {
-            applyLocalPreAudit(pairKey, formValuesRef.current);
+        const latestAuditSession = latestAuditSessionRef.current;
+        if (
+            pairKey === null ||
+            latestAuditSession === undefined ||
+            !formInitializedRef.current ||
+            !canEditInputsRef.current
+        ) {
+            return;
         }
+
+        if (
+            !shouldPersistCleanupWrite({
+                currentValue: getPreAuditValues(latestAuditSession),
+                nextValue: formValuesRef.current,
+            })
+        ) {
+            return;
+        }
+
+        applyLocalPreAudit(pairKey, formValuesRef.current);
     }, [applyLocalPreAudit, pairKey]);
 
     useEffect(() => {
         return () => {
-            if (pairKey !== null && formInitializedRef.current) {
-                applyLocalPreAudit(pairKey, formValuesRef.current);
-            }
+            flushToStore();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pairKey]);
+    }, [flushToStore]);
 
     const updateFormValue = useCallback(
         (key: string, value: string | string[]) => {
+            if (!canEditInputs) {
+                return;
+            }
+
             setFormValues((current) => {
                 const next = { ...current, [key]: value };
                 formValuesRef.current = next;
@@ -183,7 +222,7 @@ export default function SpaceAuditScreen() {
                 applyLocalPreAudit(pairKey, nextValues);
             }
         },
-        [applyLocalPreAudit, pairKey],
+        [applyLocalPreAudit, canEditInputs, pairKey],
     );
 
     if (
@@ -278,6 +317,7 @@ export default function SpaceAuditScreen() {
                 key={question.key}
                 question={question}
                 value={questionValue}
+                disabled={!canEditInputs}
                 onSingleSelect={(nextValue) => {
                     updateFormValue(question.key, nextValue);
                 }}
@@ -429,6 +469,7 @@ export default function SpaceAuditScreen() {
                             <MatrixFieldCard
                                 questions={matrixQuestions}
                                 values={formValues}
+                                disabled={!canEditInputs}
                                 onSelectValue={(questionKey, optionKey) => {
                                     updateFormValue(questionKey, optionKey);
                                 }}
@@ -449,6 +490,7 @@ export default function SpaceAuditScreen() {
                         <MatrixFieldCard
                             questions={matrixQuestions}
                             values={formValues}
+                            disabled={!canEditInputs}
                             onSelectValue={(questionKey, optionKey) => {
                                 updateFormValue(questionKey, optionKey);
                             }}
@@ -578,6 +620,7 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
 function ChoiceFieldCard({
     question,
     value,
+    disabled,
     onSingleSelect,
     onToggleSelect,
 }: Readonly<ChoiceFieldCardProps>) {
@@ -597,11 +640,16 @@ function ChoiceFieldCard({
                             minW={layout.isTablet ? 180 : "100%"}
                             height="auto"
                             rounded={ds.radii.md}
+                            disabled={disabled}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
+                            opacity={disabled ? 0.6 : 1}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
+                                if (disabled) {
+                                    return;
+                                }
                                 if (question.input_type === "single_select") {
                                     onSingleSelect(option.key);
                                     return;
@@ -643,7 +691,12 @@ function ChoiceFieldCard({
 /**
  * Render the age-group-by-quantity matrix with a tablet-first layout.
  */
-function MatrixFieldCard({ questions, values, onSelectValue }: Readonly<MatrixFieldCardProps>) {
+function MatrixFieldCard({
+    questions,
+    values,
+    disabled,
+    onSelectValue,
+}: Readonly<MatrixFieldCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
@@ -711,6 +764,7 @@ function MatrixFieldCard({ questions, values, onSelectValue }: Readonly<MatrixFi
                                             width={52}
                                             height={52}
                                             rounded={ds.radii.md}
+                                            disabled={disabled}
                                             borderWidth={1}
                                             borderColor={
                                                 isSelected ? ds.colors.primary : ds.colors.border
@@ -718,8 +772,12 @@ function MatrixFieldCard({ questions, values, onSelectValue }: Readonly<MatrixFi
                                             bg={
                                                 isSelected ? ds.colors.primarySoft : ds.colors.input
                                             }
+                                            opacity={disabled ? 0.6 : 1}
                                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                             onPress={() => {
+                                                if (disabled) {
+                                                    return;
+                                                }
                                                 onSelectValue(question.key, option.key);
                                             }}
                                         >
@@ -753,6 +811,7 @@ function MatrixFieldCard({ questions, values, onSelectValue }: Readonly<MatrixFi
                             key={question.key}
                             question={question}
                             value={values[question.key]}
+                            disabled={disabled}
                             onSingleSelect={(nextValue) => {
                                 onSelectValue(question.key, nextValue);
                             }}
