@@ -25,6 +25,7 @@ interface QuestionTableRow {
 
 interface SectionQuestionTableProps {
     readonly rows: readonly QuestionTableRow[];
+    readonly disabled: boolean;
     readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
 }
 
@@ -41,6 +42,7 @@ const SCALE_COLUMN_ORDER: readonly ScaleKey[] = [
  */
 export function SectionQuestionTable({
     rows,
+    disabled,
     onSelectAnswer,
 }: Readonly<SectionQuestionTableProps>) {
     const ds = useDesignSystem();
@@ -136,6 +138,7 @@ export function SectionQuestionTable({
                                                     : undefined
                                             }
                                             width={layout.isWideTablet ? 188 : 172}
+                                            disabled={disabled}
                                             onSelectAnswer={onSelectAnswer}
                                         />
                                     );
@@ -249,6 +252,7 @@ interface ScaleOptionCellProps {
     readonly scale: QuestionScale;
     readonly selectedOptionKey: string | undefined;
     readonly width: number;
+    readonly disabled: boolean;
     readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
 }
 
@@ -260,6 +264,7 @@ function ScaleOptionCell({
     scale,
     selectedOptionKey,
     width,
+    disabled,
     onSelectAnswer,
 }: Readonly<ScaleOptionCellProps>) {
     const ds = useDesignSystem();
@@ -290,11 +295,16 @@ function ScaleOptionCell({
                         key={`${questionKey}.${scale.key}.${option.key}`}
                         height="auto"
                         rounded={ds.radii.md}
+                        disabled={disabled}
                         borderWidth={1}
                         borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                         bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
+                        opacity={disabled ? 0.6 : 1}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={() => {
+                            if (disabled) {
+                                return;
+                            }
                             onSelectAnswer(questionKey, scale.key, option.key);
                         }}
                     >

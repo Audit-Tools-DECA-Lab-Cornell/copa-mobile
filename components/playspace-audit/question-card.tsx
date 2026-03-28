@@ -37,6 +37,7 @@ function parsePromptSegments(raw: string): PromptSegment[] {
 interface QuestionCardProps {
     readonly question: InstrumentQuestion;
     readonly selectedAnswers: QuestionResponsePayload;
+    readonly disabled: boolean;
     readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
 
@@ -49,6 +50,7 @@ interface QuestionCardProps {
 export function QuestionCard({
     question,
     selectedAnswers,
+    disabled,
     onChangeAnswers,
 }: Readonly<QuestionCardProps>) {
     const ds = useDesignSystem();
@@ -132,6 +134,7 @@ export function QuestionCard({
                     question={question}
                     selectedOptionKeys={selectedChecklistOptionKeys}
                     otherText={otherChecklistText}
+                    disabled={disabled}
                     onChangeAnswers={onChangeAnswers}
                 />
             ) : (
@@ -151,6 +154,7 @@ export function QuestionCard({
                                         ? (selectedAnswers[scale.key] as string)
                                         : undefined
                                 }
+                                disabled={disabled}
                                 onChangeAnswers={onChangeAnswers}
                                 currentAnswers={selectedAnswers}
                                 question={question}
@@ -181,6 +185,7 @@ interface ScaleSelectorProps {
     readonly scale: QuestionScale;
     readonly selectedOptionKey: string | undefined;
     readonly currentAnswers: QuestionResponsePayload;
+    readonly disabled: boolean;
     readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
 
@@ -196,6 +201,7 @@ function ScaleSelector({
     scale,
     selectedOptionKey,
     currentAnswers,
+    disabled,
     onChangeAnswers,
 }: Readonly<ScaleSelectorProps>) {
     const ds = useDesignSystem();
@@ -254,11 +260,16 @@ function ScaleSelector({
                             width={optionWidth}
                             rounded={ds.radii.md}
                             height={layout.isTablet ? layout.formOptionHeight : 52}
+                            disabled={disabled}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
+                            opacity={disabled ? 0.6 : 1}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
+                                if (disabled) {
+                                    return;
+                                }
                                 onChangeAnswers(
                                     questionKey,
                                     buildNextScaledQuestionAnswers(
@@ -297,6 +308,7 @@ interface ChecklistSelectorProps {
     readonly question: InstrumentQuestion;
     readonly selectedOptionKeys: readonly string[];
     readonly otherText: string;
+    readonly disabled: boolean;
     readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
 
@@ -304,6 +316,7 @@ function ChecklistSelector({
     question,
     selectedOptionKeys,
     otherText,
+    disabled,
     onChangeAnswers,
 }: Readonly<ChecklistSelectorProps>) {
     const ds = useDesignSystem();
@@ -331,11 +344,16 @@ function ChecklistSelector({
                             )}
                             rounded={ds.radii.md}
                             height={layout.isTablet ? layout.formOptionHeight : 42}
+                            disabled={disabled}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
+                            opacity={disabled ? 0.6 : 1}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
+                                if (disabled) {
+                                    return;
+                                }
                                 onChangeAnswers(
                                     question.question_key,
                                     toggleChecklistOption(
@@ -369,6 +387,7 @@ function ChecklistSelector({
                 <TextInput
                     multiline
                     value={otherText}
+                    editable={!disabled}
                     onChangeText={(nextText) => {
                         onChangeAnswers(
                             question.question_key,
