@@ -18,6 +18,11 @@
         "submitNeedsUploadedDraft": "Reconnectez-vous et attendez que vos modifications enregistrées soient téléversées avant d’envoyer cet audit.",
         "syncFallback": "La synchronisation en arrière-plan a échoué."
     },
+    "copy": {
+        "continueToSubject": "Continuer vers {{subject}}",
+        "continueToSubjectInfo": "Informations sur {{subject}}",
+        "submitSubject": "Soumettre {{subject}}"
+    },
     "executeLanding": {
         "continueSelectedPlace": "Continuer le lieu sélectionné",
         "emptyMessage": "Essayez une autre combinaison de recherche ou de filtre.",
@@ -40,10 +45,15 @@
         "roleNotSelected": "Mode non sélectionné",
         "auditUnavailableTitle": "Audit indisponible",
         "chooseMode": "Choisissez la partie de l’outil que vous allez remplir pour ce lieu.",
+        "completedCount_one": "{{count}} terminé",
+        "completedCount_other": "{{count}} terminés",
+        "incompleteCount_one": "{{count}} incomplet",
+        "incompleteCount_other": "{{count}} incomplets",
         "loadingDraft": "Chargement de votre brouillon actuel...",
         "placeNotFound": "L’itinéraire du lieu sélectionné n’est pas valide. Revenez à l’onglet Exécuter et choisissez à nouveau un lieu.",
         "placeNotFoundTitle": "Lieu introuvable",
         "preamble": "Préambule",
+        "reviewDescription": "Révisez chaque section au même endroit et revenez directement à la prochaine section incomplète.",
         "tapToExpand": "Touchez pour développer",
         "preparingAudit": "Préparation du flux d’audit playspace...",
         "preparingAuditTitle": "Préparation de l’audit",
@@ -155,6 +165,12 @@
         "preAudit": "Pré-audit",
         "spaceAudit": "Audit d’espace",
         "section": "Section"
+    },
+    "subjects": {
+        "audit": "audit",
+        "auditAndSurvey": "audit/enquête",
+        "survey": "enquête",
+        "workflow": "workflow"
     },
     "startAudit": "Commencer l’audit",
     "submit": "Soumettre l’audit",

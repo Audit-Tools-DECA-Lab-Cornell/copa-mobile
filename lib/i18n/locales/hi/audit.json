@@ -17,6 +17,11 @@
         "submitNeedsUploadedDraft": "इस ऑडिट को सबमिट करने से पहले फिर से कनेक्ट करें और अपने सहेजे गए बदलाव अपलोड होने तक प्रतीक्षा करें।",
         "syncFallback": "बैकग्राउंड सिंक विफल हो गया।"
     },
+    "copy": {
+        "continueToSubject": "{{subject}} पर जारी रखें",
+        "continueToSubjectInfo": "{{subject}} जानकारी पर जारी रखें",
+        "submitSubject": "{{subject}} जमा करें"
+    },
     "executeLanding": {
         "continueSelectedPlace": "चयनित स्थान जारी रखें",
         "emptyMessage": "कोई अलग खोज या फ़िल्टर संयोजन आज़माएँ.",
@@ -39,10 +44,15 @@
         "roleNotSelected": "मोड नहीं चुना गया",
         "auditUnavailableTitle": "ऑडिट उपलब्ध नहीं है",
         "chooseMode": "चुनें कि इस स्थान के लिए आप टूल का कौन-सा भाग पूरा करेंगे।",
+        "completedCount_one": "{{count}} पूर्ण",
+        "completedCount_other": "{{count}} पूर्ण",
+        "incompleteCount_one": "{{count}} अपूर्ण",
+        "incompleteCount_other": "{{count}} अपूर्ण",
         "loadingDraft": "आपका वर्तमान ड्राफ्ट लोड किया जा रहा है...",
         "placeNotFound": "चयनित स्थान का रूट अमान्य है। Execute टैब पर लौटें और फिर से एक स्थान चुनें।",
         "placeNotFoundTitle": "स्थान नहीं मिला",
         "preamble": "प्रस्तावना",
+        "reviewDescription": "सभी अनुभागों की एक ही जगह समीक्षा करें और अगले अपूर्ण अनुभाग पर वापस जाएँ.",
         "tapToExpand": "विस्तार करने के लिए टैप करें",
         "preparingAudit": "playspace ऑडिट फ़्लो तैयार किया जा रहा है...",
         "preparingAuditTitle": "ऑडिट तैयार किया जा रहा है",
@@ -154,6 +164,12 @@
         "preAudit": "प्री-ऑडिट",
         "spaceAudit": "स्पेस ऑडिट",
         "section": "सेक्शन"
+    },
+    "subjects": {
+        "audit": "ऑडिट",
+        "auditAndSurvey": "ऑडिट/सर्वे",
+        "survey": "सर्वे",
+        "workflow": "वर्कफ़्लो"
     },
     "startAudit": "ऑडिट शुरू करें",
     "submit": "ऑडिट सबमिट करें",

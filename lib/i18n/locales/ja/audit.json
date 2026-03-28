@@ -17,6 +17,11 @@
         "submitNeedsUploadedDraft": "この監査を提出する前に、再接続して保存済みの変更がアップロードされるのを待ってください。",
         "syncFallback": "バックグラウンド同期に失敗しました。"
     },
+    "copy": {
+        "continueToSubject": "{{subject}}に進む",
+        "continueToSubjectInfo": "{{subject}}の情報に進む",
+        "submitSubject": "{{subject}}を送信"
+    },
     "executeLanding": {
         "continueSelectedPlace": "選択した場所を続行",
         "emptyMessage": "別の検索条件またはフィルターの組み合わせをお試しください。",
@@ -39,10 +44,15 @@
         "roleNotSelected": "モードが選択されていません",
         "auditUnavailableTitle": "監査は利用できません",
         "chooseMode": "この場所でツールのどの部分を完了するかを選択してください。",
+        "completedCount_one": "{{count}}件完了",
+        "completedCount_other": "{{count}}件完了",
+        "incompleteCount_one": "{{count}}件未完了",
+        "incompleteCount_other": "{{count}}件未完了",
         "loadingDraft": "現在のドラフトを読み込んでいます...",
         "placeNotFound": "選択した場所のルートが無効です。実行タブに戻り、場所をもう一度選択してください。",
         "placeNotFoundTitle": "場所が見つかりません",
         "preamble": "前置き",
+        "reviewDescription": "すべてのセクションを1か所で確認し、次の未完了セクションに戻れます。",
         "tapToExpand": "タップして展開",
         "preparingAudit": "プレイスペース監査フローを準備しています...",
         "preparingAuditTitle": "監査を準備中",
@@ -154,6 +164,12 @@
         "preAudit": "事前監査",
         "spaceAudit": "スペース監査",
         "section": "セクション"
+    },
+    "subjects": {
+        "audit": "監査",
+        "auditAndSurvey": "監査/調査",
+        "survey": "調査",
+        "workflow": "ワークフロー"
     },
     "startAudit": "監査を開始",
     "submit": "監査を提出",

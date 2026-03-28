@@ -17,6 +17,11 @@
         "submitNeedsUploadedDraft": "Stellen Sie die Verbindung wieder her und warten Sie, bis Ihre gespeicherten Aenderungen hochgeladen wurden, bevor Sie dieses Audit einreichen.",
         "syncFallback": "Die Hintergrundsynchronisierung ist fehlgeschlagen."
     },
+    "copy": {
+        "continueToSubject": "Weiter zu {{subject}}",
+        "continueToSubjectInfo": "Weiter zu den Informationen zu {{subject}}",
+        "submitSubject": "{{subject}} absenden"
+    },
     "executeLanding": {
         "continueSelectedPlace": "Ausgewaehlten Ort fortsetzen",
         "emptyMessage": "Versuchen Sie eine andere Such- oder Filterkombination.",
@@ -39,10 +44,15 @@
         "roleNotSelected": "Modus nicht ausgewaehlt",
         "auditUnavailableTitle": "Audit nicht verfuegbar",
         "chooseMode": "Waehlen Sie aus, welchen Teil des Instruments Sie fuer diesen Ort ausfuellen moechten.",
+        "completedCount_one": "{{count}} abgeschlossen",
+        "completedCount_other": "{{count}} abgeschlossen",
+        "incompleteCount_one": "{{count}} unvollständig",
+        "incompleteCount_other": "{{count}} unvollständig",
         "loadingDraft": "Ihr aktueller Entwurf wird geladen...",
         "placeNotFound": "Die ausgewaehlte Ortsroute ist ungueltig. Kehren Sie zum Durchfuehren-Tab zurueck und waehlen Sie erneut einen Ort.",
         "placeNotFoundTitle": "Ort nicht gefunden",
         "preamble": "Einleitung",
+        "reviewDescription": "Überprüfen Sie alle Abschnitte an einem Ort und springen Sie direkt zum nächsten unvollständigen Abschnitt zurück.",
         "tapToExpand": "Zum Aufklappen tippen",
         "preparingAudit": "Der Playspace-Audit-Ablauf wird vorbereitet...",
         "preparingAuditTitle": "Audit wird vorbereitet",
@@ -154,6 +164,12 @@
         "preAudit": "Vor-Audit",
         "spaceAudit": "Flächenprüfung",
         "section": "Abschnitt"
+    },
+    "subjects": {
+        "audit": "Audit",
+        "auditAndSurvey": "Audit/Umfrage",
+        "survey": "Umfrage",
+        "workflow": "Workflow"
     },
     "startAudit": "Audit starten",
     "submit": "Audit einreichen",
