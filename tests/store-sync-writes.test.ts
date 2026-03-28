@@ -1,10 +1,10 @@
-import { BASE_PLAYSPACE_INSTRUMENT } from "../instrument";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 import {
     applyLocalExecutionModeChange,
     canEditAuditInputs,
     deriveLocalDraftProgress,
     shouldPersistCleanupWrite,
-} from "./store-sync-core";
+} from "lib/audit/store-sync-core";
 import type {
     AuditMeta,
     AuditPreAuditValues,
@@ -16,7 +16,7 @@ import type {
     PlayspaceInstrument,
     QuestionResponsePayload,
     QuestionScale,
-} from "./types";
+} from "lib/audit/types";
 
 interface SessionFixtureOverrides {
     readonly instrument?: PlayspaceInstrument;

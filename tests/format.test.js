@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getExecutionModeShortLabel } from "./format";
+import { getExecutionModeShortLabel } from "lib/i18n/format";
 
 /**
  * Verify execution-mode labels never leak untranslated i18n keys into UI text.

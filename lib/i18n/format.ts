@@ -4,6 +4,17 @@ import type { TFunction } from "i18next";
 /** Status labels used for place cards and summaries. */
 export type LocalizedPlaceStatus = "not_started" | "in_progress" | "submitted";
 type RelativeTimeUnit = "minute" | "hour" | "day";
+type DurationUnit = "minute" | "hour" | "day" | "month";
+
+interface LocalizedDurationPart {
+    readonly value: number;
+    readonly unit: DurationUnit;
+}
+
+const MINUTES_PER_HOUR = 60;
+const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
+const DAYS_PER_MONTH = 30;
+const MINUTES_PER_MONTH = DAYS_PER_MONTH * MINUTES_PER_DAY;
 
 const EXECUTION_MODE_SHORT_FALLBACKS: Record<ExecutionMode, string> = {
     audit: "Onsite only",
@@ -12,7 +23,7 @@ const EXECUTION_MODE_SHORT_FALLBACKS: Record<ExecutionMode, string> = {
 };
 
 const LANGUAGE_LOCALE_MAP = {
-    en: "en-NZ",
+    en: "en-US",
     de: "de-DE",
     fr: "fr-FR",
     hi: "hi-IN",
@@ -129,6 +140,53 @@ export function formatLocalizedTime(value: string, language: string): string {
 }
 
 /**
+ * Format a localized date-time label from an ISO timestamp.
+ *
+ * @param value ISO timestamp.
+ * @param language Active i18n language.
+ * @returns Localized date and time string or an empty string when invalid.
+ */
+export function formatLocalizedDateTime(value: string, language: string): string {
+    const dateLabel = formatLocalizedDate(value, language);
+    if (dateLabel.length === 0) {
+        return "";
+    }
+
+    const timeLabel = formatLocalizedTime(value, language);
+    return timeLabel.length === 0 ? dateLabel : `${dateLabel} at ${timeLabel}`;
+}
+
+/**
+ * Format an elapsed audit duration from total minutes into more readable
+ * localized units.
+ *
+ * Durations stay in minutes for short sessions, switch to hours/minutes for
+ * same-day sessions, then days/hours, and finally months/days for very long
+ * audits. Month values are approximated as 30-day periods because the source
+ * data only stores total minutes and not calendar boundaries.
+ *
+ * @param totalMinutes Total elapsed audit minutes.
+ * @param language Active i18n language.
+ * @returns Localized duration string or an empty string when invalid.
+ */
+export function formatLocalizedDurationFromMinutes(totalMinutes: number, language: string): string {
+    console.log("totalMinutes", totalMinutes);
+    if (!Number.isFinite(totalMinutes) || totalMinutes < 0) {
+        return "";
+    }
+
+    const normalizedMinutes = Math.floor(totalMinutes);
+    const durationParts = getLocalizedDurationParts(normalizedMinutes);
+    console.log("durationParts", durationParts);
+    const formattedParts = durationParts.map((part) => {
+        return formatLocalizedDurationUnit(part, language);
+    });
+    console.log("formattedParts", formattedParts);
+
+    return formatLocalizedList(formattedParts, language);
+}
+
+/**
  * Map a local place status code to a translated label.
  *
  * @param status Local status value.
@@ -167,6 +225,101 @@ export function getExecutionModeShortLabel(mode: ExecutionMode | null, t: TFunct
     }
 
     return translatedLabel;
+}
+
+/**
+ * Choose the most readable pair of duration units for an elapsed minute count.
+ *
+ * @param totalMinutes Whole elapsed minutes.
+ * @returns Ordered duration parts for display.
+ */
+function getLocalizedDurationParts(totalMinutes: number): readonly LocalizedDurationPart[] {
+    if (totalMinutes < MINUTES_PER_HOUR) {
+        return [{ value: totalMinutes, unit: "minute" }];
+    }
+
+    if (totalMinutes < MINUTES_PER_DAY) {
+        const hours = Math.floor(totalMinutes / MINUTES_PER_HOUR);
+        const minutes = totalMinutes % MINUTES_PER_HOUR;
+        return minutes === 0
+            ? [{ value: hours, unit: "hour" }]
+            : [
+                  { value: hours, unit: "hour" },
+                  { value: minutes, unit: "minute" },
+              ];
+    }
+
+    if (totalMinutes < MINUTES_PER_MONTH) {
+        const days = Math.floor(totalMinutes / MINUTES_PER_DAY);
+        const remainingHours = Math.floor((totalMinutes % MINUTES_PER_DAY) / MINUTES_PER_HOUR);
+        return remainingHours === 0
+            ? [{ value: days, unit: "day" }]
+            : [
+                  { value: days, unit: "day" },
+                  { value: remainingHours, unit: "hour" },
+              ];
+    }
+
+    const months = Math.floor(totalMinutes / MINUTES_PER_MONTH);
+    const remainingDays = Math.floor((totalMinutes % MINUTES_PER_MONTH) / MINUTES_PER_DAY);
+    return remainingDays === 0
+        ? [{ value: months, unit: "month" }]
+        : [
+              { value: months, unit: "month" },
+              { value: remainingDays, unit: "day" },
+          ];
+}
+
+/**
+ * Format one localized duration unit with the runtime unit formatter when
+ * available, then fall back to a simple English label.
+ *
+ * @param part Duration fragment to localize.
+ * @param language Active i18n language.
+ * @returns Localized unit label.
+ */
+function formatLocalizedDurationUnit(part: LocalizedDurationPart, language: string): string {
+    if (language.toLowerCase().startsWith("en")) {
+        const unit = part.value === 1 ? part.unit : `${part.unit}s`;
+        return `${part.value.toString()} ${unit}`;
+    }
+    return new Intl.NumberFormat(getLocaleTag(language), {
+        style: "currency",
+        unit: part.unit,
+        unitDisplay: "long",
+    }).format(part.value);
+}
+
+/**
+ * Join localized duration fragments with a locale-aware conjunction when
+ * possible.
+ *
+ * @param parts Preformatted localized duration fragments.
+ * @param language Active i18n language.
+ * @returns Joined duration label.
+ */
+function formatLocalizedList(parts: readonly string[], language: string): string {
+    if (parts.length === 0) {
+        return "";
+    }
+
+    if (parts.length === 1) {
+        const [firstPart] = parts;
+        return firstPart ?? "";
+    }
+
+    if (typeof Intl !== "object" || typeof Intl.ListFormat !== "function") {
+        return parts.join(", ");
+    }
+
+    try {
+        return new Intl.ListFormat(getLocaleTag(language), {
+            style: "long",
+            type: "conjunction",
+        }).format(parts);
+    } catch {
+        return parts.join(", ");
+    }
 }
 
 /**

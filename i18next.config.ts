@@ -20,7 +20,7 @@ export default {
             "lib/**/*.{ts,tsx,js,jsx,md}",
             "stores/**/*.{ts,tsx,js,jsx,md}",
         ],
-        ignore: ["lib/i18n/locales/**", "node_modules/**"],
+        ignore: ["lib/i18n/locales/**", "node_modules/**", "tests/**"],
         output: "lib/i18n/locales/{{language}}/{{namespace}}.json",
 
         // Keep files clean and predictable

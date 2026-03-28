@@ -2,8 +2,7 @@
     "autoValues": {
         "calculatedOnSubmit": "Calculated on final submit",
         "generatedOnSubmit": "Generated on final submit",
-        "minutes_one": "",
-        "minutes_other": ""
+        "minutes": "{{count}} minutes"
     },
     "errors": {
         "accessDenied403": "Access denied (403): you are not allowed to access this place or audit.",
@@ -18,8 +17,8 @@
         "syncFallback": "Background sync failed."
     },
     "copy": {
-        "continueToSubject": "Continue to {{subject}}",
-        "continueToSubjectInfo": "Continue to {{subject}} info",
+        "continueToSubject": "Continue with {{subject}}",
+        "continueToSubjectInfo": "Continue to {{subject}} details",
         "submitSubject": "Submit {{subject}}"
     },
     "executeLanding": {
@@ -70,7 +69,7 @@
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
-        "continueToAuditInfo": "Continue to audit info",
+        "continueToAuditInfo": "Continue to audit details",
         "modeRequired": "Select one execution mode before continuing.",
         "stepEyebrow": "Step 1 of 3",
         "subtitle": "Review how the tool works, then choose the role that best matches how you will complete this audit.",
@@ -142,7 +141,6 @@
         "saveAndNext": "Save and next",
         "saveSection": "Save section",
         "sectionNotes": "Section Notes",
-        "tableIntro": "On tablets the questions are shown in a matrix so the prompt stays on the left and the available scales stay aligned on the right.",
         "table": {
             "followUpPending": "Choose a positive quantity answer to unlock this scale.",
             "itemColumn": "Question item",
@@ -162,11 +160,11 @@
         "execute": "Execute",
         "preAudit": "Audit Info",
         "spaceAudit": "Space Audit",
-        "section": "Section: {{section}}"
+        "section": "{{place}} | Section: {{section}}"
     },
     "subjects": {
         "audit": "audit",
-        "auditAndSurvey": "audit/survey",
+        "auditAndSurvey": "assessment",
         "survey": "survey",
         "workflow": "workflow"
     },

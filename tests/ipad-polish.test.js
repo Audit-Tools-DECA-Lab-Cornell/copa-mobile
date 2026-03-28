@@ -3,7 +3,7 @@ import {
     getCardTextLineLimit,
     getExecuteSidebarTopPadding,
     getSettingsPageMaxWidth,
-} from "./ipad-polish";
+} from "lib/ipad-polish";
 
 /**
  * Keep iPad follow-up polish rules centralized and regression-tested.

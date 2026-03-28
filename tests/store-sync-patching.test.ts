@@ -1,5 +1,5 @@
-import { BASE_PLAYSPACE_INSTRUMENT } from "../instrument";
-import { getProjectPlaceKey } from "./pair-key";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     applyFetchedSessionSnapshot,
     buildDraftPatchSnapshot,
@@ -8,7 +8,7 @@ import {
     pruneAuditStateForAudit,
     prepareConflictRecoverySnapshot,
     upsertAuditSessionMaps,
-} from "./store-sync-core";
+} from "lib/audit/store-sync-core";
 import type {
     AuditMeta,
     AuditPreAuditValues,
@@ -18,7 +18,7 @@ import type {
     AuditStatus,
     ExecutionMode,
     QuestionResponsePayload,
-} from "./types";
+} from "lib/audit/types";
 
 interface SessionFixtureOverrides {
     readonly auditId?: string;

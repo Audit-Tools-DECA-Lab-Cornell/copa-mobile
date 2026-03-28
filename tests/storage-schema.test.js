@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { DEFAULT_PERSISTED_PREFERENCES, normalizePersistedPreferences } from "./storage-schema";
+import {
+    DEFAULT_PERSISTED_PREFERENCES,
+    normalizePersistedPreferences,
+} from "lib/preferences/storage-schema";
 
 /**
  * Persisted preferences should safely add the new Field Mode flag without breaking older data.

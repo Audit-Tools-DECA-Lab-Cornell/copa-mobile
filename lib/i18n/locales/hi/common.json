@@ -4,6 +4,7 @@
     },
     "actions": {
         "openAudit": "ऑडिट खोलें",
+        "openSubject": "{{subject}} खोलें",
         "resume": "फिर से शुरू करें",
         "retry": "पुनः प्रयास करें",
         "seeAll": "सभी देखें",

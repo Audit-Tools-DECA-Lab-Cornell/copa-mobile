@@ -3,7 +3,7 @@ import {
     doesExecutionModeRequireSpaceAudit,
     getExecuteFlowSubject,
     type ExecuteOverviewSectionInput,
-} from "./execute-flow";
+} from "lib/audit/execute-flow";
 
 /**
  * Assert that two primitive values are identical.

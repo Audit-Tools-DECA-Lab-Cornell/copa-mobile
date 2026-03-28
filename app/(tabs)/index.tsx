@@ -462,7 +462,7 @@ export default function DashboardScreen() {
                     textTransform="uppercase"
                     letterSpacing={1.3}
                 >
-                    {t("dueToday", { ns: "dashboard" })}
+                    {t("dueSoon", { ns: "dashboard" })}
                 </Text>
             </XStack>
 
@@ -643,7 +643,9 @@ export default function DashboardScreen() {
                         return (
                             <XStack key={row.id} gap="$3">
                                 <DashboardActiveWorkCard place={row.left} />
-                                {row.right === null ? null : (
+                                {row.right === null ? (
+                                    <YStack width="48.5%"></YStack>
+                                ) : (
                                     <DashboardActiveWorkCard place={row.right} />
                                 )}
                             </XStack>
@@ -1555,7 +1557,7 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                                 ? ds.typography.titleLg.lineHeight
                                 : ds.typography.titleMd.lineHeight
                         }
-                        numberOfLines={2}
+                        numberOfLines={1}
                     >
                         {place.place_name}
                     </Text>

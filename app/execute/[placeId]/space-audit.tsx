@@ -18,7 +18,11 @@ import {
 } from "lib/audit/selectors";
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import {
+    getResponsiveContentContainerStyle,
+    type ResponsiveLayout,
+    useResponsiveLayout,
+} from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -50,6 +54,9 @@ interface MatrixFieldCardProps {
     readonly disabled: boolean;
     readonly onSelectValue: (questionKey: string, optionKey: string) => void;
 }
+
+const MATRIX_PROMPT_COLUMN_FLEX = 1.4;
+const MATRIX_OPTION_COLUMN_FLEX = 1;
 
 /**
  * Step-three setup screen for onsite-only questions.
@@ -336,7 +343,7 @@ export default function SpaceAuditScreen() {
     });
 
     const sidebar = (
-        <YStack width={layout.supportRailWidth} gap="$3">
+        <YStack width="100%" gap="$3">
             <FieldCard
                 title={t("spaceAudit.sidebarTitle", { ns: "audit" })}
                 description={t("spaceAudit.sidebarDescription", { ns: "audit" })}
@@ -361,7 +368,7 @@ export default function SpaceAuditScreen() {
             </FieldCard>
             <Button
                 height={layout.buttonHeight}
-                rounded={ds.radii.md}
+                rounded={ds.radii.sm}
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.input}
@@ -385,7 +392,7 @@ export default function SpaceAuditScreen() {
             </Button>
             <Button
                 height={layout.buttonHeight}
-                rounded={ds.radii.md}
+                rounded={ds.radii.sm}
                 borderWidth={0}
                 bg={isSetupComplete ? ds.colors.primary : ds.colors.mutedSurface}
                 disabled={!isSetupComplete}
@@ -463,8 +470,8 @@ export default function SpaceAuditScreen() {
             </YStack>
 
             {layout.isTablet ? (
-                <XStack gap={layout.twoPaneGap} items="flex-start">
-                    <YStack flex={1} gap="$3">
+                <YStack gap="$3">
+                    <YStack gap="$3">
                         {matrixQuestions.length > 0 ? (
                             <MatrixFieldCard
                                 questions={matrixQuestions}
@@ -483,7 +490,7 @@ export default function SpaceAuditScreen() {
                         )}
                     </YStack>
                     {sidebar}
-                </XStack>
+                </YStack>
             ) : (
                 <YStack gap="$3">
                     {matrixQuestions.length > 0 ? (
@@ -504,7 +511,7 @@ export default function SpaceAuditScreen() {
                     )}
                     <Button
                         height={layout.controlHeight}
-                        rounded={ds.radii.md}
+                        rounded={ds.radii.sm}
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.input}
@@ -528,7 +535,7 @@ export default function SpaceAuditScreen() {
                     </Button>
                     <Button
                         height={layout.controlHeight}
-                        rounded={ds.radii.md}
+                        rounded={ds.radii.sm}
                         borderWidth={0}
                         bg={isSetupComplete ? ds.colors.primary : ds.colors.mutedSurface}
                         disabled={!isSetupComplete}
@@ -570,7 +577,7 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
 
     return (
         <YStack
-            rounded={ds.radii.lg}
+            rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
@@ -627,6 +634,12 @@ function ChoiceFieldCard({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const selectedValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
+    const optionWidth = getChoiceFieldOptionWidth(layout, question.options);
+    const hasOptionDescriptions = question.options.some(
+        (option) => (option.description ?? "").trim().length > 0,
+    );
+    const optionHeight =
+        hasOptionDescriptions || optionWidth === "100%" ? "auto" : layout.formOptionHeight;
 
     return (
         <FieldCard title={question.label} description={question.description ?? null}>
@@ -637,9 +650,10 @@ function ChoiceFieldCard({
                     return (
                         <Button
                             key={`${question.key}.${option.key}`}
-                            minW={layout.isTablet ? 180 : "100%"}
-                            height="auto"
-                            rounded={ds.radii.md}
+                            width={optionWidth}
+                            minW={optionWidth}
+                            height={optionHeight}
+                            rounded={ds.radii.sm}
                             disabled={disabled}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
@@ -710,15 +724,24 @@ function MatrixFieldCard({
         <FieldCard title={t("spaceAudit.matrixHeading")} description={t("spaceAudit.intro")}>
             {layout.isTablet ? (
                 <YStack
-                    rounded={ds.radii.md}
+                    rounded={ds.radii.sm}
                     borderWidth={1}
                     borderColor={ds.colors.border}
                     overflow="hidden"
                 >
                     <XStack bg={ds.colors.surfaceMuted}>
-                        <MatrixHeaderCell flex={1.4} label={t("spaceAudit.matrixAgeColumn")} />
-                        {matrixOptions.map((option) => (
-                            <MatrixHeaderCell key={option.key} flex={1} label={option.label} />
+                        <MatrixHeaderCell
+                            flex={MATRIX_PROMPT_COLUMN_FLEX}
+                            label={t("spaceAudit.matrixAgeColumn")}
+                            showTrailingBorder
+                        />
+                        {matrixOptions.map((option, optionIndex) => (
+                            <MatrixHeaderCell
+                                key={option.key}
+                                flex={MATRIX_OPTION_COLUMN_FLEX}
+                                label={option.label}
+                                showTrailingBorder={optionIndex < matrixOptions.length - 1}
+                            />
                         ))}
                     </XStack>
                     {questions.map((question, rowIndex) => (
@@ -729,9 +752,10 @@ function MatrixFieldCard({
                             bg={ds.colors.surface}
                         >
                             <YStack
-                                flex={1.4}
+                                flex={MATRIX_PROMPT_COLUMN_FLEX}
                                 px="$3"
                                 py="$3"
+                                items="center"
                                 justify="center"
                                 borderRightWidth={1}
                                 borderColor={ds.colors.border}
@@ -740,6 +764,7 @@ function MatrixFieldCard({
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.bodyBold}
                                     fontSize={ds.typography.bodyMd.fontSize}
+                                    style={{ textAlign: "center" }}
                                 >
                                     {question.label}
                                 </Text>
@@ -750,10 +775,9 @@ function MatrixFieldCard({
                                 return (
                                     <YStack
                                         key={`${question.key}.${option.key}`}
-                                        flex={1}
-                                        px="$2"
-                                        py="$2"
-                                        items="center"
+                                        flex={MATRIX_OPTION_COLUMN_FLEX}
+                                        px="$3"
+                                        py="$3"
                                         justify="center"
                                         borderRightWidth={
                                             columnIndex === matrixOptions.length - 1 ? 0 : 1
@@ -761,9 +785,9 @@ function MatrixFieldCard({
                                         borderColor={ds.colors.border}
                                     >
                                         <Button
-                                            width={52}
-                                            height={52}
-                                            rounded={ds.radii.md}
+                                            width="100%"
+                                            height={layout.formOptionHeight}
+                                            rounded={ds.radii.sm}
                                             disabled={disabled}
                                             borderWidth={1}
                                             borderColor={
@@ -829,16 +853,23 @@ function MatrixFieldCard({
 interface MatrixHeaderCellProps {
     readonly flex: number;
     readonly label: string;
+    readonly showTrailingBorder: boolean;
 }
 
 /**
  * Header cell for the tablet matrix layout.
  */
-function MatrixHeaderCell({ flex, label }: Readonly<MatrixHeaderCellProps>) {
+function MatrixHeaderCell({ flex, label, showTrailingBorder }: Readonly<MatrixHeaderCellProps>) {
     const ds = useDesignSystem();
 
     return (
-        <YStack flex={flex} px="$3" py="$2.5" borderRightWidth={1} borderColor={ds.colors.border}>
+        <YStack
+            flex={flex}
+            px="$3"
+            py="$3"
+            borderRightWidth={showTrailingBorder ? 1 : 0}
+            borderColor={ds.colors.border}
+        >
             <Text
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
@@ -851,6 +882,28 @@ function MatrixHeaderCell({ flex, label }: Readonly<MatrixHeaderCellProps>) {
             </Text>
         </YStack>
     );
+}
+
+/**
+ * Use full-width buttons for descriptive or short option sets, and an even
+ * two-column grid for longer tablet-only choice groups.
+ */
+function getChoiceFieldOptionWidth(
+    layout: Readonly<ResponsiveLayout>,
+    options: readonly Pick<PreAuditQuestion["options"][number], "description">[],
+): "100%" | "48.5%" {
+    if (!layout.isTablet) {
+        return "100%";
+    }
+
+    const hasSupportingDescriptions = options.some(
+        (option) => (option.description ?? "").trim().length > 0,
+    );
+    if (hasSupportingDescriptions || options.length <= 3) {
+        return "100%";
+    }
+
+    return "48.5%";
 }
 
 interface SummaryRowProps {
@@ -908,7 +961,7 @@ function CenteredMessageCard({
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                rounded={ds.radii.lg}
+                rounded={ds.radii.md}
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.surface}
@@ -929,7 +982,7 @@ function CenteredMessageCard({
                     <Button
                         mt="$2"
                         height={44}
-                        rounded={ds.radii.md}
+                        rounded={ds.radii.sm}
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.input}

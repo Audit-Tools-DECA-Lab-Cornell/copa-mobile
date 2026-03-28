@@ -27,6 +27,11 @@ export interface ExecuteOverviewSummary {
 }
 
 /**
+ * Supported filter states for the section list on the execute overview screen.
+ */
+export type ExecuteOverviewSectionFilter = "all" | "complete" | "incomplete";
+
+/**
  * Determine whether the selected execution mode includes the onsite setup step.
  *
  * @param mode Active execution mode.
@@ -87,4 +92,25 @@ export function buildExecuteOverviewSummary(
         firstIncompleteSectionKey,
         rows: rows.map((row) => ({ ...row })),
     };
+}
+
+/**
+ * Return only the section rows that match the selected overview filter while
+ * preserving the existing row order for predictable navigation.
+ *
+ * @param rows Ordered section rows.
+ * @param filter Active filter chip.
+ * @returns Visible section rows for the current filter.
+ */
+export function filterExecuteOverviewRows(
+    rows: readonly ExecuteOverviewSectionInput[],
+    filter: ExecuteOverviewSectionFilter,
+): readonly ExecuteOverviewSectionInput[] {
+    if (filter === "all") {
+        return rows.map((row) => ({ ...row }));
+    }
+
+    return rows.filter((row) => {
+        return filter === "complete" ? row.isComplete : !row.isComplete;
+    });
 }

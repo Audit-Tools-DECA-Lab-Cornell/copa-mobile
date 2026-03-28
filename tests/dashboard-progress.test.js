@@ -3,7 +3,7 @@ import {
     createActiveAuditMetricState,
     formatPriorityProgressLabel,
     getVisibleProgressBarWidth,
-} from "./dashboard-progress";
+} from "lib/dashboard-progress";
 
 /**
  * Keep dashboard priority progress copy human-readable and visually visible.

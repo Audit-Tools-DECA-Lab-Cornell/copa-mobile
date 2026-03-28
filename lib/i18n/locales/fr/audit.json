@@ -2,9 +2,7 @@
     "autoValues": {
         "calculatedOnSubmit": "Calculé lors de l’envoi final",
         "generatedOnSubmit": "Généré lors de l’envoi final",
-        "minutes_one": "",
-        "minutes_other": "",
-        "minutes_many": "il y a {{count}} mins"
+        "minutes": "{{count}} minutes"
     },
     "errors": {
         "accessDenied403": "Accès refusé (403) : vous n’êtes pas autorisé à accéder à ce lieu ou à cet audit.",
@@ -19,8 +17,8 @@
         "syncFallback": "La synchronisation en arrière-plan a échoué."
     },
     "copy": {
-        "continueToSubject": "Continuer vers {{subject}}",
-        "continueToSubjectInfo": "Informations sur {{subject}}",
+        "continueToSubject": "Continuer avec {{subject}}",
+        "continueToSubjectInfo": "Continuer vers les informations sur {{subject}}",
         "submitSubject": "Soumettre {{subject}}"
     },
     "executeLanding": {
@@ -71,7 +69,7 @@
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
-        "continueToAuditInfo": "Continuer vers les informations d’audit",
+        "continueToAuditInfo": "Continuer vers les détails de l’audit",
         "modeRequired": "Sélectionnez un mode d’exécution avant de continuer.",
         "stepEyebrow": "Étape 1 sur 3",
         "subtitle": "Passez en revue le fonctionnement de l’outil, puis choisissez le rôle qui correspond le mieux à la manière dont vous allez réaliser cet audit.",
@@ -144,7 +142,6 @@
         "saveAndNext": "Enregistrer et suivant",
         "saveSection": "Enregistrer la section",
         "sectionNotes": "Notes de section",
-        "tableIntro": "Sur tablette, les questions sont affichées dans une matrice afin que l’énoncé reste à gauche et que les échelles disponibles restent alignées à droite.",
         "table": {
             "followUpPending": "Choisissez une réponse de quantité positive pour déverrouiller cette échelle.",
             "itemColumn": "Question",
@@ -168,7 +165,7 @@
     },
     "subjects": {
         "audit": "audit",
-        "auditAndSurvey": "audit/enquête",
+        "auditAndSurvey": "évaluation",
         "survey": "enquête",
         "workflow": "workflow"
     },

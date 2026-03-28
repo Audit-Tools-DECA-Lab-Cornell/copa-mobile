@@ -381,7 +381,9 @@ export default function AuditReportDetailScreen() {
                                                                     : ds.colors.primary
                                                             }
                                                             fontFamily={ds.fonts.bodyBold}
-                                                            fontSize={ds.typography.bodyMd.fontSize}
+                                                            fontSize={
+                                                                ds.typography.metricSm.fontSize
+                                                            }
                                                         >
                                                             {sectionRow.scoreTotals === null
                                                                 ? "--"

@@ -108,10 +108,35 @@ export default function ExecuteSectionScreen() {
         if (activeSection !== undefined) {
             navigation.setOptions({
                 ...themedHeaderOptions,
-                title: t("stack.section", { section: activeSection.title, ns: "audit" }),
+                headerTitle: () => (
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.titleMd.fontSize}
+                        lineHeight={ds.typography.titleMd.lineHeight}
+                    >
+                        <Text
+                            color={ds.colors.primaryForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.titleMd.fontSize}
+                            lineHeight={ds.typography.titleMd.lineHeight}
+                        >
+                            {auditSession?.place_name}
+                        </Text>
+                        {"  "}|{"  "}
+                        <Text
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.titleMd.fontSize}
+                            lineHeight={ds.typography.titleMd.lineHeight}
+                        >
+                            Section: {activeSection.title}
+                        </Text>
+                    </Text>
+                ),
             });
         }
-    }, [themedHeaderOptions, navigation, activeSection, t]);
+    }, [themedHeaderOptions, navigation, activeSection, t, auditSession]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -383,7 +408,7 @@ export default function ExecuteSectionScreen() {
         </YStack>
     );
     const actionButtons = (
-        <YStack gap="$2">
+        <XStack gap="$2" justify="space-between" width="100%">
             <Button
                 height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
                 rounded={ds.radii.md}
@@ -434,7 +459,7 @@ export default function ExecuteSectionScreen() {
                           : t("section.saveAndNext", { ns: "audit" })}
                 </Text>
             </Button>
-        </YStack>
+        </XStack>
     );
 
     return (
@@ -478,44 +503,40 @@ export default function ExecuteSectionScreen() {
             !resolvedActiveSection.questions.some(
                 (question) => question.question_type === "checklist",
             ) ? (
-                <XStack gap={layout.twoPaneGap} items="flex-start">
-                    <YStack flex={1} gap="$3">
-                        <SectionQuestionTable
-                            rows={questionRows}
-                            disabled={!canEditInputs}
-                            onSelectAnswer={(questionKey, scaleKey, optionKey) => {
-                                const question = questionByKey.get(questionKey);
-                                if (question === undefined) {
-                                    return;
-                                }
-                                handleSelectAnswer(question, questionKey, scaleKey, optionKey);
-                            }}
-                        />
-                    </YStack>
-                    <YStack width={layout.supportRailWidth} gap="$3">
-                        {hasPendingLocalChanges ? (
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
-                            >
-                                {t("section.pendingSync", { ns: "audit" })}
-                            </Paragraph>
-                        ) : null}
-                        {errorMessage === null ? null : (
-                            <Paragraph
-                                color={ds.colors.warning}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
-                                lineHeight={ds.typography.bodySm.lineHeight}
-                            >
-                                {errorMessage}
-                            </Paragraph>
-                        )}
-                        {actionButtons}
-                        {notesPanel}
-                    </YStack>
-                </XStack>
+                <YStack gap="$3">
+                    <SectionQuestionTable
+                        rows={questionRows}
+                        disabled={!canEditInputs}
+                        onSelectAnswer={(questionKey, scaleKey, optionKey) => {
+                            const question = questionByKey.get(questionKey);
+                            if (question === undefined) {
+                                return;
+                            }
+                            handleSelectAnswer(question, questionKey, scaleKey, optionKey);
+                        }}
+                    />
+                    {hasPendingLocalChanges ? (
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                        >
+                            {t("section.pendingSync", { ns: "audit" })}
+                        </Paragraph>
+                    ) : null}
+                    {errorMessage === null ? null : (
+                        <Paragraph
+                            color={ds.colors.warning}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                            lineHeight={ds.typography.bodySm.lineHeight}
+                        >
+                            {errorMessage}
+                        </Paragraph>
+                    )}
+                    {notesPanel}
+                    {actionButtons}
+                </YStack>
             ) : (
                 <YStack gap="$3">
                     <YStack gap="$3">
@@ -558,8 +579,8 @@ export default function ExecuteSectionScreen() {
                             {errorMessage}
                         </Paragraph>
                     )}
-                    {actionButtons}
                     {notesPanel}
+                    {actionButtons}
                 </YStack>
             )}
         </ScrollView>

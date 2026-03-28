@@ -11,7 +11,11 @@ import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
 import { fetchMyAuditorProfile, type MyAuditorProfile } from "lib/audit/profile-api";
-import { formatLocalizedDate, formatLocalizedTime } from "lib/i18n/format";
+import {
+    formatLocalizedDate,
+    formatLocalizedDateTime,
+    formatLocalizedDurationFromMinutes,
+} from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
@@ -204,7 +208,7 @@ export default function PreAuditScreen() {
     ));
 
     const sidebar = (
-        <YStack width={layout.supportRailWidth} gap="$3">
+        <YStack width="100%" gap="$3">
             <FieldCard
                 title={t("auditInfo.summaryTitle", { ns: "audit" })}
                 description={t("auditInfo.summaryDescription", { ns: "audit" })}
@@ -226,7 +230,7 @@ export default function PreAuditScreen() {
             </FieldCard>
             <Button
                 height={layout.buttonHeight}
-                rounded={ds.radii.md}
+                rounded={ds.radii.sm}
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.input}
@@ -249,7 +253,7 @@ export default function PreAuditScreen() {
             </Button>
             <Button
                 height={layout.buttonHeight}
-                rounded={ds.radii.md}
+                rounded={ds.radii.sm}
                 borderWidth={0}
                 bg={ds.colors.primary}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
@@ -323,8 +327,8 @@ export default function PreAuditScreen() {
             </YStack>
 
             {layout.isTablet ? (
-                <XStack gap={layout.twoPaneGap} items="flex-start">
-                    <YStack flex={1} gap="$3">
+                <YStack gap="$3">
+                    <YStack gap="$3">
                         {auditInfoCards}
                         {errorMessage === null ? null : (
                             <Paragraph color={ds.colors.warning} fontFamily={ds.fonts.bodyMedium}>
@@ -333,7 +337,7 @@ export default function PreAuditScreen() {
                         )}
                     </YStack>
                     {sidebar}
-                </XStack>
+                </YStack>
             ) : (
                 <YStack gap="$3">
                     {auditInfoCards}
@@ -344,7 +348,7 @@ export default function PreAuditScreen() {
                     )}
                     <Button
                         height={layout.controlHeight}
-                        rounded={ds.radii.md}
+                        rounded={ds.radii.sm}
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.input}
@@ -367,7 +371,7 @@ export default function PreAuditScreen() {
                     </Button>
                     <Button
                         height={layout.controlHeight}
-                        rounded={ds.radii.md}
+                        rounded={ds.radii.sm}
                         borderWidth={0}
                         bg={ds.colors.primary}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
@@ -415,11 +419,10 @@ function AutoFieldCard({
 }: Readonly<AutoFieldCardProps>) {
     const ds = useDesignSystem();
     const { t } = useTranslation("audit");
-
     return (
         <FieldCard title={question.label} description={question.description ?? null}>
             <Text
-                color={ds.colors.foreground}
+                color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
                 fontSize={ds.typography.bodyLg.fontSize}
             >
@@ -475,7 +478,7 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
     const layout = useResponsiveLayout();
     return (
         <YStack
-            rounded={ds.radii.lg}
+            rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
@@ -542,7 +545,7 @@ function CenteredMessageCard({
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                rounded={ds.radii.lg}
+                rounded={ds.radii.md}
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.surface}
@@ -563,7 +566,7 @@ function CenteredMessageCard({
                     <Button
                         mt="$2"
                         height={44}
-                        rounded={ds.radii.md}
+                        rounded={ds.radii.sm}
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.input}
@@ -641,17 +644,17 @@ function formatAutoValue(
         return formatLocalizedDate(auditSession.started_at, language);
     }
     if (questionKey === "started_at") {
-        return formatLocalizedTime(auditSession.started_at, language);
+        return formatLocalizedDateTime(auditSession.started_at, language);
     }
     if (questionKey === "submitted_at") {
         return auditSession.submitted_at === null
             ? t("autoValues.generatedOnSubmit")
-            : formatLocalizedTime(auditSession.submitted_at, language);
+            : formatLocalizedDateTime(auditSession.submitted_at, language);
     }
     if (questionKey === "total_minutes") {
         return auditSession.total_minutes === null
             ? t("autoValues.calculatedOnSubmit")
-            : t("autoValues.minutes", { count: auditSession.total_minutes });
+            : formatLocalizedDurationFromMinutes(auditSession.total_minutes, language);
     }
     return "";
 }
