@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ScrollView } from "react-native";
-import { HeaderBackButton } from "@react-navigation/elements";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
