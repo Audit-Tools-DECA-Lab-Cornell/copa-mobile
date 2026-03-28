@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as Network from "expo-network";
 import { AppState, type AppStateStatus } from "react-native";
 import { runPendingAuditSyncAsync } from "lib/audit/background-sync";
@@ -124,28 +124,31 @@ export function useAuditSync(): void {
      *
      * @param trigger Automatic trigger that may reopen retryable blocked phases.
      */
-    function runTriggeredSync(trigger: Parameters<typeof prepareAutomaticSyncAudits>[0]): void {
-        const currentSession = sessionRef.current;
-        if (currentSession === null) {
-            return;
-        }
+    const runTriggeredSync = useCallback(
+        (trigger: Parameters<typeof prepareAutomaticSyncAudits>[0]) => {
+            const currentSession = sessionRef.current;
+            if (currentSession === null) {
+                return;
+            }
 
-        prepareAutomaticSyncAudits(trigger);
-        const currentState = usePlayspaceAuditStore.getState();
-        if (
-            !hasPendingNormalSyncWork({
-                sessionsByAuditId: currentState.sessionsByAuditId,
-                dirtySections: currentState.dirtySections,
-                dirtyPreAudit: currentState.dirtyPreAudit,
-                dirtyMeta: currentState.dirtyMeta,
-                syncStateByAuditId: currentState.syncStateByAuditId,
-            })
-        ) {
-            return;
-        }
+            prepareAutomaticSyncAudits(trigger);
+            const currentState = usePlayspaceAuditStore.getState();
+            if (
+                !hasPendingNormalSyncWork({
+                    sessionsByAuditId: currentState.sessionsByAuditId,
+                    dirtySections: currentState.dirtySections,
+                    dirtyPreAudit: currentState.dirtyPreAudit,
+                    dirtyMeta: currentState.dirtyMeta,
+                    syncStateByAuditId: currentState.syncStateByAuditId,
+                })
+            ) {
+                return;
+            }
 
-        runPendingAuditSyncAsync({ session: currentSession }).catch(() => undefined);
-    }
+            runPendingAuditSyncAsync({ session: currentSession }).catch(() => undefined);
+        },
+        [prepareAutomaticSyncAudits],
+    );
 
     useEffect(() => {
         if (!isHydrated || !hasPendingNormalWork || !isCurrentUserHydrated || session === null) {
@@ -178,7 +181,7 @@ export function useAuditSync(): void {
         return () => {
             clearTimeout(timer);
         };
-    }, [isCurrentUserHydrated, isHydrated, session]);
+    }, [isCurrentUserHydrated, isHydrated, session, runTriggeredSync]);
 
     useEffect(() => {
         if (!isHydrated || !isCurrentUserHydrated || session === null) {
@@ -198,7 +201,7 @@ export function useAuditSync(): void {
         return () => {
             networkSubscription.remove();
         };
-    }, [isCurrentUserHydrated, isHydrated, session]);
+    }, [isCurrentUserHydrated, isHydrated, session, runTriggeredSync]);
 
     useEffect(() => {
         if (!isHydrated || !isCurrentUserHydrated || session === null) {
@@ -219,5 +222,5 @@ export function useAuditSync(): void {
         return () => {
             appStateSubscription.remove();
         };
-    }, [isCurrentUserHydrated, isHydrated, session]);
+    }, [isCurrentUserHydrated, isHydrated, session, runTriggeredSync]);
 }
