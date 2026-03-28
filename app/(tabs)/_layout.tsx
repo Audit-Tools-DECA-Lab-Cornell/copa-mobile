@@ -33,7 +33,7 @@ export default function TabLayout() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("common");
-    const tabBarActiveTintColor = layout.isTablet ? ds.colors.primaryForeground : ds.colors.primary;
+    const tabBarActiveTintColor = ds.colors.primary;
     const tabBarInactiveTintColor = layout.isTablet
         ? ds.colors.secondaryForeground
         : ds.colors.mutedForeground;
@@ -62,8 +62,8 @@ export default function TabLayout() {
                 sceneStyle: {
                     backgroundColor: ds.colors.background,
                 },
-                tabBarActiveTintColor: ds.colors.primary,
-                tabBarInactiveTintColor: ds.colors.mutedForeground,
+                tabBarActiveTintColor,
+                tabBarInactiveTintColor,
                 tabBarStyle: {
                     backgroundColor: ds.colors.overlay,
                     borderTopColor: ds.colors.border,

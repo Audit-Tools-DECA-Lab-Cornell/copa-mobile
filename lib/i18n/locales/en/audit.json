@@ -13,9 +13,14 @@
         "offlineChangesSaved": "{{message}} You appear to be offline. Changes are saved locally and will sync when you reconnect.",
         "openFallback": "Unable to open audit.",
         "refreshFallback": "Unable to refresh audit.",
-        "submitFallback": "Unable to submit audit.",
-        "submitNeedsUploadedDraft": "Reconnect and wait for your saved changes to upload before submitting this audit.",
+        "submitFallback": "Unable to submit your responses.",
+        "submitNeedsUploadedDraft": "Reconnect and wait for your saved changes to upload before submitting.",
         "syncFallback": "Background sync failed."
+    },
+    "copy": {
+        "continueToSubject": "Continue to {{subject}}",
+        "continueToSubjectInfo": "Continue to {{subject}} info",
+        "submitSubject": "Submit {{subject}}"
     },
     "executeLanding": {
         "continueSelectedPlace": "Continue Selected Place",
@@ -28,9 +33,9 @@
     },
     "mode": "— {{mode}}",
     "modeShort": {
-        "audit": "Onsite only",
-        "both": "Survey & onsite",
-        "survey": "Survey only"
+        "audit": "Onsite auditor",
+        "both": "Admin and onsite auditor",
+        "survey": "Administrator or manager"
     },
     "overview": {
         "accessDeniedTitle": "Access Denied",
@@ -39,10 +44,15 @@
         "roleNotSelected": "Mode not selected",
         "auditUnavailableTitle": "Audit Unavailable",
         "chooseMode": "Choose what part of the tool you will complete for this place.",
+        "completedCount_one": "{{count}} complete",
+        "completedCount_other": "{{count}} complete",
+        "incompleteCount_one": "{{count}} incomplete",
+        "incompleteCount_other": "{{count}} incomplete",
         "loadingDraft": "Loading your current draft...",
         "placeNotFound": "The selected place route is invalid. Return to the Execute tab and choose a place again.",
         "placeNotFoundTitle": "Place Not Found",
         "preamble": "Preamble",
+        "reviewDescription": "Review every section in one place and jump back into the next incomplete section.",
         "tapToExpand": "Tap to expand",
         "preparingAudit": "Preparing the playspace audit flow...",
         "preparingAuditTitle": "Preparing Audit",
@@ -59,6 +69,34 @@
         "viewPlaceDetails": "View place details"
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
+    "setup": {
+        "continueToAuditInfo": "Continue to audit info",
+        "modeRequired": "Select one execution mode before continuing.",
+        "stepEyebrow": "Step 1 of 3",
+        "subtitle": "Review how the tool works, then choose the role that best matches how you will complete this audit.",
+        "roleTitle": "Execution Mode",
+        "roleQuestion": "What is your role with respect to this playspace?",
+        "preambleTitle": "Before You Begin"
+    },
+    "auditInfo": {
+        "auditorCodePending": "Available after profile lookup",
+        "backToPreamble": "Back to preamble",
+        "continueToSections": "Continue to sections",
+        "continueToSpaceAudit": "Continue to space audit",
+        "modeMissingTitle": "Execution Mode Required",
+        "modeMissingMessage": "Go back to the preamble step and choose how you will complete this audit before continuing.",
+        "placeLabel": "Place",
+        "preparingMessage": "Loading the generated audit details and current setup state...",
+        "preparingTitle": "Preparing Audit Info",
+        "projectLabel": "Project",
+        "selectedModeLabel": "Selected mode",
+        "stepEyebrow": "Step 2 of 3",
+        "subtitle": "Review the generated audit metadata before continuing to the setup questions or directly into the section flow.",
+        "summaryDescription": "These details are generated automatically from the current audit session.",
+        "summaryTitle": "Audit Summary",
+        "title": "Audit Information",
+        "unavailableTitle": "Audit Information Unavailable"
+    },
     "preAudit": {
         "complete": "Complete",
         "description": "Capture season, weather, users present, user count, age groups, and place size before section scoring.",
@@ -70,6 +108,24 @@
         "subtitle": "Complete the first-page context questions before moving through the section pages.",
         "title": "Pre-Audit Setup",
         "unavailableTitle": "Pre-Audit Unavailable"
+    },
+    "spaceAudit": {
+        "backToAuditInfo": "Back to audit info",
+        "continueToSections": "Continue to sections",
+        "intro": "This step is shown only when the selected execution mode includes the onsite audit. Complete the current context questions before opening the section pages.",
+        "matrixAgeColumn": "Age group",
+        "matrixHeading": "Describe users currently in the playspace",
+        "matrixQuantityColumn": "Quantity",
+        "preparingMessage": "Loading the onsite setup questions and any saved answers...",
+        "preparingTitle": "Preparing Space Audit Setup",
+        "sidebarDescription": "These questions shape the onsite context before the main section scoring begins.",
+        "sidebarTitle": "Space Audit Setup",
+        "skipForSurveyTitle": "Space Audit Not Needed",
+        "skipForSurveyMessage": "Your selected execution mode does not include the onsite audit step. Continue directly to the sections.",
+        "stepEyebrow": "Step 3 of 3",
+        "subtitle": "Capture the onsite context that only an auditor can answer at the playspace.",
+        "title": "Space Audit Setup",
+        "unavailableTitle": "Space Audit Setup Unavailable"
     },
     "resumeAudit": "Resume audit",
     "section": {
@@ -86,14 +142,33 @@
         "saveAndNext": "Save and next",
         "saveSection": "Save section",
         "sectionNotes": "Section Notes",
+        "tableIntro": "On tablets the questions are shown in a matrix so the prompt stays on the left and the available scales stay aligned on the right.",
+        "table": {
+            "followUpPending": "Choose a positive quantity answer to unlock this scale.",
+            "itemColumn": "Question item",
+            "notAvailable": "Not used for this item.",
+            "scaleColumns": {
+                "challenge": "Challenge",
+                "diversity": "Diversity",
+                "quantity": "Provision / Quantity",
+                "sociability": "Sociability"
+            }
+        },
         "unavailableTitle": "Section Unavailable",
         "uploadingShort": "Uploading…"
     },
     "stack": {
         "auditStart": "Audit Start",
         "execute": "Execute",
-        "preAudit": "Pre-Audit",
-        "section": "Section"
+        "preAudit": "Audit Info",
+        "spaceAudit": "Space Audit",
+        "section": "Section: {{section}}"
+    },
+    "subjects": {
+        "audit": "audit",
+        "auditAndSurvey": "audit/survey",
+        "survey": "survey",
+        "workflow": "workflow"
     },
     "startAudit": "Start audit",
     "submit": "Submit audit",

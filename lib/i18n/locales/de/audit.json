@@ -59,6 +59,35 @@
         "viewPlaceDetails": "Ortsdetails anzeigen"
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
+    "setup": {
+        "continueToAuditInfo": "Weiter zu den Audit-Informationen",
+        "modeRequired": "Bitte wählen Sie vor dem Fortfahren einen Ausführungsmodus aus.",
+        "stepEyebrow": "Schritt 1 von 3",
+        "subtitle": "Sehen Sie sich an, wie das Tool funktioniert, und wählen Sie dann die Rolle aus, die am besten dazu passt, wie Sie diesen Audit abschließen werden.",
+        "roleTitle": "Ausführungsmodus",
+        "roleQuestion": "Welche Rolle haben Sie in Bezug auf diesen Playspace?",
+        "preambleTitle": "Vor dem Start",
+        "preambleSubtitle": "Der Vorspann ist jetzt länger und strukturierter und wird daher in Abschnitten angezeigt, damit der Einrichtungsablauf auf Smartphones und Tablets leichter lesbar ist."
+    },
+    "auditInfo": {
+        "auditorCodePending": "Nach Profilabfrage verfügbar",
+        "backToPreamble": "Zurück zum Vorspann",
+        "continueToSections": "Weiter zu den Abschnitten",
+        "continueToSpaceAudit": "Weiter zum Space-Audit",
+        "modeMissingTitle": "Ausführungsmodus erforderlich",
+        "modeMissingMessage": "Gehen Sie zum Vorspann zurück und wählen Sie aus, wie Sie diesen Audit abschließen, bevor Sie fortfahren.",
+        "placeLabel": "Ort",
+        "preparingMessage": "Die generierten Audit-Details und der aktuelle Einrichtungsstatus werden geladen...",
+        "preparingTitle": "Audit-Informationen werden vorbereitet",
+        "projectLabel": "Projekt",
+        "selectedModeLabel": "Ausgewählter Modus",
+        "stepEyebrow": "Schritt 2 von 3",
+        "subtitle": "Prüfen Sie die generierten Audit-Metadaten, bevor Sie mit den Einrichtungsfragen fortfahren oder direkt in den Abschnittsablauf wechseln.",
+        "summaryDescription": "Diese Details werden automatisch aus der aktuellen Auditsitzung generiert.",
+        "summaryTitle": "Audit-Zusammenfassung",
+        "title": "Audit-Informationen",
+        "unavailableTitle": "Audit-Informationen nicht verfügbar"
+    },
     "preAudit": {
         "complete": "Vollstaendig",
         "description": "Erfassen Sie Jahreszeit, Wetter, anwesende Nutzer, Nutzeranzahl, Altersgruppen und Ortsgroesse vor der Abschnittsbewertung.",
@@ -70,6 +99,24 @@
         "subtitle": "Beantworten Sie zuerst die Kontextfragen, bevor Sie die Abschnittsseiten durchgehen.",
         "title": "Vor-Audit",
         "unavailableTitle": "Vor-Audit nicht verfuegbar"
+    },
+    "spaceAudit": {
+        "backToAuditInfo": "Zurück zu den Audit-Informationen",
+        "continueToSections": "Weiter zu den Abschnitten",
+        "intro": "Dieser Schritt wird nur angezeigt, wenn der ausgewählte Ausführungsmodus den Vor-Ort-Audit umfasst. Beantworten Sie die aktuellen Kontextfragen, bevor Sie die Abschnittsseiten öffnen.",
+        "matrixAgeColumn": "Altersgruppe",
+        "matrixHeading": "Beschreiben Sie die Personen, die sich derzeit im Playspace aufhalten",
+        "matrixQuantityColumn": "Anzahl",
+        "preparingMessage": "Die Vor-Ort-Einrichtungsfragen und alle gespeicherten Antworten werden geladen...",
+        "preparingTitle": "Space-Audit-Einrichtung wird vorbereitet",
+        "sidebarDescription": "Diese Fragen bilden den Vor-Ort-Kontext, bevor die Bewertung der Hauptabschnitte beginnt.",
+        "sidebarTitle": "Space-Audit-Einrichtung",
+        "skipForSurveyTitle": "Space-Audit nicht erforderlich",
+        "skipForSurveyMessage": "Der von Ihnen ausgewählte Ausführungsmodus umfasst keinen Vor-Ort-Audit-Schritt. Fahren Sie direkt mit den Abschnitten fort.",
+        "stepEyebrow": "Schritt 3 von 3",
+        "subtitle": "Erfassen Sie den Vor-Ort-Kontext, den nur ein Auditor direkt im Playspace beantworten kann.",
+        "title": "Space-Audit-Einrichtung",
+        "unavailableTitle": "Einrichtung der Flächenprüfung nicht verfügbar"
     },
     "resumeAudit": "Audit fortsetzen",
     "section": {
@@ -86,6 +133,18 @@
         "saveAndNext": "Speichern und weiter",
         "saveSection": "Abschnitt speichern",
         "sectionNotes": "Abschnittsnotizen",
+        "tableIntro": "Auf Tablets werden die Fragen in einer Matrix angezeigt, damit die Aufforderung links bleibt und die verfügbaren Skalen rechts ausgerichtet sind.",
+        "table": {
+            "followUpPending": "Wählen Sie eine positive Mengenangabe, um diese Skala freizuschalten.",
+            "itemColumn": "Fragenpunkt",
+            "notAvailable": "Für diesen Punkt nicht verwendet.",
+            "scaleColumns": {
+                "challenge": "Herausforderung",
+                "diversity": "Vielfalt",
+                "quantity": "Bereitstellung / Menge",
+                "sociability": "Kontaktfreudigkeit"
+            }
+        },
         "unavailableTitle": "Abschnitt nicht verfuegbar",
         "uploadingShort": "Wird hochgeladen…"
     },
@@ -93,6 +152,7 @@
         "auditStart": "Audit-Start",
         "execute": "Durchfuehren",
         "preAudit": "Vor-Audit",
+        "spaceAudit": "Flächenprüfung",
         "section": "Abschnitt"
     },
     "startAudit": "Audit starten",

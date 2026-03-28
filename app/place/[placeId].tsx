@@ -2,12 +2,22 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Linking, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons";
+import type { TFunction } from "i18next";
 import MapView, { Marker } from "react-native-maps";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { StatCard } from "components/ui/stat-card";
+import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, derivePlaceStatus } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
+import {
+    getPreAuditValues,
+    getQuestionAnswers,
+    getVisiblePreAuditQuestions,
+    getVisibleSections,
+    isInstrumentQuestionComplete,
+    isPreAuditQuestionComplete,
+} from "lib/audit/selectors";
 import {
     formatConstructSummary,
     formatScoreValue,
@@ -15,13 +25,16 @@ import {
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
+import type { AuditSession, ExecutionMode } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { createMetricDisplayState } from "lib/metric-display";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
+import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
 
 /**
@@ -39,8 +52,12 @@ export default function PlaceDetailScreen() {
     const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
+    const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
+    const pairKey =
+        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const localAuditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
 
     const place = useMemo(() => {
         if (placeId === null || projectId === null) {
@@ -108,17 +125,20 @@ export default function PlaceDetailScreen() {
                     scoreSummaryLabels={scoreSummaryLabels}
                     onOpenAudit={() => {
                         router.push(
-                            `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                            `/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
                         );
                     }}
                     onOpenReport={
-                        place.audit_id === null
+                        place.audit_id === null ||
+                        ((localAuditSession?.scores.overall ?? place.score_totals) === null &&
+                            place.summary_score === null)
                             ? undefined
                             : () => {
                                   router.push(`/report/${place.audit_id}`);
                               }
                     }
                     language={i18n.language}
+                    auditSession={localAuditSession}
                 />
             )}
         </>
@@ -131,6 +151,7 @@ interface PlaceDetailContentProps {
     readonly onOpenAudit: () => void;
     readonly onOpenReport: (() => void) | undefined;
     readonly language: string;
+    readonly auditSession: AuditSession | undefined;
 }
 
 /**
@@ -145,18 +166,37 @@ function PlaceDetailContent({
     onOpenAudit,
     onOpenReport,
     language,
+    auditSession,
 }: Readonly<PlaceDetailContentProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["places", "common", "reports"]);
+    const instrument = useLocalizedInstrument();
     const status = derivePlaceStatus(place.audit_status);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
     const combinedConstructScore = getCombinedConstructScore(place.score_totals);
     const summaryScore =
         combinedConstructScore ?? (place.summary_score === null ? null : place.summary_score);
+    const pendingScoreMessage = useMemo(() => {
+        return resolvePendingScoreMessage({
+            auditSession,
+            instrument,
+            place,
+            t,
+        });
+    }, [auditSession, instrument, place, t]);
+    const openAuditLabel =
+        place.selected_execution_mode === null
+            ? t("actions.openAudit", { ns: "common" })
+            : t("copy.continueToSubject", {
+                  ns: "audit",
+                  subject: t(`subjects.${getExecuteFlowSubject(place.selected_execution_mode)}`, {
+                      ns: "audit",
+                  }),
+              });
     const summaryMetric = createMetricDisplayState({
-        pendingText: t("detail.pendingMetric", { ns: "reports" }),
+        pendingText: pendingScoreMessage,
         value: summaryScore,
         formatValue: formatScoreValue,
     });
@@ -246,13 +286,13 @@ function PlaceDetailContent({
                 >
                     {t("detail.auditUnavailable", { ns: "places" })}
                 </Paragraph>
-            ) : place.score_totals === null ? (
+            ) : summaryScore === null ? (
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={ds.typography.bodyMd.fontSize}
                 >
-                    {t("detail.reportUnavailable", { ns: "places" })}
+                    {pendingScoreMessage}
                 </Paragraph>
             ) : (
                 <YStack gap="$2">
@@ -268,7 +308,9 @@ function PlaceDetailContent({
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyMd.fontSize}
                     >
-                        {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
+                        {place.score_totals === null
+                            ? t("detail.compactScoreSummary", { ns: "places" })
+                            : formatConstructSummary(place.score_totals, scoreSummaryLabels)}
                     </Paragraph>
                 </YStack>
             )}
@@ -283,6 +325,7 @@ function PlaceDetailContent({
             p={layout.cardPadding}
             gap="$2.5"
             justify="space-between"
+            content="center"
             style={{
                 minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
                 boxShadow: ds.shadows.card,
@@ -308,9 +351,9 @@ function PlaceDetailContent({
                 borderWidth={0}
                 bg={ds.colors.primary}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={onOpenAudit}
+                onPress={() => onOpenAudit()}
             >
-                <XStack items="center" gap="$2">
+                <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
                     <ClipboardCheck size={16} color={ds.colors.primaryForeground} />
                     <Text
                         color={ds.colors.primaryForeground}
@@ -319,7 +362,7 @@ function PlaceDetailContent({
                         textTransform="uppercase"
                         letterSpacing={1.2}
                     >
-                        {t("actions.openAudit", { ns: "common" })}
+                        {openAuditLabel}
                     </Text>
                 </XStack>
             </Button>
@@ -333,7 +376,7 @@ function PlaceDetailContent({
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={onOpenReport}
                 >
-                    <XStack items="center" gap="$2">
+                    <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
                         <FileBarChart size={16} color={ds.colors.foreground} />
                         <Text
                             color={ds.colors.foreground}
@@ -359,7 +402,7 @@ function PlaceDetailContent({
                     Linking.openURL(`http://maps.apple.com/?q=${mapsQuery}`).catch(() => undefined);
                 }}
             >
-                <XStack items="center" gap="$2">
+                <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
                     <MapPin size={16} color={ds.colors.foreground} />
                     <Text
                         color={ds.colors.foreground}
@@ -385,7 +428,7 @@ function PlaceDetailContent({
                     ).catch(() => undefined);
                 }}
             >
-                <XStack items="center" gap="$2">
+                <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
                     <MapPin size={16} color={ds.colors.foreground} />
                     <Text
                         color={ds.colors.foreground}
@@ -698,6 +741,164 @@ function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailS
             </YStack>
         </YStack>
     );
+}
+
+interface PendingScoreMessageParams {
+    readonly place: AuditorPlace;
+    readonly auditSession: AuditSession | undefined;
+    readonly instrument: ReturnType<typeof useLocalizedInstrument>;
+    readonly t: TFunction;
+}
+
+interface RemainingExecutionParts {
+    readonly audit: boolean;
+    readonly survey: boolean;
+}
+
+/**
+ * Resolve the most specific score-pending message available for the current
+ * place summary and any locally cached audit session.
+ *
+ * @param params Place, audit-session, instrument, and translator context.
+ * @returns Human-readable score-pending explanation.
+ */
+function resolvePendingScoreMessage({
+    place,
+    auditSession,
+    instrument,
+    t,
+}: Readonly<PendingScoreMessageParams>): string {
+    if (place.audit_id === null) {
+        return t("detail.auditUnavailable", { ns: "places" });
+    }
+    if ((auditSession?.status ?? place.audit_status) === "SUBMITTED") {
+        return t("detail.reportUnavailable", { ns: "places" });
+    }
+
+    const selectedMode = auditSession?.selected_execution_mode ?? place.selected_execution_mode;
+    if (selectedMode === null) {
+        return t("detail.reportUnavailable", { ns: "places" });
+    }
+
+    const remainingParts =
+        auditSession === undefined
+            ? getFallbackRemainingExecutionParts(selectedMode)
+            : getRemainingExecutionParts(auditSession, instrument);
+    if (remainingParts.audit && remainingParts.survey) {
+        return t("detail.waitingForAuditAndSurveyCompletion", { ns: "places" });
+    }
+    if (remainingParts.audit) {
+        return t("detail.waitingForAuditCompletion", { ns: "places" });
+    }
+    if (remainingParts.survey) {
+        return t("detail.waitingForSurveyCompletion", { ns: "places" });
+    }
+
+    if (selectedMode === "audit") {
+        return t("detail.waitingForAuditSubmission", { ns: "places" });
+    }
+    if (selectedMode === "survey") {
+        return t("detail.waitingForSurveySubmission", { ns: "places" });
+    }
+    return t("detail.waitingForAuditAndSurveySubmission", { ns: "places" });
+}
+
+/**
+ * Fall back to the selected mode when no local audit session is available.
+ *
+ * @param selectedMode Latest known execution mode.
+ * @returns Coarse audit-vs-survey remainder flags.
+ */
+function getFallbackRemainingExecutionParts(selectedMode: ExecutionMode): RemainingExecutionParts {
+    if (selectedMode === "audit") {
+        return { audit: true, survey: false };
+    }
+    if (selectedMode === "survey") {
+        return { audit: false, survey: true };
+    }
+    return { audit: true, survey: true };
+}
+
+/**
+ * Determine which portion of a locally cached audit still has unanswered
+ * required work.
+ *
+ * @param auditSession Local-first audit session.
+ * @param instrument Active instrument definition.
+ * @returns Remaining audit and survey work flags.
+ */
+function getRemainingExecutionParts(
+    auditSession: AuditSession,
+    instrument: ReturnType<typeof useLocalizedInstrument>,
+): RemainingExecutionParts {
+    const selectedMode = auditSession.selected_execution_mode;
+    if (selectedMode === null) {
+        return { audit: true, survey: true };
+    }
+
+    const preAuditQuestions = getVisiblePreAuditQuestions(
+        instrument.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
+        selectedMode,
+    );
+    const preAuditValues = getPreAuditValues(auditSession);
+    const hasIncompletePreAudit = preAuditQuestions.some((question) => {
+        return !isPreAuditQuestionComplete(question, preAuditValues[question.key]);
+    });
+    let auditRemaining = hasIncompletePreAudit;
+    let surveyRemaining = false;
+
+    const visibleSections = getVisibleSections(
+        instrument,
+        selectedMode,
+        Object.fromEntries(
+            Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
+                sectionKey,
+                sectionState.responses,
+            ]),
+        ),
+    );
+
+    for (const section of visibleSections) {
+        for (const question of section.questions) {
+            if (!question.required) {
+                continue;
+            }
+
+            const isComplete = isInstrumentQuestionComplete(
+                question,
+                getQuestionAnswers(auditSession, section.section_key, question.question_key),
+            );
+            if (isComplete) {
+                continue;
+            }
+
+            if (question.mode === "audit") {
+                auditRemaining = true;
+                continue;
+            }
+            if (question.mode === "survey") {
+                surveyRemaining = true;
+                continue;
+            }
+
+            if (selectedMode === "audit") {
+                auditRemaining = true;
+                continue;
+            }
+            if (selectedMode === "survey") {
+                surveyRemaining = true;
+                continue;
+            }
+
+            auditRemaining = true;
+            surveyRemaining = true;
+        }
+    }
+
+    return {
+        audit: auditRemaining,
+        survey: surveyRemaining,
+    };
 }
 
 /**

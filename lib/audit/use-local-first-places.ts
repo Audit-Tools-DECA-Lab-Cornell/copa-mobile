@@ -19,7 +19,16 @@ export function getLocalProgressPercent(
     instrument: PlayspaceInstrument,
 ): number | null {
     const executionMode = auditSession.selected_execution_mode ?? auditSession.meta.execution_mode;
-    const visibleSections = getVisibleSections(instrument, executionMode);
+    const visibleSections = getVisibleSections(
+        instrument,
+        executionMode,
+        Object.fromEntries(
+            Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
+                sectionKey,
+                sectionState.responses,
+            ]),
+        ),
+    );
     if (visibleSections.length === 0) {
         return auditSession.scores.draft_progress_percent;
     }
@@ -66,6 +75,8 @@ export function overlayLocalSessionOntoPlace(
         score_totals: auditSession.scores.overall,
         summary_score:
             getCombinedConstructScore(auditSession.scores.overall) ?? place.summary_score,
+        selected_execution_mode:
+            auditSession.selected_execution_mode ?? auditSession.meta.execution_mode,
     };
 }
 

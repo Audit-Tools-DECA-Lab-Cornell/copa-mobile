@@ -34,6 +34,7 @@ import { applyLanguagePreference } from "lib/i18n";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePreferencesStore } from "stores/preferences-store";
+import { useTranslation } from "react-i18next";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -125,7 +126,7 @@ function RootLayoutNav() {
     const currentAuditUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     const ds = useDesignSystem();
-
+    const { t } = useTranslation("audit");
     const navigationTheme =
         resolvedTheme === "light"
             ? {
@@ -228,6 +229,12 @@ function RootLayoutNav() {
             >
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                    name="execute"
+                    options={{ headerShown: true, title: t("stack.execute") }}
+                />
+                <Stack.Screen name="place" options={{ headerShown: true }} />
+                <Stack.Screen name="report" options={{ headerShown: true }} />
             </Stack>
         </ThemeProvider>
     );

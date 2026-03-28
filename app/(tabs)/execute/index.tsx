@@ -8,6 +8,7 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
 import type { AuditorPlace } from "lib/audit/places-api";
+import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, matchesPlaceSearch } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
@@ -135,7 +136,7 @@ export default function ExecuteIndexScreen() {
                     sessionsByPairKey={sessionsByPairKey}
                     onPress={() => {
                         router.push(
-                            `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                            `/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
                         );
                     }}
                 />
@@ -155,7 +156,7 @@ export default function ExecuteIndexScreen() {
                         sessionsByPairKey={sessionsByPairKey}
                         onPress={() => {
                             router.push(
-                                `/(tabs)/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
+                                `/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
                             );
                         }}
                     />
@@ -170,7 +171,7 @@ export default function ExecuteIndexScreen() {
                         sessionsByPairKey={sessionsByPairKey}
                         onPress={() => {
                             router.push(
-                                `/(tabs)/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
+                                `/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
                             );
                         }}
                     />
@@ -180,7 +181,7 @@ export default function ExecuteIndexScreen() {
                         sessionsByPairKey={sessionsByPairKey}
                         onPress={() => {
                             router.push(
-                                `/(tabs)/execute/${rightPlace.place_id}?projectId=${encodeURIComponent(rightPlace.project_id)}`,
+                                `/execute/${rightPlace.place_id}?projectId=${encodeURIComponent(rightPlace.project_id)}`,
                             );
                         }}
                     />
@@ -276,7 +277,7 @@ export default function ExecuteIndexScreen() {
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={() => {
                             router.push(
-                                `/(tabs)/execute/${featuredPlace.place_id}?projectId=${encodeURIComponent(featuredPlace.project_id)}`,
+                                `/execute/${featuredPlace.place_id}?projectId=${encodeURIComponent(featuredPlace.project_id)}`,
                             );
                         }}
                     >
@@ -388,6 +389,12 @@ function ExecuteQueueCard({
         ? sessionsByPairKey[getProjectPlaceKey(place.project_id, place.place_id)]
         : undefined;
     const hasActiveSession = activeSession !== undefined;
+    const flowSubject =
+        place.selected_execution_mode === null
+            ? null
+            : t(`subjects.${getExecuteFlowSubject(place.selected_execution_mode)}`, {
+                  ns: "audit",
+              });
 
     return (
         <YStack
@@ -449,9 +456,11 @@ function ExecuteQueueCard({
                     textTransform="uppercase"
                     letterSpacing={1.2}
                 >
-                    {hasActiveSession
-                        ? t("resumeAudit", { ns: "audit" })
-                        : t("startAudit", { ns: "audit" })}
+                    {hasActiveSession && flowSubject !== null
+                        ? t("copy.continueToSubject", { ns: "audit", subject: flowSubject })
+                        : hasActiveSession
+                          ? t("resumeAudit", { ns: "audit" })
+                          : t("startAudit", { ns: "audit" })}
                 </Text>
             </Button>
         </YStack>

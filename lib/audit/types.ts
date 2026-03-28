@@ -10,6 +10,8 @@ export const questionModeSchema = z.enum(["audit", "survey", "both"]);
 export const constructKeySchema = z.enum(["usability", "play_value"]);
 export const scaleKeySchema = z.enum(["quantity", "diversity", "sociability", "challenge"]);
 export const preAuditInputTypeSchema = z.enum(["single_select", "multi_select", "auto_timestamp"]);
+export const preAuditPageKeySchema = z.enum(["audit_info", "space_setup"]);
+export const questionTypeSchema = z.enum(["scaled", "checklist"]);
 
 export const choiceOptionSchema = z.object({
     key: z.string().min(1),
@@ -41,6 +43,9 @@ export const preAuditQuestionSchema = z.object({
     input_type: preAuditInputTypeSchema,
     required: z.boolean(),
     options: z.array(choiceOptionSchema),
+    page_key: preAuditPageKeySchema.default("space_setup"),
+    visible_modes: z.array(executionModeSchema).default(["audit", "survey", "both"]),
+    group_key: z.string().nullable().optional(),
 });
 
 export const questionScaleSchema = z.object({
@@ -50,6 +55,12 @@ export const questionScaleSchema = z.object({
     options: z.array(scaleOptionSchema),
 });
 
+export const questionDisplayConditionSchema = z.object({
+    question_key: z.string().min(1),
+    response_key: z.string().min(1).default("quantity"),
+    any_of_option_keys: z.array(z.string()).default([]),
+});
+
 export const instrumentQuestionSchema = z.object({
     question_key: z.string().min(1),
     mode: questionModeSchema,
@@ -57,7 +68,11 @@ export const instrumentQuestionSchema = z.object({
     domains: z.array(z.string()),
     section_key: z.string().min(1),
     prompt: z.string().min(1),
-    scales: z.array(questionScaleSchema),
+    question_type: questionTypeSchema.default("scaled"),
+    scales: z.array(questionScaleSchema).default([]),
+    options: z.array(choiceOptionSchema).default([]),
+    required: z.boolean().default(true),
+    display_if: questionDisplayConditionSchema.nullable().optional(),
 });
 
 export const instrumentSectionSchema = z.object({
@@ -105,17 +120,29 @@ export const auditMetaSchema = z.object({
 });
 
 export const preAuditValuesSchema = z.object({
+    place_size: z.string().nullable(),
+    current_users_0_5: z.string().nullable(),
+    current_users_6_12: z.string().nullable(),
+    current_users_13_17: z.string().nullable(),
+    current_users_18_plus: z.string().nullable(),
+    playspace_busyness: z.string().nullable(),
     season: z.string().nullable(),
     weather_conditions: z.array(z.string()),
-    users_present: z.array(z.string()),
-    user_count: z.string().nullable(),
-    age_groups: z.array(z.string()),
-    place_size: z.string().nullable(),
+    wind_conditions: z.string().nullable(),
 });
+
+export const questionResponseValueSchema = z.union([
+    z.string(),
+    z.array(z.string()),
+    z.record(z.string(), z.string()),
+    z.null(),
+]);
+
+export const questionResponsePayloadSchema = z.record(z.string(), questionResponseValueSchema);
 
 export const auditSectionStateSchema = z.object({
     section_key: z.string().min(1),
-    responses: z.record(z.string(), z.record(z.string(), z.string())),
+    responses: z.record(z.string(), questionResponsePayloadSchema),
     note: z.string().nullable(),
 });
 
@@ -189,16 +216,19 @@ export const auditSessionSchema = auditSessionPayloadSchema.transform((value) =>
 });
 
 export const preAuditDraftSchema = z.object({
+    place_size: z.string().nullable().optional(),
+    current_users_0_5: z.string().nullable().optional(),
+    current_users_6_12: z.string().nullable().optional(),
+    current_users_13_17: z.string().nullable().optional(),
+    current_users_18_plus: z.string().nullable().optional(),
+    playspace_busyness: z.string().nullable().optional(),
     season: z.string().nullable().optional(),
     weather_conditions: z.array(z.string()).default([]),
-    users_present: z.array(z.string()).default([]),
-    user_count: z.string().nullable().optional(),
-    age_groups: z.array(z.string()).default([]),
-    place_size: z.string().nullable().optional(),
+    wind_conditions: z.string().nullable().optional(),
 });
 
 export const sectionDraftPatchSchema = z.object({
-    responses: z.record(z.string(), z.record(z.string(), z.string())).default({}),
+    responses: z.record(z.string(), questionResponsePayloadSchema).default({}),
     note: z.string().nullable().optional(),
 });
 
@@ -294,11 +324,14 @@ export type QuestionMode = z.infer<typeof questionModeSchema>;
 export type ConstructKey = z.infer<typeof constructKeySchema>;
 export type ScaleKey = z.infer<typeof scaleKeySchema>;
 export type PreAuditInputType = z.infer<typeof preAuditInputTypeSchema>;
+export type PreAuditPageKey = z.infer<typeof preAuditPageKeySchema>;
+export type QuestionType = z.infer<typeof questionTypeSchema>;
 export type ChoiceOption = z.infer<typeof choiceOptionSchema>;
 export type ScaleOption = z.infer<typeof scaleOptionSchema>;
 export type ScaleDefinition = z.infer<typeof scaleDefinitionSchema>;
 export type PreAuditQuestion = z.infer<typeof preAuditQuestionSchema>;
 export type QuestionScale = z.infer<typeof questionScaleSchema>;
+export type QuestionDisplayCondition = z.infer<typeof questionDisplayConditionSchema>;
 export type InstrumentQuestion = z.infer<typeof instrumentQuestionSchema>;
 export type InstrumentSection = z.infer<typeof instrumentSectionSchema>;
 export type PlayspaceInstrument = z.infer<typeof playspaceInstrumentSchema>;
@@ -306,6 +339,8 @@ export type AuditSectionProgress = z.infer<typeof auditSectionProgressSchema>;
 export type AuditProgress = z.infer<typeof auditProgressSchema>;
 export type AuditMeta = z.infer<typeof auditMetaSchema>;
 export type AuditPreAuditValues = z.infer<typeof preAuditValuesSchema>;
+export type QuestionResponseValue = z.infer<typeof questionResponseValueSchema>;
+export type QuestionResponsePayload = z.infer<typeof questionResponsePayloadSchema>;
 export type AuditSectionState = z.infer<typeof auditSectionStateSchema>;
 export type AuditScoreTotals = z.infer<typeof auditScoreTotalsSchema>;
 export type AuditScores = z.infer<typeof auditScoresSchema>;

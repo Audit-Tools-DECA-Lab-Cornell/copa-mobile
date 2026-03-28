@@ -1,6 +1,10 @@
 import type { AuthSession } from "lib/auth/types";
 import { parsePayload, requestJson } from "lib/audit/api";
-import { auditScoreTotalsSchema, createPaginatedResponseSchema } from "lib/audit/types";
+import {
+    auditScoreTotalsSchema,
+    createPaginatedResponseSchema,
+    executionModeSchema,
+} from "lib/audit/types";
 import type { PaginatedResponse } from "lib/audit/types";
 import { z } from "zod";
 import { t } from "i18next";
@@ -42,6 +46,7 @@ const auditorPlaceSchema = z.object({
     summary_score: z.number().nullable(),
     score_totals: auditScoreTotalsSchema.nullable(),
     progress_percent: z.number().nullable(),
+    selected_execution_mode: executionModeSchema.nullable().default(null),
 });
 
 /**

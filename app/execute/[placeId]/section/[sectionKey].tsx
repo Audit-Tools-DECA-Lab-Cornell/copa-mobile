@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, TextInput } from "react-native";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { QuestionCard } from "components/playspace-audit/question-card";
+import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
+import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getQuestionAnswers, getSectionNote, getVisibleSections } from "lib/audit/selectors";
 import type {
+    AuditSession,
     ExecutionMode,
     InstrumentSection,
     PlayspaceInstrument,
+    QuestionResponsePayload,
     QuestionScale,
 } from "lib/audit/types";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
@@ -18,6 +22,7 @@ import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/res
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
+import { usePlacesStore } from "stores/places-store";
 
 /**
  * One section page.
@@ -33,8 +38,8 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
 export default function ExecuteSectionScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
-    const router = useRouter();
     const navigation = useNavigation();
+    const router = useRouter();
     const { t } = useTranslation(["audit", "common"]);
     const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
@@ -50,10 +55,13 @@ export default function ExecuteSectionScreen() {
         (state) => state.applyLocalQuestionAnswer,
     );
     const applyLocalSectionNote = usePlayspaceAuditStore((state) => state.applyLocalSectionNote);
+    const submitAuditSession = usePlayspaceAuditStore((state) => state.submitAuditSession);
+    const isSavingDraft = usePlayspaceAuditStore((state) => state.isSavingDraft);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
+    const loadPlaces = usePlacesStore((state) => state.loadPlaces);
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
@@ -69,17 +77,37 @@ export default function ExecuteSectionScreen() {
             ? undefined
             : visibleSections.find((section) => section.section_key === sectionKey);
 
-    useLayoutEffect(() => {
-        if (activeSection !== undefined) {
-            navigation.setOptions({ title: activeSection.title });
-        }
-    }, [navigation, activeSection]);
-
     const [localNote, setLocalNote] = useState("");
     const [isNoteFocused, setIsNoteFocused] = useState(false);
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
     const scrollViewRef = useRef<ScrollView | null>(null);
+
+    const themedHeaderOptions = useMemo(
+        () => ({
+            headerShown: true,
+            headerBackButtonMenuEnabled: true,
+            headerBackButtonDisplayMode: "generic",
+            headerBackVisible: true,
+            headerBlurEffect: "light",
+            headerStyle: { backgroundColor: ds.colors.surface },
+            headerTintColor: ds.colors.primary,
+            headerTitleStyle: {
+                color: ds.colors.foreground,
+                fontFamily: ds.fonts.bodyBold,
+            },
+        }),
+        [ds],
+    );
+
+    useLayoutEffect(() => {
+        if (activeSection !== undefined) {
+            navigation.setOptions({
+                ...themedHeaderOptions,
+                title: t("stack.section", { section: activeSection.title, ns: "audit" }),
+            });
+        }
+    }, [themedHeaderOptions, navigation, activeSection, t]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -192,7 +220,75 @@ export default function ExecuteSectionScreen() {
         );
     }
 
-    const nextSection = getNextSection(visibleSections, activeSection.section_key);
+    const resolvedPlaceId = placeId;
+    const resolvedProjectId = projectId;
+    const resolvedPairKey = pairKey;
+    const resolvedAuthSession = authSession;
+    const resolvedAuditSession = auditSession;
+    const resolvedActiveSection = activeSection;
+    const nextSection = getNextSection(visibleSections, resolvedActiveSection.section_key);
+    const flowSubject = t(
+        `subjects.${getExecuteFlowSubject(resolvedAuditSession.selected_execution_mode)}`,
+        {
+            ns: "audit",
+        },
+    );
+    const questionByKey = new Map(
+        resolvedActiveSection.questions.map((question) => [question.question_key, question]),
+    );
+    const questionRows = resolvedActiveSection.questions.map((question) => {
+        return {
+            question,
+            selectedAnswers: getQuestionAnswers(
+                resolvedAuditSession,
+                resolvedActiveSection.section_key,
+                question.question_key,
+            ),
+        };
+    });
+    const handlePrimaryAction = async (): Promise<void> => {
+        flushNoteToStore();
+
+        if (nextSection !== undefined) {
+            router.replace(
+                `/execute/${resolvedPlaceId}/section/${nextSection.section_key}?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
+            );
+            return;
+        }
+
+        try {
+            const submittedSession = await submitAuditSession(
+                resolvedAuthSession,
+                resolvedAuditSession.audit_id,
+            );
+            await loadPlaces(resolvedAuthSession).catch(() => undefined);
+            router.replace(
+                `/execute/${submittedSession.place_id}?projectId=${encodeURIComponent(submittedSession.project_id)}` as Href,
+            );
+        } catch {
+            return;
+        }
+    };
+
+    const handleSelectAnswer = (
+        question: InstrumentSection["questions"][number],
+        questionKey: string,
+        scaleKey: string,
+        optionKey: string,
+    ) => {
+        const currentAnswers = getQuestionAnswers(
+            resolvedAuditSession,
+            resolvedActiveSection.section_key,
+            questionKey,
+        );
+        const nextAnswers = buildNextQuestionAnswers(currentAnswers, question, scaleKey, optionKey);
+        applyLocalQuestionAnswer(
+            resolvedPairKey,
+            resolvedActiveSection.section_key,
+            questionKey,
+            nextAnswers,
+        );
+    };
     const notesPanel = (
         <YStack
             rounded={ds.radii.lg}
@@ -218,7 +314,7 @@ export default function ExecuteSectionScreen() {
                 lineHeight={ds.typography.bodyLg.lineHeight}
                 marginBlockEnd={4}
             >
-                {activeSection.notes_prompt ?? t("section.notesDefault", { ns: "audit" })}
+                {resolvedActiveSection.notes_prompt ?? t("section.notesDefault", { ns: "audit" })}
             </Paragraph>
             <TextInput
                 multiline
@@ -258,7 +354,9 @@ export default function ExecuteSectionScreen() {
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
                     flushNoteToStore();
-                    router.back();
+                    router.replace(
+                        `/execute/${resolvedPlaceId}?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
+                    );
                 }}
             >
                 <Text
@@ -276,18 +374,11 @@ export default function ExecuteSectionScreen() {
                 rounded={ds.radii.md}
                 borderWidth={0}
                 bg={ds.colors.primary}
+                disabled={isSavingDraft}
+                opacity={isSavingDraft ? 0.7 : 1}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
-                    flushNoteToStore();
-                    if (nextSection === undefined) {
-                        router.replace(
-                            `/(tabs)/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`,
-                        );
-                        return;
-                    }
-                    router.replace(
-                        `/(tabs)/execute/${placeId}/section/${nextSection.section_key}?projectId=${encodeURIComponent(projectId)}`,
-                    );
+                    void handlePrimaryAction();
                 }}
             >
                 <Text
@@ -297,9 +388,11 @@ export default function ExecuteSectionScreen() {
                     textTransform="uppercase"
                     letterSpacing={0.7}
                 >
-                    {nextSection === undefined
-                        ? t("section.saveSection", { ns: "audit" })
-                        : t("section.saveAndNext", { ns: "audit" })}
+                    {isSavingDraft
+                        ? t("section.uploadingShort", { ns: "audit" })
+                        : nextSection === undefined
+                          ? t("copy.submitSubject", { ns: "audit", subject: flowSubject })
+                          : t("section.saveAndNext", { ns: "audit" })}
                 </Text>
             </Button>
         </YStack>
@@ -331,54 +424,33 @@ export default function ExecuteSectionScreen() {
                             : ds.typography.displayMd.lineHeight
                     }
                 >
-                    {activeSection.title}
+                    {resolvedActiveSection.title}
                 </Text>
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={ds.typography.bodyLg.fontSize}
                 >
-                    {activeSection.description ?? activeSection.instruction}
+                    {resolvedActiveSection.description ?? resolvedActiveSection.instruction}
                 </Paragraph>
             </YStack>
 
-            {layout.isTablet ? (
+            {layout.isTablet &&
+            !resolvedActiveSection.questions.some(
+                (question) => question.question_type === "checklist",
+            ) ? (
                 <XStack gap={layout.twoPaneGap} items="flex-start">
                     <YStack flex={1} gap="$3">
-                        {activeSection.questions.map((question) => {
-                            const selectedAnswers = getQuestionAnswers(
-                                auditSession,
-                                activeSection.section_key,
-                                question.question_key,
-                            );
-
-                            return (
-                                <QuestionCard
-                                    key={question.question_key}
-                                    question={question}
-                                    selectedAnswers={selectedAnswers}
-                                    onSelectAnswer={(questionKey, scaleKey, optionKey) => {
-                                        const currentAnswers = getQuestionAnswers(
-                                            auditSession,
-                                            activeSection.section_key,
-                                            questionKey,
-                                        );
-                                        const nextAnswers = buildNextQuestionAnswers(
-                                            currentAnswers,
-                                            question,
-                                            scaleKey,
-                                            optionKey,
-                                        );
-                                        applyLocalQuestionAnswer(
-                                            pairKey,
-                                            activeSection.section_key,
-                                            questionKey,
-                                            nextAnswers,
-                                        );
-                                    }}
-                                />
-                            );
-                        })}
+                        <SectionQuestionTable
+                            rows={questionRows}
+                            onSelectAnswer={(questionKey, scaleKey, optionKey) => {
+                                const question = questionByKey.get(questionKey);
+                                if (question === undefined) {
+                                    return;
+                                }
+                                handleSelectAnswer(question, questionKey, scaleKey, optionKey);
+                            }}
+                        />
                     </YStack>
                     <YStack width={layout.supportRailWidth} gap="$3">
                         {hasPendingLocalChanges ? (
@@ -407,40 +479,21 @@ export default function ExecuteSectionScreen() {
             ) : (
                 <YStack gap="$3">
                     <YStack gap="$3">
-                        {activeSection.questions.map((question) => {
-                            const selectedAnswers = getQuestionAnswers(
-                                auditSession,
-                                activeSection.section_key,
-                                question.question_key,
-                            );
-
-                            return (
-                                <QuestionCard
-                                    key={question.question_key}
-                                    question={question}
-                                    selectedAnswers={selectedAnswers}
-                                    onSelectAnswer={(questionKey, scaleKey, optionKey) => {
-                                        const currentAnswers = getQuestionAnswers(
-                                            auditSession,
-                                            activeSection.section_key,
-                                            questionKey,
-                                        );
-                                        const nextAnswers = buildNextQuestionAnswers(
-                                            currentAnswers,
-                                            question,
-                                            scaleKey,
-                                            optionKey,
-                                        );
-                                        applyLocalQuestionAnswer(
-                                            pairKey,
-                                            activeSection.section_key,
-                                            questionKey,
-                                            nextAnswers,
-                                        );
-                                    }}
-                                />
-                            );
-                        })}
+                        {questionRows.map(({ question, selectedAnswers }) => (
+                            <QuestionCard
+                                key={question.question_key}
+                                question={question}
+                                selectedAnswers={selectedAnswers}
+                                onChangeAnswers={(questionKey, nextAnswers) => {
+                                    applyLocalQuestionAnswer(
+                                        resolvedPairKey,
+                                        resolvedActiveSection.section_key,
+                                        questionKey,
+                                        nextAnswers,
+                                    );
+                                }}
+                            />
+                        ))}
                     </YStack>
                     {hasPendingLocalChanges ? (
                         <Paragraph
@@ -475,7 +528,7 @@ export default function ExecuteSectionScreen() {
  */
 function getVisibleSectionsStable(
     instrument: PlayspaceInstrument,
-    auditSession: { readonly selected_execution_mode: string | null } | undefined,
+    auditSession: Pick<AuditSession, "selected_execution_mode" | "sections"> | undefined,
 ): InstrumentSection[] {
     if (auditSession === undefined) {
         return EMPTY_SECTIONS;
@@ -484,7 +537,16 @@ function getVisibleSectionsStable(
     if (!isExecutionMode(mode)) {
         return EMPTY_SECTIONS;
     }
-    return getVisibleSections(instrument, mode);
+    return getVisibleSections(
+        instrument,
+        mode,
+        Object.fromEntries(
+            Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
+                sectionKey,
+                sectionState.responses,
+            ]),
+        ),
+    );
 }
 
 const EMPTY_SECTIONS: InstrumentSection[] = [];
@@ -617,12 +679,12 @@ function getNextSection(
  * @returns Next scale answer map for the question.
  */
 function buildNextQuestionAnswers(
-    currentAnswers: Record<string, string>,
+    currentAnswers: QuestionResponsePayload,
     question: { readonly scales: readonly QuestionScale[] },
     scaleKey: string,
     optionKey: string,
-): Record<string, string> {
-    const nextAnswers: Record<string, string> = {
+): QuestionResponsePayload {
+    const nextAnswers: QuestionResponsePayload = {
         ...currentAnswers,
         [scaleKey]: optionKey,
     };

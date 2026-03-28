@@ -584,7 +584,7 @@ export default function DashboardScreen() {
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
                                 router.push(
-                                    `/(tabs)/execute/${priorityPlace.place_id}?projectId=${encodeURIComponent(priorityPlace.project_id)}`,
+                                    `/execute/${priorityPlace.place_id}?projectId=${encodeURIComponent(priorityPlace.project_id)}`,
                                 );
                             }}
                         >
@@ -1208,7 +1208,7 @@ export default function DashboardScreen() {
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {
                                     router.push(
-                                        `/(tabs)/execute/${priorityPlace.place_id}?projectId=${encodeURIComponent(priorityPlace.project_id)}`,
+                                        `/execute/${priorityPlace.place_id}?projectId=${encodeURIComponent(priorityPlace.project_id)}`,
                                     );
                                 }}
                             >
@@ -1635,7 +1635,7 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
                         router.push(
-                            `/(tabs)/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
+                            `/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
                         );
                     }}
                 >

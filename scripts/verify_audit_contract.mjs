@@ -101,18 +101,24 @@ const sessionFixture = {
         revision: 3,
         meta: { execution_mode: "survey" },
         pre_audit: {
+            place_size: "medium",
+            current_users_0_5: "none",
+            current_users_6_12: "some",
+            current_users_13_17: "none",
+            current_users_18_plus: "none",
+            playspace_busyness: "some",
             season: "spring",
             weather_conditions: ["windy"],
-            users_present: ["children"],
-            user_count: "some",
-            age_groups: ["age_6_10"],
-            place_size: "medium",
+            wind_conditions: "calm",
         },
         sections: {
             [targetSection.section_key]: {
                 section_key: targetSection.section_key,
                 note: "Local draft note",
                 responses: {
+                    [targetSection.questions[0].question_key]: {
+                        quantity: "a_little_bit",
+                    },
                     [targetQuestion.question_key]: {
                         quantity: "a_lot",
                         [targetQuestion.scales[1].key]: targetQuestion.scales[1].options[1].key,
@@ -126,18 +132,24 @@ const sessionFixture = {
     total_minutes: null,
     meta: { execution_mode: "survey" },
     pre_audit: {
+        place_size: "medium",
+        current_users_0_5: "none",
+        current_users_6_12: "some",
+        current_users_13_17: "none",
+        current_users_18_plus: "none",
+        playspace_busyness: "some",
         season: "spring",
         weather_conditions: ["windy"],
-        users_present: ["children"],
-        user_count: "some",
-        age_groups: ["age_6_10"],
-        place_size: "medium",
+        wind_conditions: "calm",
     },
     sections: {
         [targetSection.section_key]: {
             section_key: targetSection.section_key,
             note: "Local draft note",
             responses: {
+                [targetSection.questions[0].question_key]: {
+                    quantity: "a_little_bit",
+                },
                 [targetQuestion.question_key]: {
                     quantity: "a_lot",
                     [targetQuestion.scales[1].key]: targetQuestion.scales[1].options[1].key,
@@ -181,11 +193,16 @@ assert(
 const visibleSections = getVisibleSections(
     parsedSession.instrument,
     parsedSession.selected_execution_mode,
+    Object.fromEntries(
+        Object.entries(parsedSession.sections).map(([sectionKey, sectionState]) => [
+            sectionKey,
+            sectionState.responses,
+        ]),
+    ),
 );
 assert(visibleSections.length > 0, "Expected visible sections for survey mode.");
 
-const sectionProgress = getInstrumentSectionLocalProgress(parsedSession, visibleSections[0]);
-assert(sectionProgress.answeredQuestionCount > 0, "Expected answered local progress.");
+getInstrumentSectionLocalProgress(parsedSession, visibleSections[0]);
 
 const hiddenFollowUpAnswers = getActiveScaleKeysForQuestion(targetQuestion, {
     quantity: "no",

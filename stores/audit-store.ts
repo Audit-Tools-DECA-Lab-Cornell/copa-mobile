@@ -15,6 +15,7 @@ import type {
     AuditDraftPatch,
     AuditDraftSave,
     AuditPreAuditValues,
+    QuestionResponsePayload,
     AuditSectionState,
     AuditSession,
     DirtyPreAudit,
@@ -77,7 +78,7 @@ interface PlayspaceAuditStoreState {
         pairKey: string,
         sectionKey: string,
         questionKey: string,
-        answers: Record<string, string>,
+        answers: QuestionResponsePayload,
     ) => void;
     applyLocalSectionNote: (pairKey: string, sectionKey: string, note: string) => void;
     applyLocalPreAudit: (pairKey: string, values: Record<string, string | string[]>) => void;
@@ -283,14 +284,32 @@ function markPreAuditDirty(
 }
 
 function cloneSectionResponses(
-    value: Record<string, Record<string, string>> | undefined,
-): Record<string, Record<string, string>> {
+    value: Record<string, QuestionResponsePayload> | undefined,
+): Record<string, QuestionResponsePayload> {
     if (value === undefined) {
         return {};
     }
-    const next: Record<string, Record<string, string>> = {};
+    const next: Record<string, QuestionResponsePayload> = {};
     for (const [qKey, qVal] of Object.entries(value)) {
-        next[qKey] = { ...qVal };
+        next[qKey] = cloneQuestionResponsePayload(qVal);
+    }
+    return next;
+}
+
+function cloneQuestionResponsePayload(value: QuestionResponsePayload): QuestionResponsePayload {
+    const next: QuestionResponsePayload = {};
+    for (const [answerKey, answerValue] of Object.entries(value)) {
+        if (typeof answerValue === "string" || answerValue === null) {
+            next[answerKey] = answerValue;
+            continue;
+        }
+
+        if (Array.isArray(answerValue)) {
+            next[answerKey] = [...answerValue];
+            continue;
+        }
+
+        next[answerKey] = { ...answerValue };
     }
     return next;
 }
@@ -308,12 +327,15 @@ function cloneSectionState(
 
 function clonePreAuditValues(value: AuditPreAuditValues): AuditPreAuditValues {
     return {
+        place_size: value.place_size,
+        current_users_0_5: value.current_users_0_5,
+        current_users_6_12: value.current_users_6_12,
+        current_users_13_17: value.current_users_13_17,
+        current_users_18_plus: value.current_users_18_plus,
+        playspace_busyness: value.playspace_busyness,
         season: value.season,
         weather_conditions: [...value.weather_conditions],
-        users_present: [...value.users_present],
-        user_count: value.user_count,
-        age_groups: [...value.age_groups],
-        place_size: value.place_size,
+        wind_conditions: value.wind_conditions,
     };
 }
 
@@ -366,7 +388,7 @@ function applyQuestionAnswerToSession(
     session: AuditSession,
     sectionKey: string,
     questionKey: string,
-    answers: Record<string, string>,
+    answers: QuestionResponsePayload,
 ): AuditSession {
     const section = cloneSectionState(session.sections[sectionKey], sectionKey);
     const responses = cloneSectionResponses(section.responses);
@@ -401,22 +423,40 @@ function applyPreAuditToSession(
     values: Record<string, string | string[] | null>,
 ): AuditSession {
     const cur = clonePreAuditValues(session.pre_audit);
+    cur.place_size = readNullableStringValue(values["place_size"], cur.place_size);
+    cur.current_users_0_5 = readNullableStringValue(
+        values["current_users_0_5"],
+        cur.current_users_0_5,
+    );
+    cur.current_users_6_12 = readNullableStringValue(
+        values["current_users_6_12"],
+        cur.current_users_6_12,
+    );
+    cur.current_users_13_17 = readNullableStringValue(
+        values["current_users_13_17"],
+        cur.current_users_13_17,
+    );
+    cur.current_users_18_plus = readNullableStringValue(
+        values["current_users_18_plus"],
+        cur.current_users_18_plus,
+    );
+    cur.playspace_busyness = readNullableStringValue(
+        values["playspace_busyness"],
+        cur.playspace_busyness,
+    );
     cur.season = readNullableStringValue(values["season"], cur.season);
     cur.weather_conditions = readStringArrayValue(
         values["weather_conditions"],
         cur.weather_conditions,
     );
-    cur.users_present = readStringArrayValue(values["users_present"], cur.users_present);
-    cur.user_count = readNullableStringValue(values["user_count"], cur.user_count);
-    cur.age_groups = readStringArrayValue(values["age_groups"], cur.age_groups);
-    cur.place_size = readNullableStringValue(values["place_size"], cur.place_size);
+    cur.wind_conditions = readNullableStringValue(values["wind_conditions"], cur.wind_conditions);
     return syncSessionAggregate({ ...session, pre_audit: cur });
 }
 
 function applySectionResponsesToSession(
     session: AuditSession,
     sectionKey: string,
-    responses: Record<string, Record<string, string>>,
+    responses: Record<string, QuestionResponsePayload>,
 ): AuditSession {
     const section = cloneSectionState(session.sections[sectionKey], sectionKey);
     return syncSessionAggregate({
@@ -518,12 +558,15 @@ function buildAggregateWriteFromSession(session: AuditSession): AuditDraftPatch[
             execution_mode: session.aggregate.meta.execution_mode,
         },
         pre_audit: {
+            place_size: session.aggregate.pre_audit.place_size,
+            current_users_0_5: session.aggregate.pre_audit.current_users_0_5,
+            current_users_6_12: session.aggregate.pre_audit.current_users_6_12,
+            current_users_13_17: session.aggregate.pre_audit.current_users_13_17,
+            current_users_18_plus: session.aggregate.pre_audit.current_users_18_plus,
+            playspace_busyness: session.aggregate.pre_audit.playspace_busyness,
             season: session.aggregate.pre_audit.season,
             weather_conditions: [...session.aggregate.pre_audit.weather_conditions],
-            users_present: [...session.aggregate.pre_audit.users_present],
-            user_count: session.aggregate.pre_audit.user_count,
-            age_groups: [...session.aggregate.pre_audit.age_groups],
-            place_size: session.aggregate.pre_audit.place_size,
+            wind_conditions: session.aggregate.pre_audit.wind_conditions,
         },
         sections: Object.fromEntries(
             Object.entries(session.aggregate.sections).map(([sectionKey, sectionState]) => [
@@ -797,7 +840,7 @@ function applyLocalQuestionAnswer(
     pairKey: string,
     sectionKey: string,
     questionKey: string,
-    answers: Record<string, string>,
+    answers: QuestionResponsePayload,
 ): void {
     const session: AuditSession | undefined = auditData$.sessions_by_pair_key[pairKey]?.peek();
     if (session === undefined) {

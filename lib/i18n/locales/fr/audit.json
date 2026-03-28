@@ -60,6 +60,35 @@
         "viewPlaceDetails": "Voir les détails du lieu"
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
+    "setup": {
+        "continueToAuditInfo": "Continuer vers les informations d’audit",
+        "modeRequired": "Sélectionnez un mode d’exécution avant de continuer.",
+        "stepEyebrow": "Étape 1 sur 3",
+        "subtitle": "Passez en revue le fonctionnement de l’outil, puis choisissez le rôle qui correspond le mieux à la manière dont vous allez réaliser cet audit.",
+        "roleTitle": "Mode d’exécution",
+        "roleQuestion": "Quel est votre rôle par rapport à cet espace de jeu ?",
+        "preambleTitle": "Avant de commencer",
+        "preambleSubtitle": "Le préambule est désormais plus long et plus structuré ; il est donc présenté par sections afin de faciliter la lecture de la configuration sur téléphone comme sur tablette."
+    },
+    "auditInfo": {
+        "auditorCodePending": "Disponible après recherche du profil",
+        "backToPreamble": "Retour au préambule",
+        "continueToSections": "Continuer vers les sections",
+        "continueToSpaceAudit": "Continuer vers l’audit de l’espace",
+        "modeMissingTitle": "Mode d’exécution requis",
+        "modeMissingMessage": "Retournez à l’étape du préambule et choisissez comment vous allez réaliser cet audit avant de continuer.",
+        "placeLabel": "Lieu",
+        "preparingMessage": "Chargement des détails d’audit générés et de l’état actuel de la configuration...",
+        "preparingTitle": "Préparation des informations d’audit",
+        "projectLabel": "Projet",
+        "selectedModeLabel": "Mode sélectionné",
+        "stepEyebrow": "Étape 2 sur 3",
+        "subtitle": "Passez en revue les métadonnées d’audit générées avant de continuer vers les questions de configuration ou d’entrer directement dans le flux des sections.",
+        "summaryDescription": "Ces informations sont générées automatiquement à partir de la session d’audit en cours.",
+        "summaryTitle": "Résumé de l’audit",
+        "title": "Informations d’audit",
+        "unavailableTitle": "Informations d’audit indisponibles"
+    },
     "preAudit": {
         "complete": "Terminé",
         "description": "Saisissez la saison, la météo, les utilisateurs présents, le nombre d’utilisateurs, les groupes d’âge et la taille du lieu avant l’évaluation par section.",
@@ -71,6 +100,24 @@
         "subtitle": "Répondez aux questions de contexte de la première page avant de passer aux pages de section.",
         "title": "Configuration pré-audit",
         "unavailableTitle": "Pré-audit indisponible"
+    },
+    "spaceAudit": {
+        "backToAuditInfo": "Retour aux informations d’audit",
+        "continueToSections": "Continuer vers les sections",
+        "intro": "Cette étape s’affiche uniquement lorsque le mode d’exécution sélectionné inclut l’audit sur site. Répondez aux questions de contexte actuelles avant d’ouvrir les pages des sections.",
+        "matrixAgeColumn": "Tranche d’âge",
+        "matrixHeading": "Décrivez les utilisateurs actuellement présents dans l’espace de jeu",
+        "matrixQuantityColumn": "Quantité",
+        "preparingMessage": "Chargement des questions de configuration sur site et des réponses enregistrées, le cas échéant...",
+        "preparingTitle": "Préparation de la configuration de l’audit de l’espace",
+        "sidebarDescription": "Ces questions définissent le contexte sur site avant le début de l’évaluation principale des sections.",
+        "sidebarTitle": "Configuration de l’audit de l’espace",
+        "skipForSurveyTitle": "Audit de l’espace non requis",
+        "skipForSurveyMessage": "Le mode d’exécution sélectionné n’inclut pas l’étape d’audit sur site. Continuez directement vers les sections.",
+        "stepEyebrow": "Étape 3 sur 3",
+        "subtitle": "Saisissez le contexte sur site, que seul un auditeur peut renseigner sur place dans l’espace de jeu.",
+        "title": "Configuration de l’audit de l’espace",
+        "unavailableTitle": "Configuration de l’audit d’espace indisponible"
     },
     "resumeAudit": "Reprendre l’audit",
     "section": {
@@ -87,6 +134,18 @@
         "saveAndNext": "Enregistrer et suivant",
         "saveSection": "Enregistrer la section",
         "sectionNotes": "Notes de section",
+        "tableIntro": "Sur tablette, les questions sont affichées dans une matrice afin que l’énoncé reste à gauche et que les échelles disponibles restent alignées à droite.",
+        "table": {
+            "followUpPending": "Choisissez une réponse de quantité positive pour déverrouiller cette échelle.",
+            "itemColumn": "Question",
+            "notAvailable": "Non utilisé pour cet élément.",
+            "scaleColumns": {
+                "challenge": "Défi",
+                "diversity": "Diversité",
+                "quantity": "Disponibilité / Quantité",
+                "sociability": "Sociabilité"
+            }
+        },
         "unavailableTitle": "Section indisponible",
         "uploadingShort": "Téléversement…"
     },
@@ -94,6 +153,7 @@
         "auditStart": "Début de l’audit",
         "execute": "Exécuter",
         "preAudit": "Pré-audit",
+        "spaceAudit": "Audit d’espace",
         "section": "Section"
     },
     "startAudit": "Commencer l’audit",

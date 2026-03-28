@@ -8,6 +8,7 @@ import type {
     InstrumentQuestion,
     PlayspaceInstrument,
     PreAuditQuestion,
+    QuestionResponsePayload,
     QuestionScale,
 } from "lib/audit/types";
 
@@ -646,7 +647,7 @@ function buildQuestionResponseRow(
     sectionIndex: number,
     questionIndex: number,
     question: InstrumentQuestion,
-    answers: Record<string, string>,
+    answers: QuestionResponsePayload,
 ): SpreadsheetRow {
     return [
         `${sectionIndex + 1}.${questionIndex + 1}`,
@@ -656,10 +657,26 @@ function buildQuestionResponseRow(
         "",
         "",
         stripPromptMarkup(question.prompt),
-        formatQuestionAnswer(question, "quantity", answers.quantity),
-        formatQuestionAnswer(question, "diversity", answers.diversity),
-        formatQuestionAnswer(question, "sociability", answers.sociability),
-        formatQuestionAnswer(question, "challenge", answers.challenge),
+        formatQuestionAnswer(
+            question,
+            "quantity",
+            typeof answers.quantity === "string" ? answers.quantity : undefined,
+        ),
+        formatQuestionAnswer(
+            question,
+            "diversity",
+            typeof answers.diversity === "string" ? answers.diversity : undefined,
+        ),
+        formatQuestionAnswer(
+            question,
+            "sociability",
+            typeof answers.sociability === "string" ? answers.sociability : undefined,
+        ),
+        formatQuestionAnswer(
+            question,
+            "challenge",
+            typeof answers.challenge === "string" ? answers.challenge : undefined,
+        ),
         "",
     ];
 }
@@ -960,6 +977,8 @@ function readPreAuditQuestionValues(
     question: PreAuditQuestion,
 ): readonly string[] {
     switch (question.key) {
+        case "auditor_code":
+            return [];
         case "audit_date":
             return [formatDateForDisplay(auditSession.started_at)];
         case "started_at":
@@ -968,22 +987,38 @@ function readPreAuditQuestionValues(
             return [formatTimestampForDisplay(auditSession.submitted_at)];
         case "total_minutes":
             return [auditSession.total_minutes?.toString() ?? ""];
-        case "season":
-            return auditSession.pre_audit.season === null ? [] : [auditSession.pre_audit.season];
-        case "weather_conditions":
-            return auditSession.pre_audit.weather_conditions;
-        case "users_present":
-            return auditSession.pre_audit.users_present;
-        case "user_count":
-            return auditSession.pre_audit.user_count === null
-                ? []
-                : [auditSession.pre_audit.user_count];
-        case "age_groups":
-            return auditSession.pre_audit.age_groups;
         case "place_size":
             return auditSession.pre_audit.place_size === null
                 ? []
                 : [auditSession.pre_audit.place_size];
+        case "current_users_0_5":
+            return auditSession.pre_audit.current_users_0_5 === null
+                ? []
+                : [auditSession.pre_audit.current_users_0_5];
+        case "current_users_6_12":
+            return auditSession.pre_audit.current_users_6_12 === null
+                ? []
+                : [auditSession.pre_audit.current_users_6_12];
+        case "current_users_13_17":
+            return auditSession.pre_audit.current_users_13_17 === null
+                ? []
+                : [auditSession.pre_audit.current_users_13_17];
+        case "current_users_18_plus":
+            return auditSession.pre_audit.current_users_18_plus === null
+                ? []
+                : [auditSession.pre_audit.current_users_18_plus];
+        case "playspace_busyness":
+            return auditSession.pre_audit.playspace_busyness === null
+                ? []
+                : [auditSession.pre_audit.playspace_busyness];
+        case "season":
+            return auditSession.pre_audit.season === null ? [] : [auditSession.pre_audit.season];
+        case "weather_conditions":
+            return auditSession.pre_audit.weather_conditions;
+        case "wind_conditions":
+            return auditSession.pre_audit.wind_conditions === null
+                ? []
+                : [auditSession.pre_audit.wind_conditions];
         default:
             return [];
     }
