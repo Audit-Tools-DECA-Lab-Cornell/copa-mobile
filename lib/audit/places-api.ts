@@ -1,17 +1,28 @@
 import type { AuthSession } from "lib/auth/types";
 import { parsePayload, requestJson } from "lib/audit/api";
-import { auditScoreTotalsSchema } from "lib/audit/types";
+import {
+    auditScoreTotalsSchema,
+    createPaginatedResponseSchema,
+    executionModeSchema,
+} from "lib/audit/types";
+import type { PaginatedResponse } from "lib/audit/types";
 import { z } from "zod";
-
-/**
- * Assignment roles an auditor can hold for a place.
- */
-const assignmentRoleSchema = z.enum(["auditor", "place_admin"]);
+import { t } from "i18next";
 
 /**
  * Audit lifecycle statuses returned by the backend.
  */
 const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
+
+/**
+ * Accept coordinates when present while remaining backward compatible with
+ * older payloads until the mobile client and backend ship together.
+ */
+const nullableCoordinateSchema = z
+    .number()
+    .nullable()
+    .optional()
+    .transform((value): number | null => value ?? null);
 
 /**
  * Zod schema for the auditor place response returned by
@@ -26,7 +37,8 @@ const auditorPlaceSchema = z.object({
     city: z.string().nullable(),
     province: z.string().nullable(),
     country: z.string().nullable(),
-    assignment_roles: z.array(assignmentRoleSchema),
+    lat: nullableCoordinateSchema,
+    lng: nullableCoordinateSchema,
     audit_status: auditStatusSchema.nullable(),
     audit_id: z.uuid().nullable(),
     started_at: z.string().nullable(),
@@ -34,6 +46,7 @@ const auditorPlaceSchema = z.object({
     summary_score: z.number().nullable(),
     score_totals: auditScoreTotalsSchema.nullable(),
     progress_percent: z.number().nullable(),
+    selected_execution_mode: executionModeSchema.nullable().default(null),
 });
 
 /**
@@ -43,24 +56,29 @@ const auditorPlaceSchema = z.object({
 export type AuditorPlace = z.infer<typeof auditorPlaceSchema>;
 
 /**
- * Schema for the top-level response array.
+ * Typed paginated response returned for the current auditor's places list.
  */
-const auditorPlacesResponseSchema = z.array(auditorPlaceSchema);
+export type AuditorPlacesResponse = PaginatedResponse<AuditorPlace>;
+
+/**
+ * Schema for the top-level paginated response object.
+ */
+const auditorPlacesResponseSchema = createPaginatedResponseSchema(auditorPlaceSchema);
 
 /**
  * Fetch all places assigned to the currently authenticated auditor.
  *
  * @param session Authenticated mobile session.
- * @returns Validated array of assigned auditor places.
+ * @returns Validated paginated response of assigned auditor places.
  * @throws {PlayspaceAuditApiError} On network, auth, or validation failures.
  */
-export async function fetchAssignedPlaces(session: AuthSession): Promise<AuditorPlace[]> {
+export async function fetchAssignedPlaces(session: AuthSession): Promise<AuditorPlacesResponse> {
     const payload = await requestJson(session, "/playspace/auditor/me/places", {
         method: "GET",
     });
-    return parsePayload(
+    return parsePayload<AuditorPlacesResponse>(
         payload,
         auditorPlacesResponseSchema,
-        "Assigned places response shape is invalid.",
+        t("assignedPlacesResponseShapeIsInvalid", "Assigned places response shape is invalid."),
     );
 }

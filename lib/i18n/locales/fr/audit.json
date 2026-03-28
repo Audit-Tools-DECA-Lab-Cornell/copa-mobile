@@ -2,9 +2,9 @@
     "autoValues": {
         "calculatedOnSubmit": "Calculé lors de l’envoi final",
         "generatedOnSubmit": "Généré lors de l’envoi final",
-        "minutes_one": "TODO: autoValues.minutes_one audit",
-        "minutes_many": "TODO: autoValues.minutes_many audit",
-        "minutes_other": "TODO: autoValues.minutes_other audit"
+        "minutes_one": "",
+        "minutes_other": "",
+        "minutes_many": "il y a {{count}} mins"
     },
     "errors": {
         "accessDenied403": "Accès refusé (403) : vous n’êtes pas autorisé à accéder à ce lieu ou à cet audit.",
@@ -18,24 +18,47 @@
         "submitNeedsUploadedDraft": "Reconnectez-vous et attendez que vos modifications enregistrées soient téléversées avant d’envoyer cet audit.",
         "syncFallback": "La synchronisation en arrière-plan a échoué."
     },
+    "copy": {
+        "continueToSubject": "Continuer vers {{subject}}",
+        "continueToSubjectInfo": "Informations sur {{subject}}",
+        "submitSubject": "Soumettre {{subject}}"
+    },
     "executeLanding": {
         "continueSelectedPlace": "Continuer le lieu sélectionné",
+        "emptyMessage": "Essayez une autre combinaison de recherche ou de filtre.",
+        "emptyTitle": "Aucune audit ne correspond",
         "openSelectedAudit": "Ouvrir l’audit sélectionné",
+        "searchPlaceholder": "Rechercher des lieux ou des projets",
         "subtitle": "Choisissez un lieu pour démarrer ou reprendre le flux d’audit playspace section par section.",
         "title": "Exécution de l’audit"
+    },
+    "mode": "— {{mode}}",
+    "modeShort": {
+        "audit": "Sur site uniquement",
+        "both": "Enquête et sur site",
+        "survey": "Enquête uniquement"
     },
     "overview": {
         "accessDeniedTitle": "Accès refusé",
         "assignmentAllows": "Cette affectation de lieu permet actuellement :",
-        "auditRole": "Rôle dans l’audit",
+        "auditRole": "Mode d’exécution",
+        "roleNotSelected": "Mode non sélectionné",
         "auditUnavailableTitle": "Audit indisponible",
         "chooseMode": "Choisissez la partie de l’outil que vous allez remplir pour ce lieu.",
+        "completedCount_one": "{{count}} terminé",
+        "completedCount_other": "{{count}} terminés",
+        "incompleteCount_one": "{{count}} incomplet",
+        "incompleteCount_other": "{{count}} incomplets",
         "loadingDraft": "Chargement de votre brouillon actuel...",
         "placeNotFound": "L’itinéraire du lieu sélectionné n’est pas valide. Revenez à l’onglet Exécuter et choisissez à nouveau un lieu.",
         "placeNotFoundTitle": "Lieu introuvable",
         "preamble": "Préambule",
+        "reviewDescription": "Révisez chaque section au même endroit et revenez directement à la prochaine section incomplète.",
+        "tapToExpand": "Touchez pour développer",
         "preparingAudit": "Préparation du flux d’audit playspace...",
         "preparingAuditTitle": "Préparation de l’audit",
+        "sectionEmpty": "Aucune section ne correspond au filtre actuel.",
+        "sections": "Sections",
         "roleFixesSubset": "Votre rôle définit déjà le sous-ensemble visible de questions pour ce lieu.",
         "syncStatus": {
             "pendingMessage": "Les modifications du brouillon sont en attente et seront téléversées automatiquement lorsque l’application sera active et en ligne.",
@@ -43,7 +66,38 @@
             "retryTitle": "Téléversement en pause",
             "syncingMessage": "Les modifications enregistrées sont en cours de téléversement. Gardez l’application ouverte jusqu’à la fin si vous devez envoyer immédiatement.",
             "syncingTitle": "Téléversement des modifications"
-        }
+        },
+        "viewPlaceDetails": "Voir les détails du lieu"
+    },
+    "place_namesuffix": "{{place_name}}{{suffix}}",
+    "setup": {
+        "continueToAuditInfo": "Continuer vers les informations d’audit",
+        "modeRequired": "Sélectionnez un mode d’exécution avant de continuer.",
+        "stepEyebrow": "Étape 1 sur 3",
+        "subtitle": "Passez en revue le fonctionnement de l’outil, puis choisissez le rôle qui correspond le mieux à la manière dont vous allez réaliser cet audit.",
+        "roleTitle": "Mode d’exécution",
+        "roleQuestion": "Quel est votre rôle par rapport à cet espace de jeu ?",
+        "preambleTitle": "Avant de commencer",
+        "preambleSubtitle": "Le préambule est désormais plus long et plus structuré ; il est donc présenté par sections afin de faciliter la lecture de la configuration sur téléphone comme sur tablette."
+    },
+    "auditInfo": {
+        "auditorCodePending": "Disponible après recherche du profil",
+        "backToPreamble": "Retour au préambule",
+        "continueToSections": "Continuer vers les sections",
+        "continueToSpaceAudit": "Continuer vers l’audit de l’espace",
+        "modeMissingTitle": "Mode d’exécution requis",
+        "modeMissingMessage": "Retournez à l’étape du préambule et choisissez comment vous allez réaliser cet audit avant de continuer.",
+        "placeLabel": "Lieu",
+        "preparingMessage": "Chargement des détails d’audit générés et de l’état actuel de la configuration...",
+        "preparingTitle": "Préparation des informations d’audit",
+        "projectLabel": "Projet",
+        "selectedModeLabel": "Mode sélectionné",
+        "stepEyebrow": "Étape 2 sur 3",
+        "subtitle": "Passez en revue les métadonnées d’audit générées avant de continuer vers les questions de configuration ou d’entrer directement dans le flux des sections.",
+        "summaryDescription": "Ces informations sont générées automatiquement à partir de la session d’audit en cours.",
+        "summaryTitle": "Résumé de l’audit",
+        "title": "Informations d’audit",
+        "unavailableTitle": "Informations d’audit indisponibles"
     },
     "preAudit": {
         "complete": "Terminé",
@@ -56,6 +110,24 @@
         "subtitle": "Répondez aux questions de contexte de la première page avant de passer aux pages de section.",
         "title": "Configuration pré-audit",
         "unavailableTitle": "Pré-audit indisponible"
+    },
+    "spaceAudit": {
+        "backToAuditInfo": "Retour aux informations d’audit",
+        "continueToSections": "Continuer vers les sections",
+        "intro": "Cette étape s’affiche uniquement lorsque le mode d’exécution sélectionné inclut l’audit sur site. Répondez aux questions de contexte actuelles avant d’ouvrir les pages des sections.",
+        "matrixAgeColumn": "Tranche d’âge",
+        "matrixHeading": "Décrivez les utilisateurs actuellement présents dans l’espace de jeu",
+        "matrixQuantityColumn": "Quantité",
+        "preparingMessage": "Chargement des questions de configuration sur site et des réponses enregistrées, le cas échéant...",
+        "preparingTitle": "Préparation de la configuration de l’audit de l’espace",
+        "sidebarDescription": "Ces questions définissent le contexte sur site avant le début de l’évaluation principale des sections.",
+        "sidebarTitle": "Configuration de l’audit de l’espace",
+        "skipForSurveyTitle": "Audit de l’espace non requis",
+        "skipForSurveyMessage": "Le mode d’exécution sélectionné n’inclut pas l’étape d’audit sur site. Continuez directement vers les sections.",
+        "stepEyebrow": "Étape 3 sur 3",
+        "subtitle": "Saisissez le contexte sur site, que seul un auditeur peut renseigner sur place dans l’espace de jeu.",
+        "title": "Configuration de l’audit de l’espace",
+        "unavailableTitle": "Configuration de l’audit d’espace indisponible"
     },
     "resumeAudit": "Reprendre l’audit",
     "section": {
@@ -72,13 +144,33 @@
         "saveAndNext": "Enregistrer et suivant",
         "saveSection": "Enregistrer la section",
         "sectionNotes": "Notes de section",
-        "unavailableTitle": "Section indisponible"
+        "tableIntro": "Sur tablette, les questions sont affichées dans une matrice afin que l’énoncé reste à gauche et que les échelles disponibles restent alignées à droite.",
+        "table": {
+            "followUpPending": "Choisissez une réponse de quantité positive pour déverrouiller cette échelle.",
+            "itemColumn": "Question",
+            "notAvailable": "Non utilisé pour cet élément.",
+            "scaleColumns": {
+                "challenge": "Défi",
+                "diversity": "Diversité",
+                "quantity": "Disponibilité / Quantité",
+                "sociability": "Sociabilité"
+            }
+        },
+        "unavailableTitle": "Section indisponible",
+        "uploadingShort": "Téléversement…"
     },
     "stack": {
         "auditStart": "Début de l’audit",
         "execute": "Exécuter",
         "preAudit": "Pré-audit",
+        "spaceAudit": "Audit d’espace",
         "section": "Section"
+    },
+    "subjects": {
+        "audit": "audit",
+        "auditAndSurvey": "audit/enquête",
+        "survey": "enquête",
+        "workflow": "workflow"
     },
     "startAudit": "Commencer l’audit",
     "submit": "Soumettre l’audit",

@@ -34,8 +34,11 @@ import { applyLanguagePreference } from "lib/i18n";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePreferencesStore } from "stores/preferences-store";
+import { useTranslation } from "react-i18next";
 
 export { ErrorBoundary } from "expo-router";
+
+const SCREENSHOT_AUTOMATION_ENABLED = __DEV__;
 
 export const unstable_settings = {
     initialRouteName: "(auth)",
@@ -123,7 +126,7 @@ function RootLayoutNav() {
     const currentAuditUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     const ds = useDesignSystem();
-
+    const { t } = useTranslation("audit");
     const navigationTheme =
         resolvedTheme === "light"
             ? {
@@ -187,6 +190,15 @@ function RootLayoutNav() {
         }
 
         const inAuthGroup = segments[0] === "(auth)";
+        const isScreenshotAutomationRoute = String(segments[0] ?? "") === "__screenshot-bootstrap";
+        const canBypassAuthForScreenshotAutomation =
+            SCREENSHOT_AUTOMATION_ENABLED && isScreenshotAutomationRoute;
+
+        // Allow the screenshot bootstrap route to manage auth state and
+        // redirection itself so simulator automation can open any target page.
+        if (canBypassAuthForScreenshotAutomation) {
+            return;
+        }
 
         if (authStatus === "authenticated" && inAuthGroup) {
             router.replace("/(tabs)");
@@ -217,6 +229,12 @@ function RootLayoutNav() {
             >
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen
+                    name="execute"
+                    options={{ headerShown: true, title: t("stack.execute") }}
+                />
+                <Stack.Screen name="place" options={{ headerShown: true }} />
+                <Stack.Screen name="report" options={{ headerShown: true }} />
             </Stack>
         </ThemeProvider>
     );

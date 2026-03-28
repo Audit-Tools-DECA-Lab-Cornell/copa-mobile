@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -13,6 +13,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -22,6 +24,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export default function LoginScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation(["auth", "common"]);
     const login = useAuthStore((state) => state.login);
@@ -34,6 +37,16 @@ export default function LoginScreen() {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const [staySignedIn, setStaySignedIn] = useState<boolean>(true);
+    const scrollViewRef = useRef<ScrollView | null>(null);
+
+    const scrollLoginToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: true,
+        scrollToOffset: scrollLoginToOffset,
+    });
 
     const canSubmit = useMemo(() => {
         return !isSubmitting;
@@ -74,15 +87,20 @@ export default function LoginScreen() {
             style={{ flex: 1, backgroundColor: ds.colors.background }}
         >
             <ScrollView
+                ref={scrollViewRef}
                 contentInsetAdjustmentBehavior="automatic"
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{
-                    paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                    paddingHorizontal: layout.screenPaddingHorizontal,
                     paddingVertical: 48,
                     justifyContent: "center",
                 }}
             >
-                <YStack gap="$6" width="100%" style={{ maxWidth: 440, alignSelf: "center" }}>
+                <YStack
+                    gap="$6"
+                    width="100%"
+                    style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
+                >
                     <YStack items="center" gap="$4">
                         <YStack
                             width={88}

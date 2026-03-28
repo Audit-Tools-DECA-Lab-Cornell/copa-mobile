@@ -17,24 +17,47 @@
         "submitNeedsUploadedDraft": "この監査を提出する前に、再接続して保存済みの変更がアップロードされるのを待ってください。",
         "syncFallback": "バックグラウンド同期に失敗しました。"
     },
+    "copy": {
+        "continueToSubject": "{{subject}}に進む",
+        "continueToSubjectInfo": "{{subject}}の情報に進む",
+        "submitSubject": "{{subject}}を送信"
+    },
     "executeLanding": {
         "continueSelectedPlace": "選択した場所を続行",
+        "emptyMessage": "別の検索条件またはフィルターの組み合わせをお試しください。",
+        "emptyTitle": "一致する監査はありません",
         "openSelectedAudit": "選択した監査を開く",
+        "searchPlaceholder": "場所またはプロジェクトを検索",
         "subtitle": "セクションごとのプレイスペース監査フローを開始または再開する場所を選択してください。",
         "title": "監査の実行"
+    },
+    "mode": "— {{mode}}",
+    "modeShort": {
+        "audit": "現地のみ",
+        "both": "調査と現地",
+        "survey": "調査のみ"
     },
     "overview": {
         "accessDeniedTitle": "アクセスが拒否されました",
         "assignmentAllows": "この場所の割り当ては現在、以下を許可しています:",
-        "auditRole": "監査ロール",
+        "auditRole": "実行モード",
+        "roleNotSelected": "モードが選択されていません",
         "auditUnavailableTitle": "監査は利用できません",
         "chooseMode": "この場所でツールのどの部分を完了するかを選択してください。",
+        "completedCount_one": "{{count}}件完了",
+        "completedCount_other": "{{count}}件完了",
+        "incompleteCount_one": "{{count}}件未完了",
+        "incompleteCount_other": "{{count}}件未完了",
         "loadingDraft": "現在のドラフトを読み込んでいます...",
         "placeNotFound": "選択した場所のルートが無効です。実行タブに戻り、場所をもう一度選択してください。",
         "placeNotFoundTitle": "場所が見つかりません",
         "preamble": "前置き",
+        "reviewDescription": "すべてのセクションを1か所で確認し、次の未完了セクションに戻れます。",
+        "tapToExpand": "タップして展開",
         "preparingAudit": "プレイスペース監査フローを準備しています...",
         "preparingAuditTitle": "監査を準備中",
+        "sectionEmpty": "現在のフィルターに一致するセクションはありません。",
+        "sections": "セクション",
         "roleFixesSubset": "あなたの役割は、この場所で表示される質問の範囲をすでに固定しています。",
         "syncStatus": {
             "pendingMessage": "下書きの変更はキューに入り、アプリがアクティブでオンラインのときに自動的にアップロードされます。",
@@ -42,7 +65,38 @@
             "retryTitle": "アップロードが一時停止中",
             "syncingMessage": "保存された変更を現在アップロードしています。すぐに提出したい場合は、この処理が完了するまでアプリを開いたままにしてください。",
             "syncingTitle": "変更をアップロード中"
-        }
+        },
+        "viewPlaceDetails": "場所の詳細を表示"
+    },
+    "place_namesuffix": "{{place_name}}{{suffix}}",
+    "setup": {
+        "continueToAuditInfo": "監査情報へ進む",
+        "modeRequired": "続行する前に、実行モードを1つ選択してください。",
+        "stepEyebrow": "3ステップ中の1",
+        "subtitle": "ツールの使い方を確認し、その後、この監査を完了する方法に最も合った役割を選択してください。",
+        "roleTitle": "実行モード",
+        "roleQuestion": "この playspace に対して、あなたの役割は何ですか？",
+        "preambleTitle": "開始前に",
+        "preambleSubtitle": "現在、前文はより長く、より構造化されているため、スマートフォンとタブレットの両方でセットアップの流れを読みやすくするために、セクションごとに表示されます。"
+    },
+    "auditInfo": {
+        "auditorCodePending": "プロフィール検索後に利用可能",
+        "backToPreamble": "前文に戻る",
+        "continueToSections": "セクションへ進む",
+        "continueToSpaceAudit": "スペース監査へ進む",
+        "modeMissingTitle": "実行モードが必要です",
+        "modeMissingMessage": "続行する前に、前文の手順に戻って、この監査をどのように完了するかを選択してください。",
+        "placeLabel": "場所",
+        "preparingMessage": "生成された監査詳細と現在のセットアップ状態を読み込んでいます...",
+        "preparingTitle": "監査情報を準備しています",
+        "projectLabel": "プロジェクト",
+        "selectedModeLabel": "選択されたモード",
+        "stepEyebrow": "3ステップ中の2",
+        "subtitle": "セットアップの質問に進む前、または直接セクションの流れに入る前に、生成された監査メタデータを確認してください。",
+        "summaryDescription": "これらの詳細は、現在の監査セッションから自動的に生成されます。",
+        "summaryTitle": "監査サマリー",
+        "title": "監査情報",
+        "unavailableTitle": "監査情報を利用できません"
     },
     "preAudit": {
         "complete": "完了",
@@ -55,6 +109,24 @@
         "subtitle": "セクションページへ進む前に、最初のページの文脈質問を完了してください。",
         "title": "事前監査の設定",
         "unavailableTitle": "事前監査は利用できません"
+    },
+    "spaceAudit": {
+        "backToAuditInfo": "監査情報に戻る",
+        "continueToSections": "セクションへ進む",
+        "intro": "この手順は、選択された実行モードに現地監査が含まれる場合にのみ表示されます。セクションページを開く前に、現在の状況に関する質問を完了してください。",
+        "matrixAgeColumn": "年齢層",
+        "matrixHeading": "現在 playspace にいる利用者を記述してください",
+        "matrixQuantityColumn": "人数",
+        "preparingMessage": "現地セットアップの質問と保存済みの回答を読み込んでいます...",
+        "preparingTitle": "スペース監査セットアップを準備しています",
+        "sidebarDescription": "これらの質問は、メインのセクション採点が始まる前の現地状況を形作ります。",
+        "sidebarTitle": "スペース監査セットアップ",
+        "skipForSurveyTitle": "スペース監査は不要です",
+        "skipForSurveyMessage": "選択された実行モードには現地監査の手順が含まれていません。直接セクションへ進んでください。",
+        "stepEyebrow": "3ステップ中の3",
+        "subtitle": "その場にいる監査担当者だけが答えられる現地の状況を記録してください。",
+        "title": "スペース監査セットアップ",
+        "unavailableTitle": "スペース監査の設定は利用できません"
     },
     "resumeAudit": "監査を再開",
     "section": {
@@ -71,13 +143,33 @@
         "saveAndNext": "保存して次へ",
         "saveSection": "セクションを保存",
         "sectionNotes": "セクションのノート",
-        "unavailableTitle": "セクションが利用できません"
+        "tableIntro": "タブレットでは、質問がマトリクス形式で表示されるため、プロンプトは左側に、利用可能な尺度は右側に揃って表示されます。",
+        "table": {
+            "followUpPending": "この尺度を有効にするには、数量の質問に肯定的な回答を選択してください。",
+            "itemColumn": "質問項目",
+            "notAvailable": "この項目では使用しません。",
+            "scaleColumns": {
+                "challenge": "チャレンジ",
+                "diversity": "多様性",
+                "quantity": "提供 / 数量",
+                "sociability": "社交性"
+            }
+        },
+        "unavailableTitle": "セクションが利用できません",
+        "uploadingShort": "アップロード中…"
     },
     "stack": {
         "auditStart": "監査開始",
         "execute": "実行",
         "preAudit": "事前監査",
+        "spaceAudit": "スペース監査",
         "section": "セクション"
+    },
+    "subjects": {
+        "audit": "監査",
+        "auditAndSurvey": "監査/調査",
+        "survey": "調査",
+        "workflow": "ワークフロー"
     },
     "startAudit": "監査を開始",
     "submit": "監査を提出",

@@ -1,30 +1,49 @@
+import { useCallback, useRef } from "react";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
+import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 
 /**
  * Signup route shares auditor access setup guidance.
  */
 export default function SignupScreen() {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation("auth");
+    const scrollViewRef = useRef<ScrollView | null>(null);
+
+    const scrollSignupToOffset = useCallback((offset: number) => {
+        scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
+    }, []);
+
+    useScreenshotScrollAutomation({
+        contentReady: true,
+        scrollToOffset: scrollSignupToOffset,
+    });
 
     return (
         <ScrollView
+            ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={{
                 flexGrow: 1,
-                paddingHorizontal: ds.spacing.screenPaddingHorizontal,
+                paddingHorizontal: layout.screenPaddingHorizontal,
                 paddingVertical: 32,
                 justifyContent: "center",
                 backgroundColor: ds.colors.background,
             }}
         >
-            <YStack gap="$6" width="100%" style={{ maxWidth: 440, alignSelf: "center" }}>
+            <YStack
+                gap="$6"
+                width="100%"
+                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
+            >
                 <YStack items="center" gap="$4">
                     <YStack
                         width={88}

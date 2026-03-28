@@ -1,16 +1,18 @@
 import { z } from "zod";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 
 export type DirtySections = Record<string, Record<string, number>>;
 export type DirtyPreAudit = Record<string, number>;
+export type DirtyMeta = Record<string, number>;
 
 export const executionModeSchema = z.enum(["audit", "survey", "both"]);
-export const assignmentRoleSchema = z.enum(["auditor", "place_admin"]);
-export const assignmentRolesSchema = z.array(assignmentRoleSchema).min(1);
 export const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
 export const questionModeSchema = z.enum(["audit", "survey", "both"]);
 export const constructKeySchema = z.enum(["usability", "play_value"]);
 export const scaleKeySchema = z.enum(["quantity", "diversity", "sociability", "challenge"]);
 export const preAuditInputTypeSchema = z.enum(["single_select", "multi_select", "auto_timestamp"]);
+export const preAuditPageKeySchema = z.enum(["audit_info", "space_setup"]);
+export const questionTypeSchema = z.enum(["scaled", "checklist"]);
 
 export const choiceOptionSchema = z.object({
     key: z.string().min(1),
@@ -42,6 +44,9 @@ export const preAuditQuestionSchema = z.object({
     input_type: preAuditInputTypeSchema,
     required: z.boolean(),
     options: z.array(choiceOptionSchema),
+    page_key: preAuditPageKeySchema.default("space_setup"),
+    visible_modes: z.array(executionModeSchema).default(["audit", "survey", "both"]),
+    group_key: z.string().nullable().optional(),
 });
 
 export const questionScaleSchema = z.object({
@@ -51,6 +56,12 @@ export const questionScaleSchema = z.object({
     options: z.array(scaleOptionSchema),
 });
 
+export const questionDisplayConditionSchema = z.object({
+    question_key: z.string().min(1),
+    response_key: z.string().min(1).default("quantity"),
+    any_of_option_keys: z.array(z.string()).default([]),
+});
+
 export const instrumentQuestionSchema = z.object({
     question_key: z.string().min(1),
     mode: questionModeSchema,
@@ -58,7 +69,11 @@ export const instrumentQuestionSchema = z.object({
     domains: z.array(z.string()),
     section_key: z.string().min(1),
     prompt: z.string().min(1),
-    scales: z.array(questionScaleSchema),
+    question_type: questionTypeSchema.default("scaled"),
+    scales: z.array(questionScaleSchema).default([]),
+    options: z.array(choiceOptionSchema).default([]),
+    required: z.boolean().default(true),
+    display_if: questionDisplayConditionSchema.nullable().optional(),
 });
 
 export const instrumentSectionSchema = z.object({
@@ -106,17 +121,29 @@ export const auditMetaSchema = z.object({
 });
 
 export const preAuditValuesSchema = z.object({
+    place_size: z.string().nullable(),
+    current_users_0_5: z.string().nullable(),
+    current_users_6_12: z.string().nullable(),
+    current_users_13_17: z.string().nullable(),
+    current_users_18_plus: z.string().nullable(),
+    playspace_busyness: z.string().nullable(),
     season: z.string().nullable(),
     weather_conditions: z.array(z.string()),
-    users_present: z.array(z.string()),
-    user_count: z.string().nullable(),
-    age_groups: z.array(z.string()),
-    place_size: z.string().nullable(),
+    wind_conditions: z.string().nullable(),
 });
+
+export const questionResponseValueSchema = z.union([
+    z.string(),
+    z.array(z.string()),
+    z.record(z.string(), z.string()),
+    z.null(),
+]);
+
+export const questionResponsePayloadSchema = z.record(z.string(), questionResponseValueSchema);
 
 export const auditSectionStateSchema = z.object({
     section_key: z.string().min(1),
-    responses: z.record(z.string(), z.record(z.string(), z.string())),
+    responses: z.record(z.string(), questionResponsePayloadSchema),
     note: z.string().nullable(),
 });
 
@@ -137,18 +164,31 @@ export const auditScoresSchema = z.object({
     by_domain: z.record(z.string(), auditScoreTotalsSchema),
 });
 
-export const auditSessionSchema = z.object({
+export const auditAggregateSchema = z.object({
+    schema_version: z.number().int().positive(),
+    revision: z.number().int().nonnegative(),
+    meta: auditMetaSchema,
+    pre_audit: preAuditValuesSchema,
+    sections: z.record(z.string(), auditSectionStateSchema),
+});
+
+const auditSessionPayloadSchema = z.object({
     audit_id: z.uuid(),
     audit_code: z.string().min(1),
+    project_id: z.uuid(),
+    project_name: z.string().min(1),
     place_id: z.uuid(),
     place_name: z.string().min(1),
     place_type: z.string().nullable(),
-    assignment_roles: assignmentRolesSchema,
     allowed_execution_modes: z.array(executionModeSchema),
     selected_execution_mode: executionModeSchema.nullable(),
     status: auditStatusSchema,
     instrument_key: z.string().min(1),
     instrument_version: z.string().min(1),
+    instrument: playspaceInstrumentSchema.optional().default(BASE_PLAYSPACE_INSTRUMENT),
+    schema_version: z.number().int().positive().optional().default(1),
+    revision: z.number().int().nonnegative().optional().default(0),
+    aggregate: auditAggregateSchema.optional(),
     started_at: z.iso.datetime(),
     submitted_at: z.iso.datetime().nullable(),
     total_minutes: z.number().int().nullable(),
@@ -159,21 +199,42 @@ export const auditSessionSchema = z.object({
     progress: auditProgressSchema,
 });
 
+export const auditSessionSchema = auditSessionPayloadSchema.transform((value) => {
+    const aggregate = value.aggregate ?? {
+        schema_version: value.schema_version,
+        revision: value.revision,
+        meta: value.meta,
+        pre_audit: value.pre_audit,
+        sections: value.sections,
+    };
+
+    return {
+        ...value,
+        schema_version: aggregate.schema_version,
+        revision: aggregate.revision,
+        aggregate,
+    };
+});
+
 export const preAuditDraftSchema = z.object({
+    place_size: z.string().nullable().optional(),
+    current_users_0_5: z.string().nullable().optional(),
+    current_users_6_12: z.string().nullable().optional(),
+    current_users_13_17: z.string().nullable().optional(),
+    current_users_18_plus: z.string().nullable().optional(),
+    playspace_busyness: z.string().nullable().optional(),
     season: z.string().nullable().optional(),
     weather_conditions: z.array(z.string()).default([]),
-    users_present: z.array(z.string()).default([]),
-    user_count: z.string().nullable().optional(),
-    age_groups: z.array(z.string()).default([]),
-    place_size: z.string().nullable().optional(),
+    wind_conditions: z.string().nullable().optional(),
 });
 
 export const sectionDraftPatchSchema = z.object({
-    responses: z.record(z.string(), z.record(z.string(), z.string())).default({}),
+    responses: z.record(z.string(), questionResponsePayloadSchema).default({}),
     note: z.string().nullable().optional(),
 });
 
-export const auditDraftPatchSchema = z.object({
+export const auditAggregateWriteSchema = z.object({
+    schema_version: z.number().int().positive().optional(),
     meta: z
         .object({
             execution_mode: executionModeSchema.nullable().optional(),
@@ -182,6 +243,28 @@ export const auditDraftPatchSchema = z.object({
         .optional(),
     pre_audit: preAuditDraftSchema.nullable().optional(),
     sections: z.record(z.string(), sectionDraftPatchSchema).default({}),
+});
+
+export const auditDraftPatchSchema = z.object({
+    expected_revision: z.number().int().nonnegative().optional(),
+    aggregate: auditAggregateWriteSchema.nullable().optional(),
+    meta: z
+        .object({
+            execution_mode: executionModeSchema.nullable().optional(),
+        })
+        .nullable()
+        .optional(),
+    pre_audit: preAuditDraftSchema.nullable().optional(),
+    sections: z.record(z.string(), sectionDraftPatchSchema).default({}),
+});
+
+export const auditDraftSaveSchema = z.object({
+    audit_id: z.uuid(),
+    status: auditStatusSchema,
+    schema_version: z.number().int().positive(),
+    revision: z.number().int().nonnegative(),
+    draft_progress_percent: z.number().nullable(),
+    saved_at: z.iso.datetime(),
 });
 
 const dirtySectionVersionMapSchema = z.record(z.string(), z.number().int().nonnegative());
@@ -197,30 +280,85 @@ const dirtyPreAuditSchema = z
     .union([z.array(z.string()), z.record(z.string(), z.number().int().nonnegative())])
     .transform<DirtyPreAudit>((value) => normalizeDirtyPreAudit(value));
 
+const dirtyMetaSchema = z.record(z.string(), z.number().int().nonnegative());
+
+export const auditSyncPhaseSchema = z.enum([
+    "idle",
+    "dirty",
+    "saving",
+    "conflict",
+    "submitting",
+    "resolving_submit",
+    "submitted",
+    "blocked_network",
+    "blocked_auth",
+    "blocked_validation",
+    "blocked_server",
+]);
+
+export const auditSyncStateSchema = z.object({
+    phase: auditSyncPhaseSchema,
+    detail: z.string().nullable().default(null),
+    updated_at: z.iso.datetime(),
+});
+
+export const auditSyncStateByAuditIdSchema = z.record(z.string(), auditSyncStateSchema);
+
 export const persistedAuditStateSchema = z.object({
     storage_user_id: z.string().min(1).nullable().default(null),
     instrument: playspaceInstrumentSchema.nullable(),
     sessions_by_audit_id: z.record(z.string(), auditSessionSchema),
-    sessions_by_place_id: z.record(z.string(), auditSessionSchema),
+    sessions_by_pair_key: z.record(z.string(), auditSessionSchema),
     dirty_sections: dirtySectionsSchema.default({}),
     dirty_pre_audit: dirtyPreAuditSchema.default({}),
+    dirty_meta: dirtyMetaSchema.default({}),
+    sync_state_by_audit_id: auditSyncStateByAuditIdSchema.default({}),
     local_change_counter: z.number().int().nonnegative().default(0),
     last_successful_sync_at: z.string().nullable().default(null),
 });
 
+/**
+ * Generic TypeScript shape for paginated API responses.
+ */
+export interface PaginatedResponse<TItem> {
+    items: TItem[];
+    total_count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
+
+/**
+ * Create a runtime schema for paginated API responses that wrap data in `items`.
+ *
+ * @param itemSchema Runtime schema for one item in the collection.
+ * @returns Runtime schema for the paginated response envelope.
+ */
+export const createPaginatedResponseSchema = <TItemSchema extends z.ZodType>(
+    itemSchema: TItemSchema,
+) =>
+    z.object({
+        items: z.array(itemSchema),
+        total_count: z.number().int().nonnegative(),
+        page: z.number().int().positive(),
+        page_size: z.number().int().positive(),
+        total_pages: z.number().int().positive(),
+    });
+
 export type ExecutionMode = z.infer<typeof executionModeSchema>;
-export type AssignmentRole = z.infer<typeof assignmentRoleSchema>;
-export type AssignmentRoles = z.infer<typeof assignmentRolesSchema>;
 export type AuditStatus = z.infer<typeof auditStatusSchema>;
 export type QuestionMode = z.infer<typeof questionModeSchema>;
 export type ConstructKey = z.infer<typeof constructKeySchema>;
 export type ScaleKey = z.infer<typeof scaleKeySchema>;
 export type PreAuditInputType = z.infer<typeof preAuditInputTypeSchema>;
+export type PreAuditPageKey = z.infer<typeof preAuditPageKeySchema>;
+export type QuestionType = z.infer<typeof questionTypeSchema>;
 export type ChoiceOption = z.infer<typeof choiceOptionSchema>;
 export type ScaleOption = z.infer<typeof scaleOptionSchema>;
 export type ScaleDefinition = z.infer<typeof scaleDefinitionSchema>;
 export type PreAuditQuestion = z.infer<typeof preAuditQuestionSchema>;
 export type QuestionScale = z.infer<typeof questionScaleSchema>;
+export type QuestionDisplayCondition = z.infer<typeof questionDisplayConditionSchema>;
 export type InstrumentQuestion = z.infer<typeof instrumentQuestionSchema>;
 export type InstrumentSection = z.infer<typeof instrumentSectionSchema>;
 export type PlayspaceInstrument = z.infer<typeof playspaceInstrumentSchema>;
@@ -228,13 +366,21 @@ export type AuditSectionProgress = z.infer<typeof auditSectionProgressSchema>;
 export type AuditProgress = z.infer<typeof auditProgressSchema>;
 export type AuditMeta = z.infer<typeof auditMetaSchema>;
 export type AuditPreAuditValues = z.infer<typeof preAuditValuesSchema>;
+export type QuestionResponseValue = z.infer<typeof questionResponseValueSchema>;
+export type QuestionResponsePayload = z.infer<typeof questionResponsePayloadSchema>;
 export type AuditSectionState = z.infer<typeof auditSectionStateSchema>;
 export type AuditScoreTotals = z.infer<typeof auditScoreTotalsSchema>;
 export type AuditScores = z.infer<typeof auditScoresSchema>;
+export type AuditAggregate = z.infer<typeof auditAggregateSchema>;
 export type AuditSession = z.infer<typeof auditSessionSchema>;
 export type PreAuditDraft = z.infer<typeof preAuditDraftSchema>;
 export type SectionDraftPatch = z.infer<typeof sectionDraftPatchSchema>;
+export type AuditAggregateWrite = z.infer<typeof auditAggregateWriteSchema>;
 export type AuditDraftPatch = z.infer<typeof auditDraftPatchSchema>;
+export type AuditDraftSave = z.infer<typeof auditDraftSaveSchema>;
+export type AuditSyncPhase = z.infer<typeof auditSyncPhaseSchema>;
+export type AuditSyncState = z.infer<typeof auditSyncStateSchema>;
+export type AuditSyncStateByAuditId = z.infer<typeof auditSyncStateByAuditIdSchema>;
 export type PersistedAuditState = z.infer<typeof persistedAuditStateSchema>;
 
 /**

@@ -1,9 +1,15 @@
-import type { AssignmentRoles, ExecutionMode } from "lib/audit/types";
+import type { ExecutionMode } from "lib/audit/types";
 import type { TFunction } from "i18next";
 
 /** Status labels used for place cards and summaries. */
 export type LocalizedPlaceStatus = "not_started" | "in_progress" | "submitted";
 type RelativeTimeUnit = "minute" | "hour" | "day";
+
+const EXECUTION_MODE_SHORT_FALLBACKS: Record<ExecutionMode, string> = {
+    audit: "Onsite only",
+    survey: "Survey only",
+    both: "Survey & onsite",
+};
 
 const LANGUAGE_LOCALE_MAP = {
     en: "en-NZ",
@@ -142,26 +148,6 @@ export function getPlaceStatusLabel(status: LocalizedPlaceStatus, t: TFunction):
 }
 
 /**
- * Format assignment roles for the execute overview.
- *
- * @param roles Roles granted for the current audit assignment.
- * @param t Translation function.
- * @returns Human-readable translated role label.
- */
-export function getAssignmentRolesLabel(roles: AssignmentRoles, t: TFunction): string {
-    const hasAuditor = roles.includes("auditor");
-    const hasPlaceAdmin = roles.includes("place_admin");
-
-    if (hasAuditor && hasPlaceAdmin) {
-        return t("common:roles.auditorAndPlaceAdmin");
-    }
-    if (hasPlaceAdmin) {
-        return t("common:roles.placeAdmin");
-    }
-    return t("common:roles.auditor");
-}
-
-/**
  * Format a short translated execution mode label for headers.
  *
  * @param mode Execution mode stored on the audit session.
@@ -172,7 +158,15 @@ export function getExecutionModeShortLabel(mode: ExecutionMode | null, t: TFunct
     if (mode === null) {
         return "";
     }
-    return t(`audit:modeShort.${mode}`);
+
+    const translationKey = `audit:modeShort.${mode}`;
+    const translatedLabel = t(translationKey);
+
+    if (translatedLabel === translationKey || translatedLabel.trim().length === 0) {
+        return EXECUTION_MODE_SHORT_FALLBACKS[mode];
+    }
+
+    return translatedLabel;
 }
 
 /**

@@ -7,11 +7,34 @@
         "resume": "Resume",
         "retry": "Retry",
         "seeAll": "See all",
-        "signOut": "Sign out"
+        "signOut": "Sign out",
+        "viewDetails": "View details",
+        "viewReport": "View report"
     },
+    "assignedPlacesResponseShapeIsInvalid": "Assigned places response shape is invalid.",
+    "auditorProfileResponseShapeIsInvalid": "Auditor profile response shape is invalid.",
+    "auditSessionResponseShapeIsInvalid": "Audit session response shape is invalid.",
+    "authenticationRequestFailed": "Authentication request failed.",
+    "authenticationResponseShapeIsInvalid": "Authentication response shape is invalid.",
+    "authenticationServiceReturnedInvalidJson": "Authentication service returned invalid JSON.",
+    "dontWorryWeveGotYourData": "Don't worry, we've got your data.",
+    "draftPatchIsInvalid": "Draft patch is invalid.",
+    "executionModeIsInvalid": "Execution mode is invalid.",
+    "filters": {
+        "active": "Active",
+        "all": "All",
+        "complete": "Complete",
+        "incomplete": "Incomplete",
+        "notScored": "Not scored",
+        "scored": "Scored",
+        "submitted": "Submitted"
+    },
+    "networkRequestFailed": "Network request failed.",
     "place": {
         "assignedPlace": "Assigned place"
     },
+    "playspaceAuditRequestFailed": "Playspace audit request failed.",
+    "playspaceAuditServiceReturnedInvalidJson": "Playspace audit service returned invalid JSON.",
     "roles": {
         "auditor": "Auditor",
         "auditorAndPlaceAdmin": "Auditor and Place Admin",
@@ -25,6 +48,12 @@
         "off": "OFF",
         "on": "ON",
         "submitted": "Submitted"
+    },
+    "sort": {
+        "name": "Name",
+        "progress": "Progress",
+        "recent": "Recent",
+        "score": "Score"
     },
     "tabs": {
         "execute": "Execute",
@@ -41,5 +70,14 @@
         "justNow": "Just now",
         "minuteAgo_one": "1 min ago",
         "minuteAgo_other": "{{count}} min ago"
-    }
+    },
+    "toast": {
+        "demo": "Demo",
+        "hide": "Hide",
+        "show": "Show",
+        "success": "Successfully saved!"
+    },
+    "unableToLoadPlaces": "Unable to load places.",
+    "unableToReachAuthenticationService": "Unable to reach authentication service.",
+    "unableToReachPlayspaceAuditService": "Unable to reach playspace audit service."
 }

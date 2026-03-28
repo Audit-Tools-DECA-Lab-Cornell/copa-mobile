@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { usePreferencesStore, type ResolvedTheme } from "stores/preferences-store";
+import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 
 /**
  * Place workflow status used for status pill rendering.
@@ -50,6 +51,7 @@ interface ColorPalette {
     readonly dangerSoft: string;
     readonly infoSoft: string;
     readonly violetSoft: string;
+    readonly placeholderColor: string;
 }
 
 interface ShadowPalette {
@@ -58,29 +60,30 @@ interface ShadowPalette {
 }
 
 const DARK_COLORS = {
-    background: "#1C1917",
+    background: "#161311",
     foreground: "#E7DED3",
     primary: "#C58A5C",
     primaryForeground: "#FFFFFF",
     surface: "#24201D",
-    surfaceMuted: "#2B2622",
-    mutedSurface: "#312B27",
-    input: "#211D1A",
-    border: "#3A3430",
-    mutedForeground: "#AFA497",
-    secondaryForeground: "#D2C7BB",
+    surfaceMuted: "#2E2824",
+    mutedSurface: "#352E2A",
+    input: "#201C19",
+    border: "#5A514A",
+    mutedForeground: "#B8AEA3",
+    secondaryForeground: "#DED3C6",
     success: "#6F9A7F",
     warning: "#B99A5A",
     danger: "#C98472",
     info: "#7B90B8",
     violet: "#9B86B2",
-    overlay: "rgba(28, 25, 23, 0.9)",
-    primarySoft: "rgba(197, 138, 92, 0.1)",
-    successSoft: "rgba(111, 154, 127, 0.12)",
-    warningSoft: "rgba(185, 154, 90, 0.12)",
-    dangerSoft: "rgba(201, 132, 114, 0.12)",
-    infoSoft: "rgba(123, 144, 184, 0.12)",
-    violetSoft: "rgba(155, 134, 178, 0.12)",
+    overlay: "rgba(22, 19, 17, 0.92)",
+    primarySoft: "rgba(197, 138, 92, 0.14)",
+    successSoft: "rgba(111, 154, 127, 0.16)",
+    warningSoft: "rgba(185, 154, 90, 0.16)",
+    dangerSoft: "rgba(201, 132, 114, 0.18)",
+    infoSoft: "rgba(123, 144, 184, 0.16)",
+    violetSoft: "rgba(155, 134, 178, 0.16)",
+    placeholderColor: "#B8AEA3",
 } as const satisfies ColorPalette;
 
 const DARK_SHADOWS = {
@@ -89,29 +92,57 @@ const DARK_SHADOWS = {
 } as const satisfies ShadowPalette;
 
 const LIGHT_COLORS = {
-    background: "#FAF6F0",
-    foreground: "#2C241E",
-    primary: "#B06A38",
+    background: "#FDFAF7",
+    foreground: "#2A231E",
+    primary: "#A66334",
     primaryForeground: "#FFFFFF",
-    surface: "#F3EEE8",
-    surfaceMuted: "#EDE7E0",
-    mutedSurface: "#E6E0D8",
-    input: "#FEFCF9",
-    border: "#D1C4B6",
-    mutedForeground: "#6E6258",
-    secondaryForeground: "#4A403A",
+    surface: "#FFFCF8",
+    surfaceMuted: "#F4EEE7",
+    mutedSurface: "#E9E2DB",
+    input: "#FFFFFF",
+    border: "#C8BCB0",
+    mutedForeground: "#645A52",
+    secondaryForeground: "#423831",
     success: "#3D6B4F",
     warning: "#9A7A3F",
     danger: "#B54A38",
     info: "#4A619A",
     violet: "#6B5A8A",
-    overlay: "rgba(255, 255, 255, 0.5)",
-    primarySoft: "rgba(176, 106, 56, 0.12)",
+    overlay: "rgba(255, 255, 255, 0.56)",
+    primarySoft: "rgba(166, 99, 52, 0.12)",
     successSoft: "rgba(61, 107, 79, 0.12)",
     warningSoft: "rgba(154, 122, 63, 0.12)",
     dangerSoft: "rgba(181, 74, 56, 0.12)",
     infoSoft: "rgba(74, 97, 154, 0.12)",
     violetSoft: "rgba(107, 90, 138, 0.12)",
+    placeholderColor: "#645A52",
+} as const satisfies ColorPalette;
+
+const LIGHT_FIELD_COLORS = {
+    background: "#FAFAF8",
+    foreground: "#1F1A16",
+    primary: "#965424",
+    primaryForeground: "#FFFFFF",
+    surface: "#FFFFFF",
+    surfaceMuted: "#F2F3EF",
+    mutedSurface: "#EAEBE6",
+    input: "#FFFFFF",
+    border: "#91857A",
+    mutedForeground: "#413A34",
+    secondaryForeground: "#241E19",
+    success: "#28573A",
+    warning: "#705700",
+    danger: "#96392B",
+    info: "#234A83",
+    violet: "#5A467D",
+    overlay: "rgba(255, 255, 255, 0.62)",
+    primarySoft: "rgba(150, 84, 36, 0.16)",
+    successSoft: "rgba(40, 87, 58, 0.16)",
+    warningSoft: "rgba(112, 87, 0, 0.16)",
+    dangerSoft: "rgba(150, 57, 43, 0.16)",
+    infoSoft: "rgba(35, 74, 131, 0.16)",
+    violetSoft: "rgba(90, 70, 125, 0.16)",
+    placeholderColor: "#413A34",
 } as const satisfies ColorPalette;
 
 const LIGHT_SHADOWS = {
@@ -143,6 +174,7 @@ const DARK_HIGH_CONTRAST_COLORS = {
     dangerSoft: "rgba(242, 163, 146, 0.2)",
     infoSoft: "rgba(168, 194, 245, 0.2)",
     violetSoft: "rgba(208, 184, 244, 0.2)",
+    placeholderColor: "#8E8E8E",
 } as const satisfies ColorPalette;
 
 const LIGHT_HIGH_CONTRAST_COLORS = {
@@ -169,6 +201,7 @@ const LIGHT_HIGH_CONTRAST_COLORS = {
     dangerSoft: "rgba(142, 35, 26, 0.16)",
     infoSoft: "rgba(22, 58, 112, 0.16)",
     violetSoft: "rgba(77, 58, 112, 0.16)",
+    placeholderColor: "#D1C4B6",
 } as const satisfies ColorPalette;
 
 interface FontTokenScale {
@@ -208,6 +241,7 @@ type ActiveFontTokenScale = typeof DEFAULT_FONT_TOKENS | typeof DYSLEXIC_FONT_TO
 type ActiveColorPalette =
     | typeof DARK_COLORS
     | typeof LIGHT_COLORS
+    | typeof LIGHT_FIELD_COLORS
     | typeof DARK_HIGH_CONTRAST_COLORS
     | typeof LIGHT_HIGH_CONTRAST_COLORS;
 
@@ -234,6 +268,7 @@ const BASE_TYPOGRAPHY = {
     metricSm: createTypographyToken(22, 26),
     metricMd: createTypographyToken(24, 28),
     metricLg: createTypographyToken(26, 30),
+    displaySm: createTypographyToken(28, 32),
     displayMd: createTypographyToken(30, 34),
     displayLg: createTypographyToken(32, 36),
 } as const;
@@ -265,6 +300,7 @@ interface DesignSystemOptions {
     readonly fontScale: number;
     readonly highContrast: boolean;
     readonly dyslexicFont: boolean;
+    readonly fieldMode: boolean;
 }
 
 /** Complete theme token set for the active UI configuration. */
@@ -322,10 +358,19 @@ function scaleTypography(scale: number): TypographyScale {
  *
  * @param theme Resolved app theme.
  * @param highContrast Whether high-contrast mode is enabled.
+ * @param prefersFieldPalette Whether the outdoor field palette should be used.
  * @returns Active semantic color palette.
  */
-function getColorPalette(theme: ResolvedTheme, highContrast: boolean): ActiveColorPalette {
+function getColorPalette(
+    theme: ResolvedTheme,
+    highContrast: boolean,
+    prefersFieldPalette: boolean,
+): ActiveColorPalette {
     if (theme === "light") {
+        if (prefersFieldPalette) {
+            return LIGHT_FIELD_COLORS;
+        }
+
         return highContrast ? LIGHT_HIGH_CONTRAST_COLORS : LIGHT_COLORS;
     }
 
@@ -342,8 +387,13 @@ export function getDesignSystem(
     theme: ResolvedTheme,
     options: Partial<DesignSystemOptions> = {},
 ): DesignSystemTheme {
-    const fontScale = clampDesignFontScale(options.fontScale ?? 1);
-    const highContrast = options.highContrast ?? false;
+    const fieldModePresentation = resolveFieldModePresentation({
+        fieldMode: options.fieldMode ?? false,
+        fontScale: options.fontScale ?? 1,
+        highContrast: options.highContrast ?? false,
+        theme,
+    });
+    const fontScale = clampDesignFontScale(fieldModePresentation.effectiveFontScale);
     const dyslexicFont = options.dyslexicFont ?? false;
 
     return {
@@ -352,7 +402,11 @@ export function getDesignSystem(
         typography: scaleTypography(fontScale),
         radii: RADII,
         spacing: SPACING,
-        colors: getColorPalette(theme, highContrast),
+        colors: getColorPalette(
+            theme,
+            fieldModePresentation.useHighContrastPalette,
+            fieldModePresentation.prefersFieldPalette,
+        ),
         shadows: theme === "light" ? LIGHT_SHADOWS : DARK_SHADOWS,
     };
 }
@@ -368,14 +422,16 @@ export function useDesignSystem(): DesignSystemTheme {
     const fontScale = usePreferencesStore((state) => state.fontScale);
     const highContrast = usePreferencesStore((state) => state.highContrast);
     const dyslexicFont = usePreferencesStore((state) => state.dyslexicFont);
+    const fieldMode = usePreferencesStore((state) => state.fieldMode);
 
     return useMemo(() => {
         return getDesignSystem(resolvedTheme, {
             fontScale,
             highContrast,
             dyslexicFont,
+            fieldMode,
         });
-    }, [dyslexicFont, fontScale, highContrast, resolvedTheme]);
+    }, [dyslexicFont, fieldMode, fontScale, highContrast, resolvedTheme]);
 }
 
 /**

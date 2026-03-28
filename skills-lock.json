@@ -1,0 +1,45 @@
+{
+    "version": 1,
+    "skills": {
+        "expo-best-practices": {
+            "source": "ofershap/expo-best-practices",
+            "sourceType": "github",
+            "computedHash": "5c9de354aec265b72ae34809e1c2d2d722a6e12b9e937e24ec869f345cec3507"
+        },
+        "expo-react-native-performance": {
+            "source": "pproenca/dot-skills",
+            "sourceType": "github",
+            "computedHash": "6dab08ce00cfd8e0e8e978b50688ab03722fb2c7a1f561dc55eb7f255361ebb8"
+        },
+        "native-data-fetching": {
+            "source": "expo/skills",
+            "sourceType": "github",
+            "computedHash": "6c14e4efb34a9c4759e8b959f82dec328f87dd89a022957c6737086984b9b106"
+        },
+        "offline-sync-designer": {
+            "source": "fatih-developer/fth-skills",
+            "sourceType": "github",
+            "computedHash": "188f6e212dd815acdd5a514e9d8f1c70fe7a700a8e4effa0029c476656b7577a"
+        },
+        "react-native-architecture": {
+            "source": "wshobson/agents",
+            "sourceType": "github",
+            "computedHash": "f9a0f18d522b307981b6f188b8501c9c9326adeb8aca5b46b679731dc69681ae"
+        },
+        "tamagui": {
+            "source": "tamagui/tamagui",
+            "sourceType": "github",
+            "computedHash": "c16ef17b45cf188289a72600898110f6245c295c41cf5493b8ead3fd45027544"
+        },
+        "tanstack-query-best-practices": {
+            "source": "deckardger/tanstack-agent-skills",
+            "sourceType": "github",
+            "computedHash": "21d2e8b7468a81d772b6527ad8ca178cc2f3f08af777bb9061333013ee88a0c9"
+        },
+        "tanstack-router-best-practices": {
+            "source": "deckardger/tanstack-agent-skills",
+            "sourceType": "github",
+            "computedHash": "65764bc7b90e47f6023cb7f89b3af93eaaafc517754f10b9382e184d4646a77d"
+        }
+    }
+}

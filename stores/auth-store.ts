@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { AuthApiError, loginWithPassword, signupWithPassword } from "lib/auth/api";
 import { clearAuthSession, readAuthSession, saveAuthSession } from "lib/auth/storage";
-import i18n from "lib/i18n";
+import { t } from "lib/i18n";
 import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -183,19 +183,19 @@ function toAuthErrorMessage(error: unknown): string {
         }
 
         if (error.statusCode === 0) {
-            return i18n.t("auth:errors.serviceUnavailable");
+            return t("auth:errors.serviceUnavailable", { ns: "auth" });
         }
 
         if (error.statusCode === 403) {
-            return i18n.t("auth:errors.assignedParticipantOnly");
+            return t("auth:errors.assignedParticipantOnly", { ns: "auth" });
         }
 
-        return i18n.t("auth:errors.authFailed");
+        return t("auth:errors.authFailed", { ns: "auth" });
     }
 
     if (error instanceof Error && error.message.trim().length > 0) {
         return error.message;
     }
 
-    return i18n.t("auth:errors.unexpected");
+    return t("auth:errors.unexpected", { ns: "auth" });
 }

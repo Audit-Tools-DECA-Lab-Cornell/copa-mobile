@@ -1,0 +1,17 @@
+---
+description: Keep settings, theme, accessibility, and i18n global, mobile-first, and pragmatic.
+globs: ["app/**/*.tsx", "components/**/*.tsx", "lib/design-system.ts", "lib/preferences/**/*.ts", "stores/preferences-store.ts", "lib/i18n/**/*.ts", "lib/i18n/**/*.json"]
+alwaysApply: false
+---
+
+# Settings, Theme, Accessibility, and i18n
+
+- Theme changes must apply across the full app, not just the settings screen.
+- Default theme and language to device preferences on first run, then persist user overrides locally on-device.
+- Keep settings and profile data read-only until authentication, verification, and account-type-aware edit flows are designed for both auditor and manager users.
+- Avoid browser-centric wording in mobile comments and docs; describe storage as device-local or app-local.
+- Accessibility work should prioritize real field conditions: high contrast, readable typography, larger text, and low-friction controls in bright or dark environments.
+- Add specialized typography options only when they integrate cleanly with the global design system and remain readable across screens.
+- Use i18n for user-facing chrome, settings copy, and status/error messaging; avoid hardcoding new strings directly in screens.
+- Keep theme and accessibility state centralized in the design system and preferences store rather than scattered screen overrides.
+- Add controls only when they are understandable, global, and supportable long-term.

@@ -2,6 +2,10 @@ import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useDesignSystem } from "lib/design-system";
 
+export const unstable_settings = {
+    initialRouteName: "index",
+};
+
 /**
  * Nested execute stack for playspace audit routes inside the main tab bar.
  *
@@ -15,6 +19,10 @@ export default function ExecuteLayout() {
 
     const themedHeaderOptions = {
         headerShown: true,
+        headerBackButtonMenuEnabled: true,
+        headerBackButtonDisplayMode: "minimal",
+        headerBackVisible: true,
+        headerBlurEffect: "light",
         headerStyle: { backgroundColor: ds.colors.surface },
         headerTintColor: ds.colors.primary,
         headerTitleStyle: {
@@ -36,24 +44,11 @@ export default function ExecuteLayout() {
                 }}
             />
             <Stack.Screen
-                name="[placeId]/index"
-                options={{
-                    ...themedHeaderOptions,
-                    title: t("stack.auditStart"),
-                }}
-            />
-            <Stack.Screen
-                name="[placeId]/pre-audit"
-                options={{
-                    ...themedHeaderOptions,
-                    title: t("stack.preAudit"),
-                }}
-            />
-            <Stack.Screen
                 name="[placeId]/section/[sectionKey]"
                 options={{
                     ...themedHeaderOptions,
                     title: t("stack.section"),
+                    headerShown: true,
                 }}
             />
         </Stack>

@@ -12,7 +12,8 @@ import type {
     ScaleKey,
     ScaleOption,
 } from "lib/audit/types";
-import { PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { usePlayspaceAuditStore } from "stores/audit-store";
 
 import { enInstrumentTranslations } from "./locales/en/instrument";
 import { deInstrumentTranslations } from "./locales/de/instrument";
@@ -401,9 +402,10 @@ export function localizeInstrument(
 export function useLocalizedInstrument(): PlayspaceInstrument {
     const { i18n } = useTranslation(["instrument"]);
     const activeLanguage = i18n.resolvedLanguage ?? i18n.language;
+    const baseInstrument = usePlayspaceAuditStore((state) => state.instrument);
 
     return useMemo(() => {
         const translations = getInstrumentTranslations(activeLanguage);
-        return localizeInstrument(PLAYSPACE_INSTRUMENT, translations);
-    }, [activeLanguage]);
+        return localizeInstrument(baseInstrument ?? BASE_PLAYSPACE_INSTRUMENT, translations);
+    }, [activeLanguage, baseInstrument]);
 }

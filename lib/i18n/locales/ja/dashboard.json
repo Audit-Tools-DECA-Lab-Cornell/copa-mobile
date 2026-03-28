@@ -9,7 +9,11 @@
     "mandatoryCompletion": "必須完了",
     "offlineReadyDescription": "割り当てられた監査データはローカルに保存され、現場での使用準備が整っています。",
     "offlineReadyTitle": "オフライン対応完了",
-    "priorityProgress": "{{percent}}% 進捗 - {{code}}",
+    "priorityProgress": {
+        "inProgress": "{{percent}}% 完了 · 更新 {{updated}}",
+        "notStarted": "未開始 · すぐに開始できます",
+        "submitted": "提出済み · 更新 {{updated}}"
+    },
     "priorityTask": "優先タスク",
     "readinessLabel": "{{percent}}% 準備完了",
     "title": "現場ダッシュボード",

@@ -1,0 +1,17 @@
+---
+description: Build Playspace mobile for field auditors: offline-safe, explicit, and simple.
+alwaysApply: true
+---
+
+# Field Auditor Mobile Core
+
+- Optimize for long offline sessions in the field. Audit writes should be local-first, durable on-device, and synced in the background when connectivity returns.
+- Never let navigation between sections, pre-audit, or overview screens drop draft answers, notes, or pre-audit data.
+- Surface real sync and access states. Show explicit offline, retry, and `403` states instead of silent loading loops.
+- Keep execute navigation aligned with screen hierarchy; use `push`, `replace`, and `back` intentionally to avoid deep back-stack noise.
+- Keep headers minimal but informative inside execute flows: preserve back affordances and identify the current place, mode, or section.
+- Keep state ownership simple. Prefer store-owned audit data over repeated screen-local copies or extra abstraction layers.
+- Treat the backend API contract as the source of truth and keep mobile field names aligned with current backend responses.
+- Prefer small shared helpers and focused modules over repeated branching across screens.
+- Preserve export and reporting usefulness by keeping stored response structures explicit and stable.
+- Use comments sparingly; clarity should come from naming and component boundaries.

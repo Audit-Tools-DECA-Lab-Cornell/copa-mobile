@@ -35,7 +35,10 @@
             "favicon": "./assets/images/favicon.png"
         },
         "plugins": [
+            "./plugins/withFmtFix",
+            "./plugins/withExpoProjectRootFix",
             "expo-router",
+            "react-native-maps",
             "expo-font",
             [
                 "expo-build-properties",
@@ -55,7 +58,8 @@
             ],
             "expo-web-browser",
             "expo-secure-store",
-            "expo-background-task"
+            "expo-background-task",
+            "expo-sharing"
         ],
         "experiments": {
             "typedRoutes": true

@@ -2,8 +2,8 @@
     "autoValues": {
         "calculatedOnSubmit": "Wird bei der finalen Einreichung berechnet",
         "generatedOnSubmit": "Wird bei der finalen Einreichung erstellt",
-        "minutes_one": "TODO: autoValues.minutes_one",
-        "minutes_other": "TODO: autoValues.minutes_other"
+        "minutes_one": "",
+        "minutes_other": ""
     },
     "errors": {
         "accessDenied403": "Zugriff verweigert (403): Sie duerfen auf diesen Ort oder dieses Audit nicht zugreifen.",
@@ -17,24 +17,47 @@
         "submitNeedsUploadedDraft": "Stellen Sie die Verbindung wieder her und warten Sie, bis Ihre gespeicherten Aenderungen hochgeladen wurden, bevor Sie dieses Audit einreichen.",
         "syncFallback": "Die Hintergrundsynchronisierung ist fehlgeschlagen."
     },
+    "copy": {
+        "continueToSubject": "Weiter zu {{subject}}",
+        "continueToSubjectInfo": "Weiter zu den Informationen zu {{subject}}",
+        "submitSubject": "{{subject}} absenden"
+    },
     "executeLanding": {
         "continueSelectedPlace": "Ausgewaehlten Ort fortsetzen",
+        "emptyMessage": "Versuchen Sie eine andere Such- oder Filterkombination.",
+        "emptyTitle": "Keine Prüfungen gefunden",
         "openSelectedAudit": "Ausgewaehltes Audit oeffnen",
+        "searchPlaceholder": "Orte oder Projekte suchen",
         "subtitle": "Waehlen Sie einen Ort, um den abschnittsweisen Playspace-Ablauf zu starten oder fortzusetzen.",
         "title": "Audit durchfuehren"
+    },
+    "mode": "— {{mode}}",
+    "modeShort": {
+        "audit": "Nur vor Ort",
+        "both": "Umfrage und vor Ort",
+        "survey": "Nur Umfrage"
     },
     "overview": {
         "accessDeniedTitle": "Zugriff verweigert",
         "assignmentAllows": "Diese Ortszuweisung erlaubt derzeit:",
-        "auditRole": "Audit-Rolle",
+        "auditRole": "Ausführungsmodus",
+        "roleNotSelected": "Modus nicht ausgewaehlt",
         "auditUnavailableTitle": "Audit nicht verfuegbar",
         "chooseMode": "Waehlen Sie aus, welchen Teil des Instruments Sie fuer diesen Ort ausfuellen moechten.",
+        "completedCount_one": "{{count}} abgeschlossen",
+        "completedCount_other": "{{count}} abgeschlossen",
+        "incompleteCount_one": "{{count}} unvollständig",
+        "incompleteCount_other": "{{count}} unvollständig",
         "loadingDraft": "Ihr aktueller Entwurf wird geladen...",
         "placeNotFound": "Die ausgewaehlte Ortsroute ist ungueltig. Kehren Sie zum Durchfuehren-Tab zurueck und waehlen Sie erneut einen Ort.",
         "placeNotFoundTitle": "Ort nicht gefunden",
         "preamble": "Einleitung",
+        "reviewDescription": "Überprüfen Sie alle Abschnitte an einem Ort und springen Sie direkt zum nächsten unvollständigen Abschnitt zurück.",
+        "tapToExpand": "Zum Aufklappen tippen",
         "preparingAudit": "Der Playspace-Audit-Ablauf wird vorbereitet...",
         "preparingAuditTitle": "Audit wird vorbereitet",
+        "sectionEmpty": "Keine Abschnitte entsprechen dem aktuellen Filter.",
+        "sections": "Abschnitte",
         "roleFixesSubset": "Ihre Rolle legt bereits fest, welcher Teil der Fragen fuer diesen Ort sichtbar ist.",
         "syncStatus": {
             "pendingMessage": "Entwurfsaenderungen sind vorgemerkt und werden automatisch hochgeladen, sobald die App aktiv und online ist.",
@@ -42,7 +65,38 @@
             "retryTitle": "Upload pausiert",
             "syncingMessage": "Gespeicherte Aenderungen werden jetzt hochgeladen. Lassen Sie die App geoeffnet, wenn Sie direkt danach einreichen moechten.",
             "syncingTitle": "Aenderungen werden hochgeladen"
-        }
+        },
+        "viewPlaceDetails": "Ortsdetails anzeigen"
+    },
+    "place_namesuffix": "{{place_name}}{{suffix}}",
+    "setup": {
+        "continueToAuditInfo": "Weiter zu den Audit-Informationen",
+        "modeRequired": "Bitte wählen Sie vor dem Fortfahren einen Ausführungsmodus aus.",
+        "stepEyebrow": "Schritt 1 von 3",
+        "subtitle": "Sehen Sie sich an, wie das Tool funktioniert, und wählen Sie dann die Rolle aus, die am besten dazu passt, wie Sie diesen Audit abschließen werden.",
+        "roleTitle": "Ausführungsmodus",
+        "roleQuestion": "Welche Rolle haben Sie in Bezug auf diesen Playspace?",
+        "preambleTitle": "Vor dem Start",
+        "preambleSubtitle": "Der Vorspann ist jetzt länger und strukturierter und wird daher in Abschnitten angezeigt, damit der Einrichtungsablauf auf Smartphones und Tablets leichter lesbar ist."
+    },
+    "auditInfo": {
+        "auditorCodePending": "Nach Profilabfrage verfügbar",
+        "backToPreamble": "Zurück zum Vorspann",
+        "continueToSections": "Weiter zu den Abschnitten",
+        "continueToSpaceAudit": "Weiter zum Space-Audit",
+        "modeMissingTitle": "Ausführungsmodus erforderlich",
+        "modeMissingMessage": "Gehen Sie zum Vorspann zurück und wählen Sie aus, wie Sie diesen Audit abschließen, bevor Sie fortfahren.",
+        "placeLabel": "Ort",
+        "preparingMessage": "Die generierten Audit-Details und der aktuelle Einrichtungsstatus werden geladen...",
+        "preparingTitle": "Audit-Informationen werden vorbereitet",
+        "projectLabel": "Projekt",
+        "selectedModeLabel": "Ausgewählter Modus",
+        "stepEyebrow": "Schritt 2 von 3",
+        "subtitle": "Prüfen Sie die generierten Audit-Metadaten, bevor Sie mit den Einrichtungsfragen fortfahren oder direkt in den Abschnittsablauf wechseln.",
+        "summaryDescription": "Diese Details werden automatisch aus der aktuellen Auditsitzung generiert.",
+        "summaryTitle": "Audit-Zusammenfassung",
+        "title": "Audit-Informationen",
+        "unavailableTitle": "Audit-Informationen nicht verfügbar"
     },
     "preAudit": {
         "complete": "Vollstaendig",
@@ -55,6 +109,24 @@
         "subtitle": "Beantworten Sie zuerst die Kontextfragen, bevor Sie die Abschnittsseiten durchgehen.",
         "title": "Vor-Audit",
         "unavailableTitle": "Vor-Audit nicht verfuegbar"
+    },
+    "spaceAudit": {
+        "backToAuditInfo": "Zurück zu den Audit-Informationen",
+        "continueToSections": "Weiter zu den Abschnitten",
+        "intro": "Dieser Schritt wird nur angezeigt, wenn der ausgewählte Ausführungsmodus den Vor-Ort-Audit umfasst. Beantworten Sie die aktuellen Kontextfragen, bevor Sie die Abschnittsseiten öffnen.",
+        "matrixAgeColumn": "Altersgruppe",
+        "matrixHeading": "Beschreiben Sie die Personen, die sich derzeit im Playspace aufhalten",
+        "matrixQuantityColumn": "Anzahl",
+        "preparingMessage": "Die Vor-Ort-Einrichtungsfragen und alle gespeicherten Antworten werden geladen...",
+        "preparingTitle": "Space-Audit-Einrichtung wird vorbereitet",
+        "sidebarDescription": "Diese Fragen bilden den Vor-Ort-Kontext, bevor die Bewertung der Hauptabschnitte beginnt.",
+        "sidebarTitle": "Space-Audit-Einrichtung",
+        "skipForSurveyTitle": "Space-Audit nicht erforderlich",
+        "skipForSurveyMessage": "Der von Ihnen ausgewählte Ausführungsmodus umfasst keinen Vor-Ort-Audit-Schritt. Fahren Sie direkt mit den Abschnitten fort.",
+        "stepEyebrow": "Schritt 3 von 3",
+        "subtitle": "Erfassen Sie den Vor-Ort-Kontext, den nur ein Auditor direkt im Playspace beantworten kann.",
+        "title": "Space-Audit-Einrichtung",
+        "unavailableTitle": "Einrichtung der Flächenprüfung nicht verfügbar"
     },
     "resumeAudit": "Audit fortsetzen",
     "section": {
@@ -71,13 +143,33 @@
         "saveAndNext": "Speichern und weiter",
         "saveSection": "Abschnitt speichern",
         "sectionNotes": "Abschnittsnotizen",
-        "unavailableTitle": "Abschnitt nicht verfuegbar"
+        "tableIntro": "Auf Tablets werden die Fragen in einer Matrix angezeigt, damit die Aufforderung links bleibt und die verfügbaren Skalen rechts ausgerichtet sind.",
+        "table": {
+            "followUpPending": "Wählen Sie eine positive Mengenangabe, um diese Skala freizuschalten.",
+            "itemColumn": "Fragenpunkt",
+            "notAvailable": "Für diesen Punkt nicht verwendet.",
+            "scaleColumns": {
+                "challenge": "Herausforderung",
+                "diversity": "Vielfalt",
+                "quantity": "Bereitstellung / Menge",
+                "sociability": "Kontaktfreudigkeit"
+            }
+        },
+        "unavailableTitle": "Abschnitt nicht verfuegbar",
+        "uploadingShort": "Wird hochgeladen…"
     },
     "stack": {
         "auditStart": "Audit-Start",
         "execute": "Durchfuehren",
         "preAudit": "Vor-Audit",
+        "spaceAudit": "Flächenprüfung",
         "section": "Abschnitt"
+    },
+    "subjects": {
+        "audit": "Audit",
+        "auditAndSurvey": "Audit/Umfrage",
+        "survey": "Umfrage",
+        "workflow": "Workflow"
     },
     "startAudit": "Audit starten",
     "submit": "Audit einreichen",

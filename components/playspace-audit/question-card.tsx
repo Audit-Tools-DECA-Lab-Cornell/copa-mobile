@@ -1,8 +1,11 @@
 import { Fragment } from "react";
+import { TextInput } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
-import type { InstrumentQuestion, QuestionScale } from "lib/audit/types";
+import { getOptionGridItemWidth } from "lib/option-grid";
+import { useResponsiveLayout } from "lib/responsive-layout";
+import type { InstrumentQuestion, QuestionResponsePayload, QuestionScale } from "lib/audit/types";
 
 /**
  * One parsed segment of a prompt string with optional bold styling.
@@ -33,8 +36,9 @@ function parsePromptSegments(raw: string): PromptSegment[] {
 
 interface QuestionCardProps {
     readonly question: InstrumentQuestion;
-    readonly selectedAnswers: Record<string, string>;
-    readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
+    readonly selectedAnswers: QuestionResponsePayload;
+    readonly disabled: boolean;
+    readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
 
 /**
@@ -46,9 +50,11 @@ interface QuestionCardProps {
 export function QuestionCard({
     question,
     selectedAnswers,
-    onSelectAnswer,
+    disabled,
+    onChangeAnswers,
 }: Readonly<QuestionCardProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
     const quantityScale = question.scales[0];
     const selectedQuantityKey =
@@ -58,6 +64,8 @@ export function QuestionCard({
     );
     const showFollowUpScales = selectedQuantityOption?.allows_follow_up_scales === true;
     const promptSegments = parsePromptSegments(question.prompt);
+    const selectedChecklistOptionKeys = readChecklistOptionKeys(selectedAnswers);
+    const otherChecklistText = readChecklistOtherText(selectedAnswers);
 
     return (
         <YStack
@@ -65,8 +73,8 @@ export function QuestionCard({
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
-            p="$4"
-            gap="$3.5"
+            p={layout.cardPadding}
+            gap={layout.isTablet ? "$4.5" : "$3.5"}
             style={{
                 boxShadow: ds.shadows.card,
             }}
@@ -74,13 +82,31 @@ export function QuestionCard({
             <Text
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.titleSm.fontSize}
-                lineHeight={ds.typography.titleSm.lineHeight}
+                fontSize={
+                    layout.isWideTablet
+                        ? ds.typography.titleLg.fontSize
+                        : layout.isTablet
+                          ? ds.typography.titleMd.fontSize
+                          : ds.typography.titleSm.fontSize
+                }
+                lineHeight={
+                    layout.isWideTablet
+                        ? ds.typography.titleLg.lineHeight
+                        : layout.isTablet
+                          ? ds.typography.titleMd.lineHeight
+                          : ds.typography.titleSm.lineHeight
+                }
             >
                 <Text
                     color={ds.colors.secondaryForeground}
                     fontFamily={ds.fonts.bodySemiBold}
-                    fontSize={ds.typography.bodyLg.fontSize}
+                    fontSize={
+                        layout.isWideTablet
+                            ? ds.typography.bodyLg.fontSize
+                            : layout.isTablet
+                              ? ds.typography.titleSm.fontSize
+                              : ds.typography.bodyLg.fontSize
+                    }
                 >
                     {`${t("thisPlayspace")}\n`}
                 </Text>
@@ -88,7 +114,13 @@ export function QuestionCard({
                     <Fragment key={`${question.question_key}-seg-${index.toString()}`}>
                         <Text
                             fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
-                            fontSize={ds.typography.titleSm.fontSize}
+                            fontSize={
+                                layout.isWideTablet
+                                    ? ds.typography.titleLg.fontSize
+                                    : layout.isTablet
+                                      ? ds.typography.titleMd.fontSize
+                                      : ds.typography.titleSm.fontSize
+                            }
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                         >
                             {segment.text}
@@ -97,23 +129,44 @@ export function QuestionCard({
                 ))}
             </Text>
 
-            {question.scales.map((scale, scaleIndex) => {
-                if (scaleIndex > 0 && !showFollowUpScales) {
-                    return null;
-                }
+            {question.question_type === "checklist" ? (
+                <ChecklistSelector
+                    question={question}
+                    selectedOptionKeys={selectedChecklistOptionKeys}
+                    otherText={otherChecklistText}
+                    disabled={disabled}
+                    onChangeAnswers={onChangeAnswers}
+                />
+            ) : (
+                <>
+                    {question.scales.map((scale, scaleIndex) => {
+                        if (scaleIndex > 0 && !showFollowUpScales) {
+                            return null;
+                        }
 
-                return (
-                    <ScaleSelector
-                        key={`${question.question_key}.${scale.key}`}
-                        questionKey={question.question_key}
-                        scale={scale}
-                        selectedOptionKey={selectedAnswers[scale.key]}
-                        onSelectAnswer={onSelectAnswer}
-                    />
-                );
-            })}
+                        return (
+                            <ScaleSelector
+                                key={`${question.question_key}.${scale.key}`}
+                                questionKey={question.question_key}
+                                scale={scale}
+                                selectedOptionKey={
+                                    typeof selectedAnswers[scale.key] === "string"
+                                        ? (selectedAnswers[scale.key] as string)
+                                        : undefined
+                                }
+                                disabled={disabled}
+                                onChangeAnswers={onChangeAnswers}
+                                currentAnswers={selectedAnswers}
+                                question={question}
+                            />
+                        );
+                    })}
+                </>
+            )}
 
-            {question.scales.length > 1 && !showFollowUpScales ? (
+            {question.question_type === "scaled" &&
+            question.scales.length > 1 &&
+            !showFollowUpScales ? (
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -128,9 +181,12 @@ export function QuestionCard({
 
 interface ScaleSelectorProps {
     readonly questionKey: string;
+    readonly question: InstrumentQuestion;
     readonly scale: QuestionScale;
     readonly selectedOptionKey: string | undefined;
-    readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
+    readonly currentAnswers: QuestionResponsePayload;
+    readonly disabled: boolean;
+    readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
 
 /**
@@ -141,25 +197,39 @@ interface ScaleSelectorProps {
  */
 function ScaleSelector({
     questionKey,
+    question,
     scale,
     selectedOptionKey,
-    onSelectAnswer,
+    currentAnswers,
+    disabled,
+    onChangeAnswers,
 }: Readonly<ScaleSelectorProps>) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const optionWidth = getOptionGridItemWidth(
+        scale.options.length,
+        Math.max(...scale.options.map((option) => option.label.length)),
+    );
     return (
         <YStack
             rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.input}
-            p="$3"
-            gap="$2.5"
+            p={layout.isTablet ? 16 : 12}
+            gap={layout.isTablet ? "$3" : "$2.5"}
         >
             <YStack gap="$1">
                 <Text
                     color={ds.colors.primary}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleSm.fontSize}
+                    fontSize={
+                        layout.isWideTablet
+                            ? ds.typography.titleLg.fontSize
+                            : layout.isTablet
+                              ? ds.typography.titleMd.fontSize
+                              : ds.typography.titleSm.fontSize
+                    }
                     textTransform="uppercase"
                     letterSpacing={1.2}
                 >
@@ -168,7 +238,13 @@ function ScaleSelector({
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
+                    fontSize={
+                        layout.isWideTablet
+                            ? ds.typography.bodyLg.fontSize
+                            : layout.isTablet
+                              ? ds.typography.bodyMd.fontSize
+                              : ds.typography.bodySm.fontSize
+                    }
                 >
                     {scale.prompt}
                 </Paragraph>
@@ -181,21 +257,40 @@ function ScaleSelector({
                     return (
                         <Button
                             key={`${scale.key}.${option.key}`}
-                            width="48.5%"
+                            width={optionWidth}
                             rounded={ds.radii.md}
-                            height={42}
+                            height={layout.isTablet ? layout.formOptionHeight : 52}
+                            disabled={disabled}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
+                            opacity={disabled ? 0.6 : 1}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
-                                onSelectAnswer(questionKey, scale.key, option.key);
+                                if (disabled) {
+                                    return;
+                                }
+                                onChangeAnswers(
+                                    questionKey,
+                                    buildNextScaledQuestionAnswers(
+                                        currentAnswers,
+                                        question,
+                                        scale.key,
+                                        option.key,
+                                    ),
+                                );
                             }}
                         >
                             <Text
                                 color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
+                                fontSize={
+                                    layout.isWideTablet
+                                        ? ds.typography.bodyLg.fontSize
+                                        : layout.isTablet
+                                          ? ds.typography.bodyMd.fontSize
+                                          : ds.typography.bodySm.fontSize
+                                }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
                             >
@@ -207,4 +302,194 @@ function ScaleSelector({
             </XStack>
         </YStack>
     );
+}
+
+interface ChecklistSelectorProps {
+    readonly question: InstrumentQuestion;
+    readonly selectedOptionKeys: readonly string[];
+    readonly otherText: string;
+    readonly disabled: boolean;
+    readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
+}
+
+function ChecklistSelector({
+    question,
+    selectedOptionKeys,
+    otherText,
+    disabled,
+    onChangeAnswers,
+}: Readonly<ChecklistSelectorProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+
+    return (
+        <YStack
+            rounded={ds.radii.md}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.input}
+            p={layout.isTablet ? 16 : 12}
+            gap={layout.isTablet ? "$3" : "$2.5"}
+        >
+            <XStack gap="$2" flexWrap="wrap" justify="space-between">
+                {question.options.map((option) => {
+                    const isSelected = selectedOptionKeys.includes(option.key);
+
+                    return (
+                        <Button
+                            key={`${question.question_key}.${option.key}`}
+                            width={getOptionGridItemWidth(
+                                question.options.length,
+                                Math.max(...question.options.map((option) => option.label.length)),
+                            )}
+                            rounded={ds.radii.md}
+                            height={layout.isTablet ? layout.formOptionHeight : 42}
+                            disabled={disabled}
+                            borderWidth={1}
+                            borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                            bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
+                            opacity={disabled ? 0.6 : 1}
+                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            onPress={() => {
+                                if (disabled) {
+                                    return;
+                                }
+                                onChangeAnswers(
+                                    question.question_key,
+                                    toggleChecklistOption(
+                                        selectedOptionKeys,
+                                        option.key,
+                                        otherText,
+                                    ),
+                                );
+                            }}
+                        >
+                            <Text
+                                color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
+                                fontSize={
+                                    layout.isWideTablet
+                                        ? ds.typography.bodyLg.fontSize
+                                        : layout.isTablet
+                                          ? ds.typography.bodyMd.fontSize
+                                          : ds.typography.bodySm.fontSize
+                                }
+                                numberOfLines={2}
+                                style={{ textAlign: "center" }}
+                            >
+                                {option.label}
+                            </Text>
+                        </Button>
+                    );
+                })}
+            </XStack>
+            {selectedOptionKeys.includes("other") ? (
+                <TextInput
+                    multiline
+                    value={otherText}
+                    editable={!disabled}
+                    onChangeText={(nextText) => {
+                        onChangeAnswers(
+                            question.question_key,
+                            setChecklistOtherText(selectedOptionKeys, nextText),
+                        );
+                    }}
+                    placeholder="Describe other"
+                    placeholderTextColor={ds.colors.mutedForeground}
+                    style={{
+                        minHeight: layout.isTablet ? 96 : 88,
+                        borderRadius: ds.radii.md,
+                        borderWidth: 1,
+                        borderColor: ds.colors.border,
+                        backgroundColor: ds.colors.surface,
+                        color: ds.colors.foreground,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        textAlignVertical: "top",
+                    }}
+                />
+            ) : null}
+        </YStack>
+    );
+}
+
+function readChecklistOptionKeys(selectedAnswers: QuestionResponsePayload): string[] {
+    const selectedOptionKeys = selectedAnswers["selected_option_keys"];
+    if (!Array.isArray(selectedOptionKeys)) {
+        return [];
+    }
+
+    return selectedOptionKeys.filter((entry): entry is string => typeof entry === "string");
+}
+
+function readChecklistOtherText(selectedAnswers: QuestionResponsePayload): string {
+    const otherDetails = selectedAnswers["other_details"];
+    if (typeof otherDetails !== "object" || otherDetails === null) {
+        return "";
+    }
+    if (!("text" in otherDetails)) {
+        return "";
+    }
+
+    const text = otherDetails["text"];
+    return typeof text === "string" ? text : "";
+}
+
+function toggleChecklistOption(
+    selectedOptionKeys: readonly string[],
+    optionKey: string,
+    otherText: string,
+): QuestionResponsePayload {
+    const nextSelectedOptionKeys = selectedOptionKeys.includes(optionKey)
+        ? selectedOptionKeys.filter((currentKey) => currentKey !== optionKey)
+        : [...selectedOptionKeys, optionKey];
+
+    const nextAnswers: QuestionResponsePayload = {
+        selected_option_keys: nextSelectedOptionKeys,
+    };
+
+    if (nextSelectedOptionKeys.includes("other") && otherText.trim().length > 0) {
+        nextAnswers.other_details = { text: otherText };
+    }
+
+    return nextAnswers;
+}
+
+function setChecklistOtherText(
+    selectedOptionKeys: readonly string[],
+    nextText: string,
+): QuestionResponsePayload {
+    const nextAnswers: QuestionResponsePayload = {
+        selected_option_keys: [...selectedOptionKeys],
+    };
+
+    if (nextText.trim().length > 0) {
+        nextAnswers.other_details = { text: nextText };
+    }
+
+    return nextAnswers;
+}
+
+function buildNextScaledQuestionAnswers(
+    currentAnswers: QuestionResponsePayload,
+    question: InstrumentQuestion,
+    scaleKey: string,
+    optionKey: string,
+): QuestionResponsePayload {
+    const nextAnswers: QuestionResponsePayload = {
+        ...currentAnswers,
+        [scaleKey]: optionKey,
+    };
+
+    if (scaleKey !== "quantity") {
+        return nextAnswers;
+    }
+
+    const quantityScale = question.scales.find((currentScale) => currentScale.key === "quantity");
+    const selectedOption = quantityScale?.options.find((option) => option.key === optionKey);
+    if (selectedOption?.allows_follow_up_scales !== false) {
+        return nextAnswers;
+    }
+
+    return { quantity: optionKey };
 }

@@ -1,5 +1,41 @@
-import { create } from "zustand";
+import { batch, observable, observe } from "@legendapp/state";
+import { useSelector } from "@legendapp/state/react";
 import type { AuthSession } from "lib/auth/types";
+import {
+    applyFetchedSessionSnapshot,
+    applyLocalExecutionModeChange,
+    applyLocalPreAuditChange,
+    applyLocalQuestionAnswerChange,
+    applyLocalSectionNoteChange,
+    applySaveAcknowledgement,
+    buildDraftPatchSnapshot,
+    buildSyncableAuditIds,
+    canEditAuditInputs,
+    canonicalizeSessionsByAuditIdForHydrate,
+    clearAcknowledgedDirtyState,
+    createKeyedSingleFlightRunner,
+    deriveGlobalSyncFeedback,
+    finishSubmitResolution,
+    getOwnedAuditSessionForResponse,
+    listPendingSubmitResolutionAuditIds,
+    phaseForSaveConflictRecovery,
+    phaseForSubmitConflictAction,
+    pruneCanonicalSubmittedAuditState,
+    pruneAuditStateForAudit,
+    resolveSaveConflict,
+    resolveSubmitConflict,
+    restorePersistedSyncState,
+    shouldAttemptAutomaticSync,
+    shouldReopenOnAutomaticSyncTrigger,
+    shouldRetrySubmitResolution,
+    shouldRetrySubmitResolutionOnTrigger,
+    transitionPhaseOnExplicitSubmitRetry,
+    type PendingAuditPatchSnapshot,
+    type AutomaticSyncTrigger,
+    transitionPhaseOnLocalEdit,
+    transitionPhaseOnManualRetry,
+    upsertAuditSessionMaps,
+} from "lib/audit/store-sync-core";
 import {
     createOrResumeAudit,
     fetchAuditSession,
@@ -7,34 +43,47 @@ import {
     saveAuditDraft,
     submitAudit,
 } from "lib/audit/api";
-import { getSectionNote, getSectionResponses } from "lib/audit/selectors";
-import {
-    clearPersistedAuditState,
-    readPersistedAuditState,
-    savePersistedAuditState,
-} from "lib/audit/storage";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import type {
-    AuditDraftPatch,
-    AuditPreAuditValues,
-    AuditSectionState,
+    AuditDraftSave,
     AuditSession,
+    AuditSyncStateByAuditId,
+    DirtyMeta,
     DirtyPreAudit,
     DirtySections,
+    ExecutionMode,
+    PlayspaceInstrument,
     PersistedAuditState,
+    QuestionResponsePayload,
 } from "lib/audit/types";
-import i18n from "lib/i18n";
-import { PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { persistedAuditStateSchema } from "lib/audit/types";
+import { t } from "lib/i18n";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { mmkvStorage } from "lib/storage/mmkv";
 
-/** Debounce interval for disk persistence after local edits (ms). */
-const PERSIST_DEBOUNCE_MS = 500;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-let persistDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-let hydrateRequestCounter = 0;
+interface FlushPendingChangesResult {
+    readonly attemptedAuditIds: string[];
+    readonly failedAuditIds: string[];
+    readonly remainingDirtyAuditIds: string[];
+}
 
+interface FlushSingleAuditResult {
+    readonly auditId: string;
+    readonly failed: boolean;
+}
+
+/**
+ * Public surface exposed by the compatibility hook. Mirrors the old Zustand
+ * store interface so existing selectors and `.getState()` callers keep working.
+ */
 interface PlayspaceAuditStoreState {
-    readonly instrument: typeof PLAYSPACE_INSTRUMENT;
+    readonly instrument: PlayspaceInstrument;
     readonly sessionsByAuditId: Record<string, AuditSession>;
-    readonly sessionsByPlaceId: Record<string, AuditSession>;
+    readonly sessionsByPairKey: Record<string, AuditSession>;
     readonly currentUserId: string | null;
     readonly isHydrated: boolean;
     readonly isLoadingAudit: boolean;
@@ -44,1019 +93,1785 @@ interface PlayspaceAuditStoreState {
     readonly lastSyncError: string | null;
     readonly lastSuccessfulSyncAt: string | null;
     readonly localChangeCounter: number;
-
-    /**
-     * Tracks which sections have locally-modified answers that have not yet
-     * been pushed to the backend. Keyed by audit_id → section_key → version.
-     */
     readonly dirtySections: DirtySections;
-
-    /**
-     * Audit IDs whose pre-audit data has been locally modified but not yet
-     * pushed to the backend. Keyed by audit_id → version.
-     */
     readonly dirtyPreAudit: DirtyPreAudit;
+    readonly dirtyMeta: DirtyMeta;
+    readonly syncStateByAuditId: AuditSyncStateByAuditId;
 
     hydrate: (accountId?: string | null) => Promise<void>;
     clearStoredState: (accountId?: string | null) => Promise<void>;
-
     ensurePlaceAudit: (
         session: AuthSession,
+        projectId: string,
         placeId: string,
         executionMode?: "audit" | "survey" | "both",
     ) => Promise<AuditSession>;
-
     refreshAudit: (session: AuthSession, auditId: string) => Promise<AuditSession>;
-
-    /**
-     * Apply one question's processed answer map locally.
-     * Updates the typed section state in the in-memory session, marks the section as
-     * dirty, and schedules a debounced disk persist.
-     */
+    applyLocalExecutionMode: (pairKey: string, executionMode: ExecutionMode) => void;
     applyLocalQuestionAnswer: (
-        placeId: string,
+        pairKey: string,
         sectionKey: string,
         questionKey: string,
-        answers: Record<string, string>,
+        answers: QuestionResponsePayload,
     ) => void;
-
-    /**
-     * Apply a section note locally with the same offline-first semantics.
-     */
-    applyLocalSectionNote: (placeId: string, sectionKey: string, note: string) => void;
-
-    /**
-     * Apply pre-audit values locally with the same offline-first semantics.
-     */
-    applyLocalPreAudit: (placeId: string, values: Record<string, string | string[]>) => void;
-
-    /**
-     * Flush all dirty audits to the backend.  Silently swallows network
-     * errors so the call can be retried later by the next sync trigger.
-     */
+    applyLocalSectionNote: (pairKey: string, sectionKey: string, note: string) => void;
+    applyLocalPreAudit: (pairKey: string, values: Record<string, string | string[]>) => void;
+    prepareAutomaticSyncAudits: (trigger: AutomaticSyncTrigger) => string[];
     flushPendingChanges: (session: AuthSession) => Promise<FlushPendingChangesResult>;
-
     submitAuditSession: (session: AuthSession, auditId: string) => Promise<AuditSession>;
     clearError: () => void;
 }
 
-interface FlushPendingChangesResult {
-    readonly attemptedAuditIds: string[];
-    readonly failedAuditIds: string[];
-    readonly remainingDirtyAuditIds: string[];
-}
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
 
-interface PendingAuditPatchSnapshot {
-    readonly auditId: string;
-    readonly patch: AuditDraftPatch;
-    readonly sectionVersions: Record<string, number>;
-    readonly preAuditVersion: number | null;
-}
+const PERSIST_DEBOUNCE_MS = 500;
+const MMKV_KEY_PREFIX = "audit.state.v4";
 
-/**
- * Playspace audit store with offline-first local persistence and background sync.
- */
-export const usePlayspaceAuditStore = create<PlayspaceAuditStoreState>((set, get) => ({
-    instrument: PLAYSPACE_INSTRUMENT,
-    sessionsByAuditId: {},
-    sessionsByPlaceId: {},
-    currentUserId: null,
+type PersistedAuditDataSnapshot = Pick<
+    PersistedAuditState,
+    | "instrument"
+    | "sessions_by_audit_id"
+    | "sessions_by_pair_key"
+    | "dirty_sections"
+    | "dirty_pre_audit"
+    | "dirty_meta"
+    | "sync_state_by_audit_id"
+    | "local_change_counter"
+    | "last_successful_sync_at"
+>;
+
+// ---------------------------------------------------------------------------
+// Observable state
+// ---------------------------------------------------------------------------
+
+/** Persistent audit data — auto-saved to MMKV via an observer. */
+const auditData$ = observable({
+    instrument: BASE_PLAYSPACE_INSTRUMENT,
+    sessions_by_audit_id: {} as Record<string, AuditSession>,
+    sessions_by_pair_key: {} as Record<string, AuditSession>,
+    dirty_sections: {} as DirtySections,
+    dirty_pre_audit: {} as DirtyPreAudit,
+    dirty_meta: {} as DirtyMeta,
+    sync_state_by_audit_id: {} as AuditSyncStateByAuditId,
+    local_change_counter: 0,
+    last_successful_sync_at: null as string | null,
+});
+
+/** Transient UI state — not persisted across restarts. */
+const auditUI$ = observable({
+    currentUserId: null as string | null,
     isHydrated: false,
     isLoadingAudit: false,
     isSavingDraft: false,
     isSyncing: false,
-    errorMessage: null,
-    lastSyncError: null,
-    lastSuccessfulSyncAt: null,
-    localChangeCounter: 0,
-    dirtySections: {},
-    dirtyPreAudit: {},
+    errorMessage: null as string | null,
+    lastSyncError: null as string | null,
+});
 
-    hydrate: async (accountId) => {
-        const targetUserId = normalizeOptionalUserId(accountId);
-        const state = get();
-        if (state.isHydrated && state.currentUserId === targetUserId) {
-            return;
-        }
+// ---------------------------------------------------------------------------
+// Module-level bookkeeping
+// ---------------------------------------------------------------------------
 
-        clearPersistDebounceTimer();
-        const requestId = ++hydrateRequestCounter;
-        set(() => ({
-            instrument: PLAYSPACE_INSTRUMENT,
-            sessionsByAuditId: {},
-            sessionsByPlaceId: {},
-            currentUserId: targetUserId,
-            isHydrated: false,
-            errorMessage: null,
-            lastSyncError: null,
-            dirtySections: {},
-            dirtyPreAudit: {},
-            lastSuccessfulSyncAt: null,
-            localChangeCounter: 0,
-        }));
+let autoSaveDisposer: (() => void) | null = null;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let hydrateRequestCounter = 0;
 
-        if (targetUserId === null) {
-            set(() => ({ isHydrated: true }));
-            return;
-        }
+// ---------------------------------------------------------------------------
+// MMKV persistence infrastructure
+// ---------------------------------------------------------------------------
 
-        const persistedState = await readPersistedAuditState(targetUserId);
-        if (requestId !== hydrateRequestCounter) {
-            return;
-        }
-        if (persistedState === null) {
-            set(() => ({
-                currentUserId: targetUserId,
-                isHydrated: true,
-            }));
-            return;
-        }
-
-        set(() => ({
-            instrument: persistedState.instrument ?? PLAYSPACE_INSTRUMENT,
-            sessionsByAuditId: persistedState.sessions_by_audit_id,
-            sessionsByPlaceId: persistedState.sessions_by_place_id,
-            currentUserId: targetUserId,
-            dirtySections: persistedState.dirty_sections,
-            dirtyPreAudit: persistedState.dirty_pre_audit,
-            lastSuccessfulSyncAt: persistedState.last_successful_sync_at,
-            localChangeCounter: persistedState.local_change_counter,
-            isHydrated: true,
-        }));
-    },
-
-    clearStoredState: async (accountId) => {
-        clearPersistDebounceTimer();
-        hydrateRequestCounter += 1;
-        const targetUserId = normalizeOptionalUserId(accountId) ?? get().currentUserId;
-        if (targetUserId !== null) {
-            await clearPersistedAuditState(targetUserId);
-        }
-        set(() => ({
-            instrument: PLAYSPACE_INSTRUMENT,
-            sessionsByAuditId: {},
-            sessionsByPlaceId: {},
-            currentUserId: null,
-            dirtySections: {},
-            dirtyPreAudit: {},
-            isHydrated: true,
-            errorMessage: null,
-            lastSyncError: null,
-            lastSuccessfulSyncAt: null,
-            localChangeCounter: 0,
-        }));
-    },
-
-    ensurePlaceAudit: async (
-        session: AuthSession,
-        placeId: string,
-        executionMode?: "audit" | "survey" | "both",
-    ) => {
-        set(() => ({ isLoadingAudit: true, errorMessage: null }));
-
-        try {
-            const nextSession = await createOrResumeAudit(session, placeId, executionMode);
-            const mergedSession = mergeDirtyLocalDraftIntoServerSession(get(), nextSession);
-            set((state) =>
-                buildTrackedSessionState(state, mergedSession, {
-                    isLoadingAudit: false,
-                    errorMessage: null,
-                }),
-            );
-            await persistSnapshotNow(get());
-            return mergedSession;
-        } catch (error) {
-            const message = formatAuditErrorMessage(error, i18n.t("audit:errors.openFallback"));
-            set(() => ({ isLoadingAudit: false, errorMessage: message }));
-            throw error;
-        }
-    },
-
-    refreshAudit: async (session: AuthSession, auditId: string) => {
-        set(() => ({ isLoadingAudit: true, errorMessage: null }));
-
-        try {
-            const nextSession = await fetchAuditSession(session, auditId);
-            const mergedSession = mergeDirtyLocalDraftIntoServerSession(get(), nextSession);
-            set((state) =>
-                buildTrackedSessionState(state, mergedSession, {
-                    isLoadingAudit: false,
-                    errorMessage: null,
-                }),
-            );
-            await persistSnapshotNow(get());
-            return mergedSession;
-        } catch (error) {
-            const message = formatAuditErrorMessage(error, i18n.t("audit:errors.refreshFallback"));
-            set(() => ({ isLoadingAudit: false, errorMessage: message }));
-            throw error;
-        }
-    },
-
-    applyLocalQuestionAnswer: (
-        placeId: string,
-        sectionKey: string,
-        questionKey: string,
-        answers: Record<string, string>,
-    ) => {
-        const state = get();
-        const session = state.sessionsByPlaceId[placeId];
-        if (session === undefined) {
-            return;
-        }
-
-        const updatedSession = applyQuestionAnswerToSession(
-            session,
-            sectionKey,
-            questionKey,
-            answers,
-        );
-        const nextVersion = state.localChangeCounter + 1;
-        const nextDirty = markSectionDirty(
-            state.dirtySections,
-            session.audit_id,
-            sectionKey,
-            nextVersion,
-        );
-
-        set(() => ({
-            sessionsByAuditId: { ...state.sessionsByAuditId, [session.audit_id]: updatedSession },
-            sessionsByPlaceId: { ...state.sessionsByPlaceId, [placeId]: updatedSession },
-            dirtySections: nextDirty,
-            localChangeCounter: nextVersion,
-        }));
-
-        scheduleDebouncedPersist(get);
-    },
-
-    applyLocalSectionNote: (placeId: string, sectionKey: string, note: string) => {
-        const state = get();
-        const session = state.sessionsByPlaceId[placeId];
-        if (session === undefined) {
-            return;
-        }
-
-        const updatedSession = applySectionNoteToSession(session, sectionKey, note);
-        const nextVersion = state.localChangeCounter + 1;
-        const nextDirty = markSectionDirty(
-            state.dirtySections,
-            session.audit_id,
-            sectionKey,
-            nextVersion,
-        );
-
-        set(() => ({
-            sessionsByAuditId: { ...state.sessionsByAuditId, [session.audit_id]: updatedSession },
-            sessionsByPlaceId: { ...state.sessionsByPlaceId, [placeId]: updatedSession },
-            dirtySections: nextDirty,
-            localChangeCounter: nextVersion,
-        }));
-
-        scheduleDebouncedPersist(get);
-    },
-
-    applyLocalPreAudit: (placeId: string, values: Record<string, string | string[]>) => {
-        const state = get();
-        const session = state.sessionsByPlaceId[placeId];
-        if (session === undefined) {
-            return;
-        }
-
-        const updatedSession = applyPreAuditToSession(session, values);
-        const nextVersion = state.localChangeCounter + 1;
-        const nextDirtyPreAudit = markPreAuditDirty(
-            state.dirtyPreAudit,
-            session.audit_id,
-            nextVersion,
-        );
-
-        set(() => ({
-            sessionsByAuditId: { ...state.sessionsByAuditId, [session.audit_id]: updatedSession },
-            sessionsByPlaceId: { ...state.sessionsByPlaceId, [placeId]: updatedSession },
-            dirtyPreAudit: nextDirtyPreAudit,
-            localChangeCounter: nextVersion,
-        }));
-
-        scheduleDebouncedPersist(get);
-    },
-
-    flushPendingChanges: async (session: AuthSession) => {
-        const state = get();
-        if (state.isSyncing) {
-            return {
-                attemptedAuditIds: [],
-                failedAuditIds: [],
-                remainingDirtyAuditIds: getDirtyAuditIds(state),
-            };
-        }
-
-        const allDirtyAuditIds = getDirtyAuditIds(state);
-        if (allDirtyAuditIds.length === 0) {
-            return {
-                attemptedAuditIds: [],
-                failedAuditIds: [],
-                remainingDirtyAuditIds: [],
-            };
-        }
-
-        set(() => ({ isSyncing: true, lastSyncError: null }));
-        const failedAuditIds: string[] = [];
-
-        for (const auditId of allDirtyAuditIds) {
-            const currentState = get();
-            const auditSession = currentState.sessionsByAuditId[auditId];
-            if (auditSession === undefined) {
-                continue;
-            }
-
-            const patchSnapshot = buildPatchFromDirtyState(currentState, auditId, auditSession);
-            if (patchSnapshot === null) {
-                continue;
-            }
-
-            try {
-                const updatedSession = await saveAuditDraft(session, auditId, patchSnapshot.patch);
-
-                set((latestState) =>
-                    applySyncedAuditPatchState(latestState, updatedSession, patchSnapshot),
-                );
-            } catch (error) {
-                const message = formatAuditErrorMessage(error, i18n.t("audit:errors.syncFallback"));
-                set(() => ({ lastSyncError: message }));
-                failedAuditIds.push(auditId);
-            }
-        }
-
-        set(() => ({ isSyncing: false }));
-        await persistSnapshotNow(get());
-        const latestState = get();
-        return {
-            attemptedAuditIds: allDirtyAuditIds,
-            failedAuditIds,
-            remainingDirtyAuditIds: getDirtyAuditIds(latestState),
-        };
-    },
-
-    submitAuditSession: async (session: AuthSession, auditId: string) => {
-        const state = get();
-        set(() => ({ isSavingDraft: true, errorMessage: null }));
-
-        const auditSession = state.sessionsByAuditId[auditId];
-        if (auditSession !== undefined) {
-            const flushResult = await get().flushPendingChanges(session);
-            const hasFailedDraftSync = flushResult.failedAuditIds.includes(auditId);
-            const hasRemainingDirtyChanges = flushResult.remainingDirtyAuditIds.includes(auditId);
-            if (hasFailedDraftSync || hasRemainingDirtyChanges) {
-                const message = i18n.t("audit:errors.submitNeedsUploadedDraft");
-                set(() => ({
-                    isSavingDraft: false,
-                    errorMessage: message,
-                }));
-                throw new Error(message);
-            }
-        }
-
-        try {
-            const nextSession = await submitAudit(session, auditId);
-            set((s) =>
-                buildTrackedSessionState(s, nextSession, {
-                    isSavingDraft: false,
-                    errorMessage: null,
-                }),
-            );
-            await persistSnapshotNow(get());
-            return nextSession;
-        } catch (error) {
-            const message = formatAuditErrorMessage(error, i18n.t("audit:errors.submitFallback"));
-            set(() => ({ isSavingDraft: false, errorMessage: message }));
-            throw error;
-        }
-    },
-
-    clearError: () => {
-        set(() => ({ errorMessage: null }));
-    },
-}));
-
-type PartialStoreState = Partial<PlayspaceAuditStoreState>;
-
-/**
- * Track one updated session in both audit-id and place-id indexes.
- *
- * @param state Current store state.
- * @param auditSession Newly returned audit session.
- * @param extraFields Additional state fields to merge.
- * @returns Next partial store state.
- */
-function buildTrackedSessionState(
-    state: PlayspaceAuditStoreState,
-    auditSession: AuditSession,
-    extraFields: PartialStoreState,
-): PartialStoreState {
-    return {
-        ...extraFields,
-        sessionsByAuditId: {
-            ...state.sessionsByAuditId,
-            [auditSession.audit_id]: auditSession,
-        },
-        sessionsByPlaceId: {
-            ...state.sessionsByPlaceId,
-            [auditSession.place_id]: auditSession,
-        },
-    };
+function getStorageKey(userId: string): string {
+    return `${MMKV_KEY_PREFIX}.${encodeURIComponent(userId)}`;
 }
 
 /**
- * Persist the complete store snapshot to disk immediately (non-debounced).
- *
- * @param state Current store snapshot.
+ * Set up a debounced auto-save observer that writes the audit data
+ * observable to MMKV whenever any tracked field changes.
  */
-async function persistSnapshotNow(state: PlayspaceAuditStoreState): Promise<void> {
-    if (state.currentUserId === null) {
+function setupAutoSave(userId: string): void {
+    teardownAutoSave();
+    const storageKey = getStorageKey(userId);
+
+    autoSaveDisposer = observe(() => {
+        const snapshot = auditData$.get();
+
+        if (saveTimer !== null) {
+            clearTimeout(saveTimer);
+        }
+        saveTimer = setTimeout(() => {
+            try {
+                mmkvStorage.set(storageKey, JSON.stringify(snapshot));
+            } catch (err) {
+                console.error("[audit-store] auto-save failed", err);
+            }
+            saveTimer = null;
+        }, PERSIST_DEBOUNCE_MS);
+    });
+}
+
+function teardownAutoSave(): void {
+    if (autoSaveDisposer !== null) {
+        autoSaveDisposer();
+        autoSaveDisposer = null;
+    }
+    if (saveTimer !== null) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+    }
+}
+
+/**
+ * Flush the current observable state to MMKV immediately, bypassing debounce.
+ * Used after sync operations where durability matters.
+ */
+function saveNow(): void {
+    if (saveTimer !== null) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+    }
+    const userId = auditUI$.currentUserId.peek();
+    if (userId === null) {
         return;
     }
-
-    const snapshot: PersistedAuditState = {
-        storage_user_id: state.currentUserId,
-        instrument: state.instrument,
-        sessions_by_audit_id: state.sessionsByAuditId,
-        sessions_by_place_id: state.sessionsByPlaceId,
-        dirty_sections: state.dirtySections,
-        dirty_pre_audit: state.dirtyPreAudit,
-        local_change_counter: state.localChangeCounter,
-        last_successful_sync_at: state.lastSuccessfulSyncAt,
-    };
-    await savePersistedAuditState(state.currentUserId, snapshot);
-}
-
-/**
- * Schedule a debounced disk persist so rapid answer taps coalesce into one
- * write.  The get() call is deferred to the timer callback to capture the
- * latest state at flush time.
- *
- * @param getState Zustand getter.
- */
-function scheduleDebouncedPersist(getState: () => PlayspaceAuditStoreState): void {
-    clearPersistDebounceTimer();
-    persistDebounceTimer = setTimeout(() => {
-        void persistSnapshotNow(getState());
-        persistDebounceTimer = null;
-    }, PERSIST_DEBOUNCE_MS);
-}
-
-/**
- * Clear any pending debounced persist timer.
- */
-function clearPersistDebounceTimer(): void {
-    if (persistDebounceTimer !== null) {
-        clearTimeout(persistDebounceTimer);
-        persistDebounceTimer = null;
+    try {
+        mmkvStorage.set(getStorageKey(userId), JSON.stringify(auditData$.peek()));
+    } catch (err) {
+        console.error("[audit-store] immediate save failed", err);
     }
 }
 
 /**
- * Normalize optional user IDs to either a trimmed string or null.
- *
- * @param value Raw optional user identifier.
- * @returns Trimmed user identifier or null.
+ * Attempt to parse a raw MMKV string into validated audit data.
  */
+function parseStoredAuditData(raw: string): PersistedAuditDataSnapshot | null {
+    try {
+        const parsed = persistedAuditStateSchema.safeParse(JSON.parse(raw));
+        if (!parsed.success) {
+            return null;
+        }
+        return parsed.data;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Apply a persisted data snapshot into the audit data observable in a
+ * single batch to avoid multiple observer fires.
+ */
+function applyPersistedDataBatch(data: PersistedAuditDataSnapshot): void {
+    batch(() => {
+        auditData$.instrument.set(data.instrument ?? BASE_PLAYSPACE_INSTRUMENT);
+        auditData$.sessions_by_audit_id.set(data.sessions_by_audit_id);
+        auditData$.sessions_by_pair_key.set(data.sessions_by_pair_key);
+        auditData$.dirty_sections.set(data.dirty_sections);
+        auditData$.dirty_pre_audit.set(data.dirty_pre_audit);
+        auditData$.dirty_meta.set(data.dirty_meta);
+        auditData$.sync_state_by_audit_id.set(data.sync_state_by_audit_id);
+        auditData$.local_change_counter.set(data.local_change_counter);
+        auditData$.last_successful_sync_at.set(data.last_successful_sync_at);
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Pure domain helpers (ported from the previous Zustand store)
+// ---------------------------------------------------------------------------
+
 function normalizeOptionalUserId(value: string | null | undefined): string | null {
     if (typeof value !== "string") {
         return null;
     }
-
-    const trimmedValue = value.trim();
-    return trimmedValue.length > 0 ? trimmedValue : null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
 }
 
 /**
- * Return all audit IDs with pending local work.
+ * Determine whether one audit still has any pending dirty fragments.
  *
- * @param state Current store state.
- * @returns Unique audit IDs with dirty sections or pre-audit data.
+ * @param auditId Audit under evaluation.
+ * @param dirtyMeta Current dirty meta map.
+ * @param dirtyPreAudit Current dirty pre-audit map.
+ * @param dirtySections Current dirty section map.
+ * @returns True when at least one fragment remains dirty.
  */
-function getDirtyAuditIds(
-    state: Pick<PlayspaceAuditStoreState, "dirtySections" | "dirtyPreAudit">,
-): string[] {
-    const auditIds = new Set<string>([
-        ...Object.keys(state.dirtySections),
-        ...Object.keys(state.dirtyPreAudit),
-    ]);
-    return [...auditIds];
-}
-
-/**
- * Mark a section as dirty for one audit, returning the next versioned record.
- *
- * @param current Current dirty sections record.
- * @param auditId Audit identifier.
- * @param sectionKey Section that was modified.
- * @param version Monotonic local change version.
- * @returns Updated dirty sections record.
- */
-function markSectionDirty(
-    current: DirtySections,
+function hasDirtyFragmentsForAudit(
     auditId: string,
-    sectionKey: string,
-    version: number,
-): DirtySections {
-    const existing = current[auditId] ?? {};
+    dirtyMeta: DirtyMeta,
+    dirtyPreAudit: DirtyPreAudit,
+    dirtySections: DirtySections,
+): boolean {
+    return (
+        dirtyMeta[auditId] !== undefined ||
+        dirtyPreAudit[auditId] !== undefined ||
+        Object.keys(dirtySections[auditId] ?? {}).length > 0
+    );
+}
+
+/**
+ * Read the effective sync phase for one audit, defaulting dirty fragments
+ * without an explicit phase entry back to `dirty`.
+ *
+ * @param auditId Audit under evaluation.
+ * @param syncStateByAuditId Current persisted per-audit sync map.
+ * @param dirtyMeta Current dirty meta map.
+ * @param dirtyPreAudit Current dirty pre-audit map.
+ * @param dirtySections Current dirty section map.
+ * @returns Effective phase for selection and transition decisions.
+ */
+function readEffectiveAuditSyncPhase(
+    auditId: string,
+    syncStateByAuditId: AuditSyncStateByAuditId,
+    dirtyMeta: DirtyMeta,
+    dirtyPreAudit: DirtyPreAudit,
+    dirtySections: DirtySections,
+): "idle" | "dirty" | (typeof syncStateByAuditId)[string]["phase"] {
+    const syncState = syncStateByAuditId[auditId];
+    if (syncState !== undefined) {
+        return syncState.phase;
+    }
+
+    return hasDirtyFragmentsForAudit(auditId, dirtyMeta, dirtyPreAudit, dirtySections)
+        ? "dirty"
+        : "idle";
+}
+
+/**
+ * Build the current set of audits eligible for automatic save sync attempts.
+ *
+ * @returns Syncable audit ids whose effective phase is `dirty`.
+ */
+function buildCurrentAutomaticSyncAuditIds(): string[] {
+    const data = auditData$.peek();
+    return buildSyncableAuditIds({
+        sessionsByAuditId: data.sessions_by_audit_id,
+        dirtySections: data.dirty_sections,
+        dirtyPreAudit: data.dirty_pre_audit,
+        dirtyMeta: data.dirty_meta,
+    }).filter((auditId) =>
+        shouldAttemptAutomaticSync(
+            readEffectiveAuditSyncPhase(
+                auditId,
+                data.sync_state_by_audit_id,
+                data.dirty_meta,
+                data.dirty_pre_audit,
+                data.dirty_sections,
+            ),
+        ),
+    );
+}
+
+/**
+ * Create a stable sync-state record for one audit.
+ *
+ * @param currentSyncStateByAuditId Existing per-audit sync map.
+ * @param auditId Audit to update.
+ * @param nextPhase Next phase to persist.
+ * @param updatedAt ISO timestamp for the transition.
+ * @param detail Optional detail message for blocked or review states.
+ * @returns Updated sync-state map.
+ */
+function writeAuditSyncState(
+    currentSyncStateByAuditId: AuditSyncStateByAuditId,
+    auditId: string,
+    nextPhase: AuditSyncStateByAuditId[string]["phase"],
+    updatedAt: string,
+    detail: string | null = null,
+): AuditSyncStateByAuditId {
     return {
-        ...current,
+        ...currentSyncStateByAuditId,
         [auditId]: {
-            ...existing,
-            [sectionKey]: version,
+            phase: nextPhase,
+            detail,
+            updated_at: updatedAt,
         },
     };
 }
 
 /**
- * Mark pre-audit data as dirty for one audit, returning the next version map.
+ * Map a failed sync request onto the approved blocked phase machine.
  *
- * @param current Current dirty pre-audit record.
- * @param auditId Audit identifier.
- * @param version Monotonic local change version.
- * @returns Updated dirty pre-audit record.
+ * @param error Thrown sync error.
+ * @returns Per-audit blocked phase for the failure.
  */
-function markPreAuditDirty(
-    current: DirtyPreAudit,
-    auditId: string,
-    version: number,
-): DirtyPreAudit {
-    return {
-        ...current,
-        [auditId]: version,
-    };
-}
-
-/**
- * Deep-clone one section's nested question-to-answer map.
- *
- * @param value Existing typed question responses.
- * @returns Cloned nested string record.
- */
-function cloneSectionResponses(
-    value: Record<string, Record<string, string>> | undefined,
-): Record<string, Record<string, string>> {
-    if (value === undefined) {
-        return {};
-    }
-
-    const nextRecord: Record<string, Record<string, string>> = {};
-    for (const [questionKey, questionValue] of Object.entries(value)) {
-        nextRecord[questionKey] = { ...questionValue };
-    }
-    return nextRecord;
-}
-
-/**
- * Clone one typed section state while keeping nested responses independent.
- *
- * @param section Existing section state when available.
- * @param sectionKey Section identifier to preserve on empty state.
- * @returns Cloned section state.
- */
-function cloneSectionState(
-    section: AuditSectionState | undefined,
-    sectionKey: string,
-): AuditSectionState {
-    return {
-        section_key: section?.section_key ?? sectionKey,
-        responses: cloneSectionResponses(section?.responses),
-        note: section?.note ?? null,
-    };
-}
-
-/**
- * Clone typed pre-audit values into a mutable copy.
- *
- * @param value Existing typed pre-audit values.
- * @returns Cloned pre-audit values.
- */
-function clonePreAuditValues(value: AuditPreAuditValues): AuditPreAuditValues {
-    return {
-        season: value.season,
-        weather_conditions: [...value.weather_conditions],
-        users_present: [...value.users_present],
-        user_count: value.user_count,
-        age_groups: [...value.age_groups],
-        place_size: value.place_size,
-    };
-}
-
-/**
- * Create a new AuditSession with one question's answers merged into
- * `sections[sectionKey].responses[questionKey]`.
- *
- * @param session Current audit session.
- * @param sectionKey Target section.
- * @param questionKey Target question.
- * @param answers Processed scale→option answer map.
- * @returns Cloned session with updated responses.
- */
-function applyQuestionAnswerToSession(
-    session: AuditSession,
-    sectionKey: string,
-    questionKey: string,
-    answers: Record<string, string>,
-): AuditSession {
-    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
-    const responses = cloneSectionResponses(section.responses);
-    responses[questionKey] = { ...answers };
-
-    return {
-        ...session,
-        sections: {
-            ...session.sections,
-            [sectionKey]: {
-                ...section,
-                responses,
-            },
-        },
-    };
-}
-
-/**
- * Create a new AuditSession with a section note merged into
- * `sections[sectionKey].note`.
- *
- * @param session Current audit session.
- * @param sectionKey Target section.
- * @param note New note text.
- * @returns Cloned session with updated note.
- */
-function applySectionNoteToSession(
-    session: AuditSession,
-    sectionKey: string,
-    note: string,
-): AuditSession {
-    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
-
-    return {
-        ...session,
-        sections: {
-            ...session.sections,
-            [sectionKey]: {
-                ...section,
-                note,
-            },
-        },
-    };
-}
-
-/**
- * Create a new AuditSession with pre-audit values merged into
- * `pre_audit`.
- *
- * @param session Current audit session.
- * @param values Pre-audit form values.
- * @returns Cloned session with updated pre-audit data.
- */
-function applyPreAuditToSession(
-    session: AuditSession,
-    values: Record<string, string | string[] | null>,
-): AuditSession {
-    const currentPreAudit = clonePreAuditValues(session.pre_audit);
-    currentPreAudit.season = readNullableStringValue(values["season"], currentPreAudit.season);
-    currentPreAudit.weather_conditions = readStringArrayValue(
-        values["weather_conditions"],
-        currentPreAudit.weather_conditions,
-    );
-    currentPreAudit.users_present = readStringArrayValue(
-        values["users_present"],
-        currentPreAudit.users_present,
-    );
-    currentPreAudit.user_count = readNullableStringValue(
-        values["user_count"],
-        currentPreAudit.user_count,
-    );
-    currentPreAudit.age_groups = readStringArrayValue(
-        values["age_groups"],
-        currentPreAudit.age_groups,
-    );
-    currentPreAudit.place_size = readNullableStringValue(
-        values["place_size"],
-        currentPreAudit.place_size,
-    );
-
-    return {
-        ...session,
-        pre_audit: currentPreAudit,
-    };
-}
-
-/**
- * Merge the current local dirty fields into a freshly loaded server session so
- * unsynced device edits remain visible after refresh or reopen.
- *
- * @param state Current store state.
- * @param nextSession Newly loaded server session.
- * @returns Server session with local dirty draft fields re-applied.
- */
-function mergeDirtyLocalDraftIntoServerSession(
-    state: PlayspaceAuditStoreState,
-    nextSession: AuditSession,
-): AuditSession {
-    const localSession =
-        state.sessionsByAuditId[nextSession.audit_id] ??
-        state.sessionsByPlaceId[nextSession.place_id];
-    if (localSession === undefined) {
-        return nextSession;
-    }
-
-    let mergedSession = nextSession;
-    const dirtySectionVersions = state.dirtySections[nextSession.audit_id] ?? {};
-    for (const sectionKey of Object.keys(dirtySectionVersions)) {
-        mergedSession = copySectionDraftFromSession(localSession, mergedSession, sectionKey);
-    }
-
-    if (state.dirtyPreAudit[nextSession.audit_id] !== undefined) {
-        mergedSession = copyPreAuditDraftFromSession(localSession, mergedSession);
-    }
-
-    return mergedSession;
-}
-
-/**
- * Apply a successful draft-sync response while preserving any new edits that
- * landed during the in-flight request.
- *
- * @param state Latest store state.
- * @param updatedSession Server-confirmed audit session.
- * @param patchSnapshot Versioned patch metadata used for the request.
- * @returns Next partial store state.
- */
-function applySyncedAuditPatchState(
-    state: PlayspaceAuditStoreState,
-    updatedSession: AuditSession,
-    patchSnapshot: PendingAuditPatchSnapshot,
-): PartialStoreState {
-    const mergedSession = mergeDirtyLocalDraftIntoServerSession(state, updatedSession);
-    const nextDirtySections = clearAcknowledgedDirtySections(state.dirtySections, patchSnapshot);
-    const nextDirtyPreAudit = clearAcknowledgedDirtyPreAudit(state.dirtyPreAudit, patchSnapshot);
-
-    return {
-        ...buildTrackedSessionState(state, mergedSession, {}),
-        dirtySections: nextDirtySections,
-        dirtyPreAudit: nextDirtyPreAudit,
-        lastSyncError: null,
-        lastSuccessfulSyncAt: new Date().toISOString(),
-    };
-}
-
-/**
- * Clear dirty section markers only for the versions acknowledged by the
- * current request. Newer local edits remain dirty.
- *
- * @param current Current dirty sections record.
- * @param patchSnapshot Versioned patch metadata used for the request.
- * @returns Updated dirty sections record.
- */
-function clearAcknowledgedDirtySections(
-    current: DirtySections,
-    patchSnapshot: PendingAuditPatchSnapshot,
-): DirtySections {
-    const existingSections = current[patchSnapshot.auditId];
-    if (existingSections === undefined) {
-        return current;
-    }
-
-    const nextAuditSections: Record<string, number> = {};
-    for (const [sectionKey, version] of Object.entries(existingSections)) {
-        const acknowledgedVersion = patchSnapshot.sectionVersions[sectionKey];
-        if (acknowledgedVersion === undefined || version > acknowledgedVersion) {
-            nextAuditSections[sectionKey] = version;
+function deriveBlockedPhaseFromError(error: unknown): AuditSyncStateByAuditId[string]["phase"] {
+    if (error instanceof PlayspaceAuditApiError) {
+        if (error.statusCode === 0) {
+            return "blocked_network";
+        }
+        if (error.statusCode === 401 || error.statusCode === 403) {
+            return "blocked_auth";
+        }
+        if (error.statusCode === 400) {
+            return "blocked_validation";
         }
     }
 
-    if (Object.keys(nextAuditSections).length === 0) {
-        const remainingSections = { ...current };
-        delete remainingSections[patchSnapshot.auditId];
-        return remainingSections;
-    }
-
-    return {
-        ...current,
-        [patchSnapshot.auditId]: nextAuditSections,
-    };
+    return "blocked_server";
 }
 
-/**
- * Clear a dirty pre-audit marker only when the acknowledged version matches
- * the current store state.
- *
- * @param current Current dirty pre-audit record.
- * @param patchSnapshot Versioned patch metadata used for the request.
- * @returns Updated dirty pre-audit record.
- */
-function clearAcknowledgedDirtyPreAudit(
-    current: DirtyPreAudit,
-    patchSnapshot: PendingAuditPatchSnapshot,
-): DirtyPreAudit {
-    if (patchSnapshot.preAuditVersion === null) {
-        return current;
-    }
-
-    const currentVersion = current[patchSnapshot.auditId];
-    if (currentVersion === undefined || currentVersion > patchSnapshot.preAuditVersion) {
-        return current;
-    }
-
-    const remainingPreAudit = { ...current };
-    delete remainingPreAudit[patchSnapshot.auditId];
-    return remainingPreAudit;
-}
-
-/**
- * Copy one section's local draft from one session into another session.
- *
- * @param sourceSession Current local session with unsynced answers.
- * @param targetSession Fresh server session.
- * @param sectionKey Section to copy.
- * @returns Target session with the local section draft applied.
- */
-function copySectionDraftFromSession(
-    sourceSession: AuditSession,
-    targetSession: AuditSession,
-    sectionKey: string,
-): AuditSession {
-    const sourceSection = cloneSectionState(sourceSession.sections[sectionKey], sectionKey);
-    const sourceResponses = cloneSectionResponses(sourceSection.responses);
-    const sourceNote = sourceSection.note;
-
-    let nextSession = applySectionResponsesToSession(targetSession, sectionKey, sourceResponses);
-    nextSession = applySectionNoteToSession(nextSession, sectionKey, sourceNote ?? "");
-    return nextSession;
-}
-
-/**
- * Copy the local pre-audit draft from one session into another session.
- *
- * @param sourceSession Current local session with unsynced pre-audit values.
- * @param targetSession Fresh server session.
- * @returns Target session with the local pre-audit draft applied.
- */
-function copyPreAuditDraftFromSession(
-    sourceSession: AuditSession,
-    targetSession: AuditSession,
-): AuditSession {
-    const preAudit = clonePreAuditValues(sourceSession.pre_audit);
-    return applyPreAuditToSession(targetSession, preAudit);
-}
-
-/**
- * Create a new AuditSession with one section's full responses map replaced.
- *
- * @param session Current audit session.
- * @param sectionKey Target section.
- * @param responses Section response payload.
- * @returns Cloned session with updated section responses.
- */
-function applySectionResponsesToSession(
-    session: AuditSession,
-    sectionKey: string,
-    responses: Record<string, Record<string, string>>,
-): AuditSession {
-    const section = cloneSectionState(session.sections[sectionKey], sectionKey);
-
-    return {
-        ...session,
-        sections: {
-            ...session.sections,
-            [sectionKey]: {
-                ...section,
-                responses: cloneSectionResponses(responses),
-            },
-        },
-    };
-}
-
-/**
- * Build an `AuditDraftPatch` and capture the dirty versions included in the
- * request so only acknowledged edits are cleared afterwards.
- *
- * @param state Current store state.
- * @param auditId Target audit.
- * @param session Current audit session payload.
- * @returns Patch snapshot to send, or null when nothing is dirty.
- */
-function buildPatchFromDirtyState(
-    state: PlayspaceAuditStoreState,
-    auditId: string,
-    session: AuditSession,
-): PendingAuditPatchSnapshot | null {
-    const dirtySectionVersions = state.dirtySections[auditId] ?? {};
-    const dirtySectionKeys = Object.keys(dirtySectionVersions);
-    const preAuditVersion = state.dirtyPreAudit[auditId] ?? null;
-    const hasPreAudit = preAuditVersion !== null;
-
-    if (dirtySectionKeys.length === 0 && !hasPreAudit) {
-        return null;
-    }
-
-    const sections: Record<
-        string,
-        { responses: Record<string, Record<string, string>>; note: string | null }
-    > = {};
-    for (const sectionKey of dirtySectionKeys) {
-        const responses = getSectionResponses(session, sectionKey);
-        const note = getSectionNote(session, sectionKey);
-        sections[sectionKey] = { responses, note: note.length > 0 ? note : null };
-    }
-
-    const patch: AuditDraftPatch = { sections };
-
-    if (hasPreAudit) {
-        patch.pre_audit = {
-            season: session.pre_audit.season,
-            weather_conditions: [...session.pre_audit.weather_conditions],
-            users_present: [...session.pre_audit.users_present],
-            user_count: session.pre_audit.user_count,
-            age_groups: [...session.pre_audit.age_groups],
-            place_size: session.pre_audit.place_size,
-        };
-    }
-
-    return {
-        auditId,
-        patch,
-        sectionVersions: dirtySectionKeys.reduce<Record<string, number>>((result, sectionKey) => {
-            result[sectionKey] = dirtySectionVersions[sectionKey] ?? 0;
-            return result;
-        }, {}),
-        preAuditVersion,
-    };
-}
-
-/**
- * Read a nullable string form value while preserving the current fallback.
- *
- * @param value Candidate input value.
- * @param fallback Existing field value.
- * @returns Normalized string-or-null value.
- */
-function readNullableStringValue(value: unknown, fallback: string | null): string | null {
-    if (typeof value !== "string") {
-        return fallback;
-    }
-    return value.trim().length > 0 ? value : null;
-}
-
-/**
- * Read a string-array form value while preserving the current fallback.
- *
- * @param value Candidate input value.
- * @param fallback Existing field value.
- * @returns Normalized string array.
- */
-function readStringArrayValue(value: unknown, fallback: string[]): string[] {
-    if (!Array.isArray(value)) {
-        return [...fallback];
-    }
-    return value.filter((entry): entry is string => typeof entry === "string");
-}
-
-/**
- * Convert raw API/store errors into a user-visible, debug-friendly message.
- *
- * @param error Unknown thrown value.
- * @param fallbackMessage Generic fallback message.
- * @returns Readable error message including status and details when available.
- */
 function formatAuditErrorMessage(error: unknown, fallbackMessage: string): string {
     if (error instanceof PlayspaceAuditApiError) {
         const detailsSuffix =
             typeof error.details === "string" && error.details.trim().length > 0
-                ? ` ${i18n.t("audit:errors.detailsLabel", {
-                      details: error.details.trim(),
-                  })}`
+                ? ` ${t("audit:errors.detailsLabel", { details: error.details.trim() })}`
                 : "";
 
         if (error.statusCode === 403) {
-            return `${i18n.t("audit:errors.accessDenied403")}${detailsSuffix}`;
+            return `${t("audit:errors.accessDenied403")}${detailsSuffix}`;
         }
-
         if (error.statusCode === 0) {
-            return i18n.t("audit:errors.offlineChangesSaved", {
-                message: fallbackMessage,
-            });
+            return t("audit:errors.offlineChangesSaved", { message: fallbackMessage });
         }
-
         if (error.statusCode > 0) {
-            return `${i18n.t("audit:errors.httpFallback", {
+            return `${t("audit:errors.httpFallback", {
                 message: fallbackMessage,
                 statusCode: error.statusCode,
             })}${detailsSuffix}`;
         }
-
-        return `${i18n.t("audit:errors.networkFallback", {
-            message: fallbackMessage,
-        })}${detailsSuffix}`;
+        return `${t("audit:errors.networkFallback", { message: fallbackMessage })}${detailsSuffix}`;
     }
 
     if (error instanceof Error && error.message.trim().length > 0) {
         return `${fallbackMessage} ${error.message.trim()}`;
     }
-
     return fallbackMessage;
 }
+
+// ---------------------------------------------------------------------------
+// Action functions
+// ---------------------------------------------------------------------------
+
+/**
+ * Hydrate the audit observable for an authenticated user from MMKV only.
+ */
+async function hydrate(accountId?: string | null): Promise<void> {
+    const targetUserId = normalizeOptionalUserId(accountId);
+    const currentUserId = auditUI$.currentUserId.peek();
+    const alreadyHydrated = auditUI$.isHydrated.peek();
+    if (alreadyHydrated && currentUserId === targetUserId) {
+        return;
+    }
+
+    teardownAutoSave();
+    const requestId = ++hydrateRequestCounter;
+
+    batch(() => {
+        auditData$.set({
+            instrument: BASE_PLAYSPACE_INSTRUMENT,
+            sessions_by_audit_id: {},
+            sessions_by_pair_key: {},
+            dirty_sections: {},
+            dirty_pre_audit: {},
+            dirty_meta: {},
+            sync_state_by_audit_id: {},
+            local_change_counter: 0,
+            last_successful_sync_at: null,
+        });
+        auditUI$.set({
+            currentUserId: targetUserId,
+            isHydrated: false,
+            isLoadingAudit: false,
+            isSavingDraft: false,
+            isSyncing: false,
+            errorMessage: null,
+            lastSyncError: null,
+        });
+    });
+
+    if (targetUserId === null) {
+        auditUI$.isHydrated.set(true);
+        return;
+    }
+
+    const storageKey = getStorageKey(targetUserId);
+    const rawMmkv = mmkvStorage.getString(storageKey);
+
+    if (rawMmkv !== undefined) {
+        if (requestId !== hydrateRequestCounter) return;
+        const data = parseStoredAuditData(rawMmkv);
+        if (data === null) {
+            mmkvStorage.remove(storageKey);
+        } else {
+            const canonicalSessionsByAuditId = canonicalizeSessionsByAuditIdForHydrate({
+                sessionsByAuditId: data.sessions_by_audit_id,
+                sessionsByPairKey: data.sessions_by_pair_key,
+            });
+            const restoredPersistedSyncState = restorePersistedSyncState({
+                sessionsByAuditId: canonicalSessionsByAuditId,
+                sessionsByPairKey: data.sessions_by_pair_key,
+                dirtyMeta: data.dirty_meta,
+                dirtyPreAudit: data.dirty_pre_audit,
+                dirtySections: data.dirty_sections,
+                syncStateByAuditId: data.sync_state_by_audit_id,
+            });
+            applyPersistedDataBatch({
+                ...data,
+                sessions_by_audit_id: canonicalSessionsByAuditId,
+                dirty_meta: restoredPersistedSyncState.dirtyMeta,
+                dirty_pre_audit: restoredPersistedSyncState.dirtyPreAudit,
+                dirty_sections: restoredPersistedSyncState.dirtySections,
+                sync_state_by_audit_id: restoredPersistedSyncState.syncStateByAuditId,
+            });
+            saveNow();
+        }
+    }
+
+    if (requestId !== hydrateRequestCounter) return;
+    setupAutoSave(targetUserId);
+    auditUI$.isHydrated.set(true);
+}
+
+async function clearStoredState(accountId?: string | null): Promise<void> {
+    teardownAutoSave();
+    hydrateRequestCounter += 1;
+    const targetUserId = normalizeOptionalUserId(accountId) ?? auditUI$.currentUserId.peek();
+    if (targetUserId !== null) {
+        mmkvStorage.remove(getStorageKey(targetUserId));
+    }
+    batch(() => {
+        auditData$.set({
+            instrument: BASE_PLAYSPACE_INSTRUMENT,
+            sessions_by_audit_id: {},
+            sessions_by_pair_key: {},
+            dirty_sections: {},
+            dirty_pre_audit: {},
+            dirty_meta: {},
+            sync_state_by_audit_id: {},
+            local_change_counter: 0,
+            last_successful_sync_at: null,
+        });
+        auditUI$.set({
+            currentUserId: null,
+            isHydrated: true,
+            isLoadingAudit: false,
+            isSavingDraft: false,
+            isSyncing: false,
+            errorMessage: null,
+            lastSyncError: null,
+        });
+    });
+}
+
+async function ensurePlaceAudit(
+    session: AuthSession,
+    projectId: string,
+    placeId: string,
+    executionMode?: "audit" | "survey" | "both",
+): Promise<AuditSession> {
+    batch(() => {
+        auditUI$.isLoadingAudit.set(true);
+        auditUI$.errorMessage.set(null);
+    });
+
+    try {
+        const nextSession = await createOrResumeAudit(session, placeId, projectId, executionMode);
+        const data = auditData$.peek();
+        const currentSession =
+            data.sessions_by_audit_id[nextSession.audit_id] ??
+            data.sessions_by_pair_key[
+                getProjectPlaceKey(nextSession.project_id, nextSession.place_id)
+            ] ??
+            null;
+        const merged = applyFetchedSessionSnapshot({
+            currentSession,
+            fetchedSession: nextSession,
+            dirtyMeta: data.dirty_meta,
+            dirtyPreAudit: data.dirty_pre_audit,
+            dirtySections: data.dirty_sections,
+        }).session;
+        const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
+            session: merged,
+            dirtyMeta: data.dirty_meta,
+            dirtyPreAudit: data.dirty_pre_audit,
+            dirtySections: data.dirty_sections,
+            syncStateByAuditId: data.sync_state_by_audit_id,
+        });
+        const nextSessionMaps = upsertAuditSessionMaps({
+            sessionsByAuditId: data.sessions_by_audit_id,
+            sessionsByPairKey: data.sessions_by_pair_key,
+            nextSession: merged,
+        });
+        const nextPrunedAuditState = pruneAuditStateForAudit({
+            auditId: nextSessionMaps.displacedAuditId,
+            dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
+            dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
+            dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+            syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
+        });
+        batch(() => {
+            auditData$.instrument.set(merged.instrument);
+            auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+            auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+            auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
+            auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
+            auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+            auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(null);
+        });
+        saveNow();
+        return merged;
+    } catch (error) {
+        const message = formatAuditErrorMessage(error, t("audit:errors.openFallback"));
+        batch(() => {
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(message);
+        });
+        throw error;
+    }
+}
+
+async function refreshAudit(session: AuthSession, auditId: string): Promise<AuditSession> {
+    batch(() => {
+        auditUI$.isLoadingAudit.set(true);
+        auditUI$.errorMessage.set(null);
+    });
+
+    try {
+        const nextSession = await fetchAuditSession(session, auditId);
+        const data = auditData$.peek();
+        const currentSession =
+            data.sessions_by_audit_id[nextSession.audit_id] ??
+            data.sessions_by_pair_key[
+                getProjectPlaceKey(nextSession.project_id, nextSession.place_id)
+            ] ??
+            null;
+        const merged = applyFetchedSessionSnapshot({
+            currentSession,
+            fetchedSession: nextSession,
+            dirtyMeta: data.dirty_meta,
+            dirtyPreAudit: data.dirty_pre_audit,
+            dirtySections: data.dirty_sections,
+        }).session;
+        const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
+            session: merged,
+            dirtyMeta: data.dirty_meta,
+            dirtyPreAudit: data.dirty_pre_audit,
+            dirtySections: data.dirty_sections,
+            syncStateByAuditId: data.sync_state_by_audit_id,
+        });
+        const nextSessionMaps = upsertAuditSessionMaps({
+            sessionsByAuditId: data.sessions_by_audit_id,
+            sessionsByPairKey: data.sessions_by_pair_key,
+            nextSession: merged,
+        });
+        const nextPrunedAuditState = pruneAuditStateForAudit({
+            auditId: nextSessionMaps.displacedAuditId,
+            dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
+            dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
+            dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+            syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
+        });
+        batch(() => {
+            auditData$.instrument.set(merged.instrument);
+            auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+            auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+            auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
+            auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
+            auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+            auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(null);
+        });
+        saveNow();
+        return merged;
+    } catch (error) {
+        const message = formatAuditErrorMessage(error, t("audit:errors.refreshFallback"));
+        batch(() => {
+            auditUI$.isLoadingAudit.set(false);
+            auditUI$.errorMessage.set(message);
+        });
+        throw error;
+    }
+}
+
+function applyLocalExecutionMode(pairKey: string, executionMode: ExecutionMode): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_pair_key[pairKey]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const currentPhase = readEffectiveAuditSyncPhase(
+        session.audit_id,
+        auditData$.sync_state_by_audit_id.peek(),
+        auditData$.dirty_meta.peek(),
+        auditData$.dirty_pre_audit.peek(),
+        auditData$.dirty_sections.peek(),
+    );
+    if (
+        !canEditAuditInputs({
+            session,
+            phase: currentPhase,
+        })
+    ) {
+        return;
+    }
+
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const result = applyLocalExecutionModeChange({
+        session,
+        executionMode,
+        nextVersion,
+        dirtyMeta: auditData$.dirty_meta.peek(),
+    });
+    if (!result.didChange) {
+        return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const nextSyncStateByAuditId =
+        currentPhase === "saving" ||
+        currentPhase === "submitting" ||
+        currentPhase === "resolving_submit" ||
+        currentPhase === "submitted"
+            ? auditData$.sync_state_by_audit_id.peek()
+            : writeAuditSyncState(
+                  auditData$.sync_state_by_audit_id.peek(),
+                  session.audit_id,
+                  transitionPhaseOnLocalEdit({
+                      currentPhase,
+                      updatedAt,
+                  }).phase,
+                  updatedAt,
+              );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(result.session);
+        auditData$.sessions_by_pair_key[pairKey]?.set(result.session);
+        auditData$.dirty_meta.set(result.dirtyMeta);
+        auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+function applyLocalQuestionAnswer(
+    pairKey: string,
+    sectionKey: string,
+    questionKey: string,
+    answers: QuestionResponsePayload,
+): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_pair_key[pairKey]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const currentPhase = readEffectiveAuditSyncPhase(
+        session.audit_id,
+        auditData$.sync_state_by_audit_id.peek(),
+        auditData$.dirty_meta.peek(),
+        auditData$.dirty_pre_audit.peek(),
+        auditData$.dirty_sections.peek(),
+    );
+    if (
+        !canEditAuditInputs({
+            session,
+            phase: currentPhase,
+        })
+    ) {
+        return;
+    }
+
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const result = applyLocalQuestionAnswerChange({
+        session,
+        sectionKey,
+        questionKey,
+        answers,
+        nextVersion,
+        dirtySections: auditData$.dirty_sections.peek(),
+    });
+    if (!result.didChange) {
+        return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const nextSyncStateByAuditId =
+        currentPhase === "saving" ||
+        currentPhase === "submitting" ||
+        currentPhase === "resolving_submit" ||
+        currentPhase === "submitted"
+            ? auditData$.sync_state_by_audit_id.peek()
+            : writeAuditSyncState(
+                  auditData$.sync_state_by_audit_id.peek(),
+                  session.audit_id,
+                  transitionPhaseOnLocalEdit({
+                      currentPhase,
+                      updatedAt,
+                  }).phase,
+                  updatedAt,
+              );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(result.session);
+        auditData$.sessions_by_pair_key[pairKey]?.set(result.session);
+        auditData$.dirty_sections.set(result.dirtySections);
+        auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+function applyLocalSectionNote(pairKey: string, sectionKey: string, note: string): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_pair_key[pairKey]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const currentPhase = readEffectiveAuditSyncPhase(
+        session.audit_id,
+        auditData$.sync_state_by_audit_id.peek(),
+        auditData$.dirty_meta.peek(),
+        auditData$.dirty_pre_audit.peek(),
+        auditData$.dirty_sections.peek(),
+    );
+    if (
+        !canEditAuditInputs({
+            session,
+            phase: currentPhase,
+        })
+    ) {
+        return;
+    }
+
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const result = applyLocalSectionNoteChange({
+        session,
+        sectionKey,
+        note,
+        nextVersion,
+        dirtySections: auditData$.dirty_sections.peek(),
+    });
+    if (!result.didChange) {
+        return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const nextSyncStateByAuditId =
+        currentPhase === "saving" ||
+        currentPhase === "submitting" ||
+        currentPhase === "resolving_submit" ||
+        currentPhase === "submitted"
+            ? auditData$.sync_state_by_audit_id.peek()
+            : writeAuditSyncState(
+                  auditData$.sync_state_by_audit_id.peek(),
+                  session.audit_id,
+                  transitionPhaseOnLocalEdit({
+                      currentPhase,
+                      updatedAt,
+                  }).phase,
+                  updatedAt,
+              );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(result.session);
+        auditData$.sessions_by_pair_key[pairKey]?.set(result.session);
+        auditData$.dirty_sections.set(result.dirtySections);
+        auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+function applyLocalPreAudit(pairKey: string, values: Record<string, string | string[]>): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_pair_key[pairKey]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const currentPhase = readEffectiveAuditSyncPhase(
+        session.audit_id,
+        auditData$.sync_state_by_audit_id.peek(),
+        auditData$.dirty_meta.peek(),
+        auditData$.dirty_pre_audit.peek(),
+        auditData$.dirty_sections.peek(),
+    );
+    if (
+        !canEditAuditInputs({
+            session,
+            phase: currentPhase,
+        })
+    ) {
+        return;
+    }
+
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const result = applyLocalPreAuditChange({
+        session,
+        values,
+        nextVersion,
+        dirtyPreAudit: auditData$.dirty_pre_audit.peek(),
+    });
+    if (!result.didChange) {
+        return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const nextSyncStateByAuditId =
+        currentPhase === "saving" ||
+        currentPhase === "submitting" ||
+        currentPhase === "resolving_submit" ||
+        currentPhase === "submitted"
+            ? auditData$.sync_state_by_audit_id.peek()
+            : writeAuditSyncState(
+                  auditData$.sync_state_by_audit_id.peek(),
+                  session.audit_id,
+                  transitionPhaseOnLocalEdit({
+                      currentPhase,
+                      updatedAt,
+                  }).phase,
+                  updatedAt,
+              );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(result.session);
+        auditData$.sessions_by_pair_key[pairKey]?.set(result.session);
+        auditData$.dirty_pre_audit.set(result.dirtyPreAudit);
+        auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+/**
+ * Promote trigger-eligible blocked audits back to `dirty` before an automatic
+ * sync attempt.
+ *
+ * @param trigger Automatic trigger that reopened the retry path.
+ * @returns Audit ids whose phase moved back to dirty.
+ */
+function prepareAutomaticSyncAudits(trigger: AutomaticSyncTrigger): string[] {
+    const data = auditData$.peek();
+    const syncableAuditIds = buildSyncableAuditIds({
+        sessionsByAuditId: data.sessions_by_audit_id,
+        dirtySections: data.dirty_sections,
+        dirtyPreAudit: data.dirty_pre_audit,
+        dirtyMeta: data.dirty_meta,
+    });
+    const candidateAuditIds = new Set<string>([
+        ...syncableAuditIds,
+        ...Object.keys(data.sync_state_by_audit_id),
+    ]);
+    const updatedAt = new Date().toISOString();
+    const nextSyncStateByAuditId = { ...data.sync_state_by_audit_id };
+    const reopenedAuditIds: string[] = [];
+
+    for (const auditId of candidateAuditIds) {
+        const currentSyncState = data.sync_state_by_audit_id[auditId];
+        if (currentSyncState === undefined) {
+            continue;
+        }
+
+        const hasDirtyFragments = hasDirtyFragmentsForAudit(
+            auditId,
+            data.dirty_meta,
+            data.dirty_pre_audit,
+            data.dirty_sections,
+        );
+
+        if (
+            hasDirtyFragments &&
+            shouldReopenOnAutomaticSyncTrigger({
+                currentPhase: currentSyncState.phase,
+                trigger,
+            })
+        ) {
+            const nextSyncState = transitionPhaseOnManualRetry({
+                currentPhase: currentSyncState.phase,
+                updatedAt,
+            });
+            nextSyncStateByAuditId[auditId] = nextSyncState;
+            reopenedAuditIds.push(auditId);
+            continue;
+        }
+
+        if (
+            shouldRetrySubmitResolutionOnTrigger({
+                currentPhase: currentSyncState.phase,
+                hasDirtyFragments,
+                trigger,
+            })
+        ) {
+            nextSyncStateByAuditId[auditId] = {
+                phase: "resolving_submit",
+                detail: null,
+                updated_at: updatedAt,
+            };
+            reopenedAuditIds.push(auditId);
+        }
+    }
+
+    if (reopenedAuditIds.length > 0) {
+        auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+    }
+
+    return reopenedAuditIds;
+}
+
+/**
+ * Reopen manual-attention submit phases before an explicit user submit retry.
+ *
+ * @param auditId Audit the user is attempting to submit explicitly.
+ */
+function prepareAuditForExplicitSubmitRetry(auditId: string): void {
+    const data = auditData$.peek();
+    const currentSyncState = data.sync_state_by_audit_id[auditId];
+    if (currentSyncState === undefined) {
+        return;
+    }
+
+    const nextSyncState = transitionPhaseOnExplicitSubmitRetry({
+        currentPhase: currentSyncState.phase,
+        updatedAt: new Date().toISOString(),
+    });
+    if (nextSyncState.phase === currentSyncState.phase) {
+        return;
+    }
+
+    auditData$.sync_state_by_audit_id.set(
+        writeAuditSyncState(
+            data.sync_state_by_audit_id,
+            auditId,
+            nextSyncState.phase,
+            nextSyncState.updated_at,
+            nextSyncState.detail,
+        ),
+    );
+}
+
+/**
+ * Resolve any audits restored from an in-flight submit by fetching the latest
+ * canonical session before the normal save pass runs.
+ *
+ * @param session Authenticated mobile session.
+ */
+async function resolvePendingSubmitStates(
+    session: AuthSession,
+    requestedAuditIds?: readonly string[],
+): Promise<void> {
+    const data = auditData$.peek();
+    for (const auditId of listPendingSubmitResolutionAuditIds({
+        syncStateByAuditId: data.sync_state_by_audit_id,
+        dirtyMeta: data.dirty_meta,
+        dirtyPreAudit: data.dirty_pre_audit,
+        dirtySections: data.dirty_sections,
+        ...(requestedAuditIds === undefined ? {} : { requestedAuditIds }),
+    })) {
+        const data = auditData$.peek();
+        const currentSyncState = data.sync_state_by_audit_id[auditId];
+        if (
+            currentSyncState === undefined ||
+            !shouldRetrySubmitResolution({
+                currentPhase: currentSyncState.phase,
+                hasDirtyFragments: hasDirtyFragmentsForAudit(
+                    auditId,
+                    data.dirty_meta,
+                    data.dirty_pre_audit,
+                    data.dirty_sections,
+                ),
+            })
+        ) {
+            continue;
+        }
+
+        const currentSession = data.sessions_by_audit_id[auditId];
+        if (currentSession === undefined) {
+            const nextSyncStateByAuditId = { ...data.sync_state_by_audit_id };
+            delete nextSyncStateByAuditId[auditId];
+            auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+            continue;
+        }
+
+        try {
+            const latestSession = await fetchAuditSession(session, auditId);
+            const latestData = auditData$.peek();
+            const latestSyncState = latestData.sync_state_by_audit_id[auditId];
+            if (
+                latestSyncState === undefined ||
+                !shouldRetrySubmitResolution({
+                    currentPhase: latestSyncState.phase,
+                    hasDirtyFragments: hasDirtyFragmentsForAudit(
+                        auditId,
+                        latestData.dirty_meta,
+                        latestData.dirty_pre_audit,
+                        latestData.dirty_sections,
+                    ),
+                })
+            ) {
+                continue;
+            }
+
+            const ownedCurrentSession =
+                latestData.sessions_by_audit_id[latestSession.audit_id] ??
+                latestData.sessions_by_pair_key[
+                    getProjectPlaceKey(latestSession.project_id, latestSession.place_id)
+                ] ??
+                null;
+            const rebasedSession = applyFetchedSessionSnapshot({
+                currentSession: ownedCurrentSession,
+                fetchedSession: latestSession,
+                dirtyMeta: latestData.dirty_meta,
+                dirtyPreAudit: latestData.dirty_pre_audit,
+                dirtySections: latestData.dirty_sections,
+            }).session;
+            const resolved = finishSubmitResolution({
+                latestSession: rebasedSession,
+                currentDirtyMeta: latestData.dirty_meta,
+                currentDirtyPreAudit: latestData.dirty_pre_audit,
+                currentDirtySections: latestData.dirty_sections,
+            });
+            const updatedAt = new Date().toISOString();
+            const nextSessionMaps = upsertAuditSessionMaps({
+                sessionsByAuditId: latestData.sessions_by_audit_id,
+                sessionsByPairKey: latestData.sessions_by_pair_key,
+                nextSession: resolved.session,
+            });
+            const nextSyncStateByAuditId =
+                resolved.phase === "submitted"
+                    ? writeAuditSyncState(
+                          latestData.sync_state_by_audit_id,
+                          auditId,
+                          "submitted",
+                          updatedAt,
+                      )
+                    : writeAuditSyncState(
+                          latestData.sync_state_by_audit_id,
+                          auditId,
+                          resolved.phase,
+                          updatedAt,
+                      );
+            const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
+                session: resolved.session,
+                dirtyMeta: resolved.dirtyMeta,
+                dirtyPreAudit: resolved.dirtyPreAudit,
+                dirtySections: resolved.dirtySections,
+                syncStateByAuditId: nextSyncStateByAuditId,
+            });
+            const nextPrunedAuditState = pruneAuditStateForAudit({
+                auditId: nextSessionMaps.displacedAuditId,
+                dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
+                dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
+                dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+                syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
+            });
+
+            batch(() => {
+                auditData$.instrument.set(resolved.session.instrument);
+                auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+                auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+                auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
+                auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
+                auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+                auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+                if (resolved.phase !== "dirty") {
+                    auditData$.last_successful_sync_at.set(updatedAt);
+                }
+            });
+        } catch (error) {
+            console.error("[audit-store] submit resolution failed", error);
+            const updatedAt = new Date().toISOString();
+            const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
+            auditData$.sync_state_by_audit_id.set(
+                writeAuditSyncState(
+                    auditData$.sync_state_by_audit_id.peek(),
+                    auditId,
+                    deriveBlockedPhaseFromError(error),
+                    updatedAt,
+                    message,
+                ),
+            );
+        }
+    }
+}
+
+function acknowledgeSave(saveResult: AuditDraftSave, snapshot: PendingAuditPatchSnapshot): void {
+    const currentSessionsByAuditId = auditData$.sessions_by_audit_id.peek();
+    const currentSessionsByPairKey = auditData$.sessions_by_pair_key.peek();
+    const currentSession = getOwnedAuditSessionForResponse({
+        auditId: snapshot.auditId,
+        sessionsByAuditId: currentSessionsByAuditId,
+        sessionsByPairKey: currentSessionsByPairKey,
+    });
+    if (currentSession === null) {
+        return;
+    }
+
+    const acknowledgedSession = applySaveAcknowledgement({
+        session: currentSession,
+        saveResult,
+    });
+    const nextSessionMaps = upsertAuditSessionMaps({
+        sessionsByAuditId: currentSessionsByAuditId,
+        sessionsByPairKey: currentSessionsByPairKey,
+        nextSession: acknowledgedSession,
+    });
+    const nextDirtyState = clearAcknowledgedDirtyState({
+        auditId: snapshot.auditId,
+        currentDirtySections: auditData$.dirty_sections.peek(),
+        currentDirtyPreAudit: auditData$.dirty_pre_audit.peek(),
+        currentDirtyMeta: auditData$.dirty_meta.peek(),
+        snapshot,
+    });
+    const updatedAt = new Date().toISOString();
+    const nextPhase = hasDirtyFragmentsForAudit(
+        snapshot.auditId,
+        nextDirtyState.dirtyMeta,
+        nextDirtyState.dirtyPreAudit,
+        nextDirtyState.dirtySections,
+    )
+        ? "dirty"
+        : "idle";
+    const nextSyncStateByAuditId = writeAuditSyncState(
+        auditData$.sync_state_by_audit_id.peek(),
+        snapshot.auditId,
+        nextPhase,
+        updatedAt,
+    );
+
+    batch(() => {
+        auditData$.instrument.set(acknowledgedSession.instrument);
+        auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+        auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+        auditData$.dirty_meta.set(nextDirtyState.dirtyMeta);
+        auditData$.dirty_sections.set(nextDirtyState.dirtySections);
+        auditData$.dirty_pre_audit.set(nextDirtyState.dirtyPreAudit);
+        auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+        auditData$.last_successful_sync_at.set(updatedAt);
+    });
+}
+
+async function flushSingleAuditPendingChangesInternal(
+    session: AuthSession,
+    auditId: string,
+): Promise<FlushSingleAuditResult> {
+    const data = auditData$.peek();
+    const currentPhase = readEffectiveAuditSyncPhase(
+        auditId,
+        data.sync_state_by_audit_id,
+        data.dirty_meta,
+        data.dirty_pre_audit,
+        data.dirty_sections,
+    );
+    if (currentPhase !== "dirty") {
+        return {
+            auditId,
+            failed: false,
+        };
+    }
+
+    const auditSession = data.sessions_by_audit_id[auditId];
+    if (auditSession === undefined) {
+        return {
+            auditId,
+            failed: false,
+        };
+    }
+
+    const patchSnapshot = buildDraftPatchSnapshot({
+        auditId,
+        session: auditSession,
+        dirtyMeta: data.dirty_meta,
+        dirtyPreAudit: data.dirty_pre_audit,
+        dirtySections: data.dirty_sections,
+    });
+    if (patchSnapshot === null) {
+        auditData$.sync_state_by_audit_id.set(
+            writeAuditSyncState(
+                auditData$.sync_state_by_audit_id.peek(),
+                auditId,
+                "idle",
+                new Date().toISOString(),
+            ),
+        );
+        return {
+            auditId,
+            failed: false,
+        };
+    }
+
+    const savingAt = new Date().toISOString();
+    auditData$.sync_state_by_audit_id.set(
+        writeAuditSyncState(auditData$.sync_state_by_audit_id.peek(), auditId, "saving", savingAt),
+    );
+
+    try {
+        const saveResult = await saveAuditDraft(session, auditId, patchSnapshot.patch);
+        acknowledgeSave(saveResult, patchSnapshot);
+        return {
+            auditId,
+            failed: false,
+        };
+    } catch (error) {
+        if (error instanceof PlayspaceAuditApiError && error.statusCode === 409) {
+            try {
+                const latestSession = await fetchAuditSession(session, auditId);
+                const currentData = auditData$.peek();
+                const currentSession =
+                    currentData.sessions_by_audit_id[latestSession.audit_id] ??
+                    currentData.sessions_by_pair_key[
+                        getProjectPlaceKey(latestSession.project_id, latestSession.place_id)
+                    ] ??
+                    auditSession;
+                const resolution = resolveSaveConflict({
+                    currentSession,
+                    latestSession,
+                    dirtyMeta: currentData.dirty_meta,
+                    dirtyPreAudit: currentData.dirty_pre_audit,
+                    dirtySections: currentData.dirty_sections,
+                });
+                if (
+                    getOwnedAuditSessionForResponse({
+                        auditId,
+                        sessionsByAuditId: currentData.sessions_by_audit_id,
+                        sessionsByPairKey: currentData.sessions_by_pair_key,
+                    }) === null
+                ) {
+                    return {
+                        auditId,
+                        failed: false,
+                    };
+                }
+                const updatedAt = new Date().toISOString();
+                const nextSessionMaps = upsertAuditSessionMaps({
+                    sessionsByAuditId: currentData.sessions_by_audit_id,
+                    sessionsByPairKey: currentData.sessions_by_pair_key,
+                    nextSession: resolution.rebasedSession,
+                });
+                const nextRecoveryPhase = phaseForSaveConflictRecovery({
+                    action: resolution.action,
+                    rebasedSession: resolution.rebasedSession,
+                    dirtyMeta: resolution.dirtyMeta,
+                    dirtyPreAudit: resolution.dirtyPreAudit,
+                    dirtySections: resolution.dirtySections,
+                    recoveredWithoutRetry: resolution.recoveredWithoutRetry,
+                });
+                const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
+                    session: resolution.rebasedSession,
+                    dirtyMeta: resolution.dirtyMeta,
+                    dirtyPreAudit: resolution.dirtyPreAudit,
+                    dirtySections: resolution.dirtySections,
+                    syncStateByAuditId: writeAuditSyncState(
+                        currentData.sync_state_by_audit_id,
+                        auditId,
+                        nextRecoveryPhase,
+                        updatedAt,
+                    ),
+                });
+                const nextPrunedAuditState = pruneAuditStateForAudit({
+                    auditId: nextSessionMaps.displacedAuditId,
+                    dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
+                    dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
+                    dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+                    syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
+                });
+
+                batch(() => {
+                    auditData$.instrument.set(resolution.rebasedSession.instrument);
+                    auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+                    auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+                    auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
+                    auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
+                    auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+                    auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+                    if (
+                        resolution.action === "terminalize_submitted" ||
+                        resolution.recoveredWithoutRetry
+                    ) {
+                        auditData$.last_successful_sync_at.set(updatedAt);
+                    }
+                });
+
+                if (
+                    resolution.action === "terminalize_submitted" ||
+                    resolution.retrySnapshot === null ||
+                    resolution.recoveredWithoutRetry
+                ) {
+                    return {
+                        auditId,
+                        failed: false,
+                    };
+                }
+
+                try {
+                    const retrySaveResult = await saveAuditDraft(
+                        session,
+                        auditId,
+                        resolution.retrySnapshot.patch,
+                    );
+                    acknowledgeSave(retrySaveResult, resolution.retrySnapshot);
+                    return {
+                        auditId,
+                        failed: false,
+                    };
+                } catch (retryError) {
+                    console.error("[audit-store] retry save failed", retryError);
+                    const updatedAt = new Date().toISOString();
+                    const nextPhase =
+                        retryError instanceof PlayspaceAuditApiError &&
+                        retryError.statusCode === 409
+                            ? "conflict"
+                            : deriveBlockedPhaseFromError(retryError);
+                    const message = formatAuditErrorMessage(
+                        retryError,
+                        t("audit:errors.syncFallback"),
+                    );
+                    auditData$.sync_state_by_audit_id.set(
+                        writeAuditSyncState(
+                            auditData$.sync_state_by_audit_id.peek(),
+                            auditId,
+                            nextPhase,
+                            updatedAt,
+                            message,
+                        ),
+                    );
+                    return {
+                        auditId,
+                        failed: true,
+                    };
+                }
+            } catch (recoveryError) {
+                console.error("[audit-store] conflict recovery failed", recoveryError);
+                const message = formatAuditErrorMessage(
+                    recoveryError,
+                    t("audit:errors.syncFallback"),
+                );
+                auditData$.sync_state_by_audit_id.set(
+                    writeAuditSyncState(
+                        auditData$.sync_state_by_audit_id.peek(),
+                        auditId,
+                        deriveBlockedPhaseFromError(recoveryError),
+                        new Date().toISOString(),
+                        message,
+                    ),
+                );
+                return {
+                    auditId,
+                    failed: true,
+                };
+            }
+        }
+
+        console.error("[audit-store] sync failed", error);
+        const message = formatAuditErrorMessage(error, t("audit:errors.syncFallback"));
+        auditData$.sync_state_by_audit_id.set(
+            writeAuditSyncState(
+                auditData$.sync_state_by_audit_id.peek(),
+                auditId,
+                deriveBlockedPhaseFromError(error),
+                new Date().toISOString(),
+                message,
+            ),
+        );
+        return {
+            auditId,
+            failed: true,
+        };
+    }
+}
+
+const runSingleFlightFlushAudit = createKeyedSingleFlightRunner(
+    (_session: AuthSession, auditId: string) => auditId,
+    flushSingleAuditPendingChangesInternal,
+);
+
+function buildTargetAutomaticSyncAuditIds(requestedAuditIds?: readonly string[]): string[] {
+    if (requestedAuditIds === undefined) {
+        return buildCurrentAutomaticSyncAuditIds();
+    }
+
+    const data = auditData$.peek();
+    return [...new Set(requestedAuditIds)].filter((auditId) => {
+        const currentPhase = readEffectiveAuditSyncPhase(
+            auditId,
+            data.sync_state_by_audit_id,
+            data.dirty_meta,
+            data.dirty_pre_audit,
+            data.dirty_sections,
+        );
+        return currentPhase === "dirty" || currentPhase === "saving";
+    });
+}
+
+async function flushAuditIds(
+    session: AuthSession,
+    requestedAuditIds?: readonly string[],
+): Promise<FlushPendingChangesResult> {
+    await resolvePendingSubmitStates(session, requestedAuditIds);
+
+    const targetAuditIds = buildTargetAutomaticSyncAuditIds(requestedAuditIds);
+    if (targetAuditIds.length === 0) {
+        return {
+            attemptedAuditIds: [],
+            failedAuditIds: [],
+            remainingDirtyAuditIds: buildTargetAutomaticSyncAuditIds(requestedAuditIds),
+        };
+    }
+
+    const results = await Promise.all(
+        targetAuditIds.map(async (auditId) => runSingleFlightFlushAudit(session, auditId)),
+    );
+    saveNow();
+
+    return {
+        attemptedAuditIds: targetAuditIds,
+        failedAuditIds: results.filter((result) => result.failed).map((result) => result.auditId),
+        remainingDirtyAuditIds: buildTargetAutomaticSyncAuditIds(requestedAuditIds),
+    };
+}
+
+function flushPendingChanges(session: AuthSession): Promise<FlushPendingChangesResult> {
+    return flushAuditIds(session);
+}
+
+async function submitAuditSessionInternal(
+    session: AuthSession,
+    auditId: string,
+): Promise<AuditSession> {
+    auditUI$.errorMessage.set(null);
+    prepareAuditForExplicitSubmitRetry(auditId);
+    const currentSyncState = auditData$.sync_state_by_audit_id.peek()[auditId];
+    if (currentSyncState?.phase === "blocked_validation") {
+        const message = currentSyncState.detail ?? t("audit:errors.submitFallback");
+        auditUI$.errorMessage.set(message);
+        throw new Error(message);
+    }
+
+    const auditSession: AuditSession | undefined = auditData$.sessions_by_audit_id[auditId]?.peek();
+    if (auditSession !== undefined) {
+        const flushResult = await flushAuditIds(session, [auditId]);
+        const hasFailedDraftSync = flushResult.failedAuditIds.includes(auditId);
+        const hasRemainingDirtyChanges = flushResult.remainingDirtyAuditIds.includes(auditId);
+        if (hasFailedDraftSync || hasRemainingDirtyChanges) {
+            const message = t("audit:errors.submitNeedsUploadedDraft");
+            auditUI$.errorMessage.set(message);
+            throw new Error(message);
+        }
+    }
+
+    const latestPostFlushSession = auditData$.sessions_by_audit_id[auditId]?.peek();
+    const latestPostFlushSyncState = auditData$.sync_state_by_audit_id.peek()[auditId];
+    if (
+        latestPostFlushSession?.status === "SUBMITTED" ||
+        latestPostFlushSyncState?.phase === "submitted"
+    ) {
+        if (latestPostFlushSession !== undefined) {
+            return latestPostFlushSession;
+        }
+    }
+
+    auditData$.sync_state_by_audit_id.set(
+        writeAuditSyncState(
+            auditData$.sync_state_by_audit_id.peek(),
+            auditId,
+            "submitting",
+            new Date().toISOString(),
+        ),
+    );
+
+    try {
+        const latestSession = auditData$.sessions_by_audit_id[auditId]?.peek();
+        const nextSession = await submitAudit(session, auditId, latestSession?.revision);
+        const data = auditData$.peek();
+        if (
+            getOwnedAuditSessionForResponse({
+                auditId: nextSession.audit_id,
+                sessionsByAuditId: data.sessions_by_audit_id,
+                sessionsByPairKey: data.sessions_by_pair_key,
+            }) === null
+        ) {
+            const currentPairOwner =
+                data.sessions_by_pair_key[
+                    getProjectPlaceKey(nextSession.project_id, nextSession.place_id)
+                ];
+            return currentPairOwner ?? nextSession;
+        }
+        const updatedAt = new Date().toISOString();
+        const nextSessionMaps = upsertAuditSessionMaps({
+            sessionsByAuditId: data.sessions_by_audit_id,
+            sessionsByPairKey: data.sessions_by_pair_key,
+            nextSession,
+        });
+        const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
+            session: nextSession,
+            dirtyMeta: data.dirty_meta,
+            dirtyPreAudit: data.dirty_pre_audit,
+            dirtySections: data.dirty_sections,
+            syncStateByAuditId: writeAuditSyncState(
+                data.sync_state_by_audit_id,
+                auditId,
+                "submitted",
+                updatedAt,
+            ),
+        });
+        const nextPrunedAuditState = pruneAuditStateForAudit({
+            auditId: nextSessionMaps.displacedAuditId,
+            dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
+            dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
+            dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+            syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
+        });
+        batch(() => {
+            auditData$.instrument.set(nextSession.instrument);
+            auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+            auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+            auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
+            auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
+            auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+            auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+            auditUI$.errorMessage.set(null);
+            auditData$.last_successful_sync_at.set(updatedAt);
+        });
+        saveNow();
+        return nextSession;
+    } catch (error) {
+        if (error instanceof PlayspaceAuditApiError && error.statusCode === 409) {
+            let requiresExplicitResubmit = false;
+            try {
+                const latestSession = await fetchAuditSession(session, auditId);
+                const data = auditData$.peek();
+                const currentSession =
+                    data.sessions_by_audit_id[latestSession.audit_id] ??
+                    data.sessions_by_pair_key[
+                        getProjectPlaceKey(latestSession.project_id, latestSession.place_id)
+                    ] ??
+                    auditSession ??
+                    latestSession;
+                const resolution = resolveSubmitConflict({
+                    currentSession,
+                    latestSession,
+                    dirtyMeta: data.dirty_meta,
+                    dirtyPreAudit: data.dirty_pre_audit,
+                    dirtySections: data.dirty_sections,
+                });
+                const updatedAt = new Date().toISOString();
+                const conflictMessage = formatAuditErrorMessage(
+                    error,
+                    t("audit:errors.submitFallback"),
+                );
+                const nextSessionMaps = upsertAuditSessionMaps({
+                    sessionsByAuditId: data.sessions_by_audit_id,
+                    sessionsByPairKey: data.sessions_by_pair_key,
+                    nextSession: resolution.rebasedSession,
+                });
+                const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
+                    session: resolution.rebasedSession,
+                    dirtyMeta: resolution.dirtyMeta,
+                    dirtyPreAudit: resolution.dirtyPreAudit,
+                    dirtySections: resolution.dirtySections,
+                    syncStateByAuditId: writeAuditSyncState(
+                        data.sync_state_by_audit_id,
+                        auditId,
+                        phaseForSubmitConflictAction(resolution.action),
+                        updatedAt,
+                        resolution.action === "terminalize_submitted" ? null : conflictMessage,
+                    ),
+                });
+                const nextPrunedAuditState = pruneAuditStateForAudit({
+                    auditId: nextSessionMaps.displacedAuditId,
+                    dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
+                    dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
+                    dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+                    syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
+                });
+
+                batch(() => {
+                    auditData$.instrument.set(resolution.rebasedSession.instrument);
+                    auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+                    auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+                    auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
+                    auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
+                    auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+                    auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+                    auditUI$.errorMessage.set(
+                        resolution.action === "terminalize_submitted" ? null : conflictMessage,
+                    );
+                    if (resolution.action === "terminalize_submitted") {
+                        auditData$.last_successful_sync_at.set(updatedAt);
+                    }
+                });
+                saveNow();
+                if (resolution.action === "terminalize_submitted") {
+                    return resolution.rebasedSession;
+                }
+                requiresExplicitResubmit = true;
+            } catch (recoveryError) {
+                const message = formatAuditErrorMessage(
+                    recoveryError,
+                    t("audit:errors.submitFallback"),
+                );
+                batch(() => {
+                    auditData$.sync_state_by_audit_id.set(
+                        writeAuditSyncState(
+                            auditData$.sync_state_by_audit_id.peek(),
+                            auditId,
+                            deriveBlockedPhaseFromError(recoveryError),
+                            new Date().toISOString(),
+                            message,
+                        ),
+                    );
+                    auditUI$.errorMessage.set(message);
+                });
+                throw recoveryError;
+            }
+
+            if (requiresExplicitResubmit) {
+                throw error;
+            }
+        }
+
+        const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
+        batch(() => {
+            auditData$.sync_state_by_audit_id.set(
+                writeAuditSyncState(
+                    auditData$.sync_state_by_audit_id.peek(),
+                    auditId,
+                    deriveBlockedPhaseFromError(error),
+                    new Date().toISOString(),
+                    message,
+                ),
+            );
+            auditUI$.errorMessage.set(message);
+        });
+        throw error;
+    }
+}
+
+const runSingleFlightSubmitAuditSession = createKeyedSingleFlightRunner(
+    (_session: AuthSession, auditId: string) => auditId,
+    submitAuditSessionInternal,
+);
+
+function submitAuditSession(session: AuthSession, auditId: string): Promise<AuditSession> {
+    return runSingleFlightSubmitAuditSession(session, auditId);
+}
+
+function clearError(): void {
+    auditUI$.errorMessage.set(null);
+}
+
+// ---------------------------------------------------------------------------
+// Compatibility hook
+// ---------------------------------------------------------------------------
+
+/**
+ * Action map returned by the compatibility hook. Stable references so
+ * selectors that pick a single action don't cause extra re-renders.
+ */
+const actions = {
+    hydrate,
+    clearStoredState,
+    ensurePlaceAudit,
+    refreshAudit,
+    applyLocalExecutionMode,
+    applyLocalQuestionAnswer,
+    applyLocalSectionNote,
+    applyLocalPreAudit,
+    prepareAutomaticSyncAudits,
+    flushPendingChanges,
+    submitAuditSession,
+    clearError,
+} as const;
+
+/**
+ * Data property getters that call `.get()` so Legend State can track them
+ * inside a `useSelector` callback. Each selector only accesses the
+ * properties it actually reads, preserving fine-grained reactivity.
+ */
+const dataGetters: Record<string, () => unknown> = {
+    instrument: () => auditData$.instrument.get() ?? BASE_PLAYSPACE_INSTRUMENT,
+    sessionsByAuditId: () => auditData$.sessions_by_audit_id.get(),
+    sessionsByPairKey: () => auditData$.sessions_by_pair_key.get(),
+    currentUserId: () => auditUI$.currentUserId.get(),
+    isHydrated: () => auditUI$.isHydrated.get(),
+    isLoadingAudit: () => auditUI$.isLoadingAudit.get(),
+    isSavingDraft: () =>
+        deriveGlobalSyncFeedback({
+            syncStateByAuditId: auditData$.sync_state_by_audit_id.get(),
+        }).isSavingDraft,
+    isSyncing: () =>
+        deriveGlobalSyncFeedback({
+            syncStateByAuditId: auditData$.sync_state_by_audit_id.get(),
+        }).isSyncing,
+    errorMessage: () => auditUI$.errorMessage.get(),
+    lastSyncError: () =>
+        deriveGlobalSyncFeedback({
+            syncStateByAuditId: auditData$.sync_state_by_audit_id.get(),
+        }).message,
+    lastSuccessfulSyncAt: () => auditData$.last_successful_sync_at.get(),
+    localChangeCounter: () => auditData$.local_change_counter.get(),
+    dirtySections: () => auditData$.dirty_sections.get(),
+    dirtyPreAudit: () => auditData$.dirty_pre_audit.get(),
+    dirtyMeta: () => auditData$.dirty_meta.get(),
+    syncStateByAuditId: () => auditData$.sync_state_by_audit_id.get(),
+};
+
+/**
+ * Proxy that lazily resolves observable values only when the selector
+ * actually accesses them, so Legend State's tracking stays fine-grained.
+ */
+function createLazyState(): PlayspaceAuditStoreState {
+    return new Proxy({} as PlayspaceAuditStoreState, {
+        get(_target, prop: string | symbol): unknown {
+            if (typeof prop === "symbol") {
+                return undefined;
+            }
+            if (prop in actions) {
+                return (actions as Record<string, unknown>)[prop];
+            }
+            const getter = dataGetters[prop];
+            if (getter !== undefined) {
+                return getter();
+            }
+            return undefined;
+        },
+    });
+}
+
+/**
+ * Eagerly build a full state snapshot for non-React callers (`.getState()`).
+ * Uses `.peek()` to read without tracking.
+ */
+function buildEagerState(): PlayspaceAuditStoreState {
+    const globalSyncFeedback = deriveGlobalSyncFeedback({
+        syncStateByAuditId: auditData$.sync_state_by_audit_id.peek(),
+    });
+
+    return {
+        instrument: auditData$.instrument.peek() ?? BASE_PLAYSPACE_INSTRUMENT,
+        sessionsByAuditId: auditData$.sessions_by_audit_id.peek(),
+        sessionsByPairKey: auditData$.sessions_by_pair_key.peek(),
+        currentUserId: auditUI$.currentUserId.peek(),
+        isHydrated: auditUI$.isHydrated.peek(),
+        isLoadingAudit: auditUI$.isLoadingAudit.peek(),
+        isSavingDraft: globalSyncFeedback.isSavingDraft,
+        isSyncing: globalSyncFeedback.isSyncing,
+        errorMessage: auditUI$.errorMessage.peek(),
+        lastSyncError: globalSyncFeedback.message,
+        lastSuccessfulSyncAt: auditData$.last_successful_sync_at.peek(),
+        localChangeCounter: auditData$.local_change_counter.peek(),
+        dirtySections: auditData$.dirty_sections.peek(),
+        dirtyPreAudit: auditData$.dirty_pre_audit.peek(),
+        dirtyMeta: auditData$.dirty_meta.peek(),
+        syncStateByAuditId: auditData$.sync_state_by_audit_id.peek(),
+        ...actions,
+    };
+}
+
+/**
+ * Zustand-compatible hook backed by Legend State observables.
+ *
+ * Usage is identical to the previous Zustand store:
+ * ```
+ * const session = usePlayspaceAuditStore(s => s.sessionsByPairKey[pairKey]);
+ * const hydrate = usePlayspaceAuditStore(s => s.hydrate);
+ * ```
+ *
+ * The Proxy-based lazy state ensures that only the observables accessed
+ * inside the selector are tracked for re-render, matching Zustand's
+ * fine-grained subscription behaviour.
+ */
+function usePlayspaceAuditStoreHook<T>(selector: (state: PlayspaceAuditStoreState) => T): T {
+    return useSelector(() => selector(createLazyState()));
+}
+
+usePlayspaceAuditStoreHook.getState = buildEagerState;
+
+export const usePlayspaceAuditStore = usePlayspaceAuditStoreHook;

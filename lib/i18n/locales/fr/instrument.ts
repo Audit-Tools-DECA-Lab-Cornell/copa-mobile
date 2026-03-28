@@ -12,11 +12,15 @@ export const frInstrumentTranslations = {
         currentSheet: "PVUA v5.2",
     },
     preamble: [
-        "L’outil d’audit de la valeur ludique et de l’utilisabilité des aires de jeux Playspace est structuré en 22 domaines. Chaque domaine comprend entre 2 et 12 éléments décrivant une caractéristique précise de l’environnement.",
-        "Chaque élément est évalué à l’aide de jusqu’à quatre échelles : quantité, diversité, sociabilité et défi. Tous les éléments ne comprennent pas nécessairement toutes les échelles.",
-        "La quantité est toujours renseignée en premier. Lorsque la réponse sur la quantité est une réponse de type zéro, comme Non ou Sans objet, les autres échelles restent masquées car elles ne s’appliquent pas.",
-        "Après chaque domaine, vous pouvez consigner des notes ou des recommandations sur les changements susceptibles d’améliorer la valeur ludique et l’utilisabilité de l’aire de jeux.",
-        "L’outil comporte deux volets : un audit sur site de l’environnement physique et un questionnaire sur les aspects écologiques et de gestion de l’aire de jeux.",
+        "## Comment l’outil est structuré\nL’outil d’audit de la valeur ludique et de l’utilisabilité de Playspace est structuré en 22 domaines. Chaque domaine comporte entre 2 et 12 items. Tous les items représentent des caractéristiques ou des attributs spécifiques de l’environnement.",
+        "Chaque item est évalué au moyen de jusqu’à quatre échelles : Mise à disposition, Diversité, Possibilités de défi et Soutien à la sociabilité. Tous les items n’incluent pas chaque échelle.",
+        "### 1. Mise à disposition\nLa mise à disposition est toujours évaluée en premier. Lorsque la réponse concernant la mise à disposition est une réponse de type zéro, telle que Non ou Sans objet, les autres échelles restent masquées, car elles ne s’appliquent pas.",
+        "### 2. Diversité\nLa diversité évalue si les éléments fournis offrent une variété de types, de formes ou de possibilités. Autrement dit, s’ils ne sont pas tous identiques.\n\n**Question directrice :** Dans quelle mesure la diversité de cette caractéristique de l’élément/de l’environnement est-elle prise en compte ?\n\nExemple : Pour 5 balançoires : sont-elles toutes de types différents (p. ex. grande balançoire, balançoire pour bébé, balançoire panier, balançoire à corde), ou sont-elles toutes identiques ?\n\n**C’est à vous de juger s’il n’y a pas de diversité, s’il y a un peu de diversité ou s’il y a beaucoup de diversité prise en compte. Vous ne pouvez choisir qu’une seule réponse !**",
+        "### 3. Possibilités de défi\nLes possibilités de défi évaluent si l’élément offre des possibilités avec différents niveaux de difficulté.\n\n**Question directrice :** Dans quelle mesure cette caractéristique de l’élément/de l’environnement offre-t-elle différents niveaux de défi ?\n\nExemple : Les balançoires fournies doivent être examinées et jugées pour déterminer si elles offrent des possibilités de défi croissantes.\n\n**C’est à vous de juger si les balançoires fournies offrent différents niveaux de difficulté. Vous ne pouvez choisir qu’une seule réponse !**",
+        "### 4. Soutien à la sociabilité\nLe soutien à la sociabilité évalue si plus d’un enfant ou d’une personne peut utiliser cette caractéristique de l’élément/de l’environnement ensemble. Il prend en compte la possibilité d’utiliser l’élément à plusieurs en même temps, individuellement, en petits groupes ou en groupes plus importants.\n\n**Question directrice :** Plus d’un enfant (ou d’une personne) peut-il utiliser cette caractéristique ensemble ?\n\nExemple : Certaines balançoires peuvent-elles être utilisées seul(e) ? Certaines peuvent-elles être utilisées à deux ? Certaines peuvent-elles être utilisées par des groupes d’enfants ?\n\n**C’est à vous de juger si elles peuvent être utilisées seul(e), à deux ou en groupe.**",
+        "## Réflexion ouverte\nLa question ouverte vous donne la possibilité de consigner કેટલીક réflexions. Une question directrice vous demandera de décrire un ou deux aspects que vous recommandez de modifier dans l’aire de jeu afin d’augmenter sa valeur ludique et son utilisabilité.",
+        "## Deux parties de l’audit\nL’outil d’audit de la valeur ludique et de l’utilisabilité de Playspace utilise deux méthodes pour évaluer une aire de jeu :\n\n- **(A) Audit sur site de l’environnement physique**\nCette partie de l’audit évalue les aspects de l’aire de jeu qui ne peuvent être examinés que sur place, dans l’environnement physique.\nElle nécessite d’être physiquement présent sur l’aire de jeu.\n\n- **(B) Enquête sur les aspects écologiques de l’aire de jeu**\nCette partie de l’audit évalue les informations relatives à l’historique, aux pratiques de gestion et à la manière dont la météo et les saisons influencent l’utilisation de l’aire de jeu.\nElle ne nécessite pas d’être sur place.\nElle doit être renseignée par une personne familière du contexte et de l’historique de l’aire de jeu.",
+        "## Avant de continuer\nAvant de passer à la section suivante, vous devez décider quelle(s) partie(s) de l’audit vous allez compléter : A, B, ou A et B.\n\nVotre choix dépend de votre degré de familiarité avec l’aire de jeu et du rôle que vous occupez.",
     ],
     executionModes: {
         both: {
@@ -33,6 +37,9 @@ export const frInstrumentTranslations = {
         },
     },
     preAuditQuestions: {
+        auditor_code: {
+            label: "ID de l’auditeur",
+        },
         audit_date: {
             label: "Date de l’audit",
             description: "Générée automatiquement lors de la création de la session d’audit.",
@@ -48,6 +55,101 @@ export const frInstrumentTranslations = {
         total_minutes: {
             label: "Durée totale en minutes",
             description: "Calculée automatiquement à partir des horodatages de début et de fin.",
+        },
+        place_size: {
+            label: "Taille de l’aire de jeux selon votre estimation",
+            options: {
+                small: {
+                    label: "Petite",
+                    description:
+                        "1 à 2 zones d’activité seulement ; p. ex. dans un petit parc de quartier ou un ensemble résidentiel",
+                },
+                medium: {
+                    label: "Moyenne",
+                    description:
+                        "2 à 5 zones d’activité ; p. ex. dans un parc de taille moyenne ou une petite cour d’école",
+                },
+                large: {
+                    label: "Grande",
+                    description:
+                        "6 à 10 zones d’activité ; p. ex. dans un grand parc urbain ou une grande cour d’école",
+                },
+                very_large: {
+                    label: "Très grande",
+                    description:
+                        "Plus de 10 zones d’activité ; p. ex. une grande aire de jeu de destination",
+                },
+            },
+        },
+        current_users_0_5: {
+            label: "0-5 ans",
+            options: {
+                none: {
+                    label: "Aucun",
+                },
+                a_few: {
+                    label: "Quelques-uns",
+                },
+                a_lot: {
+                    label: "Beaucoup",
+                },
+            },
+        },
+        current_users_6_12: {
+            label: "6-12 ans",
+            options: {
+                none: {
+                    label: "Aucun",
+                },
+                a_few: {
+                    label: "Quelques-uns",
+                },
+                a_lot: {
+                    label: "Beaucoup",
+                },
+            },
+        },
+        current_users_13_17: {
+            label: "13-17 ans",
+            options: {
+                none: {
+                    label: "Aucun",
+                },
+                a_few: {
+                    label: "Quelques-uns",
+                },
+                a_lot: {
+                    label: "Beaucoup",
+                },
+            },
+        },
+        current_users_18_plus: {
+            label: "Adultes (18 ans et plus)",
+            options: {
+                none: {
+                    label: "Aucun",
+                },
+                a_few: {
+                    label: "Quelques-uns",
+                },
+                a_lot: {
+                    label: "Beaucoup",
+                },
+            },
+        },
+        playspace_busyness: {
+            label: "À quel point l’aire de jeu est-elle fréquentée actuellement ?",
+            options: {
+                not_at_all_busy: {
+                    label: "Pas du tout fréquentée",
+                },
+                somewhat_busy: {
+                    label: "Assez fréquentée",
+                },
+                very_busy: {
+                    label: "Très fréquentée",
+                },
+            },
         },
         season: {
             label: "Saison actuelle",
@@ -69,6 +171,30 @@ export const frInstrumentTranslations = {
         weather_conditions: {
             label: "Conditions météorologiques au moment de l’audit",
             options: {
+                full_sun: {
+                    label: "Plein soleil",
+                },
+                partial_sun_cloud: {
+                    label: "Partiellement ensoleillé / nuageux",
+                },
+                cloudy_overcast: {
+                    label: "Nuageux / couvert",
+                },
+                foggy_misty: {
+                    label: "Brumeux / embrumé",
+                },
+                light_rain: {
+                    label: "Petite pluie",
+                },
+                moderate_rain: {
+                    label: "Pluie modérée",
+                },
+                light_snow: {
+                    label: "Faible chute de neige",
+                },
+                moderate_snow: {
+                    label: "Chute de neige modérée",
+                },
                 sunshine: {
                     label: "Ensoleillé",
                 },
@@ -80,6 +206,23 @@ export const frInstrumentTranslations = {
                 },
                 inclement_weather: {
                     label: "Mauvais temps",
+                },
+            },
+        },
+        wind_conditions: {
+            label: "Conditions de vent actuelles",
+            options: {
+                no_wind: {
+                    label: "Pas de vent",
+                },
+                light_wind: {
+                    label: "Vent léger",
+                },
+                occasional_gusts: {
+                    label: "Rafales occasionnelles",
+                },
+                heavy_wind: {
+                    label: "Vent fort",
                 },
             },
         },
@@ -125,20 +268,6 @@ export const frInstrumentTranslations = {
                 },
             },
         },
-        place_size: {
-            label: "Taille de l’aire de jeux selon votre estimation",
-            options: {
-                small: {
-                    label: "Petite",
-                },
-                medium: {
-                    label: "Moyenne",
-                },
-                large: {
-                    label: "Grande",
-                },
-            },
-        },
     },
     scales: {
         quantity: {
@@ -181,26 +310,6 @@ export const frInstrumentTranslations = {
                 },
             },
         },
-        sociability: {
-            title: "Sociabilité",
-            prompt: "Plus d’un enfant ou d’une personne peut-il/elle utiliser cet équipement ensemble ?",
-            description:
-                "La sociabilité tient compte du fait que l’équipement peut être utilisé seul, à deux ou en groupe plus large.",
-            options: {
-                not_applicable: {
-                    label: "Non applicable",
-                },
-                no: {
-                    label: "Non",
-                },
-                yes_a_pair: {
-                    label: "Oui - à deux",
-                },
-                yes_more_than_two_children: {
-                    label: "Oui - plus de deux enfants",
-                },
-            },
-        },
         challenge: {
             title: "Défi",
             prompt: "Dans quelle mesure cette caractéristique ou cet élément de l’environnement offre-t-il différents niveaux de défi ?",
@@ -218,6 +327,26 @@ export const frInstrumentTranslations = {
                 },
                 a_lot_of_challenge: {
                     label: "Beaucoup de défi",
+                },
+            },
+        },
+        sociability: {
+            title: "Sociabilité",
+            prompt: "Plus d’un enfant ou d’une personne peut-il/elle utiliser cet équipement ensemble ?",
+            description:
+                "La sociabilité tient compte du fait que l’équipement peut être utilisé seul, à deux ou en groupe plus large.",
+            options: {
+                not_applicable: {
+                    label: "Non applicable",
+                },
+                no: {
+                    label: "Non",
+                },
+                yes_a_pair: {
+                    label: "Oui - à deux",
+                },
+                yes_more_than_two_children: {
+                    label: "Oui - plus de deux enfants",
                 },
             },
         },
@@ -283,6 +412,9 @@ export const frInstrumentTranslations = {
                 },
                 q_2_7: {
                     prompt: "est **située directement à côté de routes à circulation dense ou rapide** sans options de traversée claires/sécuritaires [Note : cet élément doit être coté en sens inverse]",
+                },
+                q_2_8: {
+                    prompt: "se trouve directement à proximité de routes à circulation dense ou rapide, sans clôture ni options de traversée claires et sûres",
                 },
             },
         },
@@ -565,14 +697,26 @@ export const frInstrumentTranslations = {
                 q_14_1: {
                     prompt: "a des **petites pièces manufacturées mobiles** disponibles, **légères et faciles à déplacer/manipuler**, y compris celles pouvant servir à manipuler des matériaux malléables et d’autres pièces mobiles (p. ex. tasses ; seaux ; pelles ; petits outils ; entonnoirs ; ballons ; cordes légères ; tissus ; ballons ; frisbees' cerceaux ; raquettes ; petites voitures/bateaux ; marionnettes)",
                 },
+                q_14_1_1: {
+                    prompt: "Cochez toutes les petites pièces manufacturées détachées dans cet espace de jeu",
+                },
                 q_14_2: {
                     prompt: "a des **pièces manufacturées mobiles de taille moyenne** qui sont **un peu plus lourdes mais restent relativement faciles à déplacer/manipuler** (p. ex. boîtes ; caisses ; cônes de chantier ; casseroles et poêles ; tubes en plastique/tuyaux PVC ; blocs de construction plus grands ; outils ; pelles/râteaux plus grands ; cordes lourdes)",
+                },
+                q_14_2_1: {
+                    prompt: "Cochez toutes les pièces manufacturées détachées de taille moyenne dans cet espace de jeu",
                 },
                 q_14_3: {
                     prompt: "a de **grandes pièces manufacturées mobiles** qui sont **plus lourdes et peuvent nécessiter de l’aide pour être déplacées/manipulées** (p. ex. pneus ; souches ; grands blocs ou planches ; tables ou chaises ; structures d’escalade mobiles)",
                 },
+                q_14_3_1: {
+                    prompt: "Cochez toutes les grandes pièces manufacturées détachées dans cet espace de jeu",
+                },
                 q_14_4: {
                     prompt: "a des **équipements porteurs (à roues)** disponibles que les enfants peuvent utiliser pour se déplacer dans l’espace / sur les chemins (p. ex. trottinettes, bicyclettes ou tricycles, poussettes, planches à roulettes, luge/toboggan)",
+                },
+                q_14_4_1: {
+                    prompt: "Cochez tous les équipements à chevaucher (à roues) dans cet espace de jeu",
                 },
             },
         },
@@ -588,17 +732,29 @@ export const frInstrumentTranslations = {
                 q_15_1: {
                     prompt: "a des **matériaux naturels malléables disponibles **(p. ex. sable, gravier/galets, paillis, terre, boue, eau, neige)",
                 },
+                q_15_1_1: {
+                    prompt: "Cochez tous les matériaux naturels malléables dans cet espace de jeu",
+                },
                 q_15_2: {
                     prompt: "dans les espaces où des matériaux malléables sont disponibles, il y a des **pièces mobiles naturelles ou manufacturées présentes** (p. ex. seaux/pelles ou bâtons dans les zones de sable ; casseroles, bols et cuillères dans la zone/cuisine de boue)",
                 },
                 q_15_3: {
                     prompt: "a des **petites pièces naturelles mobiles disponibles** (ou fournies à certaines saisons) qui sont légères et faciles à déplacer/manipuler (p. ex. feuilles ; écorce/paillis pommes de pin ; graines ; bâtons ou petites branches ; fruits ; coquillages ; fleurs, boules de neige)",
                 },
+                q_15_3_1: {
+                    prompt: "Cochez toutes les petites pièces naturelles détachées dans cet espace de jeu",
+                },
                 q_15_4: {
                     prompt: "a des  **pièces naturelles mobiles de taille moyenne un peu plus lourdes** mais toujours relativement faciles à déplacer/manipuler  (p. ex. rondelles de bois ; pierres de la taille de la paume ; petites souches ; branches plus grandes ; morceaux de glace)",
                 },
+                q_15_4_1: {
+                    prompt: "Cochez toutes les pièces naturelles détachées de taille moyenne dans cet espace de jeu",
+                },
                 q_15_5: {
                     prompt: "a des **pièces naturelles mobiles plus grandes et plus lourdes** qui peuvent nécessiter de l’aide pour être déplacées/manipulées (p. ex.  bûches ; grandes branches ; rochers plus lourds ; grandes souches)",
+                },
+                q_15_5_1: {
+                    prompt: "Cochez toutes les grandes pièces naturelles détachées dans cet espace de jeu",
                 },
                 q_15_6: {
                     prompt: "les enfants sont **autorisés à** **utiliser ensemble des pièces mobiles et/ou des matériaux malléables et/o**u **à les déplacer d’une zone de jeu à une autre**",
@@ -616,8 +772,14 @@ export const frInstrumentTranslations = {
                 q_16_1: {
                     prompt: "offre des possibilités de s’asseoir grâce à des** assises formelles** (p. ex. chaises ; bancs ; tabourets ; tables de pique-nique)** et/ou des assises informelles** (p. ex. plateformes/rebords ; souches d’arbres ; troncs d’arbres ; rochers, murets bas surélevés)",
                 },
+                q_16_1_1: {
+                    prompt: "Cochez les sièges formels que vous avez identifiés",
+                },
                 q_16_2: {
                     prompt: "des assises sont disponibles dans ou **en bordure des zones de jeu principales pour une observation facile** (par les personnes qui s’occupent des enfants ou par d’autres enfants)",
+                },
+                q_16_2_1: {
+                    prompt: "Cochez les sièges informels que vous avez identifiés",
                 },
                 q_16_3: {
                     prompt: "les assises sont **réparties dans l’ensemble de l’espace de jeu** (p. ex. dans de petits espaces ; dans des zones naturelles ; au sein des structures ou équipements de jeu)",
@@ -782,6 +944,9 @@ export const frInstrumentTranslations = {
                 },
                 q_21_9: {
                     prompt: "présente des **indicateurs clairs, tactiles et/ou visuels** (p. ex. contrastes de couleurs, changements de matériau ou surfaces texturées/à relief, bordures basses surélevées) pour définir les bords des chemins ou signaler des changements importants de hauteur (p. ex. bords d’une plateforme surélevée) ou les transitions vers de nouveaux espaces (p. ex. vers les zones de balançoires)",
+                },
+                q_21_10: {
+                    prompt: "présente des repères tactiles et/ou visuels clairs (p. ex. contrastes de couleur ; changements de matériau ; surfaces texturées ou à reliefs ; bordures basses surélevées) pour définir les bords des chemins, signaler des changements de hauteur importants ou indiquer les transitions vers de nouveaux espaces",
                 },
             },
         },

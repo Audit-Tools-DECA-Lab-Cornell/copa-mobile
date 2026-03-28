@@ -1,16 +1,25 @@
 import type { InstrumentTranslations } from "../../instrument-translations";
 
+/**
+ * Auto-generated translation overrides for the de instrument locale.
+ *
+ * Regenerate with `python3 scripts/translate_i18n.py --format instrument`.
+ */
 export const deInstrumentTranslations = {
     metadata: {
         instrumentName: "Audit-Tool fuer Spielwert und Nutzbarkeit von Spielplaetzen",
         currentSheet: "PVUA v5.2",
     },
     preamble: [
-        "Das Audit-Tool fuer Spielwert und Nutzbarkeit von Spielplaetzen ist in 22 Bereiche gegliedert. Jede Domaene enthaelt zwischen 2 und 12 Elemente, die ein bestimmtes Merkmal der Umgebung beschreiben.",
-        "Jeder Punkt wird anhand von bis zu vier Skalen bewertet: Menge, Vielfalt, Geselligkeit und Herausforderung. Nicht alle Artikel enthalten alle Maßstäbe.",
-        "Die Menge wird immer zuerst beantwortet. Wenn es sich bei der Mengenantwort um eine Null-ähnliche Antwort wie „Nein“ oder „Nicht anwendbar“ handelt, bleiben die übrigen Skalen ausgeblendet, da sie nicht zutreffen.",
-        "Nach jeder Domain können Sie Notizen oder Empfehlungen zu Änderungen aufzeichnen, die den Spielwert und die Benutzerfreundlichkeit des Spielplatzs verbessern könnten.",
-        "Das Tool unterstützt zwei Teile: eine Prüfung der physischen Umgebung vor Ort und eine Umfrage zu ökologischen und Managementaspekten des Spielplatzs.",
+        "## Wie das Tool aufgebaut ist\nDas Playspace Play Value and Usability Audit Tool ist in 22 Bereiche gegliedert. Jeder Bereich umfasst zwischen 2 und 12 Items. Alle Items stehen für bestimmte Merkmale oder Eigenschaften der Umgebung.",
+        "Jedes Item wird anhand von bis zu vier Skalen bewertet: Bereitstellung, Vielfalt, Herausforderungsmöglichkeiten und Unterstützung sozialer Interaktion. Nicht bei allen Items sind alle Skalen enthalten.",
+        "### 1. Bereitstellung\nDie Bereitstellung wird immer zuerst beantwortet. Wenn die Antwort zur Bereitstellung eine Null-Antwort ist, wie z. B. Nein oder Nicht zutreffend, bleiben die übrigen Skalen ausgeblendet, da sie nicht relevant sind.",
+        "### 2. Vielfalt\nVielfalt bewertet, ob die bereitgestellten Elemente eine Auswahl an Typen, Formen oder Möglichkeiten bieten. Mit anderen Worten: ob sie nicht alle gleich sind.\n\n**Leitfrage:** In welchem Maße wird die Vielfalt dieses Merkmals/dieser Umgebungs-eigenschaft berücksichtigt?\n\nBeispiel: Bei 5 Schaukeln: Sind sie alle unterschiedliche Typen (z. B. große Schaukel, Babyschaukel, Korbschaukel, Seilschaukel) oder sind sie alle identisch?\n\n**Es liegt in Ihrem Ermessen anzugeben, ob keine Vielfalt, etwas Vielfalt oder viel Vielfalt berücksichtigt wird. Sie können nur eine Option wählen!**",
+        "### 3. Herausforderungsmöglichkeiten\nHerausforderungsmöglichkeiten bewerten, ob das Merkmal Möglichkeiten mit unterschiedlichen Schwierigkeitsgraden bietet.\n\n**Leitfrage:** In welchem Maße bietet dieses Merkmal/diese Umgebungs-eigenschaft unterschiedliche Schwierigkeitsgrade?\n\nBeispiel: Die vorhandenen Schaukeln sollten untersucht und bewertet werden, ob sie zunehmend herausfordernde Möglichkeiten bieten.\n\n**Es liegt in Ihrem Ermessen anzugeben, ob die vorhandenen Schaukeln unterschiedliche Schwierigkeitsgrade bieten. Sie können nur eine Option wählen!**",
+        "### 4. Unterstützung sozialer Interaktion\nDie Unterstützung sozialer Interaktion bewertet, ob mehr als ein Kind/eine Person dieses Merkmal/diese Umgebungs-eigenschaft gemeinsam nutzen kann. Dabei wird berücksichtigt, ob das Merkmal von mehr als einer Person gleichzeitig, einzeln, in kleinen Gruppen oder in größeren Gruppen genutzt werden kann.\n\n**Leitfrage:** Können mehr als ein Kind (oder eine Person) dieses Merkmal gemeinsam nutzen?\n\nBeispiel: Können einige der Schaukeln allein genutzt werden? Können einige zu zweit genutzt werden? Können einige von Kindergruppen genutzt werden?\n\n**Es liegt in Ihrem Ermessen anzugeben, ob sie allein, zu zweit oder in Gruppen genutzt werden können.**",
+        "## Offene Reflexion\nDie offene Frage gibt Ihnen die Möglichkeit, einige Überlegungen zu notieren. Eine Leitfrage fordert Sie auf, ein oder zwei Aspekte zu beschreiben, die Sie im Playspace ändern würden, um dessen Spielwert und Nutzbarkeit zu erhöhen.",
+        "## Zwei Teile des Audits\nDas Playspace Play Value and Usability Audit Tool verwendet zwei Methoden zur Bewertung eines Playspaces:\n\n- **(A) Vor-Ort-Audit der physischen Umgebung**\nDieser Teil des Audits bewertet Aspekte des Playspaces, die nur vor Ort in der physischen Umgebung untersucht werden können.\nEr erfordert die physische Anwesenheit am Playspace.\n\n- **(B) Befragung zu ökologischen Aspekten des Playspaces**\nDieser Teil des Audits bewertet Informationen zur Geschichte, zu den Managementpraktiken und dazu, wie Wetter und Jahreszeiten die Nutzung des Playspaces beeinflussen.\nEr erfordert keine Anwesenheit vor Ort.\nEr muss von jemandem beantwortet werden, der mit dem Hintergrund und dem Kontext des Playspaces vertraut ist.",
+        "## Bevor Sie fortfahren\nBevor Sie zum nächsten Abschnitt wechseln, müssen Sie entscheiden, welchen Teil bzw. welche Teile des Audits Sie ausfüllen werden: A, B oder A & B.\n\nIhre Wahl hängt davon ab, wie gut Sie mit dem Playspace vertraut sind und welche Rolle Sie haben.",
     ],
     executionModes: {
         both: {
@@ -28,25 +37,120 @@ export const deInstrumentTranslations = {
         },
     },
     preAuditQuestions: {
+        auditor_code: {
+            label: "Auditor-ID",
+        },
         audit_date: {
             label: "Datum des Audits",
-            description: "Wird automatisch erstellt, wenn die Auditsitzung angelegt wird.",
             options: {},
+            description: "Wird automatisch erstellt, wenn die Auditsitzung angelegt wird.",
         },
         started_at: {
             label: "Startzeit des Audits",
-            description: "Wird automatisch erstellt, wenn die Auditsitzung angelegt wird.",
             options: {},
+            description: "Wird automatisch erstellt, wenn die Auditsitzung angelegt wird.",
         },
         submitted_at: {
             label: "Endzeit des Audits",
-            description: "Wird automatisch erstellt, wenn das Audit eingereicht wird.",
             options: {},
+            description: "Wird automatisch erstellt, wenn das Audit eingereicht wird.",
         },
         total_minutes: {
             label: "Gesamtdauer in Minuten",
             description: "Wird automatisch aus Start- und Endzeit berechnet.",
             options: {},
+        },
+        place_size: {
+            label: "Größe des Spielplatzes nach Ihrer Einschätzung",
+            description: null,
+            options: {
+                small: {
+                    label: "Klein",
+                    description: null,
+                },
+                medium: {
+                    label: "Mittel",
+                    description: null,
+                },
+                large: {
+                    label: "Groß",
+                    description: null,
+                },
+                very_large: {
+                    label: "Sehr groß",
+                    description: "Mehr als 10 Aktivitätszonen; z. B. ein großer Ziel-Spielraum",
+                },
+            },
+        },
+        current_users_0_5: {
+            label: "0–5 Jahre",
+            options: {
+                none: {
+                    label: "Keine",
+                },
+                a_few: {
+                    label: "Einige",
+                },
+                a_lot: {
+                    label: "Viele",
+                },
+            },
+        },
+        current_users_6_12: {
+            label: "6–12 Jahre",
+            options: {
+                none: {
+                    label: "Keine",
+                },
+                a_few: {
+                    label: "Einige",
+                },
+                a_lot: {
+                    label: "Viele",
+                },
+            },
+        },
+        current_users_13_17: {
+            label: "13–17 Jahre",
+            options: {
+                none: {
+                    label: "Keine",
+                },
+                a_few: {
+                    label: "Einige",
+                },
+                a_lot: {
+                    label: "Viele",
+                },
+            },
+        },
+        current_users_18_plus: {
+            label: "Erwachsene (18+ Jahre)",
+            options: {
+                none: {
+                    label: "Keine",
+                },
+                a_few: {
+                    label: "Einige",
+                },
+                a_lot: {
+                    label: "Viele",
+                },
+            },
+        },
+        playspace_busyness: {
+            label: "Wie stark frequentiert ist der Playspace derzeit?",
+            options: {
+                not_at_all_busy: {
+                    label: "Überhaupt nicht stark frequentiert",
+                },
+                somewhat_busy: {
+                    label: "Mäßig stark frequentiert",
+                },
+                very_busy: {
+                    label: "Sehr stark frequentiert",
+                },
+            },
         },
         season: {
             label: "Aktuelle Jahreszeit",
@@ -74,6 +178,30 @@ export const deInstrumentTranslations = {
             label: "Wetterbedingungen zum Zeitpunkt des Audits",
             description: null,
             options: {
+                full_sun: {
+                    label: "Volle Sonne",
+                },
+                partial_sun_cloud: {
+                    label: "Teilweise Sonne/Wolken",
+                },
+                cloudy_overcast: {
+                    label: "Bewölkt/bedeckt",
+                },
+                foggy_misty: {
+                    label: "Neblig/dunstig",
+                },
+                light_rain: {
+                    label: "Leichter Regen",
+                },
+                moderate_rain: {
+                    label: "Mäßiger Regen",
+                },
+                light_snow: {
+                    label: "Leichter Schnee",
+                },
+                moderate_snow: {
+                    label: "Mäßiger Schneefall",
+                },
                 sunshine: {
                     label: "Sonnig",
                     description: null,
@@ -89,6 +217,23 @@ export const deInstrumentTranslations = {
                 inclement_weather: {
                     label: "Schlechtes Wetter",
                     description: null,
+                },
+            },
+        },
+        wind_conditions: {
+            label: "Aktuelle Windverhältnisse",
+            options: {
+                no_wind: {
+                    label: "Kein Wind",
+                },
+                light_wind: {
+                    label: "Leichter Wind",
+                },
+                occasional_gusts: {
+                    label: "Gelegentliche Böen",
+                },
+                heavy_wind: {
+                    label: "Starker Wind",
                 },
             },
         },
@@ -146,24 +291,6 @@ export const deInstrumentTranslations = {
                 },
             },
         },
-        place_size: {
-            label: "Größe des Spielplatzes nach Ihrer Einschätzung",
-            description: null,
-            options: {
-                small: {
-                    label: "Klein",
-                    description: null,
-                },
-                medium: {
-                    label: "Mittel",
-                    description: null,
-                },
-                large: {
-                    label: "Groß",
-                    description: null,
-                },
-            },
-        },
     },
     scales: {
         quantity: {
@@ -206,26 +333,6 @@ export const deInstrumentTranslations = {
                 },
             },
         },
-        sociability: {
-            title: "Geselligkeit",
-            prompt: "Kann dieses Merkmal gemeinsam von mehr als einem Kind oder einer Person genutzt werden?",
-            description:
-                "Geselligkeit betrachtet, ob ein Merkmal allein, zu zweit oder in größeren Gruppen genutzt werden kann.",
-            options: {
-                not_applicable: {
-                    label: "Nicht zutreffend",
-                },
-                no: {
-                    label: "Nein",
-                },
-                yes_a_pair: {
-                    label: "Ja - zu zweit",
-                },
-                yes_more_than_two_children: {
-                    label: "Ja - mit mehr als zwei Kindern",
-                },
-            },
-        },
         challenge: {
             title: "Herausforderung",
             prompt: "In welchem Maß bietet dieses Merkmal oder diese Umweltcharakteristik unterschiedliche Schwierigkeitsstufen?",
@@ -243,6 +350,26 @@ export const deInstrumentTranslations = {
                 },
                 a_lot_of_challenge: {
                     label: "Viel Herausforderung",
+                },
+            },
+        },
+        sociability: {
+            title: "Geselligkeit",
+            prompt: "Kann dieses Merkmal gemeinsam von mehr als einem Kind oder einer Person genutzt werden?",
+            description:
+                "Geselligkeit betrachtet, ob ein Merkmal allein, zu zweit oder in größeren Gruppen genutzt werden kann.",
+            options: {
+                not_applicable: {
+                    label: "Nicht zutreffend",
+                },
+                no: {
+                    label: "Nein",
+                },
+                yes_a_pair: {
+                    label: "Ja - zu zweit",
+                },
+                yes_more_than_two_children: {
+                    label: "Ja - mit mehr als zwei Kindern",
                 },
             },
         },
@@ -309,6 +436,9 @@ export const deInstrumentTranslations = {
                 },
                 q_2_7: {
                     prompt: "liegt direkt neben Straßen mit starkem oder schnellem Verkehr und ohne klare/sichere Überquerungsmöglichkeiten. [Beachten Sie, dass dieser Punkt umgekehrt bewertet werden muss.]",
+                },
+                q_2_8: {
+                    prompt: "liegt unmittelbar neben Straßen mit starkem oder schnellem Verkehr, ohne Einzäunung und ohne klare/sichere Querungsmöglichkeiten",
                 },
             },
         },
@@ -601,14 +731,26 @@ export const deInstrumentTranslations = {
                 q_14_1: {
                     prompt: "verfügt über **kleine, hergestellte lose Teile**, die **leicht und leicht zu bewegen/handhaben** sind, einschließlich solcher, die zur Manipulation formbarer Materialien und anderer loser Teile verwendet werden können (z. B. Tassen, Eimer, Schaufeln, kleine Werkzeuge, Trichter, Bälle, leichte Seile, Stoffe, Bälle, Frisbees-Hula-Hoops, Schläger, Spielzeugautos/-boote, Puppen).",
                 },
+                q_14_1_1: {
+                    prompt: "Prüfen Sie alle kleinen losen, hergestellten Teile in diesem Spielbereich",
+                },
                 q_14_2: {
                     prompt: "hat **mittelgrosse hergestellte lose Teile, die etwas schwerer, aber dennoch relativ leicht zu bewegen oder zu handhaben sind** (z. B. Kisten, Baukegel, Toepfe und Pfannen, Kunststoff- oder PVC-Rohre, groessere Bausteine, Werkzeuge, groessere Schaufeln oder Rechen sowie schwere Seile)",
+                },
+                q_14_2_1: {
+                    prompt: "Prüfen Sie alle mittelgroßen losen, hergestellten Teile in diesem Spielbereich",
                 },
                 q_14_3: {
                     prompt: "hat **grosse hergestellte lose Teile, die schwerer sind und bei deren Bewegung oder Handhabung Hilfe erfordern koennten** (z. B. Reifen, Baumstuempfe, grosse Bloecke oder Bretter, Tische oder Stuehle sowie bewegliche Klettergeraete)",
                 },
+                q_14_3_1: {
+                    prompt: "Prüfen Sie alle großen losen, hergestellten Teile in diesem Spielbereich",
+                },
                 q_14_4: {
                     prompt: "verfügt über **(fahrbare) Aufsitzgeräte**, mit denen sich Kinder im Raum/auf den Wegen fortbewegen können (z. B. Roller, Fahrräder oder Dreiräder, Kinderwagen, Skateboards, Schlitten/Rodel)",
+                },
+                q_14_4_1: {
+                    prompt: "Prüfen Sie alle befahrbaren Geräte (mit Rädern) in diesem Spielbereich",
                 },
             },
         },
@@ -624,17 +766,29 @@ export const deInstrumentTranslations = {
                 q_15_1: {
                     prompt: "verfuegt ueber **natuerliche formbare Materialien** (z. B. Sand, Kies oder Kiesel, Mulch, Erde, Schlamm, Wasser oder Schnee)",
                 },
+                q_15_1_1: {
+                    prompt: "Prüfen Sie alle natürlichen formbaren Materialien in diesem Spielbereich",
+                },
                 q_15_2: {
                     prompt: "In Räumen, in denen formbare Materialien verfügbar sind, sind **natürliche oder hergestellte lose Teile vorhanden** (z. B. Eimer/Schaufeln oder Stöcke in Sandbereichen; Töpfe, Schüsseln und Löffel im Schlammbereich/in der Küche)",
                 },
                 q_15_3: {
                     prompt: "verfuegt ueber **kleine natuerliche lose Teile, die leicht zu bewegen oder zu handhaben sind** (z. B. Blaetter, Rinde oder Mulch, Tannenzapfen, Samen, Stoecke oder kleine Zweige, Fruechte, Muscheln, Blumen oder Schneebaelle)",
                 },
+                q_15_3_1: {
+                    prompt: "Prüfen Sie alle kleinen losen Naturmaterialien in diesem Spielbereich",
+                },
                 q_15_4: {
                     prompt: "hat **mittelgroße natürliche lose Teile, die etwas schwerer** sind, aber dennoch relativ leicht zu bewegen/handhaben (z. B. Baumkekse; handtellergroße Steine; kleine Baumstümpfe; größere Bänke; Eisbrocken)",
                 },
+                q_15_4_1: {
+                    prompt: "Prüfen Sie alle mittelgroßen losen Naturmaterialien in diesem Spielbereich",
+                },
                 q_15_5: {
                     prompt: "hat **größere natürliche lose Teile, die schwerer** sind und möglicherweise Hilfe beim Bewegen/Handhaben benötigen (z. B. Holzstämme; große Äste; schwerere Steine; große Baumstümpfe)",
+                },
+                q_15_5_1: {
+                    prompt: "Prüfen Sie alle großen losen Naturmaterialien in diesem Spielbereich",
                 },
                 q_15_6: {
                     prompt: "Kindern ist es **erlaubt, lose Teile und/oder formbare Materialien zusammen zu verwenden oder sie von einer Spielzone in eine andere zu bewegen**",
@@ -653,8 +807,14 @@ export const deInstrumentTranslations = {
                 q_16_1: {
                     prompt: "Bietet Möglichkeiten zum Sitzen durch formelle Sitzgelegenheiten (z. B. Stühle, Bänke, Hocker, Picknicktische) und/oder informelle Sitzgelegenheiten (z. B. Plattformen/Vorsprünge, Baumstümpfe, Baumstämme, Felsbrocken, niedrige erhöhte Mauern).",
                 },
+                q_16_1_1: {
+                    prompt: "Prüfen Sie die von Ihnen identifizierten formellen Sitzgelegenheiten",
+                },
                 q_16_2: {
                     prompt: "Zur einfachen Beobachtung (durch Betreuer oder andere Kinder) stehen Sitzgelegenheiten innerhalb oder an den Rändern der primären Spielplatze zur Verfügung.",
+                },
+                q_16_2_1: {
+                    prompt: "Prüfen Sie die von Ihnen identifizierten informellen Sitzgelegenheiten",
                 },
                 q_16_3: {
                     prompt: "Sitzgelegenheiten sind im gesamten Spielplatz verteilt (z. B. in kleinen Räumen, in Naturbereichen, innerhalb von Spielstrukturen oder -einrichtungen).",
@@ -824,6 +984,9 @@ export const deInstrumentTranslations = {
                 },
                 q_21_9: {
                     prompt: "verfügt über klare, taktile und/oder visuelle Indikatoren (z. B. Farbkontraste, Materialveränderungen oder strukturierte/geriffelte Oberflächen, niedrige erhöhte Grenzen), um Wegeränder zu definieren oder signifikante Höhenänderungen (z. B. Kanten einer erhöhten Plattform) oder Übergänge in neue Räume (z. B. in die Schaukelbereiche) zu signalisieren.",
+                },
+                q_21_10: {
+                    prompt: "verfügt über klare taktile und/oder visuelle Markierungen (z. B. Farbkontraste; Materialwechsel; strukturierte oder genoppte Oberflächen; niedrige, erhabene Begrenzungen), um Kanten von Wegen zu definieren, erhebliche Höhenänderungen anzuzeigen oder Übergänge in neue Bereiche zu kennzeichnen",
                 },
             },
         },

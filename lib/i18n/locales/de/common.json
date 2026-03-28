@@ -7,11 +7,34 @@
         "resume": "Fortsetzen",
         "retry": "Erneut versuchen",
         "seeAll": "Alle anzeigen",
-        "signOut": "Abmelden"
+        "signOut": "Abmelden",
+        "viewDetails": "Details anzeigen",
+        "viewReport": "Bericht anzeigen"
     },
+    "assignedPlacesResponseShapeIsInvalid": "Die Form der Antwort für zugewiesene Orte ist ungültig.",
+    "auditorProfileResponseShapeIsInvalid": "Die Form der Antwort für das Auditorenprofil ist ungültig.",
+    "auditSessionResponseShapeIsInvalid": "Die Form der Antwort für die Audit-Sitzung ist ungültig.",
+    "authenticationRequestFailed": "Authentifizierungsanfrage fehlgeschlagen.",
+    "authenticationResponseShapeIsInvalid": "Die Form der Authentifizierungsantwort ist ungültig.",
+    "authenticationServiceReturnedInvalidJson": "Der Authentifizierungsdienst hat ungültiges JSON zurückgegeben.",
+    "dontWorryWeveGotYourData": "Keine Sorge, Ihre Daten sind bei uns sicher.",
+    "draftPatchIsInvalid": "Der Entwurfspatch ist ungültig.",
+    "executionModeIsInvalid": "Der Ausführungsmodus ist ungültig.",
+    "filters": {
+        "active": "Aktiv",
+        "all": "Alle",
+        "complete": "Abgeschlossen",
+        "incomplete": "Unvollständig",
+        "notScored": "Nicht bewertet",
+        "scored": "Bewertet",
+        "submitted": "Eingereicht"
+    },
+    "networkRequestFailed": "Netzwerkanfrage fehlgeschlagen.",
     "place": {
         "assignedPlace": "Zugewiesener Ort"
     },
+    "playspaceAuditRequestFailed": "Anfrage für den Playspace-Audit fehlgeschlagen.",
+    "playspaceAuditServiceReturnedInvalidJson": "Der Playspace-Auditdienst hat ungültiges JSON zurückgegeben.",
     "roles": {
         "auditor": "Pruefperson",
         "auditorAndPlaceAdmin": "Pruefperson und Ortsverwaltung",
@@ -25,6 +48,12 @@
         "off": "AUS",
         "on": "AN",
         "submitted": "Eingereicht"
+    },
+    "sort": {
+        "name": "Name",
+        "progress": "Fortschritt",
+        "recent": "Zuletzt",
+        "score": "Punktzahl"
     },
     "tabs": {
         "execute": "Durchfuehren",
@@ -41,5 +70,14 @@
         "justNow": "Gerade eben",
         "minuteAgo_one": "vor 1 Min.",
         "minuteAgo_other": "vor {{count}} Min."
-    }
+    },
+    "toast": {
+        "demo": "Demo",
+        "hide": "Ausblenden",
+        "show": "Anzeigen",
+        "success": "Erfolgreich gespeichert!"
+    },
+    "unableToLoadPlaces": "Orte konnten nicht geladen werden.",
+    "unableToReachAuthenticationService": "Authentifizierungsdienst nicht erreichbar.",
+    "unableToReachPlayspaceAuditService": "Playspace-Auditdienst nicht erreichbar."
 }

@@ -9,10 +9,14 @@
     "accessibility": {
         "dyslexicFont": "ディスレクシア対応フォント",
         "dyslexicFontDescription": "読みやすさを向上させるために OpenDyslexic に切り替えます。",
+        "fieldMode": "フィールドモード",
+        "fieldModeDescription": "明るい環境向けに、よりクールな屋外用パレット、強いコントラスト、大きめの最小文字サイズを使います。",
+        "fieldModeEffect": "フィールドモードにより、現在の文字サイズは少なくとも {{value}}x で、コントラストも強化されています。",
         "fontScaleDescription": "明るい日差しの下や薄暗い場所での読みやすさのために、テキストサイズを調整します。",
         "fontScaleValue": "フォント倍率: {{value}}x",
         "highContrast": "高コントラスト",
         "highContrastDescription": "屋外・明るい環境で視認性を高めます。",
+        "highContrastManagedDescription": "屋外・明るい環境で視認性を高めます。フィールドモードが有効な間は、この効果が維持されます。",
         "label": "アクセシビリティ"
     },
     "appearance": {
@@ -32,7 +36,8 @@
         "hindi": "ヒンディー語",
         "japanese": "日本語",
         "label": "言語",
-        "selection": "アプリの言語"
+        "selection": "アプリの言語",
+        "system": "システム"
     },
     "profile": {
         "accountType": "アカウントの種類",

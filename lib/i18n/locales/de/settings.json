@@ -9,10 +9,14 @@
     "accessibility": {
         "dyslexicFont": "Legasthenie-freundliche Schrift",
         "dyslexicFontDescription": "Wechsel zu OpenDyslexic für bessere Lesbarkeit.",
+        "fieldMode": "Feldmodus",
+        "fieldModeDescription": "Verwendet die kühlere Outdoor-Palette, stärkeren Kontrast und eine größere Mindestschrift für helle Bedingungen.",
+        "fieldModeEffect": "Der Feldmodus hält den Text derzeit bei mindestens {{value}}x und erhöht den Kontrast.",
         "fontScaleDescription": "Passen Sie die Textgroesse fuer bessere Lesbarkeit bei hellem Sonnenlicht oder schlechten Lichtverhaeltnissen an.",
         "fontScaleValue": "Schriftgroesse: {{value}}x",
         "highContrast": "Hoher Kontrast",
         "highContrastDescription": "Erhöhter Kontrast für Outdoor-/Hellbedingungen.",
+        "highContrastManagedDescription": "Erhöhter Kontrast für Outdoor-/Hellbedingungen. Der Feldmodus hält dies aktiv, solange er eingeschaltet ist.",
         "label": "Barrierefreiheit"
     },
     "appearance": {
@@ -32,7 +36,8 @@
         "hindi": "Hindi",
         "japanese": "Japanisch",
         "label": "Sprache",
-        "selection": "App-Sprache"
+        "selection": "App-Sprache",
+        "system": "System"
     },
     "profile": {
         "accountType": "Kontotyp",
