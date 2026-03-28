@@ -108,9 +108,14 @@ export default function ExecutePlaceScreen() {
     }, [authSession, ensurePlaceAudit, isCurrentAuditUserReady, isHydrated, placeId, projectId]);
 
     useLayoutEffect(() => {
+        navigation.setOptions({
+            ...themedHeaderOptions,
+            title: t("overview.preparingAuditTitle", { ns: "audit" }),
+        });
         if (auditSession !== undefined) {
             const mode = getExecutionModeShortLabel(auditSession.selected_execution_mode, t);
             const suffix = mode.length > 0 ? ` - ${mode}` : "";
+
             navigation.setOptions({
                 ...themedHeaderOptions,
                 title: `${auditSession.place_name}${suffix}`,

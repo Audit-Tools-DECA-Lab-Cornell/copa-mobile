@@ -230,11 +230,11 @@ function RootLayoutNav() {
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen
-                    name="execute"
+                    name="execute/[placeId]/index"
                     options={{ headerShown: true, title: t("stack.execute") }}
                 />
-                <Stack.Screen name="place" options={{ headerShown: true }} />
-                <Stack.Screen name="report" options={{ headerShown: true }} />
+                <Stack.Screen name="place/[placeId]" options={{ headerShown: true }} />
+                <Stack.Screen name="report/[auditId]" options={{ headerShown: true }} />
             </Stack>
         </ThemeProvider>
     );
