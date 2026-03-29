@@ -437,10 +437,10 @@ export default function ExecutePlaceScreen() {
                         isSyncing={isSyncing}
                         lastSyncError={lastSyncError}
                     />
-                    <PreamblePanel blocks={preambleBlocks} />
-                    {sectionReviewCard}
-                    {roleCard}
                     {viewPlaceDetailsButton}
+                    <PreamblePanel blocks={preambleBlocks} />
+                    {roleCard}
+                    {sectionReviewCard}
                     {continueButton}
                     {selectedMode === null ? (
                         <Paragraph

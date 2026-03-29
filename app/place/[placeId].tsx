@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons";
 import type { TFunction } from "i18next";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { StatCard } from "components/ui/stat-card";
@@ -497,8 +497,9 @@ function PlaceDetailContent({
                     style={{ overflow: "hidden" }}
                 >
                     <MapView
-                        style={{ width: "100%", height: layout.isTablet ? 280 : 220 }}
+                        style={{ width: "100%", height: layout.isTablet ? 360 : 280 }}
                         region={mapRegion}
+                        provider={PROVIDER_GOOGLE}
                         pointerEvents="auto"
                         scrollEnabled={true}
                         zoomEnabled={true}

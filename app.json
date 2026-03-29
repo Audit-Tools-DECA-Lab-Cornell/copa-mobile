@@ -38,8 +38,14 @@
             "./plugins/withFmtFix",
             "./plugins/withExpoProjectRootFix",
             "expo-router",
-            "react-native-maps",
             "expo-font",
+            [
+                "react-native-maps",
+                {
+                    "iosGoogleMapsApiKey": "process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY",
+                    "androidGoogleMapsApiKey": "process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+                }
+            ],
             [
                 "expo-build-properties",
                 {
