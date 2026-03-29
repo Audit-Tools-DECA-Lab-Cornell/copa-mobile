@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowRight, ClipboardList, Shapes, TriangleAlert } from "@tamagui/lucide-icons";
@@ -6,11 +6,15 @@ import { useTranslation } from "react-i18next";
 import { Button, ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 import {
     buildExecuteOverviewSummary,
+    filterExecuteOverviewRows,
     getExecuteFlowSubject,
+    type ExecuteOverviewSectionFilter,
     type ExecuteOverviewSectionInput,
 } from "lib/audit/execute-flow";
 import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
+import { CollapsibleCard } from "components/ui/collapsible-card";
+import { FilterChip } from "components/ui/filter-chip";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import type { ExecutionMode } from "lib/audit/types";
@@ -108,9 +112,14 @@ export default function ExecutePlaceScreen() {
     }, [authSession, ensurePlaceAudit, isCurrentAuditUserReady, isHydrated, placeId, projectId]);
 
     useLayoutEffect(() => {
+        navigation.setOptions({
+            ...themedHeaderOptions,
+            title: t("overview.preparingAuditTitle", { ns: "audit" }),
+        });
         if (auditSession !== undefined) {
             const mode = getExecutionModeShortLabel(auditSession.selected_execution_mode, t);
             const suffix = mode.length > 0 ? ` - ${mode}` : "";
+
             navigation.setOptions({
                 ...themedHeaderOptions,
                 title: `${auditSession.place_name}${suffix}`,
@@ -242,7 +251,7 @@ export default function ExecutePlaceScreen() {
     const continueButton = (
         <Button
             height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-            rounded={ds.radii.md}
+            rounded={ds.radii.sm}
             borderWidth={0}
             bg={selectedMode === null ? ds.colors.mutedSurface : ds.colors.primary}
             disabled={selectedMode === null}
@@ -309,7 +318,7 @@ export default function ExecutePlaceScreen() {
     const viewPlaceDetailsButton = (
         <Button
             height={layout.isTablet ? layout.buttonHeight : 46}
-            rounded={ds.radii.md}
+            rounded={ds.radii.sm}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.input}
@@ -475,7 +484,7 @@ function ExecutionModeCard({
 
     return (
         <YStack
-            rounded={ds.radii.lg}
+            rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
@@ -522,11 +531,12 @@ function ExecutionModeCard({
                         return (
                             <Button
                                 key={option.key}
+                                minH="$10"
                                 height="auto"
-                                rounded={ds.radii.md}
+                                rounded={ds.radii.sm}
                                 disabled={!isEditable || isLoading}
                                 borderWidth={isSelected ? 2 : 1}
-                                items="flex-start"
+                                items="center"
                                 justify="flex-start"
                                 borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                                 bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
@@ -536,7 +546,7 @@ function ExecutionModeCard({
                                     onSelectMode(option.key as ExecutionMode);
                                 }}
                             >
-                                <XStack py="$4" px="$2" gap="$2.5" flex={1}>
+                                <XStack py="$3" px="$0" gap="$3.5" flex={1}>
                                     <YStack
                                         width={20}
                                         height={20}
@@ -607,37 +617,23 @@ interface SectionReviewCardProps {
  * Render the large markdown-like preamble content with headings, lists, and emphasis.
  */
 function PreamblePanel({ blocks }: Readonly<PreamblePanelProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
 
     return (
-        <YStack
-            rounded={ds.radii.lg}
-            borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
-            p={layout.cardPadding}
-            gap="$4"
-            style={{ boxShadow: ds.shadows.card }}
+        <CollapsibleCard
+            title={t("setup.preambleTitle")}
+            collapsedHint={t("overview.tapToExpand")}
+            defaultExpanded={false}
         >
-            <YStack gap="$1.5">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={ds.typography.titleLg.fontSize}
-                >
-                    {t("setup.preambleTitle")}
-                </Text>
+            <YStack gap="$4">
+                {blocks.map((block, index) => (
+                    <PreambleBlockCard
+                        key={`${block.headingLevel}:${block.heading}-${index.toString()}`}
+                        block={block}
+                    />
+                ))}
             </YStack>
-
-            {blocks.map((block, index) => (
-                <PreambleBlockCard
-                    key={`${block.headingLevel}:${block.heading}-${index.toString()}`}
-                    block={block}
-                />
-            ))}
-        </YStack>
+        </CollapsibleCard>
     );
 }
 
@@ -656,11 +652,16 @@ function SectionReviewCard({
 }: Readonly<SectionReviewCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
-    const { t } = useTranslation("audit");
+    const { t } = useTranslation(["audit", "common"]);
+    const [sectionFilter, setSectionFilter] = useState<ExecuteOverviewSectionFilter>("all");
+    const visibleRows = useMemo(() => {
+        return filterExecuteOverviewRows(summary.rows, sectionFilter);
+    }, [sectionFilter, summary.rows]);
+    const allFilterLabel = `${t("filters.all", { ns: "common" })} (${summary.rows.length.toString()})`;
 
     return (
         <YStack
-            rounded={ds.radii.lg}
+            rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
@@ -688,23 +689,38 @@ function SectionReviewCard({
 
             <XStack gap="$2" flexWrap="wrap">
                 <SectionReviewMetric
+                    label={allFilterLabel}
+                    isSelected={sectionFilter === "all"}
+                    onPress={() => {
+                        setSectionFilter("all");
+                    }}
+                />
+                <SectionReviewMetric
                     label={t("overview.completedCount", {
+                        ns: "audit",
                         count: summary.completedCount,
                     })}
-                    tone="success"
+                    isSelected={sectionFilter === "complete"}
+                    onPress={() => {
+                        setSectionFilter("complete");
+                    }}
                 />
                 <SectionReviewMetric
                     label={t("overview.incompleteCount", {
+                        ns: "audit",
                         count: summary.incompleteCount,
                     })}
-                    tone={summary.incompleteCount === 0 ? "muted" : "warning"}
+                    isSelected={sectionFilter === "incomplete"}
+                    onPress={() => {
+                        setSectionFilter("incomplete");
+                    }}
                 />
             </XStack>
 
             {onResumeFirstIncomplete === null ? null : (
                 <Button
                     height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                    rounded={ds.radii.md}
+                    rounded={ds.radii.sm}
                     borderWidth={0}
                     bg={ds.colors.primary}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
@@ -725,7 +741,7 @@ function SectionReviewCard({
                 </Button>
             )}
 
-            {summary.rows.length === 0 ? (
+            {visibleRows.length === 0 ? (
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -735,10 +751,10 @@ function SectionReviewCard({
                 </Paragraph>
             ) : (
                 <YStack gap="$2.5">
-                    {summary.rows.map((sectionSummary) => (
+                    {visibleRows.map((sectionSummary) => (
                         <YStack
                             key={sectionSummary.sectionKey}
-                            rounded={ds.radii.md}
+                            rounded={ds.radii.sm}
                             borderWidth={1}
                             borderColor={ds.colors.border}
                             bg={ds.colors.input}
@@ -768,7 +784,7 @@ function SectionReviewCard({
                                 </YStack>
                                 <Button
                                     height={layout.isTablet ? 42 : 38}
-                                    rounded={ds.radii.md}
+                                    rounded={ds.radii.sm}
                                     borderWidth={1}
                                     borderColor={ds.colors.border}
                                     bg={ds.colors.surface}
@@ -800,44 +816,18 @@ function SectionReviewCard({
 
 interface SectionReviewMetricProps {
     readonly label: string;
-    readonly tone: "success" | "warning" | "muted";
+    readonly isSelected: boolean;
+    readonly onPress: () => void;
 }
 
 /**
- * Small completion-count pill used by the section review card.
+ * Small filter chip used by the section review card.
  *
- * @param props Completion metric props.
- * @returns Styled summary pill.
+ * @param props Filter label, selected state, and press handler.
+ * @returns Styled filter chip.
  */
-function SectionReviewMetric({ label, tone }: Readonly<SectionReviewMetricProps>) {
-    const ds = useDesignSystem();
-
-    const backgroundColor =
-        tone === "success"
-            ? ds.colors.primarySoft
-            : tone === "warning"
-              ? ds.colors.warningSoft
-              : ds.colors.surfaceMuted;
-    const textColor =
-        tone === "success"
-            ? ds.colors.primary
-            : tone === "warning"
-              ? ds.colors.warning
-              : ds.colors.mutedForeground;
-
-    return (
-        <YStack rounded={ds.radii.full} px="$3" py="$2" style={{ backgroundColor }}>
-            <Text
-                color={textColor}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.labelSm.fontSize}
-                textTransform="uppercase"
-                letterSpacing={1}
-            >
-                {label}
-            </Text>
-        </YStack>
-    );
+function SectionReviewMetric({ label, isSelected, onPress }: Readonly<SectionReviewMetricProps>) {
+    return <FilterChip label={label} isSelected={isSelected} onPress={onPress} />;
 }
 
 interface PreambleBlockCardProps {
@@ -854,7 +844,7 @@ function PreambleBlockCard({ block }: Readonly<PreambleBlockCardProps>) {
 
     return (
         <YStack
-            rounded={ds.radii.md}
+            rounded={ds.radii.sm}
             borderWidth={1}
             borderColor={isScaleBlock ? ds.colors.primarySoft : ds.colors.border}
             bg={isScaleBlock ? ds.colors.primarySoft : ds.colors.surfaceMuted}
@@ -1096,7 +1086,7 @@ function AuditSyncStatusCard({
 
     return (
         <YStack
-            rounded={ds.radii.lg}
+            rounded={ds.radii.md}
             borderWidth={1}
             borderColor={tone}
             bg={cardBackgroundColor}
@@ -1159,7 +1149,7 @@ function CenteredMessageCard({
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                rounded={ds.radii.lg}
+                rounded={ds.radii.md}
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.surface}
@@ -1180,7 +1170,7 @@ function CenteredMessageCard({
                     <Button
                         mt="$2"
                         height={44}
-                        rounded={ds.radii.md}
+                        rounded={ds.radii.sm}
                         borderWidth={1}
                         borderColor={ds.colors.border}
                         bg={ds.colors.input}

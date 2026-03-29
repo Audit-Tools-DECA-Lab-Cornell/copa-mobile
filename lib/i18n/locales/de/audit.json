@@ -2,8 +2,7 @@
     "autoValues": {
         "calculatedOnSubmit": "Wird bei der finalen Einreichung berechnet",
         "generatedOnSubmit": "Wird bei der finalen Einreichung erstellt",
-        "minutes_one": "",
-        "minutes_other": ""
+        "minutes": "{{count}} Minuten"
     },
     "errors": {
         "accessDenied403": "Zugriff verweigert (403): Sie duerfen auf diesen Ort oder dieses Audit nicht zugreifen.",
@@ -18,8 +17,8 @@
         "syncFallback": "Die Hintergrundsynchronisierung ist fehlgeschlagen."
     },
     "copy": {
-        "continueToSubject": "Weiter zu {{subject}}",
-        "continueToSubjectInfo": "Weiter zu den Informationen zu {{subject}}",
+        "continueToSubject": "Mit {{subject}} fortfahren",
+        "continueToSubjectInfo": "Weiter zu den Details für {{subject}}",
         "submitSubject": "{{subject}} absenden"
     },
     "executeLanding": {
@@ -70,7 +69,7 @@
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
-        "continueToAuditInfo": "Weiter zu den Audit-Informationen",
+        "continueToAuditInfo": "Weiter zu den Audit-Details",
         "modeRequired": "Bitte wählen Sie vor dem Fortfahren einen Ausführungsmodus aus.",
         "stepEyebrow": "Schritt 1 von 3",
         "subtitle": "Sehen Sie sich an, wie das Tool funktioniert, und wählen Sie dann die Rolle aus, die am besten dazu passt, wie Sie diesen Audit abschließen werden.",
@@ -143,7 +142,6 @@
         "saveAndNext": "Speichern und weiter",
         "saveSection": "Abschnitt speichern",
         "sectionNotes": "Abschnittsnotizen",
-        "tableIntro": "Auf Tablets werden die Fragen in einer Matrix angezeigt, damit die Aufforderung links bleibt und die verfügbaren Skalen rechts ausgerichtet sind.",
         "table": {
             "followUpPending": "Wählen Sie eine positive Mengenangabe, um diese Skala freizuschalten.",
             "itemColumn": "Fragenpunkt",
@@ -167,7 +165,7 @@
     },
     "subjects": {
         "audit": "Audit",
-        "auditAndSurvey": "Audit/Umfrage",
+        "auditAndSurvey": "Bewertung",
         "survey": "Umfrage",
         "workflow": "Workflow"
     },

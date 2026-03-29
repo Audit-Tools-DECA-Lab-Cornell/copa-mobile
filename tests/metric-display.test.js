@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createMetricDisplayState } from "./metric-display";
+import { createMetricDisplayState } from "lib/metric-display";
 
 /**
  * Metric cards should expose a clear helper caption whenever the score is still pending.

@@ -35,7 +35,7 @@ export function CollapsibleCard({
 
     return (
         <YStack
-            rounded={ds.radii.lg}
+            rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.surface}

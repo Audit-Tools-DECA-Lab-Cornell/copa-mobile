@@ -2,8 +2,7 @@
     "autoValues": {
         "calculatedOnSubmit": "अंतिम सबमिट पर गणना की जाएगी",
         "generatedOnSubmit": "अंतिम सबमिट पर जनरेट किया जाएगा",
-        "minutes_one": "",
-        "minutes_other": ""
+        "minutes": "{{count}} मिनट"
     },
     "errors": {
         "accessDenied403": "पहुंच अस्वीकृत (403): आपको इस स्थान या ऑडिट तक पहुंच की अनुमति नहीं है।",
@@ -18,8 +17,8 @@
         "syncFallback": "बैकग्राउंड सिंक विफल हो गया।"
     },
     "copy": {
-        "continueToSubject": "{{subject}} पर जारी रखें",
-        "continueToSubjectInfo": "{{subject}} जानकारी पर जारी रखें",
+        "continueToSubject": "{{subject}} के साथ आगे बढ़ें",
+        "continueToSubjectInfo": "{{subject}} की जानकारी पर आगे बढ़ें",
         "submitSubject": "{{subject}} जमा करें"
     },
     "executeLanding": {
@@ -70,7 +69,7 @@
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
-        "continueToAuditInfo": "ऑडिट जानकारी पर जारी रखें",
+        "continueToAuditInfo": "ऑडिट विवरण पर आगे बढ़ें",
         "modeRequired": "जारी रखने से पहले एक निष्पादन मोड चुनें।",
         "stepEyebrow": "चरण 1 of 3",
         "subtitle": "देखें कि यह टूल कैसे काम करता है, फिर वह भूमिका चुनें जो इस ऑडिट को पूरा करने के आपके तरीके से सबसे बेहतर मेल खाती हो।",
@@ -143,7 +142,6 @@
         "saveAndNext": "सहेजें और आगे बढ़ें",
         "saveSection": "सेक्शन सहेजें",
         "sectionNotes": "सेक्शन नोट्स",
-        "tableIntro": "टैबलेट पर प्रश्न एक मैट्रिक्स में दिखाए जाते हैं, ताकि प्रॉम्प्ट बाईं ओर रहे और उपलब्ध स्केल दाईं ओर संरेखित रहें।",
         "table": {
             "followUpPending": "इस स्केल को अनलॉक करने के लिए सकारात्मक मात्रा वाला उत्तर चुनें।",
             "itemColumn": "प्रश्न आइटम",
@@ -167,7 +165,7 @@
     },
     "subjects": {
         "audit": "ऑडिट",
-        "auditAndSurvey": "ऑडिट/सर्वे",
+        "auditAndSurvey": "मूल्यांकन",
         "survey": "सर्वे",
         "workflow": "वर्कफ़्लो"
     },

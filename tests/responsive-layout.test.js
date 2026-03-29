@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createResponsiveLayoutTokens } from "./responsive-layout-tokens";
+import { createResponsiveLayoutTokens } from "lib/responsive-layout-tokens";
 
 /**
  * Lock in the iPad layout tokens used by the feedback pass.

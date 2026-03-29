@@ -1,5 +1,5 @@
-import { BASE_PLAYSPACE_INSTRUMENT } from "../instrument";
-import * as storeSyncCore from "./store-sync-core";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import * as storeSyncCore from "lib/audit/store-sync-core";
 import type {
     AuditDraftSave,
     AuditMeta,
@@ -15,7 +15,7 @@ import type {
     DirtySections,
     ExecutionMode,
     QuestionResponsePayload,
-} from "./types";
+} from "lib/audit/types";
 
 interface SessionFixtureOverrides {
     readonly auditId?: string;

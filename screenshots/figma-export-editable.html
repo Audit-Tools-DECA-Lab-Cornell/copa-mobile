@@ -1,0 +1,1553 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Audit Tools Playspace Editable Figma Export</title>
+        <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                color-scheme: light;
+                --paper: #f6f0e8;
+                --paper-dark: #161311;
+                --grid-gap: 28px;
+                --device-width: 430px;
+                --device-height: 932px;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                font-family: "Geist", sans-serif;
+                background: var(--paper);
+                color: #221c17;
+            }
+
+            body.mode-dark {
+                background: var(--paper-dark);
+                color: #efe7dc;
+            }
+
+            .page {
+                max-width: 1680px;
+                margin: 0 auto;
+                padding: 32px 28px 80px;
+            }
+
+            .hero {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-bottom: 28px;
+            }
+
+            .eyebrow {
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.18em;
+                text-transform: uppercase;
+                color: #9a826f;
+            }
+
+            body.mode-dark .eyebrow {
+                color: #b49e8e;
+            }
+
+            .hero h1 {
+                margin: 0;
+                font-family: "Space Grotesk", sans-serif;
+                font-size: 46px;
+                line-height: 1;
+            }
+
+            .hero p {
+                margin: 0;
+                max-width: 760px;
+                font-size: 18px;
+                line-height: 1.45;
+                color: #66594e;
+            }
+
+            body.mode-dark .hero p {
+                color: #c3b6a9;
+            }
+
+            .screen-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: var(--grid-gap);
+                align-items: start;
+            }
+
+            .screen-card {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .screen-label {
+                align-self: flex-start;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #9a826f;
+            }
+
+            body.mode-dark .screen-label {
+                color: #b49e8e;
+            }
+
+            .phone {
+                width: var(--device-width);
+                min-height: var(--device-height);
+                border-radius: 36px;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                border: 1px solid var(--border);
+                background: var(--bg);
+                color: var(--fg);
+                box-shadow: 0 28px 70px rgba(43, 33, 26, 0.16);
+            }
+
+            .phone.light {
+                --bg: #faf6f0;
+                --fg: #2c241e;
+                --muted: #6e6258;
+                --secondary: #4a403a;
+                --surface: #f7f1ea;
+                --surface-strong: #f3eee8;
+                --input: #fffdfa;
+                --border: #d7c8b8;
+                --hairline: #e2d7cc;
+                --accent: #b06a38;
+                --accent-soft: rgba(176, 106, 56, 0.12);
+                --success: #3d6b4f;
+                --success-soft: rgba(61, 107, 79, 0.14);
+                --warning: #9a7a3f;
+                --warning-soft: rgba(154, 122, 63, 0.14);
+                --danger: #b54a38;
+                --danger-soft: rgba(181, 74, 56, 0.14);
+                --violet: #6b5a8a;
+                --shadow: 0 10px 24px rgba(60, 48, 42, 0.08);
+                --home-indicator: #1f1a16;
+                --island: #050505;
+            }
+
+            .phone.dark {
+                --bg: #1c1917;
+                --fg: #e7ded3;
+                --muted: #afa497;
+                --secondary: #d2c7bb;
+                --surface: #24201d;
+                --surface-strong: #2b2622;
+                --input: #211d1a;
+                --border: #3a3430;
+                --hairline: #322d29;
+                --accent: #c58a5c;
+                --accent-soft: rgba(197, 138, 92, 0.12);
+                --success: #6f9a7f;
+                --success-soft: rgba(111, 154, 127, 0.14);
+                --warning: #b99a5a;
+                --warning-soft: rgba(185, 154, 90, 0.14);
+                --danger: #c98472;
+                --danger-soft: rgba(201, 132, 114, 0.14);
+                --violet: #9b86b2;
+                --shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+                --home-indicator: #e7ded3;
+                --island: #010101;
+            }
+
+            .status-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 14px 18px 6px;
+                min-height: 56px;
+                color: var(--fg);
+                flex-shrink: 0;
+            }
+
+            .status-time {
+                font-size: 14px;
+                font-weight: 700;
+            }
+
+            .dynamic-island {
+                width: 126px;
+                height: 38px;
+                border-radius: 999px;
+                background: var(--island);
+            }
+
+            .status-cluster {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+            }
+
+            .signal {
+                display: flex;
+                align-items: flex-end;
+                gap: 2px;
+            }
+
+            .signal span {
+                display: block;
+                width: 3px;
+                border-radius: 999px;
+                background: var(--fg);
+            }
+
+            .signal span:nth-child(1) {
+                height: 5px;
+                opacity: 0.45;
+            }
+
+            .signal span:nth-child(2) {
+                height: 7px;
+                opacity: 0.65;
+            }
+
+            .signal span:nth-child(3) {
+                height: 9px;
+                opacity: 0.85;
+            }
+
+            .signal span:nth-child(4) {
+                height: 11px;
+            }
+
+            .wifi {
+                width: 12px;
+                height: 10px;
+                border: 2px solid var(--fg);
+                border-top-left-radius: 12px;
+                border-top-right-radius: 12px;
+                border-bottom: 0;
+                transform: translateY(1px);
+            }
+
+            .battery {
+                width: 24px;
+                height: 12px;
+                border: 1.5px solid var(--fg);
+                border-radius: 4px;
+                padding: 1.5px;
+                position: relative;
+            }
+
+            .battery::after {
+                content: "";
+                position: absolute;
+                right: -3px;
+                top: 3px;
+                width: 2px;
+                height: 4px;
+                border-radius: 999px;
+                background: var(--fg);
+            }
+
+            .battery-level {
+                width: 72%;
+                height: 100%;
+                border-radius: 2px;
+                background: var(--fg);
+            }
+
+            .app-bar {
+                min-height: 52px;
+                border-bottom: 1px solid var(--hairline);
+                display: grid;
+                grid-template-columns: 32px 1fr 32px;
+                align-items: center;
+                padding: 0 16px;
+                flex-shrink: 0;
+            }
+
+            .app-bar.center-title .app-bar-title {
+                text-align: center;
+            }
+
+            .app-bar-title {
+                font-size: 14px;
+                font-weight: 700;
+                color: var(--fg);
+            }
+
+            .back-glyph,
+            .trailing-glyph {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                color: var(--accent);
+                font-size: 20px;
+                line-height: 1;
+            }
+
+            .phone-body {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                gap: 16px;
+                padding: 14px 16px 0;
+            }
+
+            .phone-body.auth {
+                padding-top: 32px;
+            }
+
+            .auth-center {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 18px;
+            }
+
+            .brand-mark {
+                width: 88px;
+                height: 88px;
+                border-radius: 22px;
+                border: 1px solid var(--border);
+                background: var(--surface-strong);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: var(--shadow);
+                font-family: "Space Grotesk", sans-serif;
+                font-size: 24px;
+                font-weight: 700;
+                color: var(--accent);
+            }
+
+            .title-block {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .title-block h2 {
+                margin: 0;
+                font-family: "Space Grotesk", sans-serif;
+                font-size: 34px;
+                line-height: 1.05;
+                letter-spacing: -0.04em;
+            }
+
+            .title-block.center h2,
+            .title-block.center p,
+            .title-block.center .kicker {
+                text-align: center;
+            }
+
+            .title-block p {
+                margin: 0;
+                font-size: 17px;
+                line-height: 1.35;
+                color: var(--muted);
+            }
+
+            .kicker {
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.18em;
+                text-transform: uppercase;
+                color: var(--muted);
+            }
+
+            .card {
+                border: 1px solid var(--border);
+                border-radius: 22px;
+                background: var(--surface);
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                box-shadow: var(--shadow);
+            }
+
+            .card.flat {
+                box-shadow: none;
+            }
+
+            .card-title {
+                font-size: 18px;
+                line-height: 1.2;
+                font-weight: 700;
+            }
+
+            .card-text {
+                font-size: 16px;
+                line-height: 1.4;
+                color: var(--muted);
+            }
+
+            .metric-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .metric-grid.three {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .metric-card {
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                background: var(--surface);
+                padding: 14px;
+                min-height: 104px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                box-shadow: var(--shadow);
+            }
+
+            .metric-label {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--muted);
+            }
+
+            .metric-value {
+                font-family: "Space Grotesk", sans-serif;
+                font-size: 28px;
+                line-height: 1;
+                font-weight: 700;
+                color: var(--accent);
+            }
+
+            .metric-value.success {
+                color: var(--success);
+            }
+
+            .metric-value.subtle {
+                color: var(--fg);
+            }
+
+            .metric-note {
+                font-size: 14px;
+                line-height: 1.35;
+                color: var(--muted);
+            }
+
+            .row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .stack {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .field-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 60px;
+                padding: 0 16px;
+                border: 1px solid var(--border);
+                border-radius: 18px;
+                background: var(--input);
+            }
+
+            .field-icon,
+            .circle-icon,
+            .shortcut-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid currentColor;
+                border-radius: 999px;
+                color: var(--muted);
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .field-icon {
+                width: 22px;
+                height: 22px;
+            }
+
+            .circle-icon {
+                width: 42px;
+                height: 42px;
+                color: var(--accent);
+                background: var(--surface-strong);
+            }
+
+            .shortcut-icon {
+                width: 18px;
+                height: 18px;
+                border-radius: 6px;
+                font-size: 10px;
+            }
+
+            .field-placeholder {
+                flex: 1;
+                font-size: 16px;
+                line-height: 1.3;
+                color: var(--muted);
+                opacity: 0.65;
+            }
+
+            .button {
+                min-height: 56px;
+                border-radius: 18px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                padding: 0 18px;
+                font-size: 14px;
+                font-weight: 700;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+            }
+
+            .button.primary {
+                background: var(--accent);
+                color: #ffffff;
+                border: 1px solid transparent;
+            }
+
+            .button.secondary {
+                background: var(--input);
+                color: var(--fg);
+                border: 1px solid var(--border);
+            }
+
+            .button.ghost {
+                background: transparent;
+                color: var(--accent);
+                border: 1px solid var(--border);
+            }
+
+            .button.full {
+                width: 100%;
+            }
+
+            .divider {
+                height: 1px;
+                background: var(--hairline);
+            }
+
+            .checkbox-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .checkbox {
+                width: 22px;
+                height: 22px;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: var(--surface-strong);
+                color: var(--success);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .pill-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .pill {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 32px;
+                padding: 0 12px;
+                border-radius: 999px;
+                border: 1px solid var(--border);
+                background: var(--surface);
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--muted);
+            }
+
+            .pill.active,
+            .pill.accent {
+                color: var(--accent);
+                background: var(--accent-soft);
+                border-color: rgba(176, 106, 56, 0.3);
+            }
+
+            .pill.success {
+                color: var(--success);
+                background: var(--success-soft);
+                border-color: transparent;
+            }
+
+            .pill.warning {
+                color: var(--warning);
+                background: var(--warning-soft);
+                border-color: transparent;
+            }
+
+            .list-card {
+                border: 1px solid var(--border);
+                border-radius: 22px;
+                background: var(--surface);
+                box-shadow: var(--shadow);
+                overflow: hidden;
+            }
+
+            .list-card-inner {
+                display: flex;
+                gap: 0;
+            }
+
+            .list-card-bar {
+                width: 4px;
+                background: var(--accent);
+            }
+
+            .list-card-bar.success {
+                background: var(--success);
+            }
+
+            .list-card-body {
+                flex: 1;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .place-title {
+                margin: 0;
+                font-size: 24px;
+                line-height: 1.1;
+                font-weight: 700;
+            }
+
+            .place-title.compact {
+                font-size: 20px;
+            }
+
+            .place-subtitle {
+                margin: 0;
+                font-size: 17px;
+                line-height: 1.35;
+                color: var(--muted);
+            }
+
+            .mini-detail {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 15px;
+                color: var(--muted);
+            }
+
+            .mini-dot {
+                width: 16px;
+                height: 16px;
+                border-radius: 999px;
+                border: 1px solid currentColor;
+                opacity: 0.6;
+            }
+
+            .score-box {
+                border: 1px solid var(--border);
+                border-radius: 18px;
+                background: var(--input);
+                min-height: 92px;
+                padding: 14px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .progress {
+                height: 6px;
+                border-radius: 999px;
+                background: var(--hairline);
+                overflow: hidden;
+            }
+
+            .progress > span {
+                display: block;
+                height: 100%;
+                border-radius: 999px;
+                background: var(--accent);
+            }
+
+            .shortcut-row {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .shortcut {
+                min-height: 52px;
+                border-radius: 18px;
+                border: 1px solid var(--border);
+                background: var(--surface);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+            }
+
+            .shortcut.active {
+                background: var(--accent);
+                color: #ffffff;
+                border-color: transparent;
+            }
+
+            .option-stack {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .option-card {
+                border: 1px solid var(--border);
+                border-radius: 18px;
+                background: var(--input);
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .option-card strong {
+                font-size: 16px;
+                line-height: 1.35;
+            }
+
+            .question-card {
+                border: 1px solid var(--border);
+                border-radius: 22px;
+                background: var(--surface);
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                box-shadow: var(--shadow);
+            }
+
+            .question-options {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .question-option {
+                min-height: 44px;
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                background: var(--input);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px;
+                text-align: center;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--secondary);
+            }
+
+            .question-option.active {
+                color: var(--accent);
+                background: var(--accent-soft);
+                border-color: rgba(176, 106, 56, 0.3);
+            }
+
+            .settings-card {
+                border: 1px solid var(--border);
+                border-radius: 24px;
+                background: var(--surface);
+                padding: 18px;
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                box-shadow: var(--shadow);
+            }
+
+            .settings-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 12px 0;
+                border-bottom: 1px solid var(--hairline);
+            }
+
+            .settings-row:last-child {
+                border-bottom: 0;
+            }
+
+            .theme-toggle {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .theme-option {
+                min-height: 74px;
+                border: 1px solid var(--border);
+                border-radius: 18px;
+                background: var(--input);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-size: 14px;
+                font-weight: 700;
+            }
+
+            .theme-option.active {
+                color: var(--accent);
+                background: var(--accent-soft);
+                border-color: rgba(176, 106, 56, 0.3);
+            }
+
+            .tab-bar {
+                margin-top: auto;
+                border-top: 1px solid var(--hairline);
+                background: color-mix(in srgb, var(--bg) 92%, var(--surface) 8%);
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                gap: 6px;
+                padding: 8px 8px 10px;
+            }
+
+            .tab-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
+                text-align: center;
+                color: var(--muted);
+            }
+
+            .tab-glyph {
+                width: 16px;
+                height: 16px;
+                border-radius: 5px;
+                border: 1.5px solid currentColor;
+            }
+
+            .tab-item.active {
+                color: var(--accent);
+            }
+
+            .tab-item span {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .home-indicator {
+                width: 132px;
+                height: 5px;
+                border-radius: 999px;
+                background: var(--home-indicator);
+                opacity: 0.88;
+                margin: 0 auto 10px;
+            }
+
+            .spacer-large {
+                flex: 1;
+            }
+
+            .preparing-card {
+                margin-top: 280px;
+            }
+
+            @media (max-width: 1460px) {
+                .screen-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main class="page" id="page"></main>
+        <script>
+            const modeParam = new URLSearchParams(globalThis.location.search).get("mode");
+            const mode = modeParam === "dark" ? "dark" : "light";
+            document.body.classList.add(mode === "dark" ? "mode-dark" : "mode-light");
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#39;");
+            }
+
+            function statusBar(timeLabel) {
+                return `
+          <div class="status-bar">
+            <div class="status-time">${escapeHtml(timeLabel)}</div>
+            <div class="dynamic-island"></div>
+            <div class="status-cluster">
+              <div class="signal"><span></span><span></span><span></span><span></span></div>
+              <div class="wifi"></div>
+              <div class="battery"><div class="battery-level"></div></div>
+            </div>
+          </div>
+        `;
+            }
+
+            function appBar(title, options = {}) {
+                const back =
+                    options.back === true ? '<div class="back-glyph">&lt;</div>' : "<div></div>";
+                const trailing =
+                    options.trailing === true
+                        ? '<div class="trailing-glyph">...</div>'
+                        : "<div></div>";
+                const centerClass = options.centerTitle === true ? " center-title" : "";
+                return `
+          <div class="app-bar${centerClass}">
+            ${back}
+            <div class="app-bar-title">${escapeHtml(title)}</div>
+            ${trailing}
+          </div>
+        `;
+            }
+
+            function tabBar(activeLabel) {
+                const labels = ["Home", "Places", "Execute", "Reports", "Settings"];
+                return `
+          <div class="tab-bar">
+            ${labels
+                .map((label) => {
+                    const active = label === activeLabel ? " active" : "";
+                    return `
+                  <div class="tab-item${active}">
+                    <div class="tab-glyph"></div>
+                    <span>${escapeHtml(label)}</span>
+                  </div>
+                `;
+                })
+                .join("")}
+          </div>
+        `;
+            }
+
+            function titleBlock(title, subtitle, center = false, kicker = "") {
+                return `
+          <div class="title-block${center ? " center" : ""}">
+            ${kicker.length > 0 ? `<div class="kicker">${escapeHtml(kicker)}</div>` : ""}
+            <h2>${escapeHtml(title)}</h2>
+            ${subtitle.length > 0 ? `<p>${escapeHtml(subtitle)}</p>` : ""}
+          </div>
+        `;
+            }
+
+            function button(label, variant = "primary", full = true) {
+                return `<div class="button ${variant}${full ? " full" : ""}">${escapeHtml(label)} <span>&gt;</span></div>`;
+            }
+
+            function secondaryButton(label) {
+                return `<div class="button secondary full">${escapeHtml(label)}</div>`;
+            }
+
+            function metricCard(label, value, tone = "accent", note = "") {
+                let toneClass = "";
+                if (tone === "success") {
+                    toneClass = " success";
+                } else if (tone === "subtle") {
+                    toneClass = " subtle";
+                }
+                return `
+          <div class="metric-card">
+            <div class="metric-label">${escapeHtml(label)}</div>
+            <div class="metric-value${toneClass}">
+              ${escapeHtml(value)}
+            </div>
+            ${note.length > 0 ? `<div class="metric-note">${escapeHtml(note)}</div>` : ""}
+          </div>
+        `;
+            }
+
+            function fieldRow(iconText, placeholder, trailing = "") {
+                return `
+          <div class="field-row">
+            <div class="field-icon">${escapeHtml(iconText)}</div>
+            <div class="field-placeholder">${escapeHtml(placeholder)}</div>
+            ${trailing.length > 0 ? `<div class="field-icon">${escapeHtml(trailing)}</div>` : ""}
+          </div>
+        `;
+            }
+
+            function chip(label, kind = "") {
+                const kindClass = kind.length > 0 ? " " + kind : "";
+                return `<div class="pill${kindClass}">${escapeHtml(label)}</div>`;
+            }
+
+            function placeCard(options) {
+                const statusKind = options.statusKind || "accent";
+                return `
+          <div class="list-card">
+            <div class="list-card-inner">
+              <div class="list-card-bar${statusKind === "success" ? " success" : ""}"></div>
+              <div class="list-card-body">
+                <div class="row">
+                  <h3 class="place-title compact">${escapeHtml(options.title)}</h3>
+                  ${chip(options.status, statusKind)}
+                </div>
+                <p class="place-subtitle">${escapeHtml(options.subtitle)}</p>
+                <div class="mini-detail"><div class="mini-dot"></div><span>${escapeHtml(options.locality)}</span></div>
+                ${options.score ? `<div class="score-box"><div class="metric-label">Score summary</div><div class="metric-value">${escapeHtml(options.score)}</div></div>` : ""}
+                ${
+                    options.progress
+                        ? `
+                  <div class="stack">
+                    <div class="row">
+                      <span class="card-text">Mandatory completion</span>
+                      <strong style="color: var(--accent);">${escapeHtml(options.progress)}</strong>
+                    </div>
+                    <div class="progress"><span style="width: ${escapeHtml(options.progressWidth || "0%")};"></span></div>
+                  </div>
+                `
+                        : ""
+                }
+                <div class="row">
+                  <span class="card-text">${escapeHtml(options.footerLeft)}</span>
+                  <strong style="color: var(--accent); text-transform: uppercase; letter-spacing: 0.14em; font-size: 12px;">${escapeHtml(options.cta)}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+            }
+
+            function infoCardRow(label, value) {
+                return `
+          <div class="settings-row">
+            <span class="card-text">${escapeHtml(label)}</span>
+            <strong style="font-size: 16px; line-height: 1.3;">${escapeHtml(value)}</strong>
+          </div>
+        `;
+            }
+
+            function shell(name, content, options = {}) {
+                const timeLabel = options.time || "2:18";
+                const bodyClass = options.bodyClass ? ` ${options.bodyClass}` : "";
+                const chrome = options.appBar ? appBar(options.appBar.title, options.appBar) : "";
+                const tab = options.tab ? tabBar(options.tab) : "";
+                return `
+          <div class="screen-card">
+            <div class="screen-label">${escapeHtml(name)}</div>
+            <div class="phone ${mode}">
+              ${statusBar(timeLabel)}
+              ${chrome}
+              <div class="phone-body${bodyClass}">
+                ${content}
+              </div>
+              ${tab}
+              <div class="home-indicator"></div>
+            </div>
+          </div>
+        `;
+            }
+
+            function loginScreen() {
+                return `
+          <div class="auth-center">
+            <div class="brand-mark">PS</div>
+            ${titleBlock("PLAYSPACE", "PLAYSPACE PARTICIPANT", true)}
+            <div class="stack" style="width: 100%;">
+              <div class="kicker">Participant identity</div>
+              ${fieldRow("U", "auditor@example.com")}
+            </div>
+            <div class="stack" style="width: 100%;">
+              <div class="row">
+                <div class="kicker">Access key</div>
+                <div class="kicker" style="color: var(--accent);">Offline sign-in</div>
+              </div>
+              ${fieldRow("K", "Enter password", "O")}
+            </div>
+            <div class="checkbox-row" style="width: 100%;">
+              <div class="checkbox">V</div>
+              <strong style="font-size: 16px;">Stay signed in for offline field work</strong>
+            </div>
+            ${button("Initialize access")}
+            <div class="divider" style="width: 100%;"></div>
+            <p class="card-text" style="text-align: center; margin: 0;">Need an assigned playspace account?</p>
+            <div class="button ghost" style="min-width: 200px;">Access setup guide</div>
+          </div>
+        `;
+            }
+
+            function signupScreen() {
+                return `
+          <div class="auth-center">
+            <div class="brand-mark">PS</div>
+            ${titleBlock(
+                "ACCESS SETUP",
+                "Mobile access is provisioned during project onboarding. Self-signup is not available in the app.",
+                true,
+            )}
+            <div class="card" style="width: 100%; border-color: var(--warning); background: var(--warning-soft);">
+              <div class="row" style="justify-content: flex-start;">
+                <div class="field-icon" style="color: var(--warning);">S</div>
+                <div class="kicker" style="color: var(--warning);">Use your assigned playspace participant credentials.</div>
+              </div>
+              <div class="card-text" style="color: var(--secondary);">
+                If you need access, ask your project lead to set up your participant account and share sign-in details.
+              </div>
+            </div>
+            ${secondaryButton("Back to sign in")}
+          </div>
+        `;
+            }
+
+            function homeScreen() {
+                return `
+          <div class="row">
+            <div class="row" style="flex: 1; justify-content: flex-start;">
+              <div class="circle-icon">A</div>
+              <div class="stack" style="gap: 4px;">
+                <div class="kicker">Active auditor</div>
+                <strong style="font-size: 18px;">Ariana Ngata</strong>
+              </div>
+            </div>
+            <div class="row" style="justify-content: flex-end;">
+              <div class="circle-icon">B</div>
+              <div class="circle-icon">L</div>
+            </div>
+          </div>
+          ${titleBlock("Field Dashboard", "Thursday, 26 March 2026")}
+          <div class="metric-grid">
+            ${metricCard("Assigned", "08")}
+            ${metricCard("Completed", "01", "success")}
+          </div>
+          <div class="row">
+            <div class="kicker">Priority task</div>
+            <div class="kicker" style="color: var(--danger);">Due today</div>
+          </div>
+          <div class="list-card">
+            <div class="list-card-inner">
+              <div class="list-card-bar"></div>
+              <div class="list-card-body">
+                <div class="pill-row">
+                  ${chip("Urgent audit", "accent")}
+                  ${chip("Wellington, New Zealand")}
+                </div>
+                <h3 class="place-title compact">Aro Valley Spectator Seating Learning Park</h3>
+                <p class="place-subtitle">Capital Waterfront Play Network</p>
+                <div class="divider"></div>
+                <div class="row">
+                  <div class="stack" style="flex: 1;">
+                    <div class="progress"><span style="width: 0%;"></span></div>
+                    <div class="metric-label">0% progress - 529CC5EC</div>
+                  </div>
+                  <div class="button primary" style="min-width: 112px; min-height: 44px;">Resume &gt;</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="shortcut-row">
+            <div class="shortcut"><div class="shortcut-icon">P</div>Places</div>
+            <div class="shortcut active"><div class="shortcut-icon">E</div>Execute</div>
+            <div class="shortcut"><div class="shortcut-icon">R</div>Reports</div>
+          </div>
+          <div class="stack">
+            <div class="kicker">Connectivity status</div>
+            <div class="card">
+              <div class="row" style="justify-content: flex-start;">
+                <div class="circle-icon" style="color: var(--success);">W</div>
+                <div class="stack" style="gap: 4px;">
+                  <strong style="font-size: 16px;">Offline ready</strong>
+                  <div class="card-text">Assigned audit data is stored locally and ready for field use.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+            }
+
+            function placesScreen() {
+                return `
+          ${titleBlock("Assigned Places", "Review your field queue, monitor progress, and jump back into active audits.")}
+          <div class="metric-grid three">
+            ${metricCard("In progress", "1")}
+            ${metricCard("Not started", "6")}
+            ${metricCard("Submitted", "1", "success")}
+          </div>
+          ${fieldRow("S", "Search places, projects, or locations")}
+          <div class="pill-row">
+            ${chip("All", "active")}
+            ${chip("In progress")}
+            ${chip("Not started")}
+            ${chip("Submitted")}
+            ${chip("Recent", "active")}
+            ${chip("Progress")}
+            ${chip("Name")}
+          </div>
+          ${placeCard({
+              title: "Aro Valley Spectator Seating Learning Park",
+              subtitle: "Capital Waterfront Play Network",
+              locality: "Wellington, Wellington, New Zealand",
+              status: "In progress",
+              statusKind: "accent",
+              score: "--",
+              progress: "0%",
+              progressWidth: "0%",
+              footerLeft: "11 hr ago",
+              cta: "View details >",
+          })}
+          ${placeCard({
+              title: "Greerton Family Stay Adventure Playscape",
+              subtitle: "Bay Coastal Play Pilot",
+              locality: "Tauranga, Bay of Plenty, New Zealand",
+              status: "Submitted",
+              statusKind: "success",
+              score: "36",
+              progress: "100%",
+              progressWidth: "100%",
+              footerLeft: "29 days ago",
+              cta: "View details >",
+          })}
+        `;
+            }
+
+            function placeDetailScreen() {
+                return `
+          ${titleBlock("Aro Valley Spectator Seating Learning Park", "Capital Waterfront Play Network")}
+          <div class="row">
+            <div class="mini-detail"><div class="mini-dot"></div><span>Wellington, Wellington, New Zealand</span></div>
+            ${chip("In progress", "accent")}
+          </div>
+          <div class="metric-grid">
+            ${metricCard("Mandatory completion", "0%")}
+            ${metricCard("Score summary", "--")}
+            ${metricCard("Last updated", "11 hr ago")}
+            ${metricCard("Project", "Capital Waterfront Play Network", "subtle")}
+          </div>
+          <div class="card">
+            <div class="card-title">Current audit</div>
+            <div class="card-text">A place report will appear here after an audit is started and scored.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Quick actions</div>
+            <div class="card-text">Jump back into the field workflow for this place.</div>
+            ${button("Open audit")}
+            ${secondaryButton("View report")}
+          </div>
+          <div class="spacer-large"></div>
+        `;
+            }
+
+            function executeScreen() {
+                return `
+          ${titleBlock("Audit Execute", "Choose a place to start or resume the section-by-section playspace audit flow.")}
+          ${fieldRow("S", "Search places or projects")}
+          <div class="pill-row">
+            ${chip("Active", "active")}
+            ${chip("All")}
+          </div>
+          <div class="card">
+            <div class="row" style="justify-content: flex-start;">${chip("Continue selected place", "accent")}</div>
+            <h3 class="place-title compact">Aro Valley Spectator Seating Learning Park</h3>
+            <p class="place-subtitle">Wellington, Wellington, New Zealand</p>
+            ${button("Open selected audit")}
+          </div>
+          <div class="card">
+            <h3 class="place-title compact">Avonlea Planning Playground</h3>
+            <p class="place-subtitle">Christchurch Future Sites Planning Set</p>
+            <div class="card-text">Christchurch, Canterbury, New Zealand</div>
+            ${secondaryButton("Start audit")}
+          </div>
+          <div class="card">
+            <h3 class="place-title compact">Bethlehem Sensory Play Playground</h3>
+            <p class="place-subtitle">Bay Coastal Play Pilot</p>
+            <div class="card-text">Tauranga, Bay of Plenty, New Zealand</div>
+            ${secondaryButton("Start audit")}
+          </div>
+        `;
+            }
+
+            function executePlaceScreen() {
+                return `
+          ${titleBlock("Aro Valley Spectator Seating Learning Park", "School Playspace")}
+          ${secondaryButton("View place details")}
+          <div class="card">
+            <div class="row">
+              <strong style="font-size: 18px;">Preamble</strong>
+              <div class="back-glyph" style="font-size: 16px;">V</div>
+            </div>
+          </div>
+          <div class="settings-card">
+            <div class="row" style="justify-content: flex-start; gap: 8px;">
+              <div class="field-icon" style="color: var(--accent);">A</div>
+              <div class="kicker" style="color: var(--accent);">Audit role</div>
+            </div>
+            <div class="card-text">Project Capital Waterfront Play Network</div>
+            <div class="card-text">Choose what part of the tool you will complete for this place.</div>
+            <div class="option-stack">
+              <div class="option-card">
+                <strong>I am very familiar with the playspace and I am onsite.</strong>
+                <div class="card-text">Answer both the survey and the onsite audit items.</div>
+              </div>
+              <div class="option-card">
+                <strong>I am very familiar with the playspace but I am not onsite.</strong>
+                <div class="card-text">Answer only the survey items.</div>
+              </div>
+              <div class="option-card">
+                <strong>I am not familiar with the playspace but I am onsite.</strong>
+                <div class="card-text">Capture the onsite audit items with notes and observations.</div>
+              </div>
+            </div>
+          </div>
+        `;
+            }
+
+            function preAuditScreen() {
+                return `
+          ${titleBlock("Pre-Audit Setup", "Complete the first-page context questions before moving through the section pages.")}
+          <div class="card">
+            <div class="card-title">Date of the audit</div>
+            <div class="card-text">Automatically generated when the audit session is created.</div>
+            <strong style="font-size: 18px;">25/03/2026</strong>
+          </div>
+          <div class="card">
+            <div class="card-title">Start time of the audit</div>
+            <div class="card-text">Automatically generated when the audit session is created.</div>
+            <strong style="font-size: 18px;">2:37 PM</strong>
+          </div>
+          <div class="card">
+            <div class="card-title">Finish time of the audit</div>
+            <div class="card-text">Automatically generated when the audit is submitted.</div>
+            <strong style="font-size: 18px;">Generated on final submit</strong>
+          </div>
+          <div class="card">
+            <div class="card-title">Current season</div>
+            <div class="pill-row">
+              ${chip("Summer")}
+              ${chip("Autumn", "active")}
+              ${chip("Winter")}
+              ${chip("Spring")}
+            </div>
+          </div>
+          ${button("Save and continue")}
+        `;
+            }
+
+            function executeSectionScreen() {
+                return `
+          <div class="spacer-large"></div>
+          <div class="card preparing-card">
+            <div class="card-title">Preparing Section</div>
+            <div class="card-text">Loading the current section and any previously saved answers...</div>
+          </div>
+          <div class="spacer-large"></div>
+        `;
+            }
+
+            function reportsScreen() {
+                return `
+          ${titleBlock("Playspace Scoring", "Review audit performance across your assigned places.")}
+          <div class="metric-grid">
+            ${metricCard("Average construct score", "36", "accent", "1 of 2 places scored")}
+            ${metricCard("Average sociability score", "6", "success", "Tracked across all submitted audits")}
+          </div>
+          <div class="card">
+            <div class="metric-label">Top scoring place</div>
+            <div class="metric-value">36</div>
+            <div class="card-text">Greerton Family Stay Adventure Playscape</div>
+          </div>
+          ${fieldRow("S", "Search places, projects, or audits")}
+          <div class="pill-row">
+            ${chip("All", "active")}
+            ${chip("Submitted")}
+            ${chip("Scored")}
+            ${chip("Not scored")}
+            ${chip("Score", "active")}
+            ${chip("Recent")}
+            ${chip("Name")}
+          </div>
+          ${placeCard({
+              title: "Greerton Family Stay Adventure Playscape",
+              subtitle: "Bay Coastal Play Pilot",
+              locality: "Tauranga, Bay of Plenty, New Zealand",
+              status: "Submitted",
+              statusKind: "success",
+              score: "PV 4 | U 32 | S 6",
+              footerLeft: "29 days ago",
+              cta: "View details >",
+          })}
+        `;
+            }
+
+            function reportDetailScreen() {
+                return `
+          ${titleBlock("Aro Valley Spectator Seating Learning Park", "Capital Waterfront Play Network")}
+          <div class="row">
+            <div class="mini-detail"><div class="mini-dot"></div><span>Wellington, Wellington, New Zealand</span></div>
+            ${chip("In progress", "accent")}
+          </div>
+          <div class="card-text" style="font-size: 16px;">25/03/2026 2:37 PM</div>
+          <div class="metric-grid">
+            ${metricCard("Overall score", "--")}
+            ${metricCard("PV", "--")}
+            ${metricCard("U", "--")}
+            ${metricCard("S", "--", "success")}
+          </div>
+          <div class="settings-card">
+            <div class="card-title">Audit metadata</div>
+            ${infoCardRow("Audit code", "CAPITALW-AROVALLEYSPE-AKL-01-20260325183726")}
+            ${infoCardRow("Status", "In progress")}
+            ${infoCardRow("Project", "Capital Waterfront Play Network")}
+            ${infoCardRow("Started", "25/03/2026 2:37 PM")}
+            ${infoCardRow("Submitted", "Not scored")}
+            ${infoCardRow("Progress", "0 / 0")}
+          </div>
+          <div class="settings-card">
+            <div class="row" style="justify-content: flex-start; gap: 8px;">
+              <div class="field-icon" style="color: var(--accent);">E</div>
+              <div class="card-title">Export this audit</div>
+            </div>
+            <div class="theme-toggle">
+              <div class="theme-option">PDF</div>
+              <div class="theme-option active">CSV</div>
+              <div class="theme-option">Excel</div>
+            </div>
+          </div>
+          <div class="spacer-large"></div>
+        `;
+            }
+
+            function settingsScreen() {
+                return `
+          ${titleBlock("Settings", "Profile, appearance, accessibility, and app information.")}
+          <div class="settings-card">
+            <div class="row" style="justify-content: flex-start; gap: 8px;">
+              <div class="field-icon" style="color: var(--accent);">P</div>
+              <div class="kicker" style="color: var(--accent);">Profile</div>
+            </div>
+            ${infoCardRow("Name", "Ariana Ngata")}
+            ${infoCardRow("Email", "ariana.ngata@example.org")}
+            ${infoCardRow("Account type", "Auditor")}
+            ${infoCardRow("Auditor Code", "AKL-01")}
+            ${infoCardRow("Role", "Student")}
+            ${infoCardRow("Country", "New Zealand")}
+            <div class="card-text">Profile editing will be available once the authentication system is complete.</div>
+            <div class="button ghost full" style="color: var(--danger); border-color: var(--danger);">Sign out</div>
+          </div>
+          <div class="settings-card">
+            <div class="row" style="justify-content: flex-start; gap: 8px;">
+              <div class="field-icon" style="color: var(--accent);">A</div>
+              <div class="kicker" style="color: var(--accent);">Appearance</div>
+            </div>
+            <div class="card-title">Theme</div>
+            <div class="card-text">Choose between light, dark, or follow your device settings.</div>
+            <div class="theme-toggle">
+              <div class="theme-option active">System</div>
+              <div class="theme-option">Light</div>
+              <div class="theme-option">Dark</div>
+            </div>
+          </div>
+          <div class="settings-card">
+            <div class="row" style="justify-content: flex-start; gap: 8px;">
+              <div class="field-icon" style="color: var(--accent);">T</div>
+              <div class="kicker" style="color: var(--accent);">Accessibility</div>
+            </div>
+            ${infoCardRow("Font size", "100%")}
+            ${infoCardRow("High contrast", "Off")}
+            ${infoCardRow("Dyslexic font", "Off")}
+          </div>
+        `;
+            }
+
+            function screensForMode() {
+                return [
+                    shell("01 Login", loginScreen(), { time: "2:16", bodyClass: "auth" }),
+                    shell("02 Signup", signupScreen(), { time: "2:16", bodyClass: "auth" }),
+                    shell("03 Home", homeScreen(), { time: "2:17", tab: "Home" }),
+                    shell("04 Places", placesScreen(), { time: "2:17", tab: "Places" }),
+                    shell("05 Place Detail", placeDetailScreen(), {
+                        time: "2:17",
+                        appBar: { title: "Aro Valley Spectator Seating Learning Park", back: true },
+                    }),
+                    shell("06 Execute", executeScreen(), { time: "2:17", tab: "Execute" }),
+                    shell("07 Execute Place", executePlaceScreen(), {
+                        time: "2:17",
+                        appBar: {
+                            title: "Aro Valley Spectator Seating Learning Park",
+                            centerTitle: true,
+                        },
+                        tab: "Execute",
+                    }),
+                    shell("08 Execute Pre-Audit", preAuditScreen(), {
+                        time: "2:18",
+                        appBar: { title: "Pre-Audit", centerTitle: true },
+                        tab: "Execute",
+                    }),
+                    shell("09 Execute Section", executeSectionScreen(), {
+                        time: mode === "dark" ? "2:20" : "2:18",
+                        appBar: { title: "Section", centerTitle: true },
+                        tab: "Execute",
+                    }),
+                    shell("10 Reports", reportsScreen(), { time: "2:18", tab: "Reports" }),
+                    shell("11 Report Detail", reportDetailScreen(), {
+                        time: "2:18",
+                        appBar: { title: "Aro Valley Spectator Seating Learning Park", back: true },
+                    }),
+                    shell("12 Settings", settingsScreen(), { time: "2:18", tab: "Settings" }),
+                ];
+            }
+
+            const page = document.getElementById("page");
+            const modeTitle = mode === "dark" ? "Dark" : "Light";
+            page.innerHTML = `
+        <section class="hero">
+          <div class="eyebrow">Audit Tools Playspace</div>
+          <h1>${modeTitle} Editable Mobile Screens</h1>
+          <p>
+            Real DOM-based mobile screen reconstructions for Figma capture. These screens use
+            editable text, cards, buttons, filters, and tab bars instead of screenshot images.
+          </p>
+        </section>
+        <section class="screen-grid">
+          ${screensForMode().join("")}
+        </section>
+      `;
+        </script>
+    </body>
+</html>

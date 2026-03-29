@@ -330,10 +330,14 @@ export default function ReportsScreen() {
 
                 if (rightPlace === null) {
                     return (
-                        <ReportQueueCard
-                            place={item.left}
-                            maxCombinedConstructScore={maxCombinedConstructScore}
-                        />
+                        <XStack gap="$3" items="stretch">
+                            <ReportQueueCard
+                                place={item.left}
+                                maxCombinedConstructScore={maxCombinedConstructScore}
+                            />
+
+                            <YStack width="48.5%"></YStack>
+                        </XStack>
                     );
                 }
 

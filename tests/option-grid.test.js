@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getOptionGridItemWidth } from "./option-grid";
+import { getOptionGridItemWidth } from "lib/option-grid";
 
 /**
  * Choice grids should give three-option questions an even tablet-friendly layout.

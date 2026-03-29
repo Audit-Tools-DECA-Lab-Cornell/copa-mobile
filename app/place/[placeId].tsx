@@ -189,8 +189,8 @@ function PlaceDetailContent({
     const openAuditLabel =
         place.selected_execution_mode === null
             ? t("actions.openAudit", { ns: "common" })
-            : t("copy.continueToSubject", {
-                  ns: "audit",
+            : t("actions.openSubject", {
+                  ns: "common",
                   subject: t(`subjects.${getExecuteFlowSubject(place.selected_execution_mode)}`, {
                       ns: "audit",
                   }),
@@ -349,52 +349,54 @@ function PlaceDetailContent({
                 height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
                 rounded={ds.radii.md}
                 borderWidth={0}
+                px={layout.isTablet ? "$9" : "$13"}
+                justify="flex-start"
                 bg={ds.colors.primary}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => onOpenAudit()}
             >
-                <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
-                    <ClipboardCheck size={16} color={ds.colors.primaryForeground} />
-                    <Text
-                        color={ds.colors.primaryForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelLg.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        {openAuditLabel}
-                    </Text>
-                </XStack>
+                <ClipboardCheck size={16} color={ds.colors.primaryForeground} />
+                <Text
+                    color={ds.colors.primaryForeground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelLg.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.2}
+                >
+                    {openAuditLabel}
+                </Text>
             </Button>
             {onOpenReport === undefined ? null : (
                 <Button
                     height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
                     rounded={ds.radii.md}
                     borderWidth={1}
+                    px={layout.isTablet ? "$9" : "$13"}
+                    justify="flex-start"
                     borderColor={ds.colors.border}
                     bg={ds.colors.input}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={onOpenReport}
                 >
-                    <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
-                        <FileBarChart size={16} color={ds.colors.foreground} />
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            {t("actions.viewReport", { ns: "common" })}
-                        </Text>
-                        <ArrowRight size={14} color={ds.colors.foreground} />
-                    </XStack>
+                    <FileBarChart size={16} color={ds.colors.foreground} />
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelMd.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        {t("actions.viewReport", { ns: "common" })}
+                    </Text>
+                    <ArrowRight size={14} color={ds.colors.foreground} />
                 </Button>
             )}
             <Button
                 height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
                 rounded={ds.radii.md}
                 borderWidth={1}
+                px={layout.isTablet ? "$9" : "$13"}
+                justify="flex-start"
                 borderColor={ds.colors.border}
                 bg={ds.colors.input}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
@@ -402,18 +404,16 @@ function PlaceDetailContent({
                     Linking.openURL(`http://maps.apple.com/?q=${mapsQuery}`).catch(() => undefined);
                 }}
             >
-                <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
-                    <MapPin size={16} color={ds.colors.foreground} />
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        Open in Apple Maps
-                    </Text>
-                </XStack>
+                <MapPin size={16} color={ds.colors.foreground} />
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelMd.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.2}
+                >
+                    Open in Apple Maps
+                </Text>
             </Button>
             <Button
                 height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
@@ -421,6 +421,8 @@ function PlaceDetailContent({
                 borderWidth={1}
                 borderColor={ds.colors.border}
                 bg={ds.colors.input}
+                px={layout.isTablet ? "$9" : "$13"}
+                justify="flex-start"
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
                     Linking.openURL(
@@ -428,18 +430,16 @@ function PlaceDetailContent({
                     ).catch(() => undefined);
                 }}
             >
-                <XStack width="50%" ml="$4" items="center" justify="flex-start" gap="$2">
-                    <MapPin size={16} color={ds.colors.foreground} />
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        Open in Google Maps
-                    </Text>
-                </XStack>
+                <MapPin size={16} color={ds.colors.foreground} />
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelMd.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.2}
+                >
+                    Open in Google Maps
+                </Text>
             </Button>
         </YStack>
     );

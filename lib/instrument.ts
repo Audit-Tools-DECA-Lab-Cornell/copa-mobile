@@ -40,7 +40,7 @@ export const BASE_PLAYSPACE_INSTRUMENT: PlayspaceInstrument = {
         },
         {
             key: "audit",
-            label: "I am an onsite auditor",
+            label: "I am an onsite auditor for this playspace",
             description: "This choice displays only audit questions.",
         },
     ],

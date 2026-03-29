@@ -2,8 +2,7 @@
     "autoValues": {
         "calculatedOnSubmit": "最終提出時に計算されます",
         "generatedOnSubmit": "最終提出時に生成されます",
-        "minutes_one": "",
-        "minutes_other": ""
+        "minutes": "{{count}} 分"
     },
     "errors": {
         "accessDenied403": "アクセスが拒否されました (403): この場所または監査へアクセスする権限がありません。",
@@ -19,7 +18,7 @@
     },
     "copy": {
         "continueToSubject": "{{subject}}に進む",
-        "continueToSubjectInfo": "{{subject}}の情報に進む",
+        "continueToSubjectInfo": "{{subject}}の詳細に進む",
         "submitSubject": "{{subject}}を送信"
     },
     "executeLanding": {
@@ -70,7 +69,7 @@
     },
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
-        "continueToAuditInfo": "監査情報へ進む",
+        "continueToAuditInfo": "監査の詳細へ進む",
         "modeRequired": "続行する前に、実行モードを1つ選択してください。",
         "stepEyebrow": "3ステップ中の1",
         "subtitle": "ツールの使い方を確認し、その後、この監査を完了する方法に最も合った役割を選択してください。",
@@ -143,7 +142,6 @@
         "saveAndNext": "保存して次へ",
         "saveSection": "セクションを保存",
         "sectionNotes": "セクションのノート",
-        "tableIntro": "タブレットでは、質問がマトリクス形式で表示されるため、プロンプトは左側に、利用可能な尺度は右側に揃って表示されます。",
         "table": {
             "followUpPending": "この尺度を有効にするには、数量の質問に肯定的な回答を選択してください。",
             "itemColumn": "質問項目",
@@ -167,7 +165,7 @@
     },
     "subjects": {
         "audit": "監査",
-        "auditAndSurvey": "監査/調査",
+        "auditAndSurvey": "評価",
         "survey": "調査",
         "workflow": "ワークフロー"
     },

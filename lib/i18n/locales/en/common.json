@@ -4,6 +4,7 @@
     },
     "actions": {
         "openAudit": "Open audit",
+        "openSubject": "Open {{subject}}",
         "resume": "Resume",
         "retry": "Retry",
         "seeAll": "See all",

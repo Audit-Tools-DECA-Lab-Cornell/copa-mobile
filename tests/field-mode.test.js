@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { resolveFieldModePresentation } from "./field-mode";
+import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 
 /**
  * Field Mode should improve readability without overwriting the user's theme choice.

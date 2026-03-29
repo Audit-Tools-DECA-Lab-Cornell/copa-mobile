@@ -1,4 +1,4 @@
-import { BASE_PLAYSPACE_INSTRUMENT } from "../instrument";
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 import type {
     AuditPreAuditValues,
     AuditSectionState,
@@ -8,7 +8,7 @@ import type {
     DirtyPreAudit,
     DirtySections,
     QuestionResponsePayload,
-} from "./types";
+} from "lib/audit/types";
 import {
     applyLocalPreAuditChange,
     applyLocalQuestionAnswerChange,
@@ -16,7 +16,7 @@ import {
     buildSyncableAuditIds,
     clearAcknowledgedDirtyState,
     isAuditSessionEditable,
-} from "./store-sync-core";
+} from "lib/audit/store-sync-core";
 
 /**
  * Assert that two primitive values are identical.

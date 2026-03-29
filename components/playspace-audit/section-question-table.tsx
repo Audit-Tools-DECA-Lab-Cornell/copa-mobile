@@ -3,6 +3,11 @@ import { ScrollView } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
+import {
+    getSectionQuestionTableColumnMetrics,
+    type SectionQuestionTableColumnMetrics,
+    type SectionQuestionTableScaleContent,
+} from "components/playspace-audit/section-question-table-layout";
 import { useDesignSystem } from "lib/design-system";
 import { getActiveScaleKeysForQuestion } from "lib/audit/selectors";
 import type {
@@ -49,37 +54,44 @@ export function SectionQuestionTable({
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
     const visibleScaleKeys = getVisibleScaleKeys(rows);
+    const scaleContentByKey = getScaleContentByKey(rows, visibleScaleKeys, (scaleKey) =>
+        t(`section.table.scaleColumns.${scaleKey}`),
+    );
+    const columnMetrics = getSectionQuestionTableColumnMetrics({
+        layout,
+        scaleKeys: visibleScaleKeys,
+        scaleContentByKey,
+    });
 
     return (
         <YStack gap="$3">
-            <Paragraph
-                color={ds.colors.mutedForeground}
-                fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodySm.fontSize}
-                lineHeight={ds.typography.bodySm.lineHeight}
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator
+                directionalLockEnabled
+                bounces={false}
+                style={{ width: "100%" }}
             >
-                {t("section.tableIntro")}
-            </Paragraph>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <YStack
-                    minW={Math.max(860, layout.windowWidth - layout.screenPaddingHorizontal * 2)}
-                    rounded={ds.radii.lg}
+                    width={columnMetrics.tableWidth}
+                    rounded={ds.radii.sm}
                     borderWidth={1}
                     borderColor={ds.colors.border}
                     overflow="hidden"
                     bg={ds.colors.surface}
                 >
-                    <XStack bg={ds.colors.surfaceMuted}>
+                    <XStack bg={ds.colors.surfaceMuted} width={columnMetrics.tableWidth}>
                         <HeaderCell
-                            width={layout.isWideTablet ? 360 : 320}
+                            width={columnMetrics.promptColumnWidth}
                             label={t("section.table.itemColumn")}
+                            showTrailingBorder
                         />
-                        {visibleScaleKeys.map((scaleKey) => (
+                        {visibleScaleKeys.map((scaleKey, columnIndex) => (
                             <HeaderCell
                                 key={scaleKey}
-                                width={layout.isWideTablet ? 188 : 172}
+                                width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                 label={t(`section.table.scaleColumns.${scaleKey}`)}
+                                showTrailingBorder={columnIndex < visibleScaleKeys.length - 1}
                             />
                         ))}
                     </XStack>
@@ -98,18 +110,27 @@ export function SectionQuestionTable({
                                 bg={rowIndex % 2 === 0 ? ds.colors.surface : ds.colors.surfaceMuted}
                                 items="stretch"
                             >
-                                <QuestionPromptCell question={row.question} />
-                                {visibleScaleKeys.map((scaleKey) => {
+                                <QuestionPromptCell
+                                    question={row.question}
+                                    width={columnMetrics.promptColumnWidth}
+                                />
+                                {visibleScaleKeys.map((scaleKey, columnIndex) => {
                                     const scale = row.question.scales.find(
                                         (currentScale) => currentScale.key === scaleKey,
                                     );
+                                    const showTrailingBorder =
+                                        columnIndex < visibleScaleKeys.length - 1;
 
                                     if (scale === undefined) {
                                         return (
                                             <EmptyScaleCell
                                                 key={`${row.question.question_key}.${scaleKey}`}
-                                                width={layout.isWideTablet ? 188 : 172}
+                                                width={readScaleColumnWidth(
+                                                    columnMetrics,
+                                                    scaleKey,
+                                                )}
                                                 text={t("section.table.notAvailable")}
+                                                showTrailingBorder={showTrailingBorder}
                                             />
                                         );
                                     }
@@ -121,8 +142,12 @@ export function SectionQuestionTable({
                                         return (
                                             <EmptyScaleCell
                                                 key={`${row.question.question_key}.${scaleKey}`}
-                                                width={layout.isWideTablet ? 188 : 172}
+                                                width={readScaleColumnWidth(
+                                                    columnMetrics,
+                                                    scaleKey,
+                                                )}
                                                 text={t("section.table.followUpPending")}
+                                                showTrailingBorder={showTrailingBorder}
                                             />
                                         );
                                     }
@@ -137,8 +162,9 @@ export function SectionQuestionTable({
                                                     ? (row.selectedAnswers[scale.key] as string)
                                                     : undefined
                                             }
-                                            width={layout.isWideTablet ? 188 : 172}
+                                            width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                             disabled={disabled}
+                                            showTrailingBorder={showTrailingBorder}
                                             onSelectAnswer={onSelectAnswer}
                                         />
                                     );
@@ -155,12 +181,13 @@ export function SectionQuestionTable({
 interface HeaderCellProps {
     readonly width: number;
     readonly label: string;
+    readonly showTrailingBorder: boolean;
 }
 
 /**
  * Shared table header cell.
  */
-function HeaderCell({ width, label }: Readonly<HeaderCellProps>) {
+function HeaderCell({ width, label, showTrailingBorder }: Readonly<HeaderCellProps>) {
     const ds = useDesignSystem();
 
     return (
@@ -168,7 +195,7 @@ function HeaderCell({ width, label }: Readonly<HeaderCellProps>) {
             width={width}
             px="$3"
             py="$2.5"
-            borderRightWidth={1}
+            borderRightWidth={showTrailingBorder ? 1 : 0}
             borderColor={ds.colors.border}
             justify="center"
         >
@@ -188,20 +215,20 @@ function HeaderCell({ width, label }: Readonly<HeaderCellProps>) {
 
 interface QuestionPromptCellProps {
     readonly question: InstrumentQuestion;
+    readonly width: number;
 }
 
 /**
  * Left-most prompt cell for one table row.
  */
-function QuestionPromptCell({ question }: Readonly<QuestionPromptCellProps>) {
+function QuestionPromptCell({ question, width }: Readonly<QuestionPromptCellProps>) {
     const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
     const promptSegments = parsePromptSegments(question.prompt);
 
     return (
         <YStack
-            width={layout.isWideTablet ? 360 : 320}
+            width={width}
             px="$3.5"
             py="$3.5"
             gap="$1.5"
@@ -216,7 +243,7 @@ function QuestionPromptCell({ question }: Readonly<QuestionPromptCellProps>) {
                 textTransform="uppercase"
                 letterSpacing={1.1}
             >
-                {question.question_key}
+                {formatQuestionKey(question.question_key)}
             </Text>
             <Text
                 color={ds.colors.foreground}
@@ -237,6 +264,7 @@ function QuestionPromptCell({ question }: Readonly<QuestionPromptCellProps>) {
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                             fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
                             fontSize={ds.typography.bodyMd.fontSize}
+                            style={{ fontWeight: segment.bold ? "800" : "400" }}
                         >
                             {segment.text}
                         </Text>
@@ -253,6 +281,7 @@ interface ScaleOptionCellProps {
     readonly selectedOptionKey: string | undefined;
     readonly width: number;
     readonly disabled: boolean;
+    readonly showTrailingBorder: boolean;
     readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
 }
 
@@ -265,6 +294,7 @@ function ScaleOptionCell({
     selectedOptionKey,
     width,
     disabled,
+    showTrailingBorder,
     onSelectAnswer,
 }: Readonly<ScaleOptionCellProps>) {
     const ds = useDesignSystem();
@@ -275,24 +305,25 @@ function ScaleOptionCell({
             px="$2.5"
             py="$3"
             gap="$2"
-            borderRightWidth={1}
+            borderRightWidth={showTrailingBorder ? 1 : 0}
             borderColor={ds.colors.border}
             justify="center"
         >
-            <Paragraph
+            {/* <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyMedium}
                 fontSize={ds.typography.bodyXs.fontSize}
                 lineHeight={ds.typography.bodyXs.lineHeight}
             >
                 {scale.prompt}
-            </Paragraph>
+            </Paragraph> */}
             {scale.options.map((option) => {
                 const isSelected = selectedOptionKey === option.key;
 
                 return (
                     <Button
                         key={`${questionKey}.${scale.key}.${option.key}`}
+                        width="100%"
                         height="auto"
                         rounded={ds.radii.md}
                         disabled={disabled}
@@ -312,7 +343,7 @@ function ScaleOptionCell({
                             <YStack
                                 width={16}
                                 height={16}
-                                rounded={ds.radii.full}
+                                rounded={ds.radii.sm}
                                 borderWidth={2}
                                 borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                                 items="center"
@@ -322,7 +353,7 @@ function ScaleOptionCell({
                                     <YStack
                                         width={6}
                                         height={6}
-                                        rounded={ds.radii.full}
+                                        rounded={ds.radii.sm}
                                         bg={ds.colors.primary}
                                     />
                                 ) : null}
@@ -347,12 +378,13 @@ function ScaleOptionCell({
 interface EmptyScaleCellProps {
     readonly width: number;
     readonly text: string;
+    readonly showTrailingBorder: boolean;
 }
 
 /**
  * Placeholder cell for scales that are unavailable or still gated.
  */
-function EmptyScaleCell({ width, text }: Readonly<EmptyScaleCellProps>) {
+function EmptyScaleCell({ width, text, showTrailingBorder }: Readonly<EmptyScaleCellProps>) {
     const ds = useDesignSystem();
 
     return (
@@ -360,7 +392,7 @@ function EmptyScaleCell({ width, text }: Readonly<EmptyScaleCellProps>) {
             width={width}
             px="$3"
             py="$3"
-            borderRightWidth={1}
+            borderRightWidth={showTrailingBorder ? 1 : 0}
             borderColor={ds.colors.border}
             justify="center"
         >
@@ -402,4 +434,71 @@ function getVisibleScaleKeys(rows: readonly QuestionTableRow[]): ScaleKey[] {
     return SCALE_COLUMN_ORDER.filter((scaleKey) => {
         return rows.some((row) => row.question.scales.some((scale) => scale.key === scaleKey));
     });
+}
+
+/**
+ * Convert raw instrument question keys into a human-readable audit label.
+ */
+function formatQuestionKey(questionKey: string): string {
+    const match = /^q_(\d+)_(\d+)$/i.exec(questionKey);
+    if (match === null) {
+        return questionKey.replaceAll("_", " ").toUpperCase();
+    }
+
+    const [, sectionNumber, questionNumber] = match;
+    return `Q ${sectionNumber}.${questionNumber}`;
+}
+
+/**
+ * Gather the longest option label for each visible scale so the scroll-first
+ * layout can grant extra width only where the copy actually needs it.
+ */
+function getScaleContentByKey(
+    rows: readonly QuestionTableRow[],
+    scaleKeys: readonly ScaleKey[],
+    getScaleHeaderLabel: (scaleKey: ScaleKey) => string,
+): Partial<Record<ScaleKey, SectionQuestionTableScaleContent>> {
+    const scaleContentByKey: Partial<Record<ScaleKey, SectionQuestionTableScaleContent>> = {};
+
+    for (const scaleKey of scaleKeys) {
+        let maxOptionLabelLength = 0;
+        for (const row of rows) {
+            const matchingScale = row.question.scales.find((scale) => scale.key === scaleKey);
+            if (matchingScale === undefined) {
+                continue;
+            }
+
+            for (const option of matchingScale.options) {
+                maxOptionLabelLength = Math.max(maxOptionLabelLength, option.label.trim().length);
+            }
+        }
+
+        scaleContentByKey[scaleKey] = {
+            headerLabel: getScaleHeaderLabel(scaleKey),
+            maxOptionLabelLength,
+        };
+    }
+
+    return scaleContentByKey;
+}
+
+/**
+ * Read a resolved width for one visible scale column, falling back to an even
+ * split if a width is unexpectedly missing.
+ */
+function readScaleColumnWidth(
+    columnMetrics: Readonly<SectionQuestionTableColumnMetrics>,
+    scaleKey: ScaleKey,
+): number {
+    const resolvedWidth = columnMetrics.scaleColumnWidths[scaleKey];
+    if (typeof resolvedWidth === "number") {
+        return resolvedWidth;
+    }
+
+    const visibleScaleCount = Object.keys(columnMetrics.scaleColumnWidths).length;
+    return visibleScaleCount === 0
+        ? 0
+        : Math.floor(
+              (columnMetrics.tableWidth - columnMetrics.promptColumnWidth) / visibleScaleCount,
+          );
 }
