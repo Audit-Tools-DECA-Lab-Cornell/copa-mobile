@@ -48,6 +48,7 @@ export default {
             [
                 "expo-build-properties",
                 {
+                    useHermesV1: true,
                     ios: {
                         newArchEnabled: false,
                         deploymentTarget: "15.1",
@@ -58,6 +59,7 @@ export default {
                         compileSdkVersion: 36,
                         targetSdkVersion: 36,
                         buildToolsVersion: "36.0.0",
+                        buildReactNativeFromSource: true,
                     },
                 },
             ],
@@ -76,11 +78,13 @@ export default {
             },
         },
         runtimeVersion: {
-            policy: "appVersion",
+            policy: "fingerprint",
         },
-        owner: "pratyush.sudhakar",
+        owner: "audit-tools-deca-lab-cornell",
+        githubUrl: "https://github.com/audit-tools-deca-lab-cornell/audit-tools-playspace-mobile",
         updates: {
             url: "https://u.expo.dev/2e559376-25f3-44e1-88bf-00eeaf9fb763",
+            enableBsdiffPatchSupport: true,
         },
     },
 };

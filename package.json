@@ -35,7 +35,7 @@
         "prepare": "husky"
     },
     "resolutions": {
-        "hermes-compiler": "250829098.0.1"
+        "hermes-compiler": "250829098.0.4"
     },
     "dependencies": {
         "@expo-google-fonts/geist": "^0.4.1",
@@ -74,7 +74,7 @@
         "react": "19.2.0",
         "react-dom": "19.2.0",
         "react-i18next": "^16.5.8",
-        "react-native": "0.83.2",
+        "react-native": "0.83.4",
         "react-native-maps": "^1.27.2",
         "react-native-mmkv": "^4.3.0",
         "react-native-nitro-modules": "^0.35.2",
