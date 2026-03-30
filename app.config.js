@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "Playspace Audit Tool",
         slug: "audit-tools-playspace-mobile",
-        version: "1.0.0",
+        version: "1.1.1",
         orientation: "portrait",
         icon: "./assets/images/icon.png",
         scheme: "audit-tools-playspace-mobile",
@@ -78,7 +78,7 @@ export default {
             },
         },
         runtimeVersion: {
-            policy: "fingerprint",
+            policy: "appVersion",
         },
         owner: "audit-tools-deca-lab-cornell",
         githubUrl: "https://github.com/audit-tools-deca-lab-cornell/audit-tools-playspace-mobile",
