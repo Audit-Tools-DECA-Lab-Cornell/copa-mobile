@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, Linking, ScrollView } from "react-native";
+import { ActivityIndicator, Linking, Platform, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons";
 import type { TFunction } from "i18next";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { StatCard } from "components/ui/stat-card";
@@ -218,6 +218,26 @@ function PlaceDetailContent({
         };
     }, [placeCoordinate]);
 
+    const encodedMapsQuery = encodeURIComponent(mapsQuery);
+    const openUrl = useCallback((url: string) => {
+        Linking.openURL(url);
+    }, []);
+
+    const mapProvider = Platform.OS === "ios" ? PROVIDER_DEFAULT : PROVIDER_GOOGLE;
+    const handleMapReady = useCallback(() => {
+        console.info("[PlaceDetailContent] map ready", {
+            platform: Platform.OS,
+            provider: mapProvider,
+        });
+    }, [mapProvider]);
+
+    const handleMapLoaded = useCallback(() => {
+        console.info("[PlaceDetailContent] map loaded", {
+            platform: Platform.OS,
+            provider: mapProvider,
+        });
+    }, [mapProvider]);
+
     const scrollPlaceDetailToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
     }, []);
@@ -325,7 +345,6 @@ function PlaceDetailContent({
             p={layout.cardPadding}
             gap="$2.5"
             justify="space-between"
-            content="center"
             style={{
                 minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
                 boxShadow: ds.shadows.card,
@@ -338,6 +357,7 @@ function PlaceDetailContent({
             >
                 {t("detail.quickActions", { ns: "places" })}
             </Text>
+
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyMedium}
@@ -345,102 +365,36 @@ function PlaceDetailContent({
             >
                 {t("detail.openAuditHelper", { ns: "places" })}
             </Paragraph>
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                rounded={ds.radii.md}
-                borderWidth={0}
-                px={layout.isTablet ? "$9" : "$13"}
-                justify="flex-start"
-                bg={ds.colors.primary}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => onOpenAudit()}
-            >
-                <ClipboardCheck size={16} color={ds.colors.primaryForeground} />
-                <Text
-                    color={ds.colors.primaryForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelLg.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    {openAuditLabel}
-                </Text>
-            </Button>
-            {onOpenReport === undefined ? null : (
-                <Button
-                    height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                    rounded={ds.radii.md}
-                    borderWidth={1}
-                    px={layout.isTablet ? "$9" : "$13"}
-                    justify="flex-start"
-                    borderColor={ds.colors.border}
-                    bg={ds.colors.input}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+
+            <QuickActionButton
+                variant="primary"
+                icon={<ClipboardCheck size={16} color={ds.colors.primaryForeground} />}
+                label={openAuditLabel}
+                onPress={onOpenAudit}
+            />
+
+            {onOpenReport && (
+                <QuickActionButton
+                    icon={<FileBarChart size={16} color={ds.colors.foreground} />}
+                    label={t("actions.viewReport", { ns: "common" })}
                     onPress={onOpenReport}
-                >
-                    <FileBarChart size={16} color={ds.colors.foreground} />
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        {t("actions.viewReport", { ns: "common" })}
-                    </Text>
-                    <ArrowRight size={14} color={ds.colors.foreground} />
-                </Button>
+                    rightIcon={<ArrowRight size={14} color={ds.colors.foreground} />}
+                />
             )}
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                px={layout.isTablet ? "$9" : "$13"}
-                justify="flex-start"
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => {
-                    Linking.openURL(`http://maps.apple.com/?q=${mapsQuery}`).catch(() => undefined);
-                }}
-            >
-                <MapPin size={16} color={ds.colors.foreground} />
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    Open in Apple Maps
-                </Text>
-            </Button>
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                px={layout.isTablet ? "$9" : "$13"}
-                justify="flex-start"
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => {
-                    Linking.openURL(
-                        `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`,
-                    ).catch(() => undefined);
-                }}
-            >
-                <MapPin size={16} color={ds.colors.foreground} />
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    Open in Google Maps
-                </Text>
-            </Button>
+
+            <QuickActionButton
+                icon={<MapPin size={16} color={ds.colors.foreground} />}
+                label="Open in Apple Maps"
+                onPress={() => openUrl(`http://maps.apple.com/?q=${encodedMapsQuery}`)}
+            />
+
+            <QuickActionButton
+                icon={<MapPin size={16} color={ds.colors.foreground} />}
+                label="Open in Google Maps"
+                onPress={() =>
+                    openUrl(`https://www.google.com/maps/search/?api=1&query=${encodedMapsQuery}`)
+                }
+            />
         </YStack>
     );
     const mapPreviewCard = (
@@ -499,13 +453,15 @@ function PlaceDetailContent({
                     <MapView
                         style={{ width: "100%", height: layout.isTablet ? 360 : 280 }}
                         region={mapRegion}
-                        provider={PROVIDER_GOOGLE}
+                        provider={mapProvider}
                         pointerEvents="auto"
                         scrollEnabled={true}
                         zoomEnabled={true}
                         rotateEnabled={true}
                         pitchEnabled={true}
                         toolbarEnabled={true}
+                        onMapLoaded={handleMapLoaded}
+                        onMapReady={handleMapReady}
                     >
                         <Marker
                             coordinate={placeCoordinate}
@@ -623,6 +579,68 @@ interface PlaceInfoCardProps {
     readonly label: string;
     readonly value: string;
     readonly minHeight?: number;
+}
+
+interface QuickActionButtonProps {
+    readonly icon: React.ReactNode;
+    readonly label: string;
+    readonly onPress: () => void;
+    readonly variant?: "primary" | "secondary";
+    readonly rightIcon?: React.ReactNode;
+}
+
+function QuickActionButton({
+    icon,
+    label,
+    onPress,
+    variant = "secondary",
+    rightIcon,
+}: Readonly<QuickActionButtonProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const isPrimary = variant === "primary";
+
+    const buttonHeight = layout.isTablet ? layout.buttonHeight : layout.controlHeight;
+
+    return (
+        <Button
+            height={buttonHeight}
+            rounded={ds.radii.md}
+            borderWidth={isPrimary ? 0 : 1}
+            borderColor={isPrimary ? "transparent" : ds.colors.border}
+            bg={isPrimary ? ds.colors.primary : ds.colors.input}
+            px={layout.isTablet ? "$9" : "$11"}
+            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            onPress={onPress}
+        >
+            <XStack flex={1} items="center" gap="$2">
+                <XStack width={20} items="center" justify="flex-start">
+                    {icon}
+                </XStack>
+
+                <XStack items="center">
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={
+                            isPrimary
+                                ? ds.typography.labelLg.fontSize
+                                : ds.typography.labelMd.fontSize
+                        }
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                        numberOfLines={1}
+                    >
+                        {label}
+                    </Text>
+                </XStack>
+
+                <XStack items="center" width={20}>
+                    {rightIcon ?? null}
+                </XStack>
+            </XStack>
+        </Button>
+    );
 }
 
 function PlaceInfoCard({ label, value, minHeight }: Readonly<PlaceInfoCardProps>) {

@@ -35,8 +35,7 @@ export default {
             favicon: "./assets/images/favicon.png",
         },
         plugins: [
-            "./plugins/withFmtFix",
-            "./plugins/withExpoProjectRootFix",
+            "./plugins/withCustomPodfilePatches",
             "expo-router",
             "expo-font",
             [

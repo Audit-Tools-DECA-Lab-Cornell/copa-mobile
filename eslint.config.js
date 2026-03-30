@@ -20,7 +20,7 @@ module.exports = defineConfig([
     {
         files: ["**/*.{js,jsx,ts,tsx}"],
         rules: {
-            "no-console": ["warn", { allow: ["warn", "error"] }],
+            "no-console": ["warn", { allow: ["warn", "error", "info"] }],
         },
     },
     {
