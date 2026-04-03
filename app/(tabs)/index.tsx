@@ -26,7 +26,7 @@ import {
 } from "lib/dashboard-progress";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
-import { getCardTextLineLimit } from "lib/ipad-polish";
+import { getCardTextLineLimit } from "lib/responsive";
 import { buildPairGridRows } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";

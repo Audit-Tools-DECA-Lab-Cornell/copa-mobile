@@ -57,12 +57,4 @@ const builtThemes = createV5Theme({
 
 export type Themes = typeof builtThemes;
 
-// the process.env conditional here is optional but saves web client-side bundle
-// size by leaving out themes JS. tamagui automatically hydrates themes from CSS
-// back into JS for you, and the bundler plugins set TAMAGUI_ENVIRONMENT. so
-// long as you are using the Vite, Next, Webpack plugins this should just work,
-// but if not you can just export builtThemes directly as themes:
-export const themes: Themes =
-    process.env.TAMAGUI_ENVIRONMENT === "client" && process.env.NODE_ENV === "production"
-        ? ({} as Themes)
-        : builtThemes;
+export const themes = builtThemes;

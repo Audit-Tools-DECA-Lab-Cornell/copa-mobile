@@ -42,7 +42,7 @@ import {
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
-import { getCardTextLineLimit } from "lib/ipad-polish";
+import { getCardTextLineLimit } from "lib/responsive";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";

@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Slider, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { getSettingsPageMaxWidth } from "lib/ipad-polish";
+import { getSettingsPageMaxWidth } from "lib/responsive";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import {
     fetchMyAccount,

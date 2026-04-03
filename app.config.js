@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "Playspace Audit Tool",
         slug: "audit-tools-playspace-mobile",
-        version: "1.1.1",
+        version: "2.0.0",
         orientation: "portrait",
         icon: "./assets/images/icon.png",
         scheme: "audit-tools-playspace-mobile",

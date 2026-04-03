@@ -620,7 +620,7 @@ function QuickActionButton({
 
                 <XStack items="center">
                     <Text
-                        color={ds.colors.foreground}
+                        color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
                         fontFamily={ds.fonts.bodyBold}
                         fontSize={
                             isPrimary
