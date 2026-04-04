@@ -34,9 +34,6 @@
         "ci:quality": "bun run check && bun run doctor",
         "prepare": "husky"
     },
-    "resolutions": {
-        "hermes-compiler": "250829098.0.4"
-    },
     "dependencies": {
         "@expo-google-fonts/geist": "^0.4.1",
         "@expo-google-fonts/jetbrains-mono": "^0.4.1",

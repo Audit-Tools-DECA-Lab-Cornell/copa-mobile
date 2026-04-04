@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "Playspace Audit Tool",
         slug: "audit-tools-playspace-mobile",
-        version: "2.0.0",
+        version: "1.2.0",
         orientation: "portrait",
         icon: "./assets/images/icon.png",
         scheme: "audit-tools-playspace-mobile",
@@ -48,18 +48,15 @@ export default {
             [
                 "expo-build-properties",
                 {
-                    useHermesV1: true,
                     ios: {
                         newArchEnabled: false,
                         deploymentTarget: "15.1",
-                        buildReactNativeFromSource: true,
                     },
                     android: {
                         newArchEnabled: false,
                         compileSdkVersion: 36,
                         targetSdkVersion: 36,
                         buildToolsVersion: "36.0.0",
-                        buildReactNativeFromSource: true,
                     },
                 },
             ],
@@ -71,6 +68,7 @@ export default {
         experiments: {
             typedRoutes: true,
         },
+        jsEngine: "hermes",
         extra: {
             router: {},
             eas: {
