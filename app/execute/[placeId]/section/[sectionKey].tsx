@@ -136,7 +136,7 @@ export default function ExecuteSectionScreen() {
                 ),
             });
         }
-    }, [themedHeaderOptions, navigation, activeSection, t, auditSession]);
+    }, [themedHeaderOptions, navigation, activeSection, t, auditSession, ds]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);

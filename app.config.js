@@ -37,6 +37,7 @@ export default {
         plugins: [
             "./plugins/withCustomPodfilePatches",
             "expo-router",
+            "expo-localization",
             "expo-font",
             [
                 "react-native-maps",

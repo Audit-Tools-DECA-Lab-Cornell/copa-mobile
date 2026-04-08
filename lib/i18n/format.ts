@@ -170,18 +170,15 @@ export function formatLocalizedDateTime(value: string, language: string): string
  * @returns Localized duration string or an empty string when invalid.
  */
 export function formatLocalizedDurationFromMinutes(totalMinutes: number, language: string): string {
-    console.log("totalMinutes", totalMinutes);
     if (!Number.isFinite(totalMinutes) || totalMinutes < 0) {
         return "";
     }
 
     const normalizedMinutes = Math.floor(totalMinutes);
     const durationParts = getLocalizedDurationParts(normalizedMinutes);
-    console.log("durationParts", durationParts);
     const formattedParts = durationParts.map((part) => {
         return formatLocalizedDurationUnit(part, language);
     });
-    console.log("formattedParts", formattedParts);
 
     return formatLocalizedList(formattedParts, language);
 }

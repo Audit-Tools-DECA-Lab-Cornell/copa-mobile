@@ -209,7 +209,7 @@ export async function requestJson(
 }
 
 /**
- * Build the lightweight auth headers expected by the backend scaffolding.
+ * Build the auth headers expected by the Playspace backend.
  *
  * @param session Authenticated mobile session.
  * @returns Stable headers for the playspace backend.
@@ -219,8 +219,6 @@ function buildAuthenticatedHeaders(session: AuthSession): Record<string, string>
         Accept: "application/json",
         "Content-Type": "application/json",
         Authorization: `${session.tokenType} ${session.accessToken}`,
-        "x-demo-role": session.user.accountType === "MANAGER" ? "manager" : "auditor",
-        "x-demo-account-id": session.user.id,
     };
 }
 
