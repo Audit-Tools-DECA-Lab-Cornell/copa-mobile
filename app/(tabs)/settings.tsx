@@ -671,13 +671,13 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                 <SkeletonBlock
                     ds={ds}
                     width="36%"
-                    height={layout.isWideTablet ? 52 : layout.isTablet ? 40 : 28}
+                    height={layout.isTablet ? 40 : 28}
                     rounded={ds.radii.sm}
                 />
                 <SkeletonBlock
                     ds={ds}
                     width="68%"
-                    height={layout.isWideTablet ? 32 : layout.isTablet ? 28 : 18}
+                    height={layout.isTablet ? 28 : 18}
                     rounded={ds.radii.sm}
                 />
             </YStack>
@@ -693,14 +693,10 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                 <SkeletonBlock
                     ds={ds}
                     width="78%"
-                    height={layout.isWideTablet ? 36 : layout.isTablet ? 28 : 18}
+                    height={layout.isTablet ? 28 : 18}
                     rounded={ds.radii.sm}
                 />
-                <SkeletonBlock
-                    ds={ds}
-                    width="100%"
-                    height={layout.isWideTablet ? 72 : layout.isTablet ? 64 : 48}
-                />
+                <SkeletonBlock ds={ds} width="100%" height={layout.isTablet ? 64 : 48} />
             </SettingsCardSkeleton>
 
             {layout.isTablet ? (
@@ -808,14 +804,14 @@ function SettingsCardSkeleton({
             <XStack items="center" gap="$2">
                 <SkeletonBlock
                     ds={ds}
-                    width={layout.isWideTablet ? 28 : layout.isTablet ? 20 : 16}
-                    height={layout.isWideTablet ? 28 : layout.isTablet ? 20 : 16}
+                    width={layout.isTablet ? 20 : 16}
+                    height={layout.isTablet ? 20 : 16}
                     rounded={ds.radii.full}
                 />
                 <SkeletonBlock
                     ds={ds}
                     width={labelWidth}
-                    height={layout.isWideTablet ? 24 : layout.isTablet ? 18 : 12}
+                    height={layout.isTablet ? 18 : 12}
                     rounded={ds.radii.sm}
                 />
             </XStack>
@@ -866,13 +862,13 @@ function ProfileSkeletonRow({ ds, labelWidth, valueWidth, layout }: ProfileSkele
             <SkeletonBlock
                 ds={ds}
                 width={labelWidth}
-                height={layout.isWideTablet ? 48 : layout.isTablet ? 28 : 18}
+                height={layout.isTablet ? 28 : 18}
                 rounded={ds.radii.sm}
             />
             <SkeletonBlock
                 ds={ds}
                 width={valueWidth}
-                height={layout.isWideTablet ? 48 : layout.isTablet ? 28 : 18}
+                height={layout.isTablet ? 28 : 18}
                 rounded={ds.radii.sm}
             />
         </XStack>

@@ -15,12 +15,14 @@ export interface SectionQuestionTableColumnMetrics {
 interface SectionQuestionTableColumnMetricOptions {
     readonly layout: Pick<
         ResponsiveLayout,
-        "isWideTablet" | "windowWidth" | "screenPaddingHorizontal" | "contentMaxWidth"
+        "windowWidth" | "screenPaddingHorizontal" | "contentMaxWidth"
     >;
     readonly scaleKeys: readonly ScaleKey[];
     readonly scaleContentByKey?: Partial<Record<ScaleKey, SectionQuestionTableScaleContent>>;
 }
 
+const TABLET_BREAKPOINT = 720;
+const WIDE_TABLET_BREAKPOINT = 960;
 const NARROW_TABLET_PROMPT_COLUMN_WIDTH = 320;
 const WIDE_TABLET_PROMPT_COLUMN_WIDTH = 360;
 const NARROW_TABLET_SCALE_COLUMN_MIN_WIDTH = 188;
@@ -41,9 +43,12 @@ export function getSectionQuestionTableColumnMetrics(
     options: Readonly<SectionQuestionTableColumnMetricOptions>,
 ): SectionQuestionTableColumnMetrics {
     const visibleScaleKeys = options.scaleKeys;
-    const basePromptColumnWidth = options.layout.isWideTablet
-        ? WIDE_TABLET_PROMPT_COLUMN_WIDTH
-        : NARROW_TABLET_PROMPT_COLUMN_WIDTH;
+    const widthProgress = getTabletWidthProgress(options.layout.windowWidth);
+    const basePromptColumnWidth = interpolateWidthValue(
+        NARROW_TABLET_PROMPT_COLUMN_WIDTH,
+        WIDE_TABLET_PROMPT_COLUMN_WIDTH,
+        widthProgress,
+    );
     const availableTrackWidth = resolveAvailableTrackWidth(options.layout);
 
     if (visibleScaleKeys.length === 0) {
@@ -58,8 +63,8 @@ export function getSectionQuestionTableColumnMetrics(
     const scaleColumnWidths: Partial<Record<ScaleKey, number>> = {};
     for (const scaleKey of visibleScaleKeys) {
         scaleColumnWidths[scaleKey] = resolveScaleColumnWidth(
-            options.layout.isWideTablet,
             options.scaleContentByKey?.[scaleKey],
+            widthProgress,
         );
     }
 
@@ -101,20 +106,24 @@ function resolveAvailableTrackWidth(
  * Give every scale column a consistent minimum width, then add a modest amount
  * of extra room when the header or option labels get unusually long.
  *
- * @param isWideTablet Whether the current tablet tier uses the wider sizing preset.
  * @param scaleContent Header and option-length metrics for one scale column.
+ * @param widthProgress Tablet-width interpolation factor between 0 and 1.
  * @returns Resolved width for one visible scale column.
  */
 function resolveScaleColumnWidth(
-    isWideTablet: boolean,
     scaleContent: SectionQuestionTableScaleContent | undefined,
+    widthProgress: number,
 ): number {
-    const minimumWidth = isWideTablet
-        ? WIDE_TABLET_SCALE_COLUMN_MIN_WIDTH
-        : NARROW_TABLET_SCALE_COLUMN_MIN_WIDTH;
-    const maximumWidth = isWideTablet
-        ? WIDE_TABLET_SCALE_COLUMN_MAX_WIDTH
-        : NARROW_TABLET_SCALE_COLUMN_MAX_WIDTH;
+    const minimumWidth = interpolateWidthValue(
+        NARROW_TABLET_SCALE_COLUMN_MIN_WIDTH,
+        WIDE_TABLET_SCALE_COLUMN_MIN_WIDTH,
+        widthProgress,
+    );
+    const maximumWidth = interpolateWidthValue(
+        NARROW_TABLET_SCALE_COLUMN_MAX_WIDTH,
+        WIDE_TABLET_SCALE_COLUMN_MAX_WIDTH,
+        widthProgress,
+    );
     const longestLabelLength = Math.max(
         scaleContent?.headerLabel.trim().length ?? 0,
         scaleContent?.maxOptionLabelLength ?? 0,
@@ -126,6 +135,32 @@ function resolveScaleColumnWidth(
         minimumWidth,
         maximumWidth,
     );
+}
+
+/**
+ * Convert the current tablet width into a bounded 0..1 interpolation factor.
+ *
+ * @param windowWidth Safe viewport width.
+ * @returns Width progress between the tablet and wide-tablet thresholds.
+ */
+function getTabletWidthProgress(windowWidth: number): number {
+    return clampNumber(
+        (windowWidth - TABLET_BREAKPOINT) / (WIDE_TABLET_BREAKPOINT - TABLET_BREAKPOINT),
+        0,
+        1,
+    );
+}
+
+/**
+ * Interpolate between two width values and round the result.
+ *
+ * @param minimum Value used on smaller tablets.
+ * @param maximum Value used on larger tablets.
+ * @param progress Width interpolation factor between 0 and 1.
+ * @returns Rounded interpolated width.
+ */
+function interpolateWidthValue(minimum: number, maximum: number, progress: number): number {
+    return Math.round(minimum + (maximum - minimum) * progress);
 }
 
 /**

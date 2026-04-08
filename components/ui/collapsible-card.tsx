@@ -62,18 +62,14 @@ export function CollapsibleCard({
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.bodyBold}
                             fontSize={
-                                layout.isWideTablet
+                                layout.isTablet
                                     ? ds.typography.titleLg.fontSize
-                                    : layout.isTablet
-                                      ? ds.typography.titleLg.fontSize
-                                      : ds.typography.titleMd.fontSize
+                                    : ds.typography.titleMd.fontSize
                             }
                             lineHeight={
-                                layout.isWideTablet
+                                layout.isTablet
                                     ? ds.typography.titleLg.lineHeight
-                                    : layout.isTablet
-                                      ? ds.typography.titleLg.lineHeight
-                                      : ds.typography.titleMd.lineHeight
+                                    : ds.typography.titleMd.lineHeight
                             }
                         >
                             {title}
@@ -83,18 +79,14 @@ export function CollapsibleCard({
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isWideTablet
-                                        ? ds.typography.bodyLg.fontSize
-                                        : layout.isTablet
-                                          ? ds.typography.bodyMd.fontSize
-                                          : ds.typography.bodySm.fontSize
+                                    layout.isTablet
+                                        ? ds.typography.bodyMd.fontSize
+                                        : ds.typography.bodySm.fontSize
                                 }
                                 lineHeight={
-                                    layout.isWideTablet
-                                        ? ds.typography.bodyLg.lineHeight
-                                        : layout.isTablet
-                                          ? ds.typography.bodyMd.lineHeight
-                                          : ds.typography.bodySm.lineHeight
+                                    layout.isTablet
+                                        ? ds.typography.bodyMd.lineHeight
+                                        : ds.typography.bodySm.lineHeight
                                 }
                             >
                                 {subtitle}

@@ -83,29 +83,23 @@ export function QuestionCard({
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
                 fontSize={
-                    layout.isWideTablet
-                        ? ds.typography.titleLg.fontSize
-                        : layout.isTablet
-                          ? ds.typography.titleMd.fontSize
-                          : ds.typography.titleSm.fontSize
+                    layout.isTablet
+                        ? ds.typography.titleMd.fontSize
+                        : ds.typography.titleSm.fontSize
                 }
                 lineHeight={
-                    layout.isWideTablet
-                        ? ds.typography.titleLg.lineHeight
-                        : layout.isTablet
-                          ? ds.typography.titleMd.lineHeight
-                          : ds.typography.titleSm.lineHeight
+                    layout.isTablet
+                        ? ds.typography.titleMd.lineHeight
+                        : ds.typography.titleSm.lineHeight
                 }
             >
                 <Text
                     color={ds.colors.secondaryForeground}
                     fontFamily={ds.fonts.bodySemiBold}
                     fontSize={
-                        layout.isWideTablet
-                            ? ds.typography.bodyLg.fontSize
-                            : layout.isTablet
-                              ? ds.typography.titleSm.fontSize
-                              : ds.typography.bodyLg.fontSize
+                        layout.isTablet
+                            ? ds.typography.titleSm.fontSize
+                            : ds.typography.bodyLg.fontSize
                     }
                 >
                     {`${t("thisPlayspace")}\n`}
@@ -115,11 +109,9 @@ export function QuestionCard({
                         <Text
                             fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
                             fontSize={
-                                layout.isWideTablet
-                                    ? ds.typography.titleLg.fontSize
-                                    : layout.isTablet
-                                      ? ds.typography.titleMd.fontSize
-                                      : ds.typography.titleSm.fontSize
+                                layout.isTablet
+                                    ? ds.typography.titleMd.fontSize
+                                    : ds.typography.titleSm.fontSize
                             }
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                         >
@@ -224,11 +216,9 @@ function ScaleSelector({
                     color={ds.colors.primary}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={
-                        layout.isWideTablet
-                            ? ds.typography.titleLg.fontSize
-                            : layout.isTablet
-                              ? ds.typography.titleMd.fontSize
-                              : ds.typography.titleSm.fontSize
+                        layout.isTablet
+                            ? ds.typography.titleMd.fontSize
+                            : ds.typography.titleSm.fontSize
                     }
                     textTransform="uppercase"
                     letterSpacing={1.2}
@@ -239,11 +229,9 @@ function ScaleSelector({
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={
-                        layout.isWideTablet
-                            ? ds.typography.bodyLg.fontSize
-                            : layout.isTablet
-                              ? ds.typography.bodyMd.fontSize
-                              : ds.typography.bodySm.fontSize
+                        layout.isTablet
+                            ? ds.typography.bodyMd.fontSize
+                            : ds.typography.bodySm.fontSize
                     }
                 >
                     {scale.prompt}
@@ -285,11 +273,9 @@ function ScaleSelector({
                                 color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isWideTablet
-                                        ? ds.typography.bodyLg.fontSize
-                                        : layout.isTablet
-                                          ? ds.typography.bodyMd.fontSize
-                                          : ds.typography.bodySm.fontSize
+                                    layout.isTablet
+                                        ? ds.typography.bodyMd.fontSize
+                                        : ds.typography.bodySm.fontSize
                                 }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
@@ -368,11 +354,9 @@ function ChecklistSelector({
                                 color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isWideTablet
-                                        ? ds.typography.bodyLg.fontSize
-                                        : layout.isTablet
-                                          ? ds.typography.bodyMd.fontSize
-                                          : ds.typography.bodySm.fontSize
+                                    layout.isTablet
+                                        ? ds.typography.bodyMd.fontSize
+                                        : ds.typography.bodySm.fontSize
                                 }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
