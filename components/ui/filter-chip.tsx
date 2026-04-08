@@ -22,7 +22,7 @@ export function FilterChip({ label, isSelected, onPress }: Readonly<FilterChipPr
     return (
         <Button
             height={resolvedHeight}
-            px={layout.isWideTablet ? "$4" : layout.isTablet ? "$3.5" : "$3"}
+            px={layout.isTablet ? "$3.5" : "$3"}
             py={layout.isTablet ? "$2" : "$1.5"}
             rounded={ds.radii.md}
             borderWidth={1}
@@ -36,11 +36,9 @@ export function FilterChip({ label, isSelected, onPress }: Readonly<FilterChipPr
                 color={isSelected ? ds.colors.primary : ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
                 fontSize={
-                    layout.isWideTablet
-                        ? ds.typography.labelLg.fontSize
-                        : layout.isTablet
-                          ? ds.typography.labelMd.fontSize
-                          : ds.typography.labelSm.fontSize
+                    layout.isTablet
+                        ? ds.typography.labelMd.fontSize
+                        : ds.typography.labelSm.fontSize
                 }
                 letterSpacing={layout.isTablet ? 0.3 : 0.2}
             >

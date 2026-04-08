@@ -19,10 +19,10 @@ interface TabIconProps {
 }
 
 export function getResponsiveTabIconSize(
-    layout: Pick<ResponsiveLayout, "isTablet" | "isWideTablet">,
+    layout: Pick<ResponsiveLayout, "isTablet">,
     defaultSize: number,
 ): number {
-    return layout.isWideTablet ? 24 : layout.isTablet ? 22 : defaultSize;
+    return layout.isTablet ? 22 : defaultSize;
 }
 
 /**
@@ -37,23 +37,15 @@ export default function TabLayout() {
     const tabBarInactiveTintColor = layout.isTablet
         ? ds.colors.secondaryForeground
         : ds.colors.mutedForeground;
-    const tabBarHeight = layout.isWideTablet
-        ? layout.buttonHeight + 36
-        : layout.isTablet
-          ? layout.buttonHeight + 30
-          : 78;
-    const tabBarPaddingTop = layout.isWideTablet ? 12 : layout.isTablet ? 10 : 8;
-    const tabBarPaddingBottom = layout.isWideTablet ? 18 : layout.isTablet ? 14 : 12;
-    const tabBarLabelFontSize = layout.isWideTablet
-        ? ds.typography.labelMd.fontSize
-        : layout.isTablet
-          ? ds.typography.labelSm.fontSize
-          : ds.typography.labelXs.fontSize;
-    const tabBarLabelLineHeight = layout.isWideTablet
-        ? ds.typography.labelMd.lineHeight
-        : layout.isTablet
-          ? ds.typography.labelSm.lineHeight
-          : ds.typography.labelXs.lineHeight;
+    const tabBarHeight = layout.isTablet ? layout.buttonHeight + 32 : 78;
+    const tabBarPaddingTop = layout.isTablet ? 10 : 8;
+    const tabBarPaddingBottom = layout.isTablet ? 16 : 12;
+    const tabBarLabelFontSize = layout.isTablet
+        ? ds.typography.labelSm.fontSize
+        : ds.typography.labelXs.fontSize;
+    const tabBarLabelLineHeight = layout.isTablet
+        ? ds.typography.labelSm.lineHeight
+        : ds.typography.labelXs.lineHeight;
 
     return (
         <Tabs
@@ -75,7 +67,7 @@ export default function TabLayout() {
                     borderRadius: layout.isTablet ? ds.radii.md : 0,
                     marginHorizontal: layout.isTablet ? 4 : 0,
                     marginVertical: layout.isTablet ? 6 : 0,
-                    paddingTop: layout.isWideTablet ? 2 : 0,
+                    paddingTop: 0,
                 },
                 tabBarLabelStyle: {
                     fontSize: tabBarLabelFontSize,

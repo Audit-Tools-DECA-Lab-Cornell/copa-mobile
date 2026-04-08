@@ -1548,12 +1548,12 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.headingBold}
                         fontSize={
-                            layout.isWideTablet
+                            layout.isTablet
                                 ? ds.typography.titleLg.fontSize
                                 : ds.typography.titleMd.fontSize
                         }
                         lineHeight={
-                            layout.isWideTablet
+                            layout.isTablet
                                 ? ds.typography.titleLg.lineHeight
                                 : ds.typography.titleMd.lineHeight
                         }

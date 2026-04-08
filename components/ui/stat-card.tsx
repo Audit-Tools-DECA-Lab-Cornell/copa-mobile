@@ -65,18 +65,14 @@ export function StatCard({
                 <Text
                     fontFamily={ds.fonts.headingBold}
                     fontSize={
-                        layout.isWideTablet
-                            ? ds.typography.metricMd.fontSize
-                            : layout.isTablet
-                              ? ds.typography.metricSm.fontSize
-                              : ds.typography.metricXs.fontSize
+                        layout.isTablet
+                            ? ds.typography.metricSm.fontSize
+                            : ds.typography.metricXs.fontSize
                     }
                     lineHeight={
-                        layout.isWideTablet
-                            ? ds.typography.metricMd.lineHeight
-                            : layout.isTablet
-                              ? ds.typography.metricSm.lineHeight
-                              : ds.typography.metricXs.lineHeight
+                        layout.isTablet
+                            ? ds.typography.metricSm.lineHeight
+                            : ds.typography.metricXs.lineHeight
                     }
                     style={{ color: accentColor, flexShrink: 1 }}
                 >

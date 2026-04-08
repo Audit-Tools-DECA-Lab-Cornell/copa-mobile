@@ -33,7 +33,7 @@ export function ActionButton({
         <Button
             flex={1}
             height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-            px={layout.isWideTablet ? "$4.5" : layout.isTablet ? "$4" : "$3"}
+            px={layout.isTablet ? "$4" : "$3"}
             rounded={ds.radii.md}
             borderWidth={isPrimary ? 0 : 1}
             borderColor={ds.colors.border}
@@ -58,18 +58,14 @@ export function ActionButton({
                     color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={
-                        layout.isWideTablet
-                            ? ds.typography.labelMd.fontSize
-                            : layout.isTablet
-                              ? ds.typography.labelLg.fontSize
-                              : ds.typography.labelMd.fontSize
+                        layout.isTablet
+                            ? ds.typography.labelLg.fontSize
+                            : ds.typography.labelMd.fontSize
                     }
                     lineHeight={
-                        layout.isWideTablet
-                            ? ds.typography.labelMd.lineHeight
-                            : layout.isTablet
-                              ? ds.typography.labelLg.lineHeight
-                              : ds.typography.labelMd.lineHeight
+                        layout.isTablet
+                            ? ds.typography.labelLg.lineHeight
+                            : ds.typography.labelMd.lineHeight
                     }
                     letterSpacing={layout.isTablet ? 1.35 : 1.2}
                 >
