@@ -31,6 +31,7 @@ import {
 } from "lib/audit/background-sync";
 import { useDesignSystem } from "lib/design-system";
 import { applyLanguagePreference } from "lib/i18n";
+import { logger } from "lib/logger";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePreferencesStore } from "stores/preferences-store";
@@ -88,6 +89,10 @@ export default function RootLayout() {
 
         applyLanguagePreference(languagePreference).catch(() => undefined);
     }, [isPreferencesHydrated, languagePreference]);
+
+    useEffect(() => {
+        logger.info("Playspace mobile app initialized");
+    }, []);
 
     if ((!fontsLoaded && !fontError) || !isPreferencesHydrated) {
         return null;

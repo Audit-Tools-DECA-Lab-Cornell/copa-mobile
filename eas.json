@@ -35,6 +35,12 @@
         }
     },
     "submit": {
-        "production": {}
+        "production": {
+            "android": {
+                "track": "internal",
+                "serviceAccountKeyPath": "./playspace-deca.json",
+                "releaseStatus": "draft"
+            }
+        }
     }
 }

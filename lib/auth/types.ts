@@ -1,7 +1,7 @@
 /**
  * Account roles supported by the playspace backend.
  */
-export type AccountType = "MANAGER" | "AUDITOR";
+export type AccountType = "ADMIN" | "MANAGER" | "AUDITOR";
 
 /**
  * Authenticated user shape consumed by the mobile app.

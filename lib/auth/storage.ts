@@ -346,7 +346,7 @@ function readNullableString(value: unknown): string | null | undefined {
  * @returns Account type when valid, otherwise null.
  */
 function readAccountType(value: unknown): AccountType | null {
-    if (value === "MANAGER" || value === "AUDITOR") {
+    if (value === "ADMIN" || value === "MANAGER" || value === "AUDITOR") {
         return value;
     }
 

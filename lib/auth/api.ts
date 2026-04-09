@@ -11,7 +11,7 @@ const authResponseSchema = z.object({
         id: z.string().min(1),
         email: z.string().min(1),
         name: z.string().nullable(),
-        account_type: z.enum(["MANAGER", "AUDITOR"]),
+        account_type: z.enum(["ADMIN", "MANAGER", "AUDITOR"]),
     }),
 });
 
@@ -40,7 +40,6 @@ export async function loginWithPassword(payload: LoginPayload): Promise<AuthSess
     const responsePayload = await postJson("/playspace/auth/login", {
         email: payload.email,
         password: payload.password,
-        account_type: "AUDITOR",
     });
 
     return parseAuthResponse(responsePayload);

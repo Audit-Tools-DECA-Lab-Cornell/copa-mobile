@@ -1,6 +1,7 @@
 import { batch, observable, observe } from "@legendapp/state";
 import { useSelector } from "@legendapp/state/react";
 import type { AuthSession } from "lib/auth/types";
+import { createModuleLogger } from "lib/logger";
 import {
     applyFetchedSessionSnapshot,
     applyLocalExecutionModeChange,
@@ -60,6 +61,8 @@ import { persistedAuditStateSchema } from "lib/audit/types";
 import { t } from "lib/i18n";
 import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 import { mmkvStorage } from "lib/storage/mmkv";
+
+const log = createModuleLogger("audit-store");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -204,7 +207,7 @@ function setupAutoSave(userId: string): void {
             try {
                 mmkvStorage.set(storageKey, JSON.stringify(snapshot));
             } catch (err) {
-                console.error("[audit-store] auto-save failed", err);
+                log.withError(err).error("auto-save failed");
             }
             saveTimer = null;
         }, PERSIST_DEBOUNCE_MS);
@@ -238,7 +241,7 @@ function saveNow(): void {
     try {
         mmkvStorage.set(getStorageKey(userId), JSON.stringify(auditData$.peek()));
     } catch (err) {
-        console.error("[audit-store] immediate save failed", err);
+        log.withError(err).error("immediate save failed");
     }
 }
 
@@ -1166,7 +1169,7 @@ async function resolvePendingSubmitStates(
                 }
             });
         } catch (error) {
-            console.error("[audit-store] submit resolution failed", error);
+            log.withError(error).error("submit resolution failed");
             const updatedAt = new Date().toISOString();
             const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
             auditData$.sync_state_by_audit_id.set(
@@ -1402,7 +1405,7 @@ async function flushSingleAuditPendingChangesInternal(
                         failed: false,
                     };
                 } catch (retryError) {
-                    console.error("[audit-store] retry save failed", retryError);
+                    log.withError(retryError).error("retry save failed");
                     const updatedAt = new Date().toISOString();
                     const nextPhase =
                         retryError instanceof PlayspaceAuditApiError &&
@@ -1428,7 +1431,7 @@ async function flushSingleAuditPendingChangesInternal(
                     };
                 }
             } catch (recoveryError) {
-                console.error("[audit-store] conflict recovery failed", recoveryError);
+                log.withError(recoveryError).error("conflict recovery failed");
                 const message = formatAuditErrorMessage(
                     recoveryError,
                     t("audit:errors.syncFallback"),
@@ -1449,7 +1452,7 @@ async function flushSingleAuditPendingChangesInternal(
             }
         }
 
-        console.error("[audit-store] sync failed", error);
+        log.withError(error).error("sync failed");
         const message = formatAuditErrorMessage(error, t("audit:errors.syncFallback"));
         auditData$.sync_state_by_audit_id.set(
             writeAuditSyncState(

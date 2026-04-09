@@ -33,9 +33,12 @@ import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { createMetricDisplayState } from "lib/metric-display";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
+import { createModuleLogger } from "lib/logger";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
+
+const log = createModuleLogger("place-detail");
 
 /**
  * Full-screen place detail used from the places and execute flows.
@@ -225,17 +228,17 @@ function PlaceDetailContent({
 
     const mapProvider = Platform.OS === "ios" ? PROVIDER_DEFAULT : PROVIDER_GOOGLE;
     const handleMapReady = useCallback(() => {
-        console.info("[PlaceDetailContent] map ready", {
+        log.withMetadata({
             platform: Platform.OS,
             provider: mapProvider,
-        });
+        }).debug("map ready");
     }, [mapProvider]);
 
     const handleMapLoaded = useCallback(() => {
-        console.info("[PlaceDetailContent] map loaded", {
+        log.withMetadata({
             platform: Platform.OS,
             provider: mapProvider,
-        });
+        }).debug("map loaded");
     }, [mapProvider]);
 
     const scrollPlaceDetailToOffset = useCallback((offset: number) => {

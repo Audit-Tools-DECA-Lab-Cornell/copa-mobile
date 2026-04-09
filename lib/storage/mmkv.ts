@@ -6,6 +6,9 @@ import type {
     PersistMetadata,
     PersistOptionsLocal,
 } from "@legendapp/state";
+import { createModuleLogger } from "lib/logger";
+
+const log = createModuleLogger("mmkv-storage");
 
 /**
  * Shared MMKV storage instance for general-purpose app persistence
@@ -39,7 +42,7 @@ export class ObservablePersistMMKV4 implements ObservablePersistLocal {
                 const raw = mmkvStorage.getString(table);
                 this.data[table] = raw === undefined ? init : safeParse(raw);
             } catch {
-                console.error("[legend-state] MMKV4 failed to parse", table);
+                log.withMetadata({ table: table }).error("failed to parse table from MMKV");
             }
         }
         return this.data[table] as T;
@@ -93,7 +96,7 @@ export class ObservablePersistMMKV4 implements ObservablePersistLocal {
         try {
             mmkvStorage.set(table, safeStringify(value));
         } catch (err) {
-            console.error(err);
+            log.withError(err).error("failed to save table to MMKV");
         }
     }
 }
