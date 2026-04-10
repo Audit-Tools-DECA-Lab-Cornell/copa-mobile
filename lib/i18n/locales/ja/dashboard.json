@@ -13,7 +13,7 @@
     "priorityProgress": {
         "inProgress": "{{percent}}% 完了 · 更新 {{updated}}",
         "notStarted": "未開始 · すぐに開始できます",
-        "submitted": "提出済み · 更新 {{updated}}"
+        "submitted": "完了 · 更新 {{updated}}"
     },
     "priorityTask": "優先タスク",
     "readinessLabel": "{{percent}}% 準備完了",

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, TextInput } from "react-native";
+import { Alert, ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
@@ -9,7 +9,13 @@ import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
-import { getQuestionAnswers, getSectionNote, getVisibleSections } from "lib/audit/selectors";
+import {
+    getInstrumentSectionLocalProgress,
+    getQuestionAnswers,
+    getSectionNote,
+    getVisibleSections,
+    isInstrumentQuestionComplete,
+} from "lib/audit/selectors";
 import type {
     AuditSession,
     ExecutionMode,
@@ -104,39 +110,44 @@ export default function ExecuteSectionScreen() {
         [ds],
     );
 
+    const truncate = useCallback((text: string | undefined, maxLength: number) => {
+        if (text === undefined) {
+            return "";
+        }
+        if (text.length <= maxLength) {
+            return text;
+        }
+        return text.slice(0, maxLength) + "...";
+    }, []);
+
     useLayoutEffect(() => {
         if (activeSection !== undefined) {
             navigation.setOptions({
                 ...themedHeaderOptions,
                 headerTitle: () => (
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleMd.fontSize}
-                        lineHeight={ds.typography.titleMd.lineHeight}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.titleMd.fontSize}
-                            lineHeight={ds.typography.titleMd.lineHeight}
-                        >
-                            {auditSession?.place_name}
-                        </Text>
-                        {"  "}|{"  "}
+                    <YStack justify="center" px="$1" gap="$1.5">
                         <Text
                             color={ds.colors.primary}
-                            fontFamily={ds.fonts.bodyMedium}
+                            fontFamily={ds.fonts.bodyBold}
                             fontSize={ds.typography.titleMd.fontSize}
                             lineHeight={ds.typography.titleMd.lineHeight}
                         >
-                            Section: {activeSection.title}
+                            {truncate(auditSession?.place_name, layout.isTablet ? 80 : 30)}
                         </Text>
-                    </Text>
+                        <Text
+                            color={ds.colors.primaryForeground}
+                            fontFamily={ds.fonts.bodyRegular}
+                            fontSize={ds.typography.labelLg.fontSize}
+                            lineHeight={ds.typography.labelLg.lineHeight}
+                        >
+                            Section {activeSectionNumber}:{" "}
+                            {truncate(activeSection.title, layout.isTablet ? 80 : 40)}
+                        </Text>
+                    </YStack>
                 ),
             });
         }
-    }, [themedHeaderOptions, navigation, activeSection, t, auditSession, ds]);
+    }, [themedHeaderOptions, navigation, activeSection, t, auditSession, ds, truncate]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -286,6 +297,8 @@ export default function ExecuteSectionScreen() {
     const resolvedAuditSession = auditSession;
     const resolvedActiveSection = activeSection;
     const nextSection = getNextSection(visibleSections, resolvedActiveSection.section_key);
+    const activeSectionNumber =
+        visibleSections.findIndex((s) => s.section_key === resolvedActiveSection.section_key) + 1;
     const flowSubject = t(
         `subjects.${getExecuteFlowSubject(resolvedAuditSession.selected_execution_mode)}`,
         {
@@ -305,9 +318,7 @@ export default function ExecuteSectionScreen() {
             ),
         };
     });
-    const handlePrimaryAction = async (): Promise<void> => {
-        flushNoteToStore();
-
+    const proceedToNextOrSubmit = async (): Promise<void> => {
         if (nextSection !== undefined) {
             router.replace(
                 `/execute/${resolvedPlaceId}/section/${nextSection.section_key}?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
@@ -327,6 +338,78 @@ export default function ExecuteSectionScreen() {
         } catch {
             return;
         }
+    };
+
+    const handlePrimaryAction = async (): Promise<void> => {
+        flushNoteToStore();
+
+        const unansweredQuestions = resolvedActiveSection.questions.filter((question) => {
+            if (!question.required) {
+                return false;
+            }
+            const answers = getQuestionAnswers(
+                resolvedAuditSession,
+                resolvedActiveSection.section_key,
+                question.question_key,
+            );
+            return !isInstrumentQuestionComplete(question, answers);
+        });
+
+        const isSubmit = nextSection === undefined;
+
+        if (isSubmit) {
+            const incompleteSections = visibleSections.filter((section) => {
+                const progress = getInstrumentSectionLocalProgress(resolvedAuditSession, section);
+                return !progress.isComplete;
+            });
+
+            if (incompleteSections.length > 0) {
+                const sectionList = incompleteSections
+                    .map((s) => {
+                        const num = visibleSections.indexOf(s) + 1;
+                        return `${num}. ${s.title}`;
+                    })
+                    .join("\n");
+
+                Alert.alert(
+                    t("section.submitBlockedTitle", { ns: "audit" }),
+                    `${t("section.submitBlockedMessage", { ns: "audit" })}\n\n${t("section.submitBlockedListLabel", { ns: "audit" })}\n${sectionList}`,
+                    [
+                        {
+                            text: t("section.submitBlockedOk", { ns: "audit" }),
+                            style: "cancel",
+                        },
+                    ],
+                );
+                return;
+            }
+        }
+
+        if (unansweredQuestions.length > 0) {
+            const questionList = unansweredQuestions
+                .map((q) => formatQuestionKey(q.question_key))
+                .join(", ");
+
+            Alert.alert(
+                t("section.incompleteTitle", { ns: "audit" }),
+                `${t("section.incompleteMessage", { ns: "audit" })}\n\n${t("section.incompleteListLabel", { ns: "audit" })} ${questionList}`,
+                [
+                    {
+                        text: t("section.incompleteGoBack", { ns: "audit" }),
+                        style: "cancel",
+                    },
+                    {
+                        text: t("section.incompleteConfirmContinue", { ns: "audit" }),
+                        onPress: () => {
+                            void proceedToNextOrSubmit();
+                        },
+                    },
+                ],
+            );
+            return;
+        }
+
+        await proceedToNextOrSubmit();
     };
 
     const handleSelectAnswer = (
@@ -408,7 +491,7 @@ export default function ExecuteSectionScreen() {
         </YStack>
     );
     const actionButtons = (
-        <XStack gap="$2" justify="space-between" width="100%">
+        <XStack gap="$2" items="center" justify="space-between" width="100%">
             <Button
                 height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
                 rounded={ds.radii.md}
@@ -438,6 +521,7 @@ export default function ExecuteSectionScreen() {
                 rounded={ds.radii.md}
                 borderWidth={0}
                 bg={ds.colors.primary}
+                width={"48%"}
                 disabled={isSavingDraft || (!canEditInputs && nextSection === undefined)}
                 opacity={isSavingDraft || (!canEditInputs && nextSection === undefined) ? 0.7 : 1}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
@@ -488,7 +572,7 @@ export default function ExecuteSectionScreen() {
                             : ds.typography.displayMd.lineHeight
                     }
                 >
-                    {resolvedActiveSection.title}
+                    {`${activeSectionNumber}. ${resolvedActiveSection.title}`}
                 </Text>
                 <Paragraph
                     color={ds.colors.mutedForeground}
@@ -540,10 +624,12 @@ export default function ExecuteSectionScreen() {
             ) : (
                 <YStack gap="$3">
                     <YStack gap="$3">
-                        {questionRows.map(({ question, selectedAnswers }) => (
+                        {questionRows.map(({ question, selectedAnswers }, index) => (
                             <QuestionCard
                                 key={question.question_key}
                                 question={question}
+                                questionIndex={index + 1}
+                                totalQuestions={questionRows.length}
                                 selectedAnswers={selectedAnswers}
                                 disabled={!canEditInputs}
                                 onChangeAnswers={(questionKey, nextAnswers) => {
@@ -731,6 +817,19 @@ function getNextSection(
         return undefined;
     }
     return sections[currentIndex + 1];
+}
+
+/**
+ * Convert raw instrument question keys into a human-readable audit label.
+ */
+function formatQuestionKey(questionKey: string): string {
+    const match = /^q_(\d+)_(\d+)$/i.exec(questionKey);
+    if (match === null) {
+        return questionKey.replaceAll("_", " ").toUpperCase();
+    }
+
+    const [, sectionNumber, questionNumber] = match;
+    return `Q ${sectionNumber}.${questionNumber}`;
 }
 
 /**

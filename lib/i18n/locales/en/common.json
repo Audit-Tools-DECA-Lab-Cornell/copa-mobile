@@ -28,7 +28,7 @@
         "incomplete": "Incomplete",
         "notScored": "Not scored",
         "scored": "Scored",
-        "submitted": "Submitted"
+        "submitted": "Completed"
     },
     "networkRequestFailed": "Network request failed.",
     "place": {
@@ -48,7 +48,7 @@
         "notStarted": "Not started",
         "off": "OFF",
         "on": "ON",
-        "submitted": "Submitted"
+        "submitted": "Completed"
     },
     "sort": {
         "name": "Name",

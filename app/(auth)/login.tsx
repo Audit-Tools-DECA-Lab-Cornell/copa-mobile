@@ -16,6 +16,9 @@ import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
+import { createModuleLogger } from "lib/logger";
+
+const logger = createModuleLogger("login");
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -71,10 +74,15 @@ export default function LoginScreen() {
             return;
         }
 
-        await login({
-            email: normalizedEmail,
-            password: trimmedPassword,
-        });
+        try {
+            await login({
+                email: normalizedEmail,
+                password: trimmedPassword,
+            });
+        } catch {
+            logger.error("Failed to login");
+            return;
+        }
 
         router.replace("/(tabs)");
     };
@@ -262,6 +270,24 @@ export default function LoginScreen() {
                                 </Paragraph>
                             </YStack>
                         )}
+
+                        {__DEV__ && errorMessage ? (
+                            <YStack
+                                borderWidth={1}
+                                borderColor={ds.colors.amber}
+                                bg={ds.colors.amberSoft}
+                                rounded={ds.radii.md}
+                                p="$3"
+                            >
+                                <Paragraph
+                                    fontFamily={ds.fonts.bodyRegular}
+                                    color={ds.colors.mutedForeground}
+                                >
+                                    {"Dev password: "}
+                                    <Text fontFamily={ds.fonts.monoMedium}>DemoPass123!</Text>
+                                </Paragraph>
+                            </YStack>
+                        ) : null}
 
                         <XStack items="center" gap="$2" px="$1.5">
                             <Checkbox

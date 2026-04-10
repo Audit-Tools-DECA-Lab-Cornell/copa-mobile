@@ -79,6 +79,7 @@ function main(): void {
     const sectionRows: ExecuteOverviewSectionInput[] = [
         {
             sectionKey: "one",
+            sectionNumber: 1,
             title: "Section One",
             answeredCount: 4,
             totalCount: 4,
@@ -86,6 +87,7 @@ function main(): void {
         },
         {
             sectionKey: "two",
+            sectionNumber: 2,
             title: "Section Two",
             answeredCount: 1,
             totalCount: 3,
@@ -93,6 +95,7 @@ function main(): void {
         },
         {
             sectionKey: "three",
+            sectionNumber: 3,
             title: "Section Three",
             answeredCount: 0,
             totalCount: 2,

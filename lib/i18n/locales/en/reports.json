@@ -21,7 +21,7 @@
         "sectionBreakdown": "Section breakdown",
         "startedAt": "Started",
         "status": "Status",
-        "submittedAt": "Submitted",
+        "submittedAt": "Completed",
         "unavailableMessage": "This audit report is unavailable right now.",
         "unavailableTitle": "Audit not found"
     },

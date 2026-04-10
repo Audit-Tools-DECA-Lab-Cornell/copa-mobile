@@ -28,7 +28,7 @@
         "incomplete": "Unvollständig",
         "notScored": "Nicht bewertet",
         "scored": "Bewertet",
-        "submitted": "Eingereicht"
+        "submitted": "Abgeschlossen"
     },
     "networkRequestFailed": "Netzwerkanfrage fehlgeschlagen.",
     "place": {
@@ -48,7 +48,7 @@
         "notStarted": "Nicht begonnen",
         "off": "AUS",
         "on": "AN",
-        "submitted": "Eingereicht"
+        "submitted": "Abgeschlossen"
     },
     "sort": {
         "name": "Name",

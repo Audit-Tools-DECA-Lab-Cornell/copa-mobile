@@ -164,10 +164,11 @@ export default function ExecutePlaceScreen() {
             return [];
         }
 
-        return visibleSections.map((section) => {
+        return visibleSections.map((section, index) => {
             const progress = getInstrumentSectionLocalProgress(auditSession, section);
             return {
                 sectionKey: section.section_key,
+                sectionNumber: index + 1,
                 title: section.title,
                 answeredCount: progress.answeredQuestionCount,
                 totalCount: progress.visibleQuestionCount,
@@ -439,8 +440,8 @@ export default function ExecutePlaceScreen() {
                     />
                     {viewPlaceDetailsButton}
                     <PreamblePanel blocks={preambleBlocks} />
+
                     {roleCard}
-                    {sectionReviewCard}
                     {continueButton}
                     {selectedMode === null ? (
                         <Paragraph
@@ -451,6 +452,7 @@ export default function ExecutePlaceScreen() {
                             {t("setup.modeRequired", { ns: "audit" })}
                         </Paragraph>
                     ) : null}
+                    {sectionReviewCard}
                 </YStack>
             )}
         </ScrollView>
@@ -761,27 +763,25 @@ function SectionReviewCard({
                             p="$3"
                             gap="$2.5"
                         >
-                            <XStack justify="space-between" items="center" gap="$3">
-                                <YStack flex={1} gap="$1">
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.bodyLg.fontSize}
-                                        lineHeight={ds.typography.bodyLg.lineHeight}
-                                    >
-                                        {sectionSummary.title}
-                                    </Text>
-                                    <Paragraph
-                                        color={ds.colors.mutedForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                    >
-                                        {t("section.answeredCount", {
-                                            answered: sectionSummary.answeredCount,
-                                            total: sectionSummary.totalCount,
-                                        })}
-                                    </Paragraph>
-                                </YStack>
+                            <Text
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.bodyLg.fontSize}
+                                lineHeight={ds.typography.bodyLg.lineHeight}
+                            >
+                                {`${sectionSummary.sectionNumber}. ${sectionSummary.title}`}
+                            </Text>
+                            <XStack justify="space-between" items="center">
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                >
+                                    {t("section.answeredCount", {
+                                        answered: sectionSummary.answeredCount,
+                                        total: sectionSummary.totalCount,
+                                    })}
+                                </Paragraph>
                                 <Button
                                     height={layout.isTablet ? 42 : 38}
                                     rounded={ds.radii.sm}

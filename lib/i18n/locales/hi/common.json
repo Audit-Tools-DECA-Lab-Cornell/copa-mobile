@@ -28,7 +28,7 @@
         "incomplete": "अपूर्ण",
         "notScored": "अंकित नहीं",
         "scored": "अंकित",
-        "submitted": "सबमिट किया गया"
+        "submitted": "पूर्ण"
     },
     "networkRequestFailed": "नेटवर्क अनुरोध विफल रहा।",
     "place": {
@@ -48,7 +48,7 @@
         "notStarted": "शुरू नहीं हुआ",
         "off": "बंद",
         "on": "चालू",
-        "submitted": "सबमिट किया गया"
+        "submitted": "पूर्ण"
     },
     "sort": {
         "name": "नाम",

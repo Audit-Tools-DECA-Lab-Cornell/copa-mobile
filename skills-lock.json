@@ -11,6 +11,16 @@
             "sourceType": "github",
             "computedHash": "6dab08ce00cfd8e0e8e978b50688ab03722fb2c7a1f561dc55eb7f255361ebb8"
         },
+        "maestro": {
+            "source": "xenitV1/claude-code-maestro",
+            "sourceType": "github",
+            "computedHash": "f86a7b1a3c840d7f9eb289387b875fee81c10f4acba37960e895e45bceae0520"
+        },
+        "mobile-design": {
+            "source": "davila7/claude-code-templates",
+            "sourceType": "github",
+            "computedHash": "27e338f7267fed0ce198852af954f79ce6746b9c94e4e530e581e19e568b8ba0"
+        },
         "native-data-fetching": {
             "source": "expo/skills",
             "sourceType": "github",
@@ -31,6 +41,11 @@
             "sourceType": "github",
             "computedHash": "c16ef17b45cf188289a72600898110f6245c295c41cf5493b8ead3fd45027544"
         },
+        "tamagui-best-practices": {
+            "source": "0xbigboss/claude-code",
+            "sourceType": "github",
+            "computedHash": "b2f815652ca756166a6d9d8d8d324e756f8bd1e8cd32f92955872ad781ef9c92"
+        },
         "tanstack-query-best-practices": {
             "source": "deckardger/tanstack-agent-skills",
             "sourceType": "github",
@@ -40,6 +55,11 @@
             "source": "deckardger/tanstack-agent-skills",
             "sourceType": "github",
             "computedHash": "65764bc7b90e47f6023cb7f89b3af93eaaafc517754f10b9382e184d4646a77d"
+        },
+        "ui-ux-pro-max": {
+            "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+            "sourceType": "github",
+            "computedHash": "0a413bf988d06481f69bb81df2070741c3ba12dd9f1be2706d57f259c905992d"
         }
     }
 }

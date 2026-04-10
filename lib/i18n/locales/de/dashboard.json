@@ -13,7 +13,7 @@
     "priorityProgress": {
         "inProgress": "{{percent}}% abgeschlossen · Aktualisiert {{updated}}",
         "notStarted": "Nicht gestartet · Bereit zum Beginnen",
-        "submitted": "Eingereicht · Aktualisiert {{updated}}"
+        "submitted": "Abgeschlossen · Aktualisiert {{updated}}"
     },
     "priorityTask": "Prioritaetsaufgabe",
     "readinessLabel": "{{percent}}% bereit",

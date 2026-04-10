@@ -10,6 +10,7 @@ export type ExecuteFlowSubject = "audit" | "survey" | "auditAndSurvey" | "workfl
  */
 export interface ExecuteOverviewSectionInput {
     readonly sectionKey: string;
+    readonly sectionNumber: number;
     readonly title: string;
     readonly answeredCount: number;
     readonly totalCount: number;

@@ -36,6 +36,7 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
 
 interface SectionReportRow {
     readonly sectionKey: string;
+    readonly sectionNumber: number;
     readonly title: string;
     readonly answeredCount: number;
     readonly totalCount: number;
@@ -162,6 +163,7 @@ export default function AuditReportDetailScreen() {
 
             rows.push({
                 sectionKey: section.section_key,
+                sectionNumber: rows.length + 1,
                 title: section.title,
                 answeredCount: progress?.answered_question_count ?? 0,
                 totalCount: progress?.visible_question_count ?? section.questions.length,
@@ -362,7 +364,7 @@ export default function AuditReportDetailScreen() {
                                                                     ds.typography.bodyLg.fontSize
                                                                 }
                                                             >
-                                                                {sectionRow.title}
+                                                                {`${sectionRow.sectionNumber}. ${sectionRow.title}`}
                                                             </Text>
                                                             <Paragraph
                                                                 color={ds.colors.mutedForeground}
@@ -738,7 +740,7 @@ export default function AuditReportDetailScreen() {
                                                             fontFamily={ds.fonts.bodyBold}
                                                             fontSize={ds.typography.bodyLg.fontSize}
                                                         >
-                                                            {sectionRow.title}
+                                                            {`${sectionRow.sectionNumber}. ${sectionRow.title}`}
                                                         </Text>
                                                         <Paragraph
                                                             color={ds.colors.mutedForeground}

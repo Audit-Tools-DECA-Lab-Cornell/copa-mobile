@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { TextInput } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { useDesignSystem } from "lib/design-system";
+import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getOptionGridItemWidth } from "lib/option-grid";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import type { InstrumentQuestion, QuestionResponsePayload, QuestionScale } from "lib/audit/types";
@@ -34,8 +34,23 @@ function parsePromptSegments(raw: string): PromptSegment[] {
     return segments;
 }
 
+/**
+ * Convert raw instrument question keys into a human-readable audit label.
+ */
+function formatQuestionKey(questionKey: string): string {
+    const match = /^q_(\d+)_(\d+)$/i.exec(questionKey);
+    if (match === null) {
+        return questionKey.replaceAll("_", " ").toUpperCase();
+    }
+
+    const [, sectionNumber, questionNumber] = match;
+    return `Q ${sectionNumber}.${questionNumber}`;
+}
+
 interface QuestionCardProps {
     readonly question: InstrumentQuestion;
+    readonly questionIndex: number;
+    readonly totalQuestions: number;
     readonly selectedAnswers: QuestionResponsePayload;
     readonly disabled: boolean;
     readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
@@ -49,6 +64,8 @@ interface QuestionCardProps {
  */
 export function QuestionCard({
     question,
+    questionIndex,
+    totalQuestions,
     selectedAnswers,
     disabled,
     onChangeAnswers,
@@ -79,6 +96,24 @@ export function QuestionCard({
                 boxShadow: ds.shadows.card,
             }}
         >
+            <XStack justify="space-between" items="center">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.bodySm.fontSize}
+                >
+                    {`${questionIndex} of ${totalQuestions}`}
+                </Text>
+                <Text
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.1}
+                >
+                    {formatQuestionKey(question.question_key)}
+                </Text>
+            </XStack>
             <Text
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
@@ -198,10 +233,19 @@ function ScaleSelector({
 }: Readonly<ScaleSelectorProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const isPhone = !layout.isTablet;
+    console.log(
+        "Scale option label lengths:",
+        scale.options.map((option) => option.label.length),
+    );
     const optionWidth = getOptionGridItemWidth(
         scale.options.length,
         Math.max(...scale.options.map((option) => option.label.length)),
+        isPhone,
     );
+    console.log("Option width:", optionWidth);
+    const scaleAccent = getScaleAccentColor(scale.key, ds.colors);
+    const scaleSoft = getScaleSoftColor(scale.key, ds.colors);
     return (
         <YStack
             rounded={ds.radii.md}
@@ -210,10 +254,12 @@ function ScaleSelector({
             bg={ds.colors.input}
             p={layout.isTablet ? 16 : 12}
             gap={layout.isTablet ? "$3" : "$2.5"}
+            borderLeftWidth={3}
+            borderLeftColor={scaleAccent}
         >
             <YStack gap="$1">
                 <Text
-                    color={ds.colors.primary}
+                    color={scaleAccent}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={
                         layout.isTablet
@@ -249,9 +295,9 @@ function ScaleSelector({
                             rounded={ds.radii.md}
                             height={layout.isTablet ? layout.formOptionHeight : 52}
                             disabled={disabled}
-                            borderWidth={1}
-                            borderColor={isSelected ? ds.colors.primary : ds.colors.border}
-                            bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
+                            borderWidth={isSelected ? 2 : 1}
+                            borderColor={isSelected ? scaleAccent : ds.colors.border}
+                            bg={isSelected ? scaleSoft : ds.colors.surfaceMuted}
                             opacity={disabled ? 0.6 : 1}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
@@ -270,7 +316,7 @@ function ScaleSelector({
                             }}
                         >
                             <Text
-                                color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                color={isSelected ? scaleAccent : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
                                     layout.isTablet
@@ -307,6 +353,7 @@ function ChecklistSelector({
 }: Readonly<ChecklistSelectorProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const isPhone = !layout.isTablet;
 
     return (
         <YStack
@@ -327,11 +374,12 @@ function ChecklistSelector({
                             width={getOptionGridItemWidth(
                                 question.options.length,
                                 Math.max(...question.options.map((option) => option.label.length)),
+                                isPhone,
                             )}
                             rounded={ds.radii.md}
                             height={layout.isTablet ? layout.formOptionHeight : 42}
                             disabled={disabled}
-                            borderWidth={1}
+                            borderWidth={isSelected ? 2 : 1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
                             opacity={disabled ? 0.6 : 1}

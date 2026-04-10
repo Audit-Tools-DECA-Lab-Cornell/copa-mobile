@@ -131,6 +131,15 @@
         "answeredCount": "{{answered}} / {{total}} answered",
         "backToOverview": "Back to overview",
         "followUpHidden": "Diversity, Sociability, and Challenge appear only after a positive Quantity answer.",
+        "incompleteConfirmContinue": "Continue anyway",
+        "incompleteGoBack": "Go back",
+        "incompleteListLabel": "Unanswered questions:",
+        "incompleteTitle": "Unanswered Questions",
+        "incompleteMessage": "You haven't answered all required questions in this section.",
+        "submitBlockedTitle": "Cannot Submit Yet",
+        "submitBlockedMessage": "All questions in every section must be answered before you can submit.",
+        "submitBlockedListLabel": "Incomplete sections:",
+        "submitBlockedOk": "OK",
         "notesDefault": "Add any reflections or recommendations for this section.",
         "notesPlaceholder": "Add section notes or recommendations...",
         "openSection": "Open section",
@@ -148,7 +157,7 @@
             "scaleColumns": {
                 "challenge": "Challenge",
                 "diversity": "Diversity",
-                "quantity": "Provision / Quantity",
+                "quantity": "Provision",
                 "sociability": "Sociability"
             }
         },

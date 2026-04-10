@@ -1,14 +1,14 @@
 import { Fragment } from "react";
 import { ScrollView } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { Button, ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 
 import {
     getSectionQuestionTableColumnMetrics,
     type SectionQuestionTableColumnMetrics,
     type SectionQuestionTableScaleContent,
 } from "components/playspace-audit/section-question-table-layout";
-import { useDesignSystem } from "lib/design-system";
+import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getActiveScaleKeysForQuestion } from "lib/audit/selectors";
 import type {
     InstrumentQuestion,
@@ -92,6 +92,7 @@ export function SectionQuestionTable({
                                 width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                 label={t(`section.table.scaleColumns.${scaleKey}`)}
                                 showTrailingBorder={columnIndex < visibleScaleKeys.length - 1}
+                                accentColor={getScaleAccentColor(scaleKey, ds.colors)}
                             />
                         ))}
                     </XStack>
@@ -182,12 +183,13 @@ interface HeaderCellProps {
     readonly width: number;
     readonly label: string;
     readonly showTrailingBorder: boolean;
+    readonly accentColor?: string;
 }
 
 /**
  * Shared table header cell.
  */
-function HeaderCell({ width, label, showTrailingBorder }: Readonly<HeaderCellProps>) {
+function HeaderCell({ width, label, showTrailingBorder, accentColor }: Readonly<HeaderCellProps>) {
     const ds = useDesignSystem();
 
     return (
@@ -200,7 +202,11 @@ function HeaderCell({ width, label, showTrailingBorder }: Readonly<HeaderCellPro
             justify="center"
         >
             <Text
-                color={ds.colors.mutedForeground}
+                color={
+                    accentColor
+                        ? (accentColor as ColorTokens)
+                        : (ds.colors.mutedForeground as ColorTokens)
+                }
                 fontFamily={ds.fonts.bodyBold}
                 fontSize={ds.typography.bodySm.fontSize}
                 textTransform="uppercase"
@@ -298,6 +304,8 @@ function ScaleOptionCell({
     onSelectAnswer,
 }: Readonly<ScaleOptionCellProps>) {
     const ds = useDesignSystem();
+    const scaleAccent = getScaleAccentColor(scale.key, ds.colors);
+    const scaleSoft = getScaleSoftColor(scale.key, ds.colors);
 
     return (
         <YStack
@@ -309,14 +317,6 @@ function ScaleOptionCell({
             borderColor={ds.colors.border}
             justify="center"
         >
-            {/* <Paragraph
-                color={ds.colors.mutedForeground}
-                fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodyXs.fontSize}
-                lineHeight={ds.typography.bodyXs.lineHeight}
-            >
-                {scale.prompt}
-            </Paragraph> */}
             {scale.options.map((option) => {
                 const isSelected = selectedOptionKey === option.key;
 
@@ -327,9 +327,17 @@ function ScaleOptionCell({
                         height="auto"
                         rounded={ds.radii.md}
                         disabled={disabled}
-                        borderWidth={1}
-                        borderColor={isSelected ? ds.colors.primary : ds.colors.border}
-                        bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
+                        borderWidth={isSelected ? 2 : 1}
+                        borderColor={
+                            isSelected
+                                ? (scaleAccent as ColorTokens)
+                                : (ds.colors.border as ColorTokens)
+                        }
+                        bg={
+                            isSelected
+                                ? (scaleSoft as ColorTokens)
+                                : (ds.colors.input as ColorTokens)
+                        }
                         opacity={disabled ? 0.6 : 1}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={() => {
@@ -345,7 +353,11 @@ function ScaleOptionCell({
                                 height={16}
                                 rounded={ds.radii.sm}
                                 borderWidth={2}
-                                borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                                borderColor={
+                                    isSelected
+                                        ? (scaleAccent as ColorTokens)
+                                        : (ds.colors.border as ColorTokens)
+                                }
                                 items="center"
                                 justify="center"
                             >
@@ -354,13 +366,17 @@ function ScaleOptionCell({
                                         width={6}
                                         height={6}
                                         rounded={ds.radii.sm}
-                                        bg={ds.colors.primary}
+                                        bg={scaleAccent}
                                     />
                                 ) : null}
                             </YStack>
                             <Text
                                 flex={1}
-                                color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                color={
+                                    isSelected
+                                        ? (scaleAccent as ColorTokens)
+                                        : (ds.colors.foreground as ColorTokens)
+                                }
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={ds.typography.bodySm.fontSize}
                                 lineHeight={ds.typography.bodySm.lineHeight}

@@ -28,7 +28,7 @@
         "incomplete": "Incomplet",
         "notScored": "Non noté",
         "scored": "Noté",
-        "submitted": "Soumis"
+        "submitted": "Terminé"
     },
     "networkRequestFailed": "La requête réseau a échoué.",
     "place": {
@@ -48,7 +48,7 @@
         "notStarted": "Non commencé",
         "off": "OFF",
         "on": "ON",
-        "submitted": "Soumis"
+        "submitted": "Terminé"
     },
     "sort": {
         "name": "Nom",

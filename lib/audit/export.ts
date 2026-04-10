@@ -102,7 +102,9 @@ const BULK_RESPONSE_PREFIX_HEADERS = [
 const PREVIEW_RESPONSE_COLUMN_INDEXES = [0, 1, 2, 3, 6, 7, 8, 9, 10] as const;
 const OVERVIEW_COLUMN_WIDTHS = [28, 56] as const;
 const SINGLE_PRE_AUDIT_COLUMN_WIDTHS = [42, 58] as const;
+const SINGLE_SPACE_AUDIT_COLUMN_WIDTHS = [42, 58] as const;
 const BULK_PRE_AUDIT_COLUMN_WIDTHS = [16, 24, 40, 56] as const;
+const BULK_SPACE_AUDIT_COLUMN_WIDTHS = [16, 24, 40, 56] as const;
 const GUIDANCE_COLUMN_WIDTHS = [24, 64, 56] as const;
 const SINGLE_RESPONSE_COLUMN_WIDTHS = [12, 16, 16, 28, 42, 40, 56, 22, 22, 22, 26, 40] as const;
 const BULK_RESPONSE_COLUMN_WIDTHS = [16, 24, 24, 24, ...SINGLE_RESPONSE_COLUMN_WIDTHS] as const;
@@ -210,6 +212,7 @@ function buildSingleAuditWorkbook(
         tables: [
             buildSingleAuditOverviewTable(exportableAudit, instrument),
             buildSingleAuditPreAuditTable(exportableAudit, instrument),
+            buildSingleAuditSpaceAuditTable(exportableAudit, instrument),
             buildAuditGuidanceTable(instrument),
             buildResponsesTable(exportableAudit, instrument),
         ],
@@ -233,6 +236,7 @@ function buildBulkAuditWorkbook(
         tables: [
             buildBulkAuditOverviewTable(exportableAudits, instrument),
             buildBulkAuditPreAuditTable(exportableAudits, instrument),
+            buildBulkAuditSpaceAuditTable(exportableAudits, instrument),
             buildAuditGuidanceTable(instrument),
             buildBulkResponsesTable(exportableAudits, instrument),
         ],
@@ -268,14 +272,14 @@ function buildSingleAuditOverviewTable(
             ["Execution Mode", formatExecutionModeLabel(auditSession, instrument)],
             ["Started At", formatTimestampForDisplay(auditSession.started_at)],
             ["Submitted At", formatTimestampForDisplay(auditSession.submitted_at)],
-            ["Total Minutes", auditSession.total_minutes ?? ""],
+            ["Total Minutes", auditSession.total_minutes ?? "Pending"],
             ["Summary Score", deriveSummaryScore(auditSession)],
-            ["Play Value Total", overallScores?.play_value_total ?? ""],
-            ["Usability Total", overallScores?.usability_total ?? ""],
-            ["Quantity Total", overallScores?.quantity_total ?? ""],
-            ["Diversity Total", overallScores?.diversity_total ?? ""],
-            ["Sociability Total", overallScores?.sociability_total ?? ""],
-            ["Challenge Total", overallScores?.challenge_total ?? ""],
+            ["Play Value Total", overallScores?.play_value_total ?? "Pending"],
+            ["Usability Total", overallScores?.usability_total ?? "Pending"],
+            ["Quantity Total", overallScores?.quantity_total ?? "Pending"],
+            ["Diversity Total", overallScores?.diversity_total ?? "Pending"],
+            ["Sociability Total", overallScores?.sociability_total ?? "Pending"],
+            ["Challenge Total", overallScores?.challenge_total ?? "Pending"],
             ["Auditor Code", auditorProfile?.auditorCode ?? ""],
             ["Auditor Country", auditorProfile?.country ?? ""],
             ["Auditor Gender", auditorProfile?.gender ?? ""],
@@ -344,13 +348,43 @@ function buildSingleAuditPreAuditTable(
     exportableAudit: ExportableAudit,
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
+    const auditInfoQuestions = instrument.pre_audit_questions.filter(
+        (q) => q.page_key === "audit_info",
+    );
     return {
         name: "PreAudit",
         title: "Pre-Audit",
         columnWidths: SINGLE_PRE_AUDIT_COLUMN_WIDTHS,
         rows: [
             ["Question", "Recorded Answer"],
-            ...instrument.pre_audit_questions.map((question) =>
+            ...auditInfoQuestions.map((question) =>
+                buildSingleAuditPreAuditRow(exportableAudit.auditSession, question),
+            ),
+        ],
+    };
+}
+
+/**
+ * Build a space-audit setup table for one submitted audit.
+ *
+ * @param exportableAudit Submitted audit included in the export.
+ * @param instrument Localized PVUA instrument.
+ * @returns Space-audit question/answer table.
+ */
+function buildSingleAuditSpaceAuditTable(
+    exportableAudit: ExportableAudit,
+    instrument: PlayspaceInstrument,
+): WorkbookTable {
+    const spaceSetupQuestions = instrument.pre_audit_questions.filter(
+        (q) => q.page_key === "space_setup",
+    );
+    return {
+        name: "SpaceAudit",
+        title: "Space Audit Setup",
+        columnWidths: SINGLE_SPACE_AUDIT_COLUMN_WIDTHS,
+        rows: [
+            ["Question", "Recorded Answer"],
+            ...spaceSetupQuestions.map((question) =>
                 buildSingleAuditPreAuditRow(exportableAudit.auditSession, question),
             ),
         ],
@@ -368,10 +402,13 @@ function buildBulkAuditPreAuditTable(
     exportableAudits: readonly ExportableAudit[],
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
+    const auditInfoQuestions = instrument.pre_audit_questions.filter(
+        (q) => q.page_key === "audit_info",
+    );
     const rows: SpreadsheetRow[] = [["Audit Code", "Place Name", "Question", "Recorded Answer"]];
 
     for (const exportableAudit of exportableAudits) {
-        for (const question of instrument.pre_audit_questions) {
+        for (const question of auditInfoQuestions) {
             rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, question));
         }
     }
@@ -380,6 +417,36 @@ function buildBulkAuditPreAuditTable(
         name: "PreAudit",
         title: "Pre-Audit",
         columnWidths: BULK_PRE_AUDIT_COLUMN_WIDTHS,
+        rows,
+    };
+}
+
+/**
+ * Build a space-audit setup table across multiple submitted audits.
+ *
+ * @param exportableAudits Submitted audits included in the export.
+ * @param instrument Localized PVUA instrument.
+ * @returns Space-audit table with one row per question per audit.
+ */
+function buildBulkAuditSpaceAuditTable(
+    exportableAudits: readonly ExportableAudit[],
+    instrument: PlayspaceInstrument,
+): WorkbookTable {
+    const spaceSetupQuestions = instrument.pre_audit_questions.filter(
+        (q) => q.page_key === "space_setup",
+    );
+    const rows: SpreadsheetRow[] = [["Audit Code", "Place Name", "Question", "Recorded Answer"]];
+
+    for (const exportableAudit of exportableAudits) {
+        for (const question of spaceSetupQuestions) {
+            rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, question));
+        }
+    }
+
+    return {
+        name: "SpaceAudit",
+        title: "Space Audit Setup",
+        columnWidths: BULK_SPACE_AUDIT_COLUMN_WIDTHS,
         rows,
     };
 }
@@ -453,14 +520,14 @@ function buildBulkAuditOverviewRow(
         formatExecutionModeLabel(auditSession, instrument),
         formatTimestampForDisplay(auditSession.started_at),
         formatTimestampForDisplay(auditSession.submitted_at),
-        auditSession.total_minutes ?? "",
+        auditSession.total_minutes ?? "Pending",
         deriveSummaryScore(auditSession),
-        overallScores?.play_value_total ?? "",
-        overallScores?.usability_total ?? "",
-        overallScores?.quantity_total ?? "",
-        overallScores?.diversity_total ?? "",
-        overallScores?.sociability_total ?? "",
-        overallScores?.challenge_total ?? "",
+        overallScores?.play_value_total ?? "Pending",
+        overallScores?.usability_total ?? "Pending",
+        overallScores?.quantity_total ?? "Pending",
+        overallScores?.diversity_total ?? "Pending",
+        overallScores?.sociability_total ?? "Pending",
+        overallScores?.challenge_total ?? "Pending",
         auditorProfile?.auditorCode ?? "",
         auditorProfile?.country ?? "",
         auditorProfile?.gender ?? "",
@@ -649,6 +716,23 @@ function buildQuestionResponseRow(
     question: InstrumentQuestion,
     answers: QuestionResponsePayload,
 ): SpreadsheetRow {
+    if (question.question_type === "checklist") {
+        return [
+            `${sectionIndex + 1}.${questionIndex + 1}`,
+            formatQuestionModeLabel(question.mode),
+            formatConstructLabel(question.constructs),
+            formatQuestionDomainLabel(question),
+            "",
+            "",
+            stripPromptMarkup(question.prompt),
+            formatChecklistAnswer(question, answers),
+            "",
+            "",
+            "",
+            "",
+        ];
+    }
+
     return [
         `${sectionIndex + 1}.${questionIndex + 1}`,
         formatQuestionModeLabel(question.mode),
@@ -800,6 +884,43 @@ function formatQuestionAnswer(
     }
 
     return formatOptionScoreLabel(option);
+}
+
+/**
+ * Format a checklist question's selected options into a readable label.
+ *
+ * @param question Instrument checklist question.
+ * @param answers Stored answer payload with selected_option_keys.
+ * @returns Pipe-separated list of selected option labels.
+ */
+function formatChecklistAnswer(
+    question: InstrumentQuestion,
+    answers: QuestionResponsePayload,
+): string {
+    const selectedKeys = answers["selected_option_keys"];
+    if (!Array.isArray(selectedKeys) || selectedKeys.length === 0) {
+        return "";
+    }
+
+    const labels = selectedKeys
+        .filter((key): key is string => typeof key === "string")
+        .map((key) => {
+            const option = question.options.find((o) => o.key === key);
+            return option?.label ?? key;
+        });
+
+    const otherDetails = answers["other_details"];
+    if (
+        typeof otherDetails === "object" &&
+        otherDetails !== null &&
+        "text" in otherDetails &&
+        typeof otherDetails.text === "string" &&
+        otherDetails.text.trim().length > 0
+    ) {
+        labels.push(`Other: ${otherDetails.text.trim()}`);
+    }
+
+    return labels.join(" | ");
 }
 
 /**
@@ -986,7 +1107,7 @@ function readPreAuditQuestionValues(
         case "submitted_at":
             return [formatTimestampForDisplay(auditSession.submitted_at)];
         case "total_minutes":
-            return [auditSession.total_minutes?.toString() ?? ""];
+            return [auditSession.total_minutes?.toString() ?? "Pending"];
         case "place_size":
             return auditSession.pre_audit.place_size === null
                 ? []
@@ -1054,7 +1175,7 @@ function resolvePreAuditDisplayValues(
 function deriveSummaryScore(auditSession: AuditSession): number | string {
     const overall = auditSession.scores.overall;
     if (overall === null) {
-        return "";
+        return "Pending";
     }
     return roundToTwoDecimals(overall.play_value_total + overall.usability_total);
 }

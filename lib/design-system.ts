@@ -52,6 +52,8 @@ interface ColorPalette {
     readonly infoSoft: string;
     readonly violetSoft: string;
     readonly placeholderColor: string;
+    readonly amber: string;
+    readonly amberSoft: string;
 }
 
 interface ShadowPalette {
@@ -83,6 +85,8 @@ const DARK_COLORS = {
     dangerSoft: "rgba(201, 132, 114, 0.18)",
     infoSoft: "rgba(123, 144, 184, 0.16)",
     violetSoft: "rgba(155, 134, 178, 0.16)",
+    amber: "rgba(255, 180, 0, 0.1)",
+    amberSoft: "rgba(255, 180, 0, 0.1)",
     placeholderColor: "#B8AEA3",
 } as const satisfies ColorPalette;
 
@@ -115,6 +119,8 @@ const LIGHT_COLORS = {
     dangerSoft: "rgba(181, 74, 56, 0.12)",
     infoSoft: "rgba(74, 97, 154, 0.12)",
     violetSoft: "rgba(107, 90, 138, 0.12)",
+    amber: "rgba(255, 180, 0, 0.1)",
+    amberSoft: "rgba(204, 136, 0, 0.1)",
     placeholderColor: "#645A52",
 } as const satisfies ColorPalette;
 
@@ -142,6 +148,8 @@ const LIGHT_FIELD_COLORS = {
     dangerSoft: "rgba(150, 57, 43, 0.16)",
     infoSoft: "rgba(35, 74, 131, 0.16)",
     violetSoft: "rgba(90, 70, 125, 0.16)",
+    amber: "rgba(255, 180, 0, 0.1)",
+    amberSoft: "rgba(204, 136, 0, 0.1)",
     placeholderColor: "#413A34",
 } as const satisfies ColorPalette;
 
@@ -174,6 +182,8 @@ const DARK_HIGH_CONTRAST_COLORS = {
     dangerSoft: "rgba(242, 163, 146, 0.2)",
     infoSoft: "rgba(168, 194, 245, 0.2)",
     violetSoft: "rgba(208, 184, 244, 0.2)",
+    amber: "rgba(255, 180, 0, 0.1)",
+    amberSoft: "rgba(255, 180, 0, 0.1)",
     placeholderColor: "#8E8E8E",
 } as const satisfies ColorPalette;
 
@@ -201,6 +211,8 @@ const LIGHT_HIGH_CONTRAST_COLORS = {
     dangerSoft: "rgba(142, 35, 26, 0.16)",
     infoSoft: "rgba(22, 58, 112, 0.16)",
     violetSoft: "rgba(77, 58, 112, 0.16)",
+    amber: "rgba(255, 180, 0, 0.1)",
+    amberSoft: "rgba(255, 180, 0, 0.1)",
     placeholderColor: "#D1C4B6",
 } as const satisfies ColorPalette;
 
@@ -434,6 +446,59 @@ export function useDesignSystem(): DesignSystemTheme {
     }, [dyslexicFont, fieldMode, fontScale, highContrast, resolvedTheme]);
 }
 
+/** Union of every concrete color value across all theme palettes. */
+type PaletteColorValue = ActiveColorPalette[keyof ColorPalette];
+
+/**
+ * Resolve the accent color for a given audit scale key.
+ *
+ * Each of the four instrument scales has a dedicated hue so auditors can
+ * recognise the scale by color without re-reading the description.
+ *
+ * @param scaleKey Instrument scale key.
+ * @param colors Active semantic color palette.
+ * @returns Accent color string.
+ */
+export function getScaleAccentColor(
+    scaleKey: string,
+    colors: ActiveColorPalette,
+): PaletteColorValue {
+    switch (scaleKey) {
+        case "quantity":
+            return colors.primary;
+        case "diversity":
+            return colors.info;
+        case "challenge":
+            return colors.violet;
+        case "sociability":
+            return colors.success;
+        default:
+            return colors.primary;
+    }
+}
+
+/**
+ * Resolve the soft background tint for a given audit scale key.
+ *
+ * @param scaleKey Instrument scale key.
+ * @param colors Active semantic color palette.
+ * @returns Soft background color string.
+ */
+export function getScaleSoftColor(scaleKey: string, colors: ActiveColorPalette): PaletteColorValue {
+    switch (scaleKey) {
+        case "quantity":
+            return colors.primarySoft;
+        case "diversity":
+            return colors.infoSoft;
+        case "challenge":
+            return colors.violetSoft;
+        case "sociability":
+            return colors.successSoft;
+        default:
+            return colors.primarySoft;
+    }
+}
+
 /**
  * Default dark design system for backward compatibility.
  *
@@ -491,5 +556,5 @@ export function getPlaceStatusTone(
     if (status === "in_progress") {
         return { accent: c.primary, surface: c.primarySoft, text: c.primary };
     }
-    return { accent: c.warning, surface: c.warningSoft, text: c.warning };
+    return { accent: c.danger, surface: c.dangerSoft, text: c.danger };
 }

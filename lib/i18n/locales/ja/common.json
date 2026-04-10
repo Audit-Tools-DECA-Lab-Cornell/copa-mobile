@@ -28,7 +28,7 @@
         "incomplete": "未完了",
         "notScored": "未採点",
         "scored": "採点済み",
-        "submitted": "送信済み"
+        "submitted": "完了"
     },
     "networkRequestFailed": "ネットワークリクエストに失敗しました。",
     "place": {
@@ -48,7 +48,7 @@
         "notStarted": "未開始",
         "off": "オフ",
         "on": "オン",
-        "submitted": "提出済み"
+        "submitted": "完了"
     },
     "sort": {
         "name": "名前",
