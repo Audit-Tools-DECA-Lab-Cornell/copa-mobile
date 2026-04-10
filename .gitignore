@@ -83,6 +83,7 @@ playspace-deca.json
 docs/superpowers/
 .superpowers/
 .claude/
+.cline/
 
 # Scripts
 scripts/screenshots/*
