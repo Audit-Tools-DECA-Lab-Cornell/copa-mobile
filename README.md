@@ -229,11 +229,9 @@ Defaults to `http://127.0.0.1:8000` if omitted.
 
 ```bash
 EXPO_PUBLIC_GLASS_UI_ENABLED=true
-EXPO_PUBLIC_APPLE_SIGN_IN_ENABLED=true
-EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED=true
 ```
 
-These flags control visual glass surfaces and demo-only Apple/Google sign-in entry points.
+These flags control visual glass surfaces.
 
 ### Run
 

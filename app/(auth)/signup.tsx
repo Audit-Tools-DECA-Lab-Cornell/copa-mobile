@@ -2,15 +2,9 @@ import { useCallback, useRef } from "react";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons";
-import { useToastController } from "@tamagui/toast";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
-import {
-    isDemoAppleSignInEnabled,
-    isDemoGoogleSignInEnabled,
-    isGlassUiEnabled,
-} from "lib/feature-flags";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 
@@ -21,11 +15,7 @@ export default function SignupScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const router = useRouter();
-    const toast = useToastController();
     const { t } = useTranslation("auth");
-    const isGlassEnabled = isGlassUiEnabled();
-    const isDemoAppleSignInVisible = isDemoAppleSignInEnabled();
-    const isDemoGoogleSignInVisible = isDemoGoogleSignInEnabled();
     const scrollViewRef = useRef<ScrollView | null>(null);
 
     const scrollSignupToOffset = useCallback((offset: number) => {
@@ -52,16 +42,7 @@ export default function SignupScreen() {
             <YStack
                 gap="$6"
                 width="100%"
-                bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
-                borderWidth={1}
-                borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
-                rounded={ds.radii.lg}
-                p={layout.isTablet ? "$5" : "$4"}
-                style={{
-                    maxWidth: layout.formMaxWidth,
-                    alignSelf: "center",
-                    boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
-                }}
+                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
             >
                 <YStack items="center" gap="$4">
                     <YStack
@@ -153,73 +134,6 @@ export default function SignupScreen() {
                         </Text>
                     </XStack>
                 </Button>
-
-                {isDemoAppleSignInVisible || isDemoGoogleSignInVisible ? (
-                    <YStack gap="$2.5">
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.4}
-                            px="$1"
-                        >
-                            {t("login.social.label")}
-                        </Paragraph>
-                        {isDemoAppleSignInVisible ? (
-                            <Button
-                                height={52}
-                                rounded={ds.radii.md}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={() => {
-                                    toast.show(t("login.social.restrictedTitle"), {
-                                        message: t("login.social.restrictedMessage", {
-                                            provider: t("login.social.apple"),
-                                        }),
-                                        variant: "info",
-                                    });
-                                }}
-                            >
-                                <Text
-                                    color={ds.colors.foreground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelLg.fontSize}
-                                >
-                                    {t("login.social.apple")}
-                                </Text>
-                            </Button>
-                        ) : null}
-                        {isDemoGoogleSignInVisible ? (
-                            <Button
-                                height={52}
-                                rounded={ds.radii.md}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={() => {
-                                    toast.show(t("login.social.restrictedTitle"), {
-                                        message: t("login.social.restrictedMessage", {
-                                            provider: t("login.social.google"),
-                                        }),
-                                        variant: "info",
-                                    });
-                                }}
-                            >
-                                <Text
-                                    color={ds.colors.foreground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelLg.fontSize}
-                                >
-                                    {t("login.social.google")}
-                                </Text>
-                            </Button>
-                        ) : null}
-                    </YStack>
-                ) : null}
             </YStack>
         </ScrollView>
     );
