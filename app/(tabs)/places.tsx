@@ -21,13 +21,17 @@ import {
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
-import { getPlaceStatusTone, useDesignSystem, type DesignTone } from "lib/design-system";
+import {
+    getPlaceStatusTone,
+    useDesignSystem,
+    isGlassUiEnabled,
+    type DesignTone,
+} from "lib/design-system";
 import {
     formatRelativeTimeLabel,
     getPlaceStatusLabel,
     type LocalizedPlaceStatus,
 } from "lib/i18n/format";
-import { isGlassUiEnabled } from "lib/feature-flags";
 import { getCardTextLineLimit } from "lib/responsive";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";

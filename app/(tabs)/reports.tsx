@@ -40,8 +40,7 @@ import {
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
-import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
-import { isGlassUiEnabled } from "lib/feature-flags";
+import { useDesignSystem, getPlaceStatusTone, isGlassUiEnabled } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { getCardTextLineLimit } from "lib/responsive";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";

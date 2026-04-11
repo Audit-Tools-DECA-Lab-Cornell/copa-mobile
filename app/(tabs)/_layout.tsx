@@ -7,9 +7,8 @@ import {
     Settings,
 } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
-import { useDesignSystem } from "lib/design-system";
+import { useDesignSystem, isGlassUiEnabled } from "lib/design-system";
 import { useAuditSync } from "lib/audit/use-audit-sync";
-import { isGlassUiEnabled } from "lib/feature-flags";
 import { useResponsiveLayout, type ResponsiveLayout } from "lib/responsive-layout";
 import type { ColorTokens } from "tamagui";
 

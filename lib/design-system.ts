@@ -281,6 +281,8 @@ type ActiveColorPalette =
     | typeof DARK_HIGH_CONTRAST_COLORS
     | typeof LIGHT_HIGH_CONTRAST_COLORS;
 
+type ActiveGlassPalette = typeof LIGHT_GLASS | typeof DARK_GLASS;
+
 const FONT_WEIGHTS = {
     regular: "400",
     medium: "500",
@@ -343,7 +345,7 @@ interface DesignSystemOptions {
 export type DesignSystemTheme = SharedDesignTokens & {
     readonly colors: ActiveColorPalette;
     readonly shadows: ShadowPalette;
-    readonly glass: GlassPalette;
+    readonly glass: ActiveGlassPalette;
 };
 
 const MIN_DESIGN_FONT_SCALE = 0.85;
@@ -472,6 +474,24 @@ export function useDesignSystem(): DesignSystemTheme {
     }, [dyslexicFont, fieldMode, fontScale, highContrast, resolvedTheme]);
 }
 
+const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
+
+function parseBooleanFlag(rawValue: string | undefined, fallback: boolean): boolean {
+    if (typeof rawValue !== "string") {
+        return fallback;
+    }
+
+    const normalizedValue = rawValue.trim().toLowerCase();
+    if (normalizedValue.length === 0) {
+        return fallback;
+    }
+
+    return TRUE_VALUES.has(normalizedValue);
+}
+
+export function isGlassUiEnabled(): boolean {
+    return parseBooleanFlag(process.env.EXPO_PUBLIC_GLASS_UI_ENABLED, true);
+}
 /** Union of every concrete color value across all theme palettes. */
 type PaletteColorValue = ActiveColorPalette[keyof ColorPalette];
 

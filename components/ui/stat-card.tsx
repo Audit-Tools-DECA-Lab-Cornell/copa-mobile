@@ -1,6 +1,5 @@
 import { Paragraph, Text, YStack } from "tamagui";
-import { useDesignSystem } from "lib/design-system";
-import { isGlassUiEnabled } from "lib/feature-flags";
+import { useDesignSystem, isGlassUiEnabled } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface StatCardProps {

@@ -2,8 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Pressable } from "react-native";
 import { ChevronDown } from "@tamagui/lucide-icons";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
-import { useDesignSystem } from "lib/design-system";
-import { isGlassUiEnabled } from "lib/feature-flags";
+import { useDesignSystem, isGlassUiEnabled } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface CollapsibleCardProps {
