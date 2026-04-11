@@ -1,5 +1,6 @@
 import { Paragraph, Text, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { isGlassUiEnabled } from "lib/feature-flags";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface StatCardProps {
@@ -25,6 +26,7 @@ export function StatCard({
 }: Readonly<StatCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const isGlassEnabled = isGlassUiEnabled();
     const resolvedMinHeight = minHeight ?? (layout.isTablet ? layout.summaryCardMinHeight : 0);
 
     return (
@@ -33,14 +35,14 @@ export function StatCard({
             justify="space-between"
             rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
             px={layout.cardPadding}
             py={layout.isTablet ? 20 : 12}
             gap={layout.isTablet ? 12 : 4}
             style={{
                 minHeight: resolvedMinHeight,
-                boxShadow: ds.shadows.card,
+                boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
             }}
         >
             <YStack gap={layout.isTablet ? "$2.5" : "$1"}>

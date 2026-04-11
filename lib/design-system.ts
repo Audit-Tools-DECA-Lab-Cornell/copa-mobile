@@ -61,6 +61,14 @@ interface ShadowPalette {
     readonly accent: string;
 }
 
+interface GlassPalette {
+    readonly elevatedSurface: string;
+    readonly elevatedBorder: string;
+    readonly elevatedShadow: string;
+    readonly tabBarSurface: string;
+    readonly tabBarBorder: string;
+}
+
 const DARK_COLORS = {
     background: "#161311",
     foreground: "#E7DED3",
@@ -94,6 +102,14 @@ const DARK_SHADOWS = {
     card: "0 10px 24px rgba(0, 0, 0, 0.14)",
     accent: "0 0 14px rgba(197, 138, 92, 0.12)",
 } as const satisfies ShadowPalette;
+
+const DARK_GLASS = {
+    elevatedSurface: "rgba(36, 32, 29, 0.74)",
+    elevatedBorder: "rgba(231, 222, 211, 0.2)",
+    elevatedShadow: "0 14px 28px rgba(0, 0, 0, 0.24)",
+    tabBarSurface: "rgba(22, 19, 17, 0.84)",
+    tabBarBorder: "rgba(231, 222, 211, 0.14)",
+} as const satisfies GlassPalette;
 
 const LIGHT_COLORS = {
     background: "#FDFAF7",
@@ -157,6 +173,14 @@ const LIGHT_SHADOWS = {
     card: "0 10px 24px rgba(60, 48, 42, 0.08)",
     accent: "0 0 14px rgba(176, 106, 56, 0.2)",
 } as const satisfies ShadowPalette;
+
+const LIGHT_GLASS = {
+    elevatedSurface: "rgba(255, 255, 255, 0.76)",
+    elevatedBorder: "rgba(42, 35, 30, 0.12)",
+    elevatedShadow: "0 14px 28px rgba(60, 48, 42, 0.12)",
+    tabBarSurface: "rgba(255, 255, 255, 0.72)",
+    tabBarBorder: "rgba(42, 35, 30, 0.1)",
+} as const satisfies GlassPalette;
 
 const DARK_HIGH_CONTRAST_COLORS = {
     background: "#000000",
@@ -319,6 +343,7 @@ interface DesignSystemOptions {
 export type DesignSystemTheme = SharedDesignTokens & {
     readonly colors: ActiveColorPalette;
     readonly shadows: ShadowPalette;
+    readonly glass: GlassPalette;
 };
 
 const MIN_DESIGN_FONT_SCALE = 0.85;
@@ -420,6 +445,7 @@ export function getDesignSystem(
             fieldModePresentation.prefersFieldPalette,
         ),
         shadows: theme === "light" ? LIGHT_SHADOWS : DARK_SHADOWS,
+        glass: theme === "light" ? LIGHT_GLASS : DARK_GLASS,
     };
 }
 

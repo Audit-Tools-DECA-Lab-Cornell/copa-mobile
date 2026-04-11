@@ -27,6 +27,7 @@ import {
     getPlaceStatusLabel,
     type LocalizedPlaceStatus,
 } from "lib/i18n/format";
+import { isGlassUiEnabled } from "lib/feature-flags";
 import { getCardTextLineLimit } from "lib/responsive";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -44,6 +45,7 @@ type PlaceSortOption = "recent" | "progress" | "name";
  */
 export default function PlacesScreen() {
     const ds = useDesignSystem();
+    const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation(["places", "common"]);
@@ -378,11 +380,11 @@ export default function PlacesScreen() {
         <YStack
             rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
             p="$4"
             gap="$2"
-            style={{ boxShadow: ds.shadows.card }}
+            style={{ boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card }}
         >
             <Text
                 color={ds.colors.foreground}
@@ -452,6 +454,7 @@ interface PlaceQueueCardProps {
 
 function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQueueCardProps>) {
     const ds = useDesignSystem();
+    const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const { t, i18n } = useTranslation(["places", "common"]);
     const status = derivePlaceStatus(place.audit_status);
@@ -480,12 +483,12 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
             <YStack
                 rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
+                borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+                bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
                 overflow="hidden"
                 style={{
                     minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
-                    boxShadow: ds.shadows.card,
+                    boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
                 }}
             >
                 <XStack flex={1}>
@@ -634,6 +637,7 @@ interface SummaryTileProps {
  */
 function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
     const ds = useDesignSystem();
+    const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const tileTone = tone ?? {
         accent: ds.colors.primary,
@@ -646,8 +650,8 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
             flex={1}
             rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
             justify="space-between"
             p={layout.isTablet ? 16 : 12}
             style={{ minHeight: layout.isTablet ? 116 : undefined }}

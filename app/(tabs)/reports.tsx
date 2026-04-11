@@ -41,6 +41,7 @@ import {
 } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
+import { isGlassUiEnabled } from "lib/feature-flags";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { getCardTextLineLimit } from "lib/responsive";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
@@ -61,6 +62,7 @@ type ReportsListItem = AuditorPlace | PairGridRow<AuditorPlace>;
  */
 export default function ReportsScreen() {
     const ds = useDesignSystem();
+    const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["reports", "common"]);
     const instrument = useLocalizedInstrument();
@@ -585,11 +587,13 @@ export default function ReportsScreen() {
                 <YStack
                     rounded={ds.radii.lg}
                     borderWidth={1}
-                    borderColor={ds.colors.border}
-                    bg={ds.colors.surface}
+                    borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+                    bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
                     p="$4"
                     gap="$2"
-                    style={{ boxShadow: ds.shadows.card }}
+                    style={{
+                        boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+                    }}
                 >
                     <Text
                         color={ds.colors.foreground}
@@ -759,11 +763,13 @@ export default function ReportsScreen() {
                     <YStack
                         rounded={ds.radii.lg}
                         borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
+                        borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+                        bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
                         p={layout.cardPadding}
                         gap="$4"
-                        style={{ boxShadow: ds.shadows.card }}
+                        style={{
+                            boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+                        }}
                     >
                         <Text
                             color={ds.colors.mutedForeground}
@@ -818,6 +824,7 @@ interface ReportQueueCardProps {
 
 function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQueueCardProps>) {
     const ds = useDesignSystem();
+    const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["reports", "common"]);
@@ -860,14 +867,14 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
             <YStack
                 rounded={ds.radii.lg}
                 borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
+                borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+                bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
                 p={layout.cardPadding}
                 gap="$3.5"
                 justify="space-between"
                 style={{
                     minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
-                    boxShadow: ds.shadows.card,
+                    boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
                 }}
             >
                 <YStack gap="$3">

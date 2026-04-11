@@ -10,9 +10,15 @@ import {
     ShieldCheck,
     UserRound,
 } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import {
+    isDemoAppleSignInEnabled,
+    isDemoGoogleSignInEnabled,
+    isGlassUiEnabled,
+} from "lib/feature-flags";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
@@ -30,10 +36,14 @@ export default function LoginScreen() {
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t } = useTranslation(["auth", "common"]);
+    const toast = useToastController();
     const login = useAuthStore((state) => state.login);
     const clearError = useAuthStore((state) => state.clearError);
     const isSubmitting = useAuthStore((state) => state.isSubmitting);
     const errorMessage = useAuthStore((state) => state.errorMessage);
+    const isGlassEnabled = isGlassUiEnabled();
+    const isDemoAppleSignInVisible = isDemoAppleSignInEnabled();
+    const isDemoGoogleSignInVisible = isDemoGoogleSignInEnabled();
 
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
@@ -54,6 +64,23 @@ export default function LoginScreen() {
     const canSubmit = useMemo(() => {
         return !isSubmitting;
     }, [isSubmitting]);
+
+    const handleDemoSocialSignIn = useCallback(
+        (providerKey: "apple" | "google"): void => {
+            const providerLabel =
+                providerKey === "apple"
+                    ? t("login.social.apple", { ns: "auth" })
+                    : t("login.social.google", { ns: "auth" });
+            toast.show(t("login.social.restrictedTitle", { ns: "auth" }), {
+                message: t("login.social.restrictedMessage", {
+                    ns: "auth",
+                    provider: providerLabel,
+                }),
+                variant: "info",
+            });
+        },
+        [t, toast],
+    );
 
     /**
      * Submit login credentials to backend auth.
@@ -107,7 +134,16 @@ export default function LoginScreen() {
                 <YStack
                     gap="$6"
                     width="100%"
-                    style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
+                    bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
+                    borderWidth={1}
+                    borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+                    rounded={ds.radii.lg}
+                    p={layout.isTablet ? "$5" : "$4"}
+                    style={{
+                        maxWidth: layout.formMaxWidth,
+                        alignSelf: "center",
+                        boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+                    }}
                 >
                     <YStack items="center" gap="$4">
                         <YStack
@@ -286,6 +322,67 @@ export default function LoginScreen() {
                                     {"Dev password: "}
                                     <Text fontFamily={ds.fonts.monoMedium}>DemoPass123!</Text>
                                 </Paragraph>
+                            </YStack>
+                        ) : null}
+
+                        {isDemoAppleSignInVisible || isDemoGoogleSignInVisible ? (
+                            <YStack gap="$2.5">
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelMd.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.4}
+                                    px="$1"
+                                >
+                                    {t("login.social.label", { ns: "auth" })}
+                                </Paragraph>
+                                {isDemoAppleSignInVisible ? (
+                                    <Button
+                                        height={56}
+                                        rounded={ds.radii.md}
+                                        borderWidth={1}
+                                        borderColor={ds.colors.border}
+                                        bg={
+                                            isGlassEnabled
+                                                ? ds.glass.elevatedSurface
+                                                : ds.colors.surface
+                                        }
+                                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                        onPress={() => handleDemoSocialSignIn("apple")}
+                                    >
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelLg.fontSize}
+                                        >
+                                            {t("login.social.apple", { ns: "auth" })}
+                                        </Text>
+                                    </Button>
+                                ) : null}
+                                {isDemoGoogleSignInVisible ? (
+                                    <Button
+                                        height={56}
+                                        rounded={ds.radii.md}
+                                        borderWidth={1}
+                                        borderColor={ds.colors.border}
+                                        bg={
+                                            isGlassEnabled
+                                                ? ds.glass.elevatedSurface
+                                                : ds.colors.surface
+                                        }
+                                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                        onPress={() => handleDemoSocialSignIn("google")}
+                                    >
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelLg.fontSize}
+                                        >
+                                            {t("login.social.google", { ns: "auth" })}
+                                        </Text>
+                                    </Button>
+                                ) : null}
                             </YStack>
                         ) : null}
 

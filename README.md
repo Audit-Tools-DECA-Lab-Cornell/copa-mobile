@@ -225,6 +225,16 @@ EXPO_PUBLIC_API_BASE_URL="http://127.0.0.1:8000"
 
 Defaults to `http://127.0.0.1:8000` if omitted.
 
+### Optional UI Feature Flags
+
+```bash
+EXPO_PUBLIC_GLASS_UI_ENABLED=true
+EXPO_PUBLIC_APPLE_SIGN_IN_ENABLED=true
+EXPO_PUBLIC_GOOGLE_SIGN_IN_ENABLED=true
+```
+
+These flags control visual glass surfaces and demo-only Apple/Google sign-in entry points.
+
 ### Run
 
 ```bash

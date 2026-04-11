@@ -3,6 +3,7 @@ import { Pressable } from "react-native";
 import { ChevronDown } from "@tamagui/lucide-icons";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { isGlassUiEnabled } from "lib/feature-flags";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface CollapsibleCardProps {
@@ -30,6 +31,7 @@ export function CollapsibleCard({
 }: Readonly<CollapsibleCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const isGlassEnabled = isGlassUiEnabled();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const visibleCollapsedHint = isExpanded ? undefined : collapsedHint;
 
@@ -37,11 +39,11 @@ export function CollapsibleCard({
         <YStack
             rounded={ds.radii.md}
             borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
             p={layout.cardPadding}
             gap={layout.isTablet ? "$4.5" : "$3"}
-            style={{ boxShadow: ds.shadows.card }}
+            style={{ boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card }}
         >
             <Pressable
                 accessibilityRole="button"

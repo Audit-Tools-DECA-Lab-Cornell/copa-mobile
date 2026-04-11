@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useDesignSystem } from "lib/design-system";
 import { useAuditSync } from "lib/audit/use-audit-sync";
+import { isGlassUiEnabled } from "lib/feature-flags";
 import { useResponsiveLayout, type ResponsiveLayout } from "lib/responsive-layout";
 import type { ColorTokens } from "tamagui";
 
@@ -33,6 +34,7 @@ export default function TabLayout() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("common");
+    const isGlassEnabled = isGlassUiEnabled();
     const tabBarActiveTintColor = ds.colors.primary;
     const tabBarInactiveTintColor = layout.isTablet
         ? ds.colors.secondaryForeground
@@ -57,8 +59,9 @@ export default function TabLayout() {
                 tabBarActiveTintColor,
                 tabBarInactiveTintColor,
                 tabBarStyle: {
-                    backgroundColor: ds.colors.overlay,
-                    borderTopColor: ds.colors.border,
+                    backgroundColor: isGlassEnabled ? ds.glass.tabBarSurface : ds.colors.overlay,
+                    borderTopColor: isGlassEnabled ? ds.glass.tabBarBorder : ds.colors.border,
+                    borderTopWidth: 1,
                     height: tabBarHeight,
                     paddingTop: tabBarPaddingTop,
                     paddingBottom: tabBarPaddingBottom,
