@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useToastController } from "@tamagui/toast";
-import { FileBarChart, MapPin } from "@tamagui/lucide-icons";
+import { FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { ActionButton } from "components/ui/action-button";

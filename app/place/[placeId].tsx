@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Linking, Platform, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons";
+import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import type { TFunction } from "i18next";
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
 import { useTranslation } from "react-i18next";

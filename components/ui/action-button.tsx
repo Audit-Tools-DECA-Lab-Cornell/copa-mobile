@@ -1,5 +1,5 @@
 import { ActivityIndicator } from "react-native";
-import { Download } from "@tamagui/lucide-icons";
+import { Download } from "@tamagui/lucide-icons-2";
 import { Button, Text, XStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";

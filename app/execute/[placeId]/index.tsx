@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { ArrowRight, ClipboardList, Shapes, TriangleAlert } from "@tamagui/lucide-icons";
+import { ArrowRight, ClipboardList, Shapes, TriangleAlert } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 import {

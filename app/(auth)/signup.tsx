@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons";
+import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";

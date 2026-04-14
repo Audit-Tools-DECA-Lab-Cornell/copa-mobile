@@ -8,3 +8,14 @@ bun.lock
 tsconfig.tsbuildinfo
 tamagui.generated.css
 tamagui-web.css
+.agents/
+.cline/
+.cursor/
+.eas/
+.expo
+.eslintcache
+.eslintignore
+.superpowers/
+.worktrees/
+.claude/
+.tamagui/

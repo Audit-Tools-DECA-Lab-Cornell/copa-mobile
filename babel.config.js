@@ -9,7 +9,7 @@ module.exports = (api) => {
                     components: ["tamagui"],
                     config: "./tamagui.config.ts",
                     logTimings: true,
-                    disableExtraction: true,
+                    disableExtraction: false,
                 },
             ],
 

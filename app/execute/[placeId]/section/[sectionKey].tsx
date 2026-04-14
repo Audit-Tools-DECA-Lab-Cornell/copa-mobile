@@ -140,14 +140,22 @@ export default function ExecuteSectionScreen() {
                             fontSize={ds.typography.labelLg.fontSize}
                             lineHeight={ds.typography.labelLg.lineHeight}
                         >
-                            Section {activeSectionNumber}:{" "}
-                            {truncate(activeSection.title, layout.isTablet ? 80 : 40)}
+                            Section: {truncate(activeSection.title, layout.isTablet ? 80 : 40)}
                         </Text>
                     </YStack>
                 ),
             });
         }
-    }, [themedHeaderOptions, navigation, activeSection, t, auditSession, ds, truncate]);
+    }, [
+        themedHeaderOptions,
+        navigation,
+        activeSection,
+        layout.isTablet,
+        t,
+        auditSession,
+        ds,
+        truncate,
+    ]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);

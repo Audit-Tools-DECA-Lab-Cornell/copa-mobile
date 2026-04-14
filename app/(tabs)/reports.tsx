@@ -9,7 +9,7 @@ import {
     FileBarChart,
     MapPin,
     Dot,
-} from "@tamagui/lucide-icons";
+} from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { useToastController } from "@tamagui/toast";
 import { Paragraph, Text, XStack, YStack } from "tamagui";

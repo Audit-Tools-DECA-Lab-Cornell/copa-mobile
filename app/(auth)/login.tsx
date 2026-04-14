@@ -9,7 +9,7 @@ import {
     KeyRound,
     ShieldCheck,
     UserRound,
-} from "@tamagui/lucide-icons";
+} from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import {
     Button,

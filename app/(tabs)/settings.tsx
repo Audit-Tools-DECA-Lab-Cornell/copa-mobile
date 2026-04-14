@@ -14,7 +14,7 @@ import {
     Sun,
     Type,
     User,
-} from "@tamagui/lucide-icons";
+} from "@tamagui/lucide-icons-2";
 import type { IconProps } from "@tamagui/helpers-icon";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Slider, Text, XStack, YStack } from "tamagui";
@@ -180,6 +180,18 @@ export default function SettingsScreen() {
     const userEmail = account?.email ?? session?.user.email ?? "—";
     const accountType = session === null ? "—" : t("accountTypes.auditor", { ns: "common" });
     const activeLanguage = resolveAppLanguage(i18n.resolvedLanguage ?? i18n.language);
+
+    const getActiveLanguageTranslationKey = (language: ResolvedAppLanguage): string => {
+        const languageMap: Record<ResolvedAppLanguage, string> = {
+            de: "language.german",
+            fr: "language.french",
+            ja: "language.japanese",
+            hi: "language.hindi",
+            en: "language.english",
+        };
+        return languageMap[language];
+    };
+
     const getLanguageOptionLabel = (preference: LanguagePreference): string => {
         const matchingOption = LANGUAGE_OPTIONS.find((option) => option.key === preference);
 
@@ -602,20 +614,9 @@ export default function SettingsScreen() {
                 >
                     {t("language.currentValue", {
                         ns: "settings",
-                        value: t(
-                            activeLanguage === "de"
-                                ? "language.german"
-                                : activeLanguage === "fr"
-                                  ? "language.french"
-                                  : activeLanguage === "ja"
-                                    ? "language.japanese"
-                                    : activeLanguage === "hi"
-                                      ? "language.hindi"
-                                      : "language.english",
-                            {
-                                ns: "settings",
-                            },
-                        ),
+                        value: t(getActiveLanguageTranslationKey(activeLanguage), {
+                            ns: "settings",
+                        }),
                     })}
                 </Paragraph>
             </SettingsCard>

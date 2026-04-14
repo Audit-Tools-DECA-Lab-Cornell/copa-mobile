@@ -14,7 +14,7 @@ import {
     ShieldCheck,
     UserRound,
     WifiOff,
-} from "@tamagui/lucide-icons";
+} from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-helpers";

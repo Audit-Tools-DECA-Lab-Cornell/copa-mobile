@@ -5,7 +5,7 @@ import {
     LayoutDashboard,
     MapPinned,
     Settings,
-} from "@tamagui/lucide-icons";
+} from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { useDesignSystem, isGlassUiEnabled } from "lib/design-system";
 import { useAuditSync } from "lib/audit/use-audit-sync";

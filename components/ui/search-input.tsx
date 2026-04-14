@@ -1,4 +1,4 @@
-import { Search } from "@tamagui/lucide-icons";
+import { Search } from "@tamagui/lucide-icons-2";
 import { type ColorTokens, Input, XStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";

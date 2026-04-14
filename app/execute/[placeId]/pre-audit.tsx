@@ -4,7 +4,7 @@ import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
-import { ArrowRight, ClipboardList } from "@tamagui/lucide-icons";
+import { ArrowRight, ClipboardList } from "@tamagui/lucide-icons-2";
 import { doesExecutionModeRequireSpaceAudit, getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";

@@ -2,7 +2,7 @@ import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowRight, Clock3 } from "@tamagui/lucide-icons";
+import { ArrowRight, Clock3 } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { FilterChip } from "components/ui/filter-chip";

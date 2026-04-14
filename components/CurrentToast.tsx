@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Info, X } from "@tamagui/lucide-icons";
+import { AlertTriangle, CheckCircle2, Info, X } from "@tamagui/lucide-icons-2";
 import { Toast, useToastController, useToastState } from "@tamagui/toast";
 import { useTranslation } from "react-i18next";
 import { Button, H4, XStack, YStack } from "tamagui";

@@ -29,11 +29,6 @@ export default {
             },
             package: "com.pratyush.sudhakar.audittoolsplayspacemobile",
         },
-        web: {
-            bundler: "metro",
-            output: "static",
-            favicon: "./assets/images/favicon.png",
-        },
         plugins: [
             "./plugins/withCustomPodfilePatches",
             "expo-router",
