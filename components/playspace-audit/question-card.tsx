@@ -234,16 +234,11 @@ function ScaleSelector({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const isPhone = !layout.isTablet;
-    console.log(
-        "Scale option label lengths:",
-        scale.options.map((option) => option.label.length),
-    );
     const optionWidth = getOptionGridItemWidth(
         scale.options.length,
         Math.max(...scale.options.map((option) => option.label.length)),
         isPhone,
     );
-    console.log("Option width:", optionWidth);
     const scaleAccent = getScaleAccentColor(scale.key, ds.colors);
     const scaleSoft = getScaleSoftColor(scale.key, ds.colors);
     return (
@@ -427,7 +422,7 @@ function ChecklistSelector({
                         );
                     }}
                     placeholder="Describe other"
-                    placeholderTextColor={ds.colors.mutedForeground}
+                    placeholderTextColor={ds.colors.placeholderColor}
                     style={{
                         minHeight: layout.isTablet ? 96 : 88,
                         borderRadius: ds.radii.md,

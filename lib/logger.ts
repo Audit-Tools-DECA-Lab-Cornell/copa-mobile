@@ -26,16 +26,22 @@ function getLogLevel(): "debug" | "info" {
  *   logger.info("User logged in");
  *   logger.withMetadata({ userId: "123" }).info("Session created");
  *   logger.withError(err).error("Failed to sync audit");
- *   const childLogger = logger.withContext({ module: "auth" });
- *   childLogger.debug("Token refreshed");
+ *   const moduleLogger = createModuleLogger("auth");
+ *   moduleLogger.debug("Token refreshed");
  */
-export const logger = new LogLayer({
-    transport: new StructuredTransport({
-        logger: console,
-        level: getLogLevel(),
-    }),
-    errorSerializer: serializeError,
+const transport = new StructuredTransport({
+    logger: console,
+    level: getLogLevel(),
 });
+
+function createBaseLogger(): LogLayer {
+    return new LogLayer({
+        transport,
+        errorSerializer: serializeError,
+    });
+}
+
+export const logger = createBaseLogger();
 
 /**
  * Creates a child logger that inherits the parent configuration but
@@ -48,5 +54,5 @@ export const logger = new LogLayer({
  * @returns A LogLayer instance pre-seeded with the given module context
  */
 export function createModuleLogger(module: string): LogLayer {
-    return logger.withContext({ module });
+    return createBaseLogger().withContext({ module });
 }

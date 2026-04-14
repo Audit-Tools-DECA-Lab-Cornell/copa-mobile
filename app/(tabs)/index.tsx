@@ -38,6 +38,9 @@ import { usePlacesStore } from "stores/places-store";
  * UI status derived from the backend `audit_status` value.
  */
 type DerivedPlaceStatus = "not_started" | "in_progress" | "submitted";
+type PriorityDueLabelKey = "dueToday" | "dueSoon";
+
+const DUE_SOON_WINDOW_DAYS = 3;
 
 /**
  * Map the backend `audit_status` to a local UI status string.
@@ -65,6 +68,32 @@ function derivePlaceStatus(auditStatus: AuditorPlace["audit_status"]): DerivedPl
 function deriveLocality(place: AuditorPlace, fallbackLabel: string): string {
     const parts = [place.city, place.country].filter(Boolean);
     return parts.length > 0 ? parts.join(", ") : fallbackLabel;
+}
+
+function derivePriorityDueLabelKey(place: AuditorPlace | undefined): PriorityDueLabelKey | null {
+    if (place === undefined || place.due_date === null) {
+        return null;
+    }
+
+    const dueDate = new Date(place.due_date);
+    if (Number.isNaN(dueDate.getTime())) {
+        return null;
+    }
+
+    const dueDateStart = new Date(dueDate);
+    dueDateStart.setHours(0, 0, 0, 0);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const daysUntilDue = Math.round((dueDateStart.getTime() - todayStart.getTime()) / 86_400_000);
+
+    if (daysUntilDue <= 0) {
+        return "dueToday";
+    }
+    if (daysUntilDue <= DUE_SOON_WINDOW_DAYS) {
+        return "dueSoon";
+    }
+
+    return null;
 }
 
 /**
@@ -218,6 +247,10 @@ export default function DashboardScreen() {
 
         return getVisibleProgressBarWidth(priorityPlace.progress_percent ?? 0);
     }, [priorityPlace]);
+    const priorityDueLabelKey = useMemo<PriorityDueLabelKey | null>(() => {
+        return derivePriorityDueLabelKey(priorityPlace);
+    }, [priorityPlace]);
+    const showPriorityUrgentBadge = priorityDueLabelKey !== null;
 
     const quickActionsBlock = (
         <YStack
@@ -454,16 +487,18 @@ export default function DashboardScreen() {
                 >
                     {t("priorityTask", { ns: "dashboard" })}
                 </Text>
-                <Text
-                    color={ds.colors.danger}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelSm.fontSize}
-                    lineHeight={ds.typography.labelSm.lineHeight}
-                    textTransform="uppercase"
-                    letterSpacing={1.3}
-                >
-                    {t("dueSoon", { ns: "dashboard" })}
-                </Text>
+                {priorityDueLabelKey === null ? null : (
+                    <Text
+                        color={ds.colors.danger}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        lineHeight={ds.typography.labelSm.lineHeight}
+                        textTransform="uppercase"
+                        letterSpacing={1.3}
+                    >
+                        {t(priorityDueLabelKey, { ns: "dashboard" })}
+                    </Text>
+                )}
             </XStack>
 
             {priorityPlace === undefined ? null : (
@@ -488,17 +523,24 @@ export default function DashboardScreen() {
                         }}
                     >
                         <XStack gap="$2" items="center" flexWrap="wrap">
-                            <YStack rounded={ds.radii.sm} px="$2" py="$2" bg={ds.colors.primary}>
-                                <Text
-                                    color={ds.colors.primaryForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelXs.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.3}
+                            {showPriorityUrgentBadge ? (
+                                <YStack
+                                    rounded={ds.radii.sm}
+                                    px="$2"
+                                    py="$2"
+                                    bg={ds.colors.primary}
                                 >
-                                    {t("urgentAudit", { ns: "dashboard" })}
-                                </Text>
-                            </YStack>
+                                    <Text
+                                        color={ds.colors.primaryForeground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelXs.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.3}
+                                    >
+                                        {t("urgentAudit", { ns: "dashboard" })}
+                                    </Text>
+                                </YStack>
+                            ) : null}
                             <XStack
                                 items="center"
                                 gap="$2"
@@ -1078,15 +1120,17 @@ export default function DashboardScreen() {
                     >
                         {t("priorityTask", { ns: "dashboard" })}
                     </Text>
-                    <Paragraph
-                        color={ds.colors.danger}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelSm.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.3}
-                    >
-                        {t("dueToday", { ns: "dashboard" })}
-                    </Paragraph>
+                    {priorityDueLabelKey === null ? null : (
+                        <Paragraph
+                            color={ds.colors.danger}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelSm.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.3}
+                        >
+                            {t(priorityDueLabelKey, { ns: "dashboard" })}
+                        </Paragraph>
+                    )}
                 </XStack>
 
                 {priorityPlace === undefined ? null : (
@@ -1110,22 +1154,24 @@ export default function DashboardScreen() {
                             }}
                         >
                             <XStack gap="$2" items="center" flexWrap="wrap">
-                                <YStack
-                                    rounded={ds.radii.sm}
-                                    px="$2"
-                                    py="$2"
-                                    bg={ds.colors.primary}
-                                >
-                                    <Text
-                                        color={ds.colors.primaryForeground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.labelXs.fontSize}
-                                        textTransform="uppercase"
-                                        letterSpacing={1.3}
+                                {showPriorityUrgentBadge ? (
+                                    <YStack
+                                        rounded={ds.radii.sm}
+                                        px="$2"
+                                        py="$2"
+                                        bg={ds.colors.primary}
                                     >
-                                        {t("urgentAudit", { ns: "dashboard" })}
-                                    </Text>
-                                </YStack>
+                                        <Text
+                                            color={ds.colors.primaryForeground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelXs.fontSize}
+                                            textTransform="uppercase"
+                                            letterSpacing={1.3}
+                                        >
+                                            {t("urgentAudit", { ns: "dashboard" })}
+                                        </Text>
+                                    </YStack>
+                                ) : null}
                                 <XStack
                                     rounded={ds.radii.sm}
                                     px="$2"

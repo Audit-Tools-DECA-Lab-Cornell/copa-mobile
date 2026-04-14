@@ -135,7 +135,7 @@ export default function ExecuteSectionScreen() {
                             {truncate(auditSession?.place_name, layout.isTablet ? 80 : 30)}
                         </Text>
                         <Text
-                            color={ds.colors.primaryForeground}
+                            color={ds.colors.mutedForeground}
                             fontFamily={ds.fonts.bodyRegular}
                             fontSize={ds.typography.labelLg.fontSize}
                             lineHeight={ds.typography.labelLg.lineHeight}
@@ -475,9 +475,9 @@ export default function ExecuteSectionScreen() {
                     flushNoteToStore();
                 }}
                 placeholder={t("section.notesPlaceholder", { ns: "audit" })}
-                placeholderTextColor={ds.colors.mutedForeground}
+                placeholderTextColor={ds.colors.placeholderColor}
                 style={{
-                    minHeight: layout.isTablet ? (isNoteFocused ? 200 : 112) : 120,
+                    minHeight: layout.isTablet && isNoteFocused ? 200 : 120,
                     borderRadius: ds.radii.md,
                     borderWidth: 1,
                     borderColor: ds.colors.border,

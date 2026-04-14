@@ -11,7 +11,16 @@ import {
     UserRound,
 } from "@tamagui/lucide-icons";
 import { useTranslation } from "react-i18next";
-import { Button, Checkbox, Input, Paragraph, Text, XStack, YStack } from "tamagui";
+import {
+    Button,
+    Checkbox,
+    type ColorTokens,
+    Input,
+    Paragraph,
+    Text,
+    XStack,
+    YStack,
+} from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
@@ -183,7 +192,7 @@ export default function LoginScreen() {
                                     keyboardType="email-address"
                                     textContentType="emailAddress"
                                     placeholder={t("login.emailPlaceholder", { ns: "auth" })}
-                                    placeholderTextColor="$color10"
+                                    placeholderTextColor={ds.colors.placeholderColor as ColorTokens}
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.bodyMedium}
                                     fontSize={ds.typography.titleSm.fontSize}
@@ -233,7 +242,7 @@ export default function LoginScreen() {
                                     textContentType="password"
                                     secureTextEntry={!showPassword}
                                     placeholder={t("login.passwordPlaceholder", { ns: "auth" })}
-                                    placeholderTextColor="$color10"
+                                    placeholderTextColor={ds.colors.placeholderColor as ColorTokens}
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.bodyMedium}
                                     fontSize={ds.typography.titleSm.fontSize}

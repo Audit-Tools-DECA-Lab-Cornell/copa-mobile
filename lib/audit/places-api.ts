@@ -43,6 +43,7 @@ const auditorPlaceSchema = z.object({
     audit_id: z.uuid().nullable(),
     started_at: z.string().nullable(),
     submitted_at: z.string().nullable(),
+    due_date: z.iso.datetime().nullable().optional().default(null),
     summary_score: z.number().nullable(),
     score_totals: auditScoreTotalsSchema.nullable(),
     progress_percent: z.number().nullable(),

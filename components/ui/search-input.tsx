@@ -1,5 +1,5 @@
 import { Search } from "@tamagui/lucide-icons";
-import { Input, XStack } from "tamagui";
+import { type ColorTokens, Input, XStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
@@ -39,7 +39,7 @@ export function SearchInput({ value, onChangeText, placeholder }: Readonly<Searc
                 autoCorrect={false}
                 returnKeyType="search"
                 placeholder={placeholder}
-                placeholderTextColor="$placeholderColor"
+                placeholderTextColor={ds.colors.placeholderColor as ColorTokens}
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
                 fontSize={
