@@ -27,7 +27,7 @@ import { Platform } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { usePreferencesStore } from "stores/preferences-store";
-
+import { StatusBar } from "expo-status-bar";
 export { ErrorBoundary } from "expo-router";
 
 const SCREENSHOT_AUTOMATION_ENABLED = __DEV__;
@@ -211,10 +211,10 @@ function RootLayoutNav() {
 
     return (
         <ThemeProvider value={navigationTheme}>
+            <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} hidden={Platform.OS === "android"} />
             <Stack
                 screenOptions={{
                     statusBarHidden: Platform.OS === "android",
-                    statusBarStyle: resolvedTheme === "light" ? "dark" : "light",
                     contentStyle: {
                         backgroundColor: ds.colors.background,
                     },
