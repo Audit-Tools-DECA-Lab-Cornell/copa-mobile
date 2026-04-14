@@ -1,7 +1,7 @@
 import { fetchAuditSession } from "lib/audit/api";
-import { fetchMyAuditorProfile, type MyAuditorProfile } from "lib/audit/profile-api";
 import type { ExportAuditorProfile, ExportableAudit } from "lib/audit/export";
 import type { AuditorPlace } from "lib/audit/places-api";
+import { fetchMyAuditorProfile, type MyAuditorProfile } from "lib/audit/profile-api";
 import type { AuditSession } from "lib/audit/types";
 import type { AuthSession } from "lib/auth/types";
 
@@ -76,9 +76,7 @@ export async function buildExportableAuditForPlace({
     }
 
     const auditSession =
-        cachedAudit?.status === "SUBMITTED"
-            ? cachedAudit
-            : await fetchAuditSession(session, place.audit_id);
+        cachedAudit?.status === "SUBMITTED" ? cachedAudit : await fetchAuditSession(session, place.audit_id);
 
     return {
         auditSession,

@@ -11,11 +11,7 @@ import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
 import { fetchMyAuditorProfile, type MyAuditorProfile } from "lib/audit/profile-api";
-import {
-    formatLocalizedDate,
-    formatLocalizedDateTime,
-    formatLocalizedDurationFromMinutes,
-} from "lib/i18n/format";
+import { formatLocalizedDate, formatLocalizedDateTime, formatLocalizedDurationFromMinutes } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
@@ -47,8 +43,7 @@ export default function PreAuditScreen() {
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
-    const pairKey =
-        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
     const scrollViewRef = useRef<ScrollView | null>(null);
     const [auditorProfile, setAuditorProfile] = useState<MyAuditorProfile | null>(null);
@@ -62,6 +57,7 @@ export default function PreAuditScreen() {
             headerBlurEffect: "light",
             headerStyle: { backgroundColor: ds.colors.surface },
             headerTintColor: ds.colors.primary,
+            contentStyle: { paddingTop: 20 },
             headerTitleStyle: {
                 color: ds.colors.foreground,
                 fontFamily: ds.fonts.bodyBold,
@@ -118,8 +114,22 @@ export default function PreAuditScreen() {
             return;
         }
 
-        navigation.setOptions({ ...themedHeaderOptions, title: `${auditSession.place_name}` });
-    }, [themedHeaderOptions, navigation, auditSession]);
+        navigation.setOptions({
+            ...themedHeaderOptions,
+            headerTitle: () => (
+                <YStack justify="center">
+                    <Text
+                        color={ds.colors.primary}
+                        fontFamily={ds.fonts.bodySemiBold}
+                        fontSize={ds.typography.titleLg.fontSize}
+                        lineHeight={ds.typography.titleLg.lineHeight}
+                    >
+                        {auditSession.place_name}
+                    </Text>
+                </YStack>
+            ),
+        });
+    }, [themedHeaderOptions, navigation, auditSession, ds]);
 
     if (
         placeId === null ||
@@ -128,12 +138,7 @@ export default function PreAuditScreen() {
         currentUserId !== authSession.user.id ||
         auditSession === undefined
     ) {
-        if (
-            placeId !== null &&
-            projectId !== null &&
-            authSession !== null &&
-            errorMessage !== null
-        ) {
+        if (placeId !== null && projectId !== null && authSession !== null && errorMessage !== null) {
             return (
                 <CenteredMessageCard
                     title={
@@ -165,9 +170,7 @@ export default function PreAuditScreen() {
                 message={t("auditInfo.modeMissingMessage", { ns: "audit" })}
                 actionLabel={t("auditInfo.backToPreamble", { ns: "audit" })}
                 onAction={() => {
-                    router.replace(
-                        `/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`,
-                    );
+                    router.replace(`/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`);
                 }}
             />
         );
@@ -184,15 +187,10 @@ export default function PreAuditScreen() {
         ),
     );
     const firstSection = getNextSectionTarget(visibleSections, auditSession);
-    const auditInfoQuestions = instrument.pre_audit_questions.filter(
-        (question) => question.page_key === "audit_info",
-    );
-    const flowSubject = t(
-        `subjects.${getExecuteFlowSubject(auditSession.selected_execution_mode)}`,
-        {
-            ns: "audit",
-        },
-    );
+    const auditInfoQuestions = instrument.pre_audit_questions.filter((question) => question.page_key === "audit_info");
+    const flowSubject = t(`subjects.${getExecuteFlowSubject(auditSession.selected_execution_mode)}`, {
+        ns: "audit",
+    });
     const nextRoute = doesExecutionModeRequireSpaceAudit(auditSession.selected_execution_mode)
         ? `/execute/${placeId}/space-audit?projectId=${encodeURIComponent(projectId)}`
         : `/execute/${placeId}/section/${firstSection?.section_key}?projectId=${encodeURIComponent(projectId)}`;
@@ -218,10 +216,7 @@ export default function PreAuditScreen() {
                         label={t("auditInfo.selectedModeLabel", { ns: "audit" })}
                         value={resolveExecutionModeLabel(auditSession.selected_execution_mode, t)}
                     />
-                    <SummaryRow
-                        label={t("auditInfo.placeLabel", { ns: "audit" })}
-                        value={auditSession.place_name}
-                    />
+                    <SummaryRow label={t("auditInfo.placeLabel", { ns: "audit" })} value={auditSession.place_name} />
                     <SummaryRow
                         label={t("auditInfo.projectLabel", { ns: "audit" })}
                         value={auditSession.project_name}
@@ -236,9 +231,7 @@ export default function PreAuditScreen() {
                 bg={ds.colors.input}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
-                    router.replace(
-                        `/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`,
-                    );
+                    router.replace(`/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`);
                 }}
             >
                 <Text
@@ -286,6 +279,7 @@ export default function PreAuditScreen() {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
                 maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
+                includeTopPadding: false,
             })}
         >
             <YStack gap="$3">
@@ -304,15 +298,9 @@ export default function PreAuditScreen() {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.displayLg.fontSize
-                            : ds.typography.displayMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
                     lineHeight={
-                        layout.isTablet
-                            ? ds.typography.displayLg.lineHeight
-                            : ds.typography.displayMd.lineHeight
+                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
                     }
                 >
                     {t("auditInfo.title", { ns: "audit" })}
@@ -354,9 +342,7 @@ export default function PreAuditScreen() {
                         bg={ds.colors.input}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={() => {
-                            router.replace(
-                                `/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`,
-                            );
+                            router.replace(`/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`);
                         }}
                     >
                         <Text
@@ -411,12 +397,7 @@ interface AutoFieldCardProps {
 /**
  * Render one read-only audit-information field.
  */
-function AutoFieldCard({
-    question,
-    auditSession,
-    language,
-    auditorCode,
-}: Readonly<AutoFieldCardProps>) {
+function AutoFieldCard({ question, auditSession, language, auditorCode }: Readonly<AutoFieldCardProps>) {
     const ds = useDesignSystem();
     const { t } = useTranslation("audit");
     return (
@@ -453,11 +434,7 @@ function SummaryRow({ label, value }: Readonly<SummaryRowProps>) {
             >
                 {label}
             </Text>
-            <Text
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.bodyMd.fontSize}
-            >
+            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.bodyMd.fontSize}>
                 {value}
             </Text>
         </YStack>
@@ -490,11 +467,7 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.titleLg.fontSize
-                            : ds.typography.titleMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize}
                 >
                     {title}
                 </Text>
@@ -502,11 +475,7 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
-                        fontSize={
-                            layout.isTablet
-                                ? ds.typography.bodyMd.fontSize
-                                : ds.typography.bodySm.fontSize
-                        }
+                        fontSize={layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize}
                     >
                         {description}
                     </Paragraph>
@@ -527,21 +496,11 @@ interface CenteredMessageCardProps {
 /**
  * Centered loading or error state for the audit-info step.
  */
-function CenteredMessageCard({
-    title,
-    message,
-    actionLabel,
-    onAction,
-}: Readonly<CenteredMessageCardProps>) {
+function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     return (
-        <YStack
-            flex={1}
-            justify="center"
-            px={layout.screenPaddingHorizontal}
-            bg={ds.colors.background}
-        >
+        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
@@ -607,10 +566,7 @@ function getNextSectionTarget(
 /**
  * Convert the selected execution mode into readable UI copy.
  */
-function resolveExecutionModeLabel(
-    mode: AuditSession["selected_execution_mode"],
-    t: TFunction,
-): string {
+function resolveExecutionModeLabel(mode: AuditSession["selected_execution_mode"], t: TFunction): string {
     return mode === null ? t("overview.roleNotSelected", { ns: "audit" }) : getModeLabel(mode, t);
 }
 
@@ -662,10 +618,7 @@ function formatAutoValue(
 /**
  * Compact execution-mode label for audit-info summaries.
  */
-function getModeLabel(
-    mode: NonNullable<AuditSession["selected_execution_mode"]>,
-    t: TFunction,
-): string {
+function getModeLabel(mode: NonNullable<AuditSession["selected_execution_mode"]>, t: TFunction): string {
     switch (mode) {
         case "survey":
             return t("modeShort.survey", { ns: "audit" });

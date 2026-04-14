@@ -1,4 +1,5 @@
 import { requireOptionalNativeModule } from "expo-modules-core";
+
 import type { AccountType, AuthSession, AuthUser } from "lib/auth/types";
 
 const AUTH_SESSION_STORAGE_KEY = "playspace.auth.session.v1";
@@ -12,19 +13,9 @@ interface SecureStoreApi {
     readonly isAvailableAsync?: () => Promise<boolean>;
 }
 
-type SetValueWithKeyAsyncFunction = (
-    value: string,
-    key: string,
-    options?: Record<string, unknown>,
-) => Promise<void>;
-type GetValueWithKeyAsyncFunction = (
-    key: string,
-    options?: Record<string, unknown>,
-) => Promise<string | null>;
-type DeleteValueWithKeyAsyncFunction = (
-    key: string,
-    options?: Record<string, unknown>,
-) => Promise<void>;
+type SetValueWithKeyAsyncFunction = (value: string, key: string, options?: Record<string, unknown>) => Promise<void>;
+type GetValueWithKeyAsyncFunction = (key: string, options?: Record<string, unknown>) => Promise<string | null>;
+type DeleteValueWithKeyAsyncFunction = (key: string, options?: Record<string, unknown>) => Promise<void>;
 
 /**
  * Persist auth session in secure device storage.
@@ -113,9 +104,7 @@ async function resolveSecureStoreApi(): Promise<SecureStoreApi | null> {
             return null;
         }
 
-        const available = resolvedApi.isAvailableAsync
-            ? await resolvedApi.isAvailableAsync()
-            : true;
+        const available = resolvedApi.isAvailableAsync ? await resolvedApi.isAvailableAsync() : true;
         secureStoreApiCache = available ? resolvedApi : null;
         return secureStoreApiCache;
     } catch {
@@ -244,15 +233,9 @@ function toSecureStoreApi(value: unknown): SecureStoreApi | null {
 
     const setValueWithKeyAsync = toSetValueWithKeyAsyncFunction(value.setValueWithKeyAsync);
     const getValueWithKeyAsync = toGetValueWithKeyAsyncFunction(value.getValueWithKeyAsync);
-    const deleteValueWithKeyAsync = toDeleteValueWithKeyAsyncFunction(
-        value.deleteValueWithKeyAsync,
-    );
+    const deleteValueWithKeyAsync = toDeleteValueWithKeyAsyncFunction(value.deleteValueWithKeyAsync);
 
-    if (
-        setValueWithKeyAsync === null ||
-        getValueWithKeyAsync === null ||
-        deleteValueWithKeyAsync === null
-    ) {
+    if (setValueWithKeyAsync === null || getValueWithKeyAsync === null || deleteValueWithKeyAsync === null) {
         return null;
     }
 

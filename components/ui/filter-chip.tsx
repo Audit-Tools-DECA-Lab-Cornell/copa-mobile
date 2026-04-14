@@ -1,6 +1,6 @@
-import { Button, Text } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
+import { Button, Text } from "tamagui";
 
 interface FilterChipProps {
     readonly label: string;
@@ -35,11 +35,7 @@ export function FilterChip({ label, isSelected, onPress }: Readonly<FilterChipPr
             <Text
                 color={isSelected ? ds.colors.primary : ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={
-                    layout.isTablet
-                        ? ds.typography.labelMd.fontSize
-                        : ds.typography.labelSm.fontSize
-                }
+                fontSize={layout.isTablet ? ds.typography.labelMd.fontSize : ds.typography.labelSm.fontSize}
                 letterSpacing={layout.isTablet ? 0.3 : 0.2}
             >
                 {label}

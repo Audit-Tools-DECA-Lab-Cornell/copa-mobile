@@ -1,26 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import {
-    ArrowRight,
-    Check,
-    Eye,
-    EyeOff,
-    KeyRound,
-    ShieldCheck,
-    UserRound,
-} from "@tamagui/lucide-icons-2";
+import { ArrowRight, Check, Eye, EyeOff, KeyRound, ShieldCheck, UserRound } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
-import {
-    Button,
-    Checkbox,
-    type ColorTokens,
-    Input,
-    Paragraph,
-    Text,
-    XStack,
-    YStack,
-} from "tamagui";
+import { Button, Checkbox, type ColorTokens, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
@@ -113,11 +96,7 @@ export default function LoginScreen() {
                     justifyContent: "center",
                 }}
             >
-                <YStack
-                    gap="$6"
-                    width="100%"
-                    style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                >
+                <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                     <YStack items="center" gap="$4">
                         <YStack
                             width={88}
@@ -271,10 +250,7 @@ export default function LoginScreen() {
                                 rounded={ds.radii.md}
                                 p="$3"
                             >
-                                <Paragraph
-                                    color={ds.colors.danger}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                >
+                                <Paragraph color={ds.colors.danger} fontFamily={ds.fonts.bodyMedium}>
                                     {visibleErrorMessage}
                                 </Paragraph>
                             </YStack>
@@ -288,10 +264,7 @@ export default function LoginScreen() {
                                 rounded={ds.radii.md}
                                 p="$3"
                             >
-                                <Paragraph
-                                    fontFamily={ds.fonts.bodyRegular}
-                                    color={ds.colors.mutedForeground}
-                                >
+                                <Paragraph fontFamily={ds.fonts.bodyRegular} color={ds.colors.mutedForeground}>
                                     {"Dev password: "}
                                     <Text fontFamily={ds.fonts.monoMedium}>DemoPass123!</Text>
                                 </Paragraph>
@@ -306,9 +279,7 @@ export default function LoginScreen() {
                                 }}
                                 checked={staySignedIn}
                             >
-                                {staySignedIn ? (
-                                    <Check size={16} color={ds.colors.success} />
-                                ) : null}
+                                {staySignedIn ? <Check size={16} color={ds.colors.success} /> : null}
                             </Checkbox>
                             <Paragraph
                                 color={ds.colors.foreground}
@@ -350,17 +321,8 @@ export default function LoginScreen() {
                             </XStack>
                         </Button>
 
-                        <YStack
-                            pt="$5"
-                            gap="$3"
-                            items="center"
-                            borderTopWidth={1}
-                            borderTopColor={ds.colors.border}
-                        >
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                            >
+                        <YStack pt="$5" gap="$3" items="center" borderTopWidth={1} borderTopColor={ds.colors.border}>
+                            <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                                 {t("login.needAccount", { ns: "auth" })}
                             </Paragraph>
                             <Button

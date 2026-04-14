@@ -1,17 +1,17 @@
-import type { AuthSession } from "lib/auth/types";
+import { t } from "i18next";
 import { getApiBaseUrl } from "lib/api-base-url";
 import {
+    AuditDraftPatch,
     auditDraftPatchSchema,
+    AuditDraftSave,
     auditDraftSaveSchema,
+    AuditSession,
     auditSessionSchema,
+    ExecutionMode,
     executionModeSchema,
-    type AuditDraftPatch,
-    type AuditDraftSave,
-    type AuditSession,
-    type ExecutionMode,
 } from "lib/audit/types";
+import type { AuthSession } from "lib/auth/types";
 import { z } from "zod";
-import { t } from "i18next";
 
 /**
  * Structured API error for playspace audit requests.
@@ -77,10 +77,7 @@ export async function createOrResumeAudit(
  * @param auditId UUID of the audit session.
  * @returns Validated audit session payload.
  */
-export async function fetchAuditSession(
-    session: AuthSession,
-    auditId: string,
-): Promise<AuditSession> {
+export async function fetchAuditSession(session: AuthSession, auditId: string): Promise<AuditSession> {
     const payload = await requestJson(session, `/playspace/audits/${encodeURIComponent(auditId)}`, {
         method: "GET",
     });
@@ -109,19 +106,11 @@ export async function saveAuditDraft(
         );
     }
 
-    const payload = await requestJson(
-        session,
-        `/playspace/audits/${encodeURIComponent(auditId)}/draft`,
-        {
-            method: "PATCH",
-            body: JSON.stringify(parsedPatch.data),
-        },
-    );
-    return parsePayload(
-        payload,
-        auditDraftSaveSchema,
-        "Audit draft save response shape is invalid.",
-    );
+    const payload = await requestJson(session, `/playspace/audits/${encodeURIComponent(auditId)}/draft`, {
+        method: "PATCH",
+        body: JSON.stringify(parsedPatch.data),
+    });
+    return parsePayload(payload, auditDraftSaveSchema, "Audit draft save response shape is invalid.");
 }
 
 /**
@@ -137,16 +126,10 @@ export async function submitAudit(
     auditId: string,
     expectedRevision?: number,
 ): Promise<AuditSession> {
-    const payload = await requestJson(
-        session,
-        `/playspace/audits/${encodeURIComponent(auditId)}/submit`,
-        {
-            method: "POST",
-            body: JSON.stringify(
-                expectedRevision === undefined ? {} : { expected_revision: expectedRevision },
-            ),
-        },
-    );
+    const payload = await requestJson(session, `/playspace/audits/${encodeURIComponent(auditId)}/submit`, {
+        method: "POST",
+        body: JSON.stringify(expectedRevision === undefined ? {} : { expected_revision: expectedRevision }),
+    });
     return parsePayload(payload, auditSessionSchema, "Audit session response shape is invalid.");
 }
 
@@ -158,11 +141,7 @@ export async function submitAudit(
  * @param init Fetch request options.
  * @returns Parsed unknown JSON payload.
  */
-export async function requestJson(
-    session: AuthSession,
-    path: string,
-    init: RequestInit,
-): Promise<unknown> {
+export async function requestJson(session: AuthSession, path: string, init: RequestInit): Promise<unknown> {
     const baseUrl = getApiBaseUrl();
     let response: Response;
 
@@ -175,10 +154,7 @@ export async function requestJson(
             },
         });
     } catch (error) {
-        const message =
-            error instanceof Error
-                ? error.message
-                : t("networkRequestFailed", "Network request failed.");
+        const message = error instanceof Error ? error.message : t("networkRequestFailed", "Network request failed.");
         throw new PlayspaceAuditApiError(
             t("unableToReachPlayspaceAuditService", "Unable to reach playspace audit service."),
             0,
@@ -199,10 +175,7 @@ export async function requestJson(
         return await response.json();
     } catch {
         throw new PlayspaceAuditApiError(
-            t(
-                "playspaceAuditServiceReturnedInvalidJson",
-                "Playspace audit service returned invalid JSON.",
-            ),
+            t("playspaceAuditServiceReturnedInvalidJson", "Playspace audit service returned invalid JSON."),
             500,
         );
     }
@@ -281,11 +254,7 @@ async function readErrorDetails(response: Response): Promise<string | null> {
  * @param message Error message when validation fails.
  * @returns Parsed schema output.
  */
-export function parsePayload<TValue>(
-    payload: unknown,
-    schema: z.ZodType<TValue>,
-    message: string,
-): TValue {
+export function parsePayload<TValue>(payload: unknown, schema: z.ZodType<TValue>, message: string): TValue {
     const parsedPayload = schema.safeParse(payload);
     if (!parsedPayload.success) {
         throw new PlayspaceAuditApiError(message, 500, parsedPayload.error.message);

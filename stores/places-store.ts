@@ -1,9 +1,9 @@
-import { create } from "zustand";
-import type { AuthSession } from "lib/auth/types";
-import { fetchAssignedPlaces } from "lib/audit/places-api";
-import type { AuditorPlace } from "lib/audit/places-api";
 import { t } from "i18next";
+import { fetchAssignedPlaces } from "lib/audit/places-api";
+import { create } from "zustand";
 
+import type { AuthSession } from "lib/auth/types";
+import type { AuditorPlace } from "lib/audit/places-api";
 /**
  * State shape for the auditor places store.
  */
@@ -46,10 +46,7 @@ export const usePlacesStore = create<PlacesStoreState>((set) => ({
                 errorMessage: null,
             }));
         } catch (error) {
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : t("unableToLoadPlaces", "Unable to load places.");
+            const message = error instanceof Error ? error.message : t("unableToLoadPlaces", "Unable to load places.");
             set(() => ({
                 isLoading: false,
                 errorMessage: message,

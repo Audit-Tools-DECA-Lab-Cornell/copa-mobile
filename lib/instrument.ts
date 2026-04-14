@@ -112,14 +112,12 @@ export const BASE_PLAYSPACE_INSTRUMENT: PlayspaceInstrument = {
                 {
                     key: "medium",
                     label: "Medium",
-                    description:
-                        "2 to 5 activity zones; e.g. found in a moderate sized park or small school yard",
+                    description: "2 to 5 activity zones; e.g. found in a moderate sized park or small school yard",
                 },
                 {
                     key: "large",
                     label: "Large",
-                    description:
-                        "6 to 10 activity zones; e.g. found in a large city park or large school yard",
+                    description: "6 to 10 activity zones; e.g. found in a large city park or large school yard",
                 },
                 {
                     key: "very_large",
@@ -429,8 +427,7 @@ export const BASE_PLAYSPACE_INSTRUMENT: PlayspaceInstrument = {
             key: "diversity",
             title: "Diversity",
             prompt: "To what extent is there diversity in the provision of this feature/environmental characteristic?",
-            description:
-                "Diversity evaluates whether the provided items offer variety rather than all being the same.",
+            description: "Diversity evaluates whether the provided items offer variety rather than all being the same.",
             options: [
                 {
                     key: "not_applicable",
@@ -1242,8 +1239,7 @@ export const BASE_PLAYSPACE_INSTRUMENT: PlayspaceInstrument = {
         {
             section_key: "section_3_playspace_rules_restrictions",
             title: "Playspace Rules & Restrictions",
-            description:
-                "Playspace Rules & Restrictions evaluates if any rules and restrictions hinder outdoor play.",
+            description: "Playspace Rules & Restrictions evaluates if any rules and restrictions hinder outdoor play.",
             instruction: "Read each statement and answer the questions. This playspace...",
             notes_prompt:
                 "Any comments? Describe one or more recommendations to improve the rules and restrictions of this playsapace:",
@@ -7567,8 +7563,7 @@ export const BASE_PLAYSPACE_INSTRUMENT: PlayspaceInstrument = {
                 "Seating is a supporting feature of playgrounds. More formal seating might be used more by adults who want to supervise children. More informal seating might be used by children for resting, sitting, observing others, linger or socialize with peers but also afford evolving of creative and imaginative play (examples of informal seating: platforms, tree logs, stumps, steps, low raised boundaries, rocks, picknick tables, seating in smaller spaces and in nature \u2026)",
             instruction:
                 "Answers about provision and diversity of seating should be considered against what is appropriate or expected for the size and/or type of playspace. Read each statement and answer the questions. This playspace...",
-            notes_prompt:
-                "Any comments? Describe one or more recommendations to improve seating of this playspace:",
+            notes_prompt: "Any comments? Describe one or more recommendations to improve seating of this playspace:",
             questions: [
                 {
                     question_key: "q_16_1",

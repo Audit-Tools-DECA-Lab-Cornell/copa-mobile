@@ -1,41 +1,32 @@
 import "../tamagui.generated.css";
 
-import { useEffect } from "react";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { useFonts } from "expo-font";
-import {
-    Geist_400Regular,
-    Geist_500Medium,
-    Geist_600SemiBold,
-    Geist_700Bold,
-} from "@expo-google-fonts/geist";
+import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from "@expo-google-fonts/geist";
 import {
     JetBrainsMono_400Regular,
     JetBrainsMono_500Medium,
     JetBrainsMono_600SemiBold,
     JetBrainsMono_700Bold,
 } from "@expo-google-fonts/jetbrains-mono";
-import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import {
     SpaceGrotesk_400Regular,
     SpaceGrotesk_500Medium,
     SpaceGrotesk_600SemiBold,
     SpaceGrotesk_700Bold,
 } from "@expo-google-fonts/space-grotesk";
-import { StatusBar } from "expo-status-bar";
-import { Platform } from "react-native";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Provider } from "components/Provider";
-import {
-    registerAuditBackgroundTaskAsync,
-    unregisterAuditBackgroundTaskAsync,
-} from "lib/audit/background-sync";
+import { useFonts } from "expo-font";
+import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
+import { registerAuditBackgroundTaskAsync, unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { useDesignSystem } from "lib/design-system";
 import { applyLanguagePreference } from "lib/i18n";
 import { logger } from "lib/logger";
-import { useAuthStore } from "stores/auth-store";
-import { usePlayspaceAuditStore } from "stores/audit-store";
-import { usePreferencesStore } from "stores/preferences-store";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { Platform } from "react-native";
+import { usePlayspaceAuditStore } from "stores/audit-store";
+import { useAuthStore } from "stores/auth-store";
+import { usePreferencesStore } from "stores/preferences-store";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -196,8 +187,7 @@ function RootLayoutNav() {
 
         const inAuthGroup = segments[0] === "(auth)";
         const isScreenshotAutomationRoute = String(segments[0] ?? "") === "__screenshot-bootstrap";
-        const canBypassAuthForScreenshotAutomation =
-            SCREENSHOT_AUTOMATION_ENABLED && isScreenshotAutomationRoute;
+        const canBypassAuthForScreenshotAutomation = SCREENSHOT_AUTOMATION_ENABLED && isScreenshotAutomationRoute;
 
         // Allow the screenshot bootstrap route to manage auth state and
         // redirection itself so simulator automation can open any target page.
@@ -221,12 +211,10 @@ function RootLayoutNav() {
 
     return (
         <ThemeProvider value={navigationTheme}>
-            <StatusBar
-                style={resolvedTheme === "light" ? "dark" : "light"}
-                hidden={Platform.OS === "android"}
-            />
             <Stack
                 screenOptions={{
+                    statusBarHidden: Platform.OS === "android",
+                    statusBarStyle: resolvedTheme === "light" ? "dark" : "light",
                     contentStyle: {
                         backgroundColor: ds.colors.background,
                     },

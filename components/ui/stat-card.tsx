@@ -1,6 +1,6 @@
-import { Paragraph, Text, YStack } from "tamagui";
-import { useDesignSystem, isGlassUiEnabled } from "lib/design-system";
+import { isGlassUiEnabled, useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
+import { Paragraph, Text, YStack } from "tamagui";
 
 interface StatCardProps {
     readonly label: string;
@@ -16,13 +16,7 @@ interface StatCardProps {
  * @param props Card label, metric value, accent color, and optional helper text.
  * @returns Styled metric card surface.
  */
-export function StatCard({
-    label,
-    value,
-    accentColor,
-    helperText,
-    minHeight,
-}: Readonly<StatCardProps>) {
+export function StatCard({ label, value, accentColor, helperText, minHeight }: Readonly<StatCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const isGlassEnabled = isGlassUiEnabled();
@@ -48,16 +42,8 @@ export function StatCard({
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.labelLg.fontSize
-                            : ds.typography.labelMd.fontSize
-                    }
-                    lineHeight={
-                        layout.isTablet
-                            ? ds.typography.labelLg.lineHeight
-                            : ds.typography.labelMd.lineHeight
-                    }
+                    fontSize={layout.isTablet ? ds.typography.labelLg.fontSize : ds.typography.labelMd.fontSize}
+                    lineHeight={layout.isTablet ? ds.typography.labelLg.lineHeight : ds.typography.labelMd.lineHeight}
                     textTransform="uppercase"
                     letterSpacing={layout.isTablet ? 1.05 : 0.7}
                 >
@@ -65,16 +51,8 @@ export function StatCard({
                 </Paragraph>
                 <Text
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.metricSm.fontSize
-                            : ds.typography.metricXs.fontSize
-                    }
-                    lineHeight={
-                        layout.isTablet
-                            ? ds.typography.metricSm.lineHeight
-                            : ds.typography.metricXs.lineHeight
-                    }
+                    fontSize={layout.isTablet ? ds.typography.metricSm.fontSize : ds.typography.metricXs.fontSize}
+                    lineHeight={layout.isTablet ? ds.typography.metricSm.lineHeight : ds.typography.metricXs.lineHeight}
                     style={{ color: accentColor, flexShrink: 1 }}
                 >
                     {value}
@@ -84,16 +62,8 @@ export function StatCard({
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.bodySm.fontSize
-                            : ds.typography.bodyXs.fontSize
-                    }
-                    lineHeight={
-                        layout.isTablet
-                            ? ds.typography.bodySm.lineHeight
-                            : ds.typography.bodyXs.lineHeight
-                    }
+                    fontSize={layout.isTablet ? ds.typography.bodySm.fontSize : ds.typography.bodyXs.fontSize}
+                    lineHeight={layout.isTablet ? ds.typography.bodySm.lineHeight : ds.typography.bodyXs.lineHeight}
                 >
                     {helperText}
                 </Paragraph>

@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from "react";
 import { useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo } from "react";
 
 const DEFAULT_SCREENSHOT_SCROLL_DELAY_MS = 350;
 

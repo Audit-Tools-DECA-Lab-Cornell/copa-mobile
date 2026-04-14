@@ -335,9 +335,7 @@ function readEffectiveAuditSyncPhase(
         return syncState.phase;
     }
 
-    return hasDirtyFragmentsForAudit(auditId, dirtyMeta, dirtyPreAudit, dirtySections)
-        ? "dirty"
-        : "idle";
+    return hasDirtyFragmentsForAudit(auditId, dirtyMeta, dirtyPreAudit, dirtySections) ? "dirty" : "idle";
 }
 
 /**
@@ -573,9 +571,7 @@ async function ensurePlaceAudit(
         const data = auditData$.peek();
         const currentSession =
             data.sessions_by_audit_id[nextSession.audit_id] ??
-            data.sessions_by_pair_key[
-                getProjectPlaceKey(nextSession.project_id, nextSession.place_id)
-            ] ??
+            data.sessions_by_pair_key[getProjectPlaceKey(nextSession.project_id, nextSession.place_id)] ??
             null;
         const merged = applyFetchedSessionSnapshot({
             currentSession,
@@ -637,9 +633,7 @@ async function refreshAudit(session: AuthSession, auditId: string): Promise<Audi
         const data = auditData$.peek();
         const currentSession =
             data.sessions_by_audit_id[nextSession.audit_id] ??
-            data.sessions_by_pair_key[
-                getProjectPlaceKey(nextSession.project_id, nextSession.place_id)
-            ] ??
+            data.sessions_by_pair_key[getProjectPlaceKey(nextSession.project_id, nextSession.place_id)] ??
             null;
         const merged = applyFetchedSessionSnapshot({
             currentSession,
@@ -949,10 +943,7 @@ function prepareAutomaticSyncAudits(trigger: AutomaticSyncTrigger): string[] {
         dirtyPreAudit: data.dirty_pre_audit,
         dirtyMeta: data.dirty_meta,
     });
-    const candidateAuditIds = new Set<string>([
-        ...syncableAuditIds,
-        ...Object.keys(data.sync_state_by_audit_id),
-    ]);
+    const candidateAuditIds = new Set<string>([...syncableAuditIds, ...Object.keys(data.sync_state_by_audit_id)]);
     const updatedAt = new Date().toISOString();
     const nextSyncStateByAuditId = { ...data.sync_state_by_audit_id };
     const reopenedAuditIds: string[] = [];
@@ -1046,10 +1037,7 @@ function prepareAuditForExplicitSubmitRetry(auditId: string): void {
  *
  * @param session Authenticated mobile session.
  */
-async function resolvePendingSubmitStates(
-    session: AuthSession,
-    requestedAuditIds?: readonly string[],
-): Promise<void> {
+async function resolvePendingSubmitStates(session: AuthSession, requestedAuditIds?: readonly string[]): Promise<void> {
     const data = auditData$.peek();
     for (const auditId of listPendingSubmitResolutionAuditIds({
         syncStateByAuditId: data.sync_state_by_audit_id,
@@ -1104,9 +1092,7 @@ async function resolvePendingSubmitStates(
 
             const ownedCurrentSession =
                 latestData.sessions_by_audit_id[latestSession.audit_id] ??
-                latestData.sessions_by_pair_key[
-                    getProjectPlaceKey(latestSession.project_id, latestSession.place_id)
-                ] ??
+                latestData.sessions_by_pair_key[getProjectPlaceKey(latestSession.project_id, latestSession.place_id)] ??
                 null;
             const rebasedSession = applyFetchedSessionSnapshot({
                 currentSession: ownedCurrentSession,
@@ -1129,18 +1115,8 @@ async function resolvePendingSubmitStates(
             });
             const nextSyncStateByAuditId =
                 resolved.phase === "submitted"
-                    ? writeAuditSyncState(
-                          latestData.sync_state_by_audit_id,
-                          auditId,
-                          "submitted",
-                          updatedAt,
-                      )
-                    : writeAuditSyncState(
-                          latestData.sync_state_by_audit_id,
-                          auditId,
-                          resolved.phase,
-                          updatedAt,
-                      );
+                    ? writeAuditSyncState(latestData.sync_state_by_audit_id, auditId, "submitted", updatedAt)
+                    : writeAuditSyncState(latestData.sync_state_by_audit_id, auditId, resolved.phase, updatedAt);
             const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
                 session: resolved.session,
                 dirtyMeta: resolved.dirtyMeta,
@@ -1277,12 +1253,7 @@ async function flushSingleAuditPendingChangesInternal(
     });
     if (patchSnapshot === null) {
         auditData$.sync_state_by_audit_id.set(
-            writeAuditSyncState(
-                auditData$.sync_state_by_audit_id.peek(),
-                auditId,
-                "idle",
-                new Date().toISOString(),
-            ),
+            writeAuditSyncState(auditData$.sync_state_by_audit_id.peek(), auditId, "idle", new Date().toISOString()),
         );
         return {
             auditId,
@@ -1374,10 +1345,7 @@ async function flushSingleAuditPendingChangesInternal(
                     auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
                     auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
                     auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
-                    if (
-                        resolution.action === "terminalize_submitted" ||
-                        resolution.recoveredWithoutRetry
-                    ) {
+                    if (resolution.action === "terminalize_submitted" || resolution.recoveredWithoutRetry) {
                         auditData$.last_successful_sync_at.set(updatedAt);
                     }
                 });
@@ -1394,11 +1362,7 @@ async function flushSingleAuditPendingChangesInternal(
                 }
 
                 try {
-                    const retrySaveResult = await saveAuditDraft(
-                        session,
-                        auditId,
-                        resolution.retrySnapshot.patch,
-                    );
+                    const retrySaveResult = await saveAuditDraft(session, auditId, resolution.retrySnapshot.patch);
                     acknowledgeSave(retrySaveResult, resolution.retrySnapshot);
                     return {
                         auditId,
@@ -1408,14 +1372,10 @@ async function flushSingleAuditPendingChangesInternal(
                     log.withError(retryError).error("retry save failed");
                     const updatedAt = new Date().toISOString();
                     const nextPhase =
-                        retryError instanceof PlayspaceAuditApiError &&
-                        retryError.statusCode === 409
+                        retryError instanceof PlayspaceAuditApiError && retryError.statusCode === 409
                             ? "conflict"
                             : deriveBlockedPhaseFromError(retryError);
-                    const message = formatAuditErrorMessage(
-                        retryError,
-                        t("audit:errors.syncFallback"),
-                    );
+                    const message = formatAuditErrorMessage(retryError, t("audit:errors.syncFallback"));
                     auditData$.sync_state_by_audit_id.set(
                         writeAuditSyncState(
                             auditData$.sync_state_by_audit_id.peek(),
@@ -1432,10 +1392,7 @@ async function flushSingleAuditPendingChangesInternal(
                 }
             } catch (recoveryError) {
                 log.withError(recoveryError).error("conflict recovery failed");
-                const message = formatAuditErrorMessage(
-                    recoveryError,
-                    t("audit:errors.syncFallback"),
-                );
+                const message = formatAuditErrorMessage(recoveryError, t("audit:errors.syncFallback"));
                 auditData$.sync_state_by_audit_id.set(
                     writeAuditSyncState(
                         auditData$.sync_state_by_audit_id.peek(),
@@ -1524,10 +1481,7 @@ function flushPendingChanges(session: AuthSession): Promise<FlushPendingChangesR
     return flushAuditIds(session);
 }
 
-async function submitAuditSessionInternal(
-    session: AuthSession,
-    auditId: string,
-): Promise<AuditSession> {
+async function submitAuditSessionInternal(session: AuthSession, auditId: string): Promise<AuditSession> {
     auditUI$.errorMessage.set(null);
     prepareAuditForExplicitSubmitRetry(auditId);
     const currentSyncState = auditData$.sync_state_by_audit_id.peek()[auditId];
@@ -1551,22 +1505,14 @@ async function submitAuditSessionInternal(
 
     const latestPostFlushSession = auditData$.sessions_by_audit_id[auditId]?.peek();
     const latestPostFlushSyncState = auditData$.sync_state_by_audit_id.peek()[auditId];
-    if (
-        latestPostFlushSession?.status === "SUBMITTED" ||
-        latestPostFlushSyncState?.phase === "submitted"
-    ) {
+    if (latestPostFlushSession?.status === "SUBMITTED" || latestPostFlushSyncState?.phase === "submitted") {
         if (latestPostFlushSession !== undefined) {
             return latestPostFlushSession;
         }
     }
 
     auditData$.sync_state_by_audit_id.set(
-        writeAuditSyncState(
-            auditData$.sync_state_by_audit_id.peek(),
-            auditId,
-            "submitting",
-            new Date().toISOString(),
-        ),
+        writeAuditSyncState(auditData$.sync_state_by_audit_id.peek(), auditId, "submitting", new Date().toISOString()),
     );
 
     try {
@@ -1581,9 +1527,7 @@ async function submitAuditSessionInternal(
             }) === null
         ) {
             const currentPairOwner =
-                data.sessions_by_pair_key[
-                    getProjectPlaceKey(nextSession.project_id, nextSession.place_id)
-                ];
+                data.sessions_by_pair_key[getProjectPlaceKey(nextSession.project_id, nextSession.place_id)];
             return currentPairOwner ?? nextSession;
         }
         const updatedAt = new Date().toISOString();
@@ -1597,12 +1541,7 @@ async function submitAuditSessionInternal(
             dirtyMeta: data.dirty_meta,
             dirtyPreAudit: data.dirty_pre_audit,
             dirtySections: data.dirty_sections,
-            syncStateByAuditId: writeAuditSyncState(
-                data.sync_state_by_audit_id,
-                auditId,
-                "submitted",
-                updatedAt,
-            ),
+            syncStateByAuditId: writeAuditSyncState(data.sync_state_by_audit_id, auditId, "submitted", updatedAt),
         });
         const nextPrunedAuditState = pruneAuditStateForAudit({
             auditId: nextSessionMaps.displacedAuditId,
@@ -1632,9 +1571,7 @@ async function submitAuditSessionInternal(
                 const data = auditData$.peek();
                 const currentSession =
                     data.sessions_by_audit_id[latestSession.audit_id] ??
-                    data.sessions_by_pair_key[
-                        getProjectPlaceKey(latestSession.project_id, latestSession.place_id)
-                    ] ??
+                    data.sessions_by_pair_key[getProjectPlaceKey(latestSession.project_id, latestSession.place_id)] ??
                     auditSession ??
                     latestSession;
                 const resolution = resolveSubmitConflict({
@@ -1645,10 +1582,7 @@ async function submitAuditSessionInternal(
                     dirtySections: data.dirty_sections,
                 });
                 const updatedAt = new Date().toISOString();
-                const conflictMessage = formatAuditErrorMessage(
-                    error,
-                    t("audit:errors.submitFallback"),
-                );
+                const conflictMessage = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
                 const nextSessionMaps = upsertAuditSessionMaps({
                     sessionsByAuditId: data.sessions_by_audit_id,
                     sessionsByPairKey: data.sessions_by_pair_key,
@@ -1683,9 +1617,7 @@ async function submitAuditSessionInternal(
                     auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
                     auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
                     auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
-                    auditUI$.errorMessage.set(
-                        resolution.action === "terminalize_submitted" ? null : conflictMessage,
-                    );
+                    auditUI$.errorMessage.set(resolution.action === "terminalize_submitted" ? null : conflictMessage);
                     if (resolution.action === "terminalize_submitted") {
                         auditData$.last_successful_sync_at.set(updatedAt);
                     }
@@ -1696,10 +1628,7 @@ async function submitAuditSessionInternal(
                 }
                 requiresExplicitResubmit = true;
             } catch (recoveryError) {
-                const message = formatAuditErrorMessage(
-                    recoveryError,
-                    t("audit:errors.submitFallback"),
-                );
+                const message = formatAuditErrorMessage(recoveryError, t("audit:errors.submitFallback"));
                 batch(() => {
                     auditData$.sync_state_by_audit_id.set(
                         writeAuditSyncState(

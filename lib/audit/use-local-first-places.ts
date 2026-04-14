@@ -1,12 +1,12 @@
-import { useMemo } from "react";
-import type { AuditorPlace } from "lib/audit/places-api";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getCombinedConstructScore } from "lib/audit/score-helpers";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
-import type { AuditSession, PlayspaceInstrument } from "lib/audit/types";
-import { usePlacesStore } from "stores/places-store";
+import { useMemo } from "react";
 import { usePlayspaceAuditStore } from "stores/audit-store";
+import { usePlacesStore } from "stores/places-store";
 
+import type { AuditorPlace } from "lib/audit/places-api";
+import type { AuditSession, PlayspaceInstrument } from "lib/audit/types";
 /**
  * Compute a local-first progress percent from the in-memory aggregate.
  *
@@ -14,10 +14,7 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
  * @param instrument Current canonical instrument.
  * @returns Draft progress percentage rounded to two decimals.
  */
-export function getLocalProgressPercent(
-    auditSession: AuditSession,
-    instrument: PlayspaceInstrument,
-): number | null {
+export function getLocalProgressPercent(auditSession: AuditSession, instrument: PlayspaceInstrument): number | null {
     const executionMode = auditSession.selected_execution_mode ?? auditSession.meta.execution_mode;
     const visibleSections = getVisibleSections(
         instrument,
@@ -73,10 +70,8 @@ export function overlayLocalSessionOntoPlace(
         submitted_at: auditSession.submitted_at,
         progress_percent: getLocalProgressPercent(auditSession, instrument),
         score_totals: auditSession.scores.overall,
-        summary_score:
-            getCombinedConstructScore(auditSession.scores.overall) ?? place.summary_score,
-        selected_execution_mode:
-            auditSession.selected_execution_mode ?? auditSession.meta.execution_mode,
+        summary_score: getCombinedConstructScore(auditSession.scores.overall) ?? place.summary_score,
+        selected_execution_mode: auditSession.selected_execution_mode ?? auditSession.meta.execution_mode,
     };
 }
 

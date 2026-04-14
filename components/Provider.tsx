@@ -1,8 +1,8 @@
-import { TamaguiProvider, type TamaguiProviderProps } from "tamagui";
 import { ToastProvider, ToastViewport } from "@tamagui/toast";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CurrentToast } from "./CurrentToast";
+import { TamaguiProvider, type TamaguiProviderProps } from "tamagui";
 import { config } from "../tamagui.config";
+import { CurrentToast } from "./CurrentToast";
 
 interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "defaultTheme"> {
     /** Tamagui theme name — typically "light" or "dark". */

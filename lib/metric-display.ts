@@ -15,9 +15,7 @@ interface MetricDisplayState {
  * @param options Pending copy, raw numeric value, and formatter.
  * @returns Display-ready card state for metric components.
  */
-export function createMetricDisplayState(
-    options: Readonly<CreateMetricDisplayStateOptions>,
-): MetricDisplayState {
+export function createMetricDisplayState(options: Readonly<CreateMetricDisplayStateOptions>): MetricDisplayState {
     if (options.value === null) {
         return {
             value: "--",

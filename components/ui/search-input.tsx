@@ -42,9 +42,7 @@ export function SearchInput({ value, onChangeText, placeholder }: Readonly<Searc
                 placeholderTextColor={ds.colors.placeholderColor as ColorTokens}
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
-                fontSize={
-                    layout.isTablet ? ds.typography.bodyLg.fontSize : ds.typography.bodyMd.fontSize
-                }
+                fontSize={layout.isTablet ? ds.typography.bodyLg.fontSize : ds.typography.bodyMd.fontSize}
             />
         </XStack>
     );

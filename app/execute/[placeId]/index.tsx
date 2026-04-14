@@ -15,7 +15,7 @@ import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import { CollapsibleCard } from "components/ui/collapsible-card";
 import { FilterChip } from "components/ui/filter-chip";
-import { useDesignSystem } from "lib/design-system";
+import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import type { ExecutionMode } from "lib/audit/types";
 import { getExecutionModeShortLabel } from "lib/i18n/format";
@@ -61,9 +61,7 @@ export default function ExecutePlaceScreen() {
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
     const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
-    const applyLocalExecutionMode = usePlayspaceAuditStore(
-        (state) => state.applyLocalExecutionMode,
-    );
+    const applyLocalExecutionMode = usePlayspaceAuditStore((state) => state.applyLocalExecutionMode);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const isLoadingAudit = usePlayspaceAuditStore((state) => state.isLoadingAudit);
     const isSyncing = usePlayspaceAuditStore((state) => state.isSyncing);
@@ -77,8 +75,7 @@ export default function ExecutePlaceScreen() {
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
-    const pairKey =
-        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
     const isCurrentAuditUserReady = authSession !== null && currentUserId === authSession.user.id;
 
@@ -91,6 +88,7 @@ export default function ExecutePlaceScreen() {
             headerBlurEffect: "light",
             headerStyle: { backgroundColor: ds.colors.surface },
             headerTintColor: ds.colors.primary,
+            contentStyle: { paddingTop: 20 },
             headerTitleStyle: {
                 color: ds.colors.foreground,
                 fontFamily: ds.fonts.bodyBold,
@@ -118,21 +116,37 @@ export default function ExecutePlaceScreen() {
         });
         if (auditSession !== undefined) {
             const mode = getExecutionModeShortLabel(auditSession.selected_execution_mode, t);
-            const suffix = mode.length > 0 ? ` - ${mode}` : "";
+            const suffix = mode.length > 0 ? mode : "";
 
             navigation.setOptions({
                 ...themedHeaderOptions,
-                title: `${auditSession.place_name}${suffix}`,
+                headerTitle: () => (
+                    <YStack justify="center" gap="$1.5" mb="$2" mt="$-2">
+                        <Text
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.titleLg.fontSize}
+                            lineHeight={ds.typography.titleLg.lineHeight}
+                        >
+                            {auditSession.place_name}
+                        </Text>
+                        <Text
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyRegular}
+                            fontSize={ds.typography.bodyLg.fontSize}
+                            lineHeight={ds.typography.bodyLg.lineHeight}
+                        >
+                            {suffix}
+                        </Text>
+                    </YStack>
+                ),
             });
         }
-    }, [themedHeaderOptions, navigation, auditSession, router, t]);
+    }, [themedHeaderOptions, navigation, auditSession, router, t, ds]);
 
     const pendingSectionCount =
-        auditSession === undefined
-            ? 0
-            : Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
-    const hasPendingPreAudit =
-        auditSession !== undefined && dirtyPreAudit[auditSession.audit_id] !== undefined;
+        auditSession === undefined ? 0 : Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
+    const hasPendingPreAudit = auditSession !== undefined && dirtyPreAudit[auditSession.audit_id] !== undefined;
     const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
     const canEditInputs =
         auditSession !== undefined &&
@@ -141,7 +155,6 @@ export default function ExecutePlaceScreen() {
             phase: syncStateByAuditId[auditSession.audit_id]?.phase,
         });
     const preambleBlocks = instrument.preamble.map(parsePreambleBlock);
-    const placeLocality = getPlaceLocality(auditSession, t);
     const selectedMode = auditSession?.selected_execution_mode ?? null;
     const visibleSections = useMemo(() => {
         if (auditSession === undefined) {
@@ -180,9 +193,7 @@ export default function ExecutePlaceScreen() {
         return buildExecuteOverviewSummary(sectionOverviewRows);
     }, [sectionOverviewRows]);
     const flowSubject =
-        selectedMode === null
-            ? null
-            : t(`subjects.${getExecuteFlowSubject(selectedMode)}`, { ns: "audit" });
+        selectedMode === null ? null : t(`subjects.${getExecuteFlowSubject(selectedMode)}`, { ns: "audit" });
     const firstIncompleteSectionKey = sectionOverviewSummary.firstIncompleteSectionKey;
 
     const scrollExecutePlaceToOffset = useCallback((offset: number) => {
@@ -259,18 +270,12 @@ export default function ExecutePlaceScreen() {
             opacity={selectedMode === null ? 0.6 : 1}
             pressStyle={{ opacity: 0.92, scale: 0.985 }}
             onPress={() => {
-                router.push(
-                    `/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}` as Href,
-                );
+                router.push(`/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}` as Href);
             }}
         >
             <XStack items="center" gap="$2">
                 <Text
-                    color={
-                        selectedMode === null
-                            ? ds.colors.mutedForeground
-                            : ds.colors.primaryForeground
-                    }
+                    color={selectedMode === null ? ds.colors.mutedForeground : ds.colors.primaryForeground}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={ds.typography.labelLg.fontSize}
                     textTransform="uppercase"
@@ -374,6 +379,7 @@ export default function ExecutePlaceScreen() {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
                 maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
+                includeTopPadding: false,
             })}
         >
             <YStack gap="$3">
@@ -392,27 +398,13 @@ export default function ExecutePlaceScreen() {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.displayLg.fontSize
-                            : ds.typography.displayMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
                     lineHeight={
-                        layout.isTablet
-                            ? ds.typography.displayLg.lineHeight
-                            : ds.typography.displayMd.lineHeight
+                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
                     }
                 >
                     {auditSession.place_name}
                 </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                    textTransform="capitalize"
-                >
-                    {placeLocality}
-                </Paragraph>
                 <Paragraph
                     color={ds.colors.secondaryForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -556,9 +548,7 @@ function ExecutionModeCard({
                                         justify="center"
                                         rounded={ds.radii.full}
                                         borderWidth={2}
-                                        borderColor={
-                                            isSelected ? ds.colors.primary : ds.colors.border
-                                        }
+                                        borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                                         bg={isSelected ? ds.colors.primarySoft : ds.colors.surface}
                                         mt="$1"
                                     >
@@ -573,11 +563,7 @@ function ExecutionModeCard({
                                     </YStack>
                                     <YStack flex={1} gap="$2.5">
                                         <Text
-                                            color={
-                                                isSelected
-                                                    ? ds.colors.primary
-                                                    : ds.colors.foreground
-                                            }
+                                            color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                             fontFamily={ds.fonts.bodyBold}
                                             fontSize={ds.typography.bodyMd.fontSize}
                                             lineHeight={ds.typography.bodyMd.lineHeight}
@@ -679,14 +665,6 @@ function SectionReviewCard({
                 >
                     {t("overview.sections")}
                 </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                    lineHeight={ds.typography.bodyMd.lineHeight}
-                >
-                    {t("overview.reviewDescription")}
-                </Paragraph>
             </YStack>
 
             <XStack gap="$2" flexWrap="wrap">
@@ -842,30 +820,38 @@ function PreambleBlockCard({ block }: Readonly<PreambleBlockCardProps>) {
     const layout = useResponsiveLayout();
     const isScaleBlock = block.headingLevel === 3;
 
+    let scaleKey = "quantity";
+    if (isScaleBlock && block.heading) {
+        const headingLower = block.heading.toLowerCase();
+        if (headingLower.includes("diversity")) {
+            scaleKey = "diversity";
+        } else if (headingLower.includes("challenge")) {
+            scaleKey = "challenge";
+        } else if (headingLower.includes("sociability")) {
+            scaleKey = "sociability";
+        }
+    }
+
+    const blockColor = isScaleBlock ? getScaleAccentColor(scaleKey, ds.colors) : ds.colors.border;
+    const blockSoftColor = isScaleBlock ? getScaleSoftColor(scaleKey, ds.colors) : ds.colors.surfaceMuted;
+    const headingColor = isScaleBlock ? getScaleAccentColor(scaleKey, ds.colors) : ds.colors.foreground;
+
     return (
         <YStack
             rounded={ds.radii.sm}
             borderWidth={1}
-            borderColor={isScaleBlock ? ds.colors.primarySoft : ds.colors.border}
-            bg={isScaleBlock ? ds.colors.primarySoft : ds.colors.surfaceMuted}
+            borderColor={blockColor}
+            bg={blockSoftColor}
             px={layout.cardPadding}
             py={layout.isTablet ? "$4" : "$3.5"}
             gap="$2.5"
         >
             {block.heading ? (
                 <Text
-                    color={isScaleBlock ? ds.colors.primary : ds.colors.foreground}
+                    color={headingColor as ColorTokens}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={
-                        isScaleBlock
-                            ? ds.typography.titleMd.fontSize
-                            : ds.typography.titleLg.fontSize
-                    }
-                    lineHeight={
-                        isScaleBlock
-                            ? ds.typography.titleMd.lineHeight
-                            : ds.typography.titleLg.lineHeight
-                    }
+                    fontSize={isScaleBlock ? ds.typography.titleMd.fontSize : ds.typography.titleLg.fontSize}
+                    lineHeight={isScaleBlock ? ds.typography.titleMd.lineHeight : ds.typography.titleLg.lineHeight}
                 >
                     {block.heading}
                 </Text>
@@ -882,13 +868,9 @@ function PreambleBlockCard({ block }: Readonly<PreambleBlockCardProps>) {
                 }
 
                 return (
-                    <XStack
-                        key={`${block.heading}-line-${index.toString()}`}
-                        gap="$2"
-                        items="flex-start"
-                    >
+                    <XStack key={`${block.heading}-line-${index.toString()}`} gap="$2" items="flex-start">
                         <Text
-                            color={isScaleBlock ? ds.colors.primary : ds.colors.foreground}
+                            color={headingColor as ColorTokens}
                             fontFamily={ds.fonts.bodyBold}
                             fontSize={ds.typography.bodySm.fontSize}
                             lineHeight={ds.typography.bodyMd.lineHeight}
@@ -896,10 +878,7 @@ function PreambleBlockCard({ block }: Readonly<PreambleBlockCardProps>) {
                             {line.marker ?? (line.kind === "ordered" ? "1." : "•")}
                         </Text>
                         <YStack flex={1}>
-                            <RichTextLine
-                                text={line.text}
-                                color={ds.colors.secondaryForeground as ColorTokens}
-                            />
+                            <RichTextLine text={line.text} color={ds.colors.secondaryForeground as ColorTokens} />
                         </YStack>
                     </XStack>
                 );
@@ -1048,11 +1027,7 @@ interface AuditSyncStatusCardProps {
  * @param props Sync-state presentation props.
  * @returns Status card or null when there is nothing noteworthy to show.
  */
-function AuditSyncStatusCard({
-    hasPendingLocalChanges,
-    isSyncing,
-    lastSyncError,
-}: Readonly<AuditSyncStatusCardProps>) {
+function AuditSyncStatusCard({ hasPendingLocalChanges, isSyncing, lastSyncError }: Readonly<AuditSyncStatusCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
@@ -1063,11 +1038,7 @@ function AuditSyncStatusCard({
         return null;
     }
 
-    const tone = isSyncing
-        ? ds.colors.primary
-        : hasSyncFailure
-          ? ds.colors.danger
-          : ds.colors.mutedForeground;
+    const tone = isSyncing ? ds.colors.primary : hasSyncFailure ? ds.colors.danger : ds.colors.mutedForeground;
     const cardBackgroundColor = isSyncing
         ? ds.colors.primarySoft
         : hasSyncFailure
@@ -1131,21 +1102,11 @@ interface CenteredMessageCardProps {
  * @param props Message card props.
  * @returns Full-screen centered message card.
  */
-function CenteredMessageCard({
-    title,
-    message,
-    actionLabel,
-    onAction,
-}: Readonly<CenteredMessageCardProps>) {
+function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     return (
-        <YStack
-            flex={1}
-            justify="center"
-            px={layout.screenPaddingHorizontal}
-            bg={ds.colors.background}
-        >
+        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
@@ -1220,21 +1181,4 @@ export function getOverviewErrorTitle(errorMessage: string, t: TFunction): strin
     return errorMessage.includes("403")
         ? t("overview.accessDeniedTitle", { ns: "audit" })
         : t("overview.auditUnavailableTitle", { ns: "audit" });
-}
-
-/**
- * Resolve place locality copy for the overview header.
- *
- * @param auditSession Loaded audit session for the active place.
- * @param t Translation function.
- * @returns Place type label or fallback copy.
- */
-export function getPlaceLocality(
-    auditSession: { readonly place_type?: string | null } | undefined,
-    t: TFunction,
-): string {
-    if (auditSession === undefined) {
-        return "";
-    }
-    return auditSession.place_type ?? t("place.assignedPlace", { ns: "common" });
 }

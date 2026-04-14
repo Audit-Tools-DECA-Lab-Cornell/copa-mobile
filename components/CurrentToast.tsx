@@ -1,7 +1,8 @@
-import { AlertTriangle, CheckCircle2, Info, X } from "@tamagui/lucide-icons-2";
-import { Toast, useToastController, useToastState } from "@tamagui/toast";
 import { useTranslation } from "react-i18next";
 import { Button, H4, XStack, YStack } from "tamagui";
+
+import { AlertTriangle, CheckCircle2, Info, X } from "@tamagui/lucide-icons-2";
+import { Toast, useToastController, useToastState } from "@tamagui/toast";
 
 type ToastVariant = "success" | "error" | "info";
 type ToastThemeName = "success" | "error" | "accent";
@@ -92,12 +93,7 @@ export function CurrentToast() {
             <XStack gap="$3" items="flex-start" width="100%" justify="center">
                 <YStack flex={1} gap="$2.5" pt="$0.5" justify="center">
                     <XStack flex={1} justify="flex-start" items="center" gap="$2">
-                        <YStack
-                            theme={toastTheme}
-                            items="center"
-                            justify="center"
-                            background="$color7"
-                        >
+                        <YStack theme={toastTheme} items="center" justify="center" background="$color7">
                             {renderToastIcon(toastVariant)}
                         </YStack>
                         <Toast.Title
@@ -152,10 +148,7 @@ export function ToastControl() {
                 <Button
                     onPress={() => {
                         toast.show(t("toast.success", { ns: "common" }), {
-                            message: t(
-                                "dontWorryWeveGotYourData",
-                                "Don't worry, we've got your data.",
-                            ),
+                            message: t("dontWorryWeveGotYourData", "Don't worry, we've got your data."),
                             variant: "success",
                         });
                     }}

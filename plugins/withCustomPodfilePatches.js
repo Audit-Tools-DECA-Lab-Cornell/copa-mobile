@@ -95,10 +95,7 @@ function buildPostIntegrateHook() {
 }
 
 function removeTaggedAppend(src, tag) {
-    const pattern = new RegExp(
-        `\\n?# @generated begin ${tag}[\\s\\S]*?# @generated end ${tag}\\n?`,
-        "g",
-    );
+    const pattern = new RegExp(`\\n?# @generated begin ${tag}[\\s\\S]*?# @generated end ${tag}\\n?`, "g");
     return src.replace(pattern, "\n").replace(/\n{3,}/g, "\n\n");
 }
 

@@ -5,6 +5,7 @@ import {
     getVisibleSections,
     isRequiredPreAuditComplete,
 } from "./selectors";
+
 import type {
     AuditDraftPatch,
     AuditDraftSave,
@@ -82,10 +83,7 @@ interface CanEditAuditInputsArgs {
     readonly phase: AuditSyncPhase | null | undefined;
 }
 
-type CleanupComparable =
-    | string
-    | readonly string[]
-    | Readonly<Record<string, string | readonly string[]>>;
+type CleanupComparable = string | readonly string[] | Readonly<Record<string, string | readonly string[]>>;
 
 interface ShouldPersistCleanupWriteArgs {
     readonly currentValue: CleanupComparable;
@@ -386,11 +384,7 @@ export function createSingleFlightRunner<TArgs extends readonly unknown[], TResu
  * @param runner Async runner that should execute single-flight per key.
  * @returns Wrapped runner that reuses the in-flight promise for each key.
  */
-export function createKeyedSingleFlightRunner<
-    TKey extends string,
-    TArgs extends readonly unknown[],
-    TResult,
->(
+export function createKeyedSingleFlightRunner<TKey extends string, TArgs extends readonly unknown[], TResult>(
     readKey: (...args: TArgs) => TKey,
     runner: (...args: TArgs) => Promise<TResult>,
 ): (...args: TArgs) => Promise<TResult> {
@@ -452,9 +446,7 @@ export function shouldPersistCleanupWrite(args: ShouldPersistCleanupWriteArgs): 
  * @returns True when at least one audit is waiting in `resolving_submit`.
  */
 export function hasPendingSubmitResolution(syncStateByAuditId: AuditSyncStateByAuditId): boolean {
-    return Object.values(syncStateByAuditId).some(
-        (syncState) => syncState.phase === "resolving_submit",
-    );
+    return Object.values(syncStateByAuditId).some((syncState) => syncState.phase === "resolving_submit");
 }
 
 /**
@@ -464,9 +456,7 @@ export function hasPendingSubmitResolution(syncStateByAuditId: AuditSyncStateByA
  * @param args Current sync-state and dirty-state maps plus optional target ids.
  * @returns Audit ids that still require submit-resolution retry work.
  */
-export function listPendingSubmitResolutionAuditIds(
-    args: ListPendingSubmitResolutionAuditIdsArgs,
-): string[] {
+export function listPendingSubmitResolutionAuditIds(args: ListPendingSubmitResolutionAuditIdsArgs): string[] {
     const candidateAuditIds =
         args.requestedAuditIds === undefined
             ? Object.keys(args.syncStateByAuditId)
@@ -500,8 +490,7 @@ export function listPendingSubmitResolutionAuditIds(
 export function shouldRetrySubmitResolution(args: SubmitResolutionRetryArgs): boolean {
     return (
         args.currentPhase === "resolving_submit" ||
-        ((args.currentPhase === "blocked_server" || args.currentPhase === "blocked_network") &&
-            !args.hasDirtyFragments)
+        ((args.currentPhase === "blocked_server" || args.currentPhase === "blocked_network") && !args.hasDirtyFragments)
     );
 }
 
@@ -512,18 +501,12 @@ export function shouldRetrySubmitResolution(args: SubmitResolutionRetryArgs): bo
  * @param args Current phase, dirty-fragment flag, and trigger.
  * @returns True when the trigger should retry submit-resolution work now.
  */
-export function shouldRetrySubmitResolutionOnTrigger(
-    args: SubmitResolutionTriggerRetryArgs,
-): boolean {
+export function shouldRetrySubmitResolutionOnTrigger(args: SubmitResolutionTriggerRetryArgs): boolean {
     if (shouldRetrySubmitResolution(args)) {
         return true;
     }
 
-    return (
-        args.currentPhase === "blocked_auth" &&
-        !args.hasDirtyFragments &&
-        args.trigger === "auth_restore"
-    );
+    return args.currentPhase === "blocked_auth" && !args.hasDirtyFragments && args.trigger === "auth_restore";
 }
 
 /**
@@ -695,9 +678,7 @@ export function resolveSaveConflict(args: ResolveSaveConflictArgs): ResolveSaveC
  * @param args Current local draft, fetched latest session, and dirty-state maps.
  * @returns Recovery instructions for the submit conflict path.
  */
-export function resolveSubmitConflict(
-    args: ResolveSubmitConflictArgs,
-): ResolveSubmitConflictResult {
+export function resolveSubmitConflict(args: ResolveSubmitConflictArgs): ResolveSubmitConflictResult {
     const recovery = prepareConflictRecoverySnapshot({
         auditId: args.currentSession.audit_id,
         currentSession: args.currentSession,
@@ -733,9 +714,7 @@ export function resolveSubmitConflict(
  * @param action Submit conflict recovery action.
  * @returns Persisted per-audit phase for the conflict result.
  */
-export function phaseForSubmitConflictAction(
-    action: ResolveSubmitConflictResult["action"],
-): AuditSyncPhase {
+export function phaseForSubmitConflictAction(action: ResolveSubmitConflictResult["action"]): AuditSyncPhase {
     return action === "terminalize_submitted" ? "submitted" : "conflict";
 }
 
@@ -867,10 +846,7 @@ export function deriveGlobalSyncFeedback(args: DeriveGlobalSyncFeedbackArgs): Gl
  * @param hasDirtyFragments Whether this audit still has syncable dirty fragments after hydrate pruning.
  * @returns The hydrated phase to restore, or null when the phase must be dropped.
  */
-export function normalizeHydratedSyncPhase(
-    phase: AuditSyncPhase,
-    hasDirtyFragments: boolean,
-): AuditSyncPhase | null {
+export function normalizeHydratedSyncPhase(phase: AuditSyncPhase, hasDirtyFragments: boolean): AuditSyncPhase | null {
     switch (phase) {
         case "submitting":
             return "resolving_submit";
@@ -912,10 +888,7 @@ export function restorePersistedSyncState(args: RestorePersistedSyncStateArgs): 
     const nextDirtySections: DirtySections = {};
     const nextSyncStateByAuditId: AuditSyncStateByAuditId = {};
 
-    for (const auditId of listRestorableHydratedAuditIds(
-        args.sessionsByAuditId,
-        args.sessionsByPairKey,
-    )) {
+    for (const auditId of listRestorableHydratedAuditIds(args.sessionsByAuditId, args.sessionsByPairKey)) {
         const hasDirtyFragments = copyHydratedDirtyFragmentsForAudit(
             auditId,
             args.dirtyMeta,
@@ -925,12 +898,7 @@ export function restorePersistedSyncState(args: RestorePersistedSyncStateArgs): 
             nextDirtyPreAudit,
             nextDirtySections,
         );
-        restoreHydratedSyncStateForAudit(
-            auditId,
-            args.syncStateByAuditId,
-            hasDirtyFragments,
-            nextSyncStateByAuditId,
-        );
+        restoreHydratedSyncStateForAudit(auditId, args.syncStateByAuditId, hasDirtyFragments, nextSyncStateByAuditId);
     }
 
     return {
@@ -1009,13 +977,8 @@ function listRestorableHydratedAuditIds(
  * @param session Session being evaluated for hydrate restore.
  * @returns True when the session is editable and still owns the canonical pair entry.
  */
-function canRestoreHydratedAuditState(
-    sessionsByPairKey: Record<string, AuditSession>,
-    session: AuditSession,
-): boolean {
-    return (
-        isAuditSessionEditable(session) && isCanonicalPairMappedSession(sessionsByPairKey, session)
-    );
+function canRestoreHydratedAuditState(sessionsByPairKey: Record<string, AuditSession>, session: AuditSession): boolean {
+    return isAuditSessionEditable(session) && isCanonicalPairMappedSession(sessionsByPairKey, session);
 }
 
 /**
@@ -1026,10 +989,7 @@ function canRestoreHydratedAuditState(
  * @param session Session being evaluated for dirty-state restore.
  * @returns True when the pair map still points at this session, or has no entry.
  */
-function isCanonicalPairMappedSession(
-    sessionsByPairKey: Record<string, AuditSession>,
-    session: AuditSession,
-): boolean {
+function isCanonicalPairMappedSession(sessionsByPairKey: Record<string, AuditSession>, session: AuditSession): boolean {
     const pairKey = getProjectPlaceKey(session.project_id, session.place_id);
     const pairMappedSession = sessionsByPairKey[pairKey];
     return pairMappedSession === undefined || pairMappedSession.audit_id === session.audit_id;
@@ -1041,10 +1001,7 @@ function readDisplacedAuditId(
     nextAuditId: string,
 ): string | null {
     const currentPairMappedSession = sessionsByPairKey[nextPairKey];
-    if (
-        currentPairMappedSession === undefined ||
-        currentPairMappedSession.audit_id === nextAuditId
-    ) {
+    if (currentPairMappedSession === undefined || currentPairMappedSession.audit_id === nextAuditId) {
         return null;
     }
 
@@ -1088,12 +1045,7 @@ function copyHydratedDirtyFragmentsForAudit(
         targetDirtySections[auditId] = { ...dirtySectionVersions };
     }
 
-    return hasDirtyFragmentsForAudit(
-        auditId,
-        targetDirtyMeta,
-        targetDirtyPreAudit,
-        targetDirtySections,
-    );
+    return hasDirtyFragmentsForAudit(auditId, targetDirtyMeta, targetDirtyPreAudit, targetDirtySections);
 }
 
 /**
@@ -1154,9 +1106,7 @@ function hasDirtyFragmentsForAudit(
  * @param args Target audit session plus current dirty-state inputs.
  * @returns A sparse patch snapshot, or null when nothing is dirty.
  */
-export function buildDraftPatchSnapshot(
-    args: BuildDraftPatchSnapshotArgs,
-): PendingAuditPatchSnapshot | null {
+export function buildDraftPatchSnapshot(args: BuildDraftPatchSnapshotArgs): PendingAuditPatchSnapshot | null {
     const metaVersion = args.dirtyMeta[args.auditId] ?? null;
     const preAuditVersion = args.dirtyPreAudit[args.auditId] ?? null;
     const currentSectionVersions = args.dirtySections[args.auditId] ?? {};
@@ -1182,10 +1132,7 @@ export function buildDraftPatchSnapshot(
     }
 
     for (const sectionKey of dirtySectionKeys) {
-        patch.sections[sectionKey] = cloneSectionState(
-            args.session.sections[sectionKey],
-            sectionKey,
-        );
+        patch.sections[sectionKey] = cloneSectionState(args.session.sections[sectionKey], sectionKey);
     }
 
     return {
@@ -1205,9 +1152,7 @@ export function buildDraftPatchSnapshot(
  * @param args Current and fetched session snapshots plus dirty-state inputs.
  * @returns The session snapshot that should be written into store state.
  */
-export function applyFetchedSessionSnapshot(
-    args: ApplyFetchedSessionSnapshotArgs,
-): ApplyFetchedSessionSnapshotResult {
+export function applyFetchedSessionSnapshot(args: ApplyFetchedSessionSnapshotArgs): ApplyFetchedSessionSnapshotResult {
     const currentSession = args.currentSession;
     if (currentSession?.audit_id !== args.fetchedSession.audit_id) {
         return {
@@ -1283,12 +1228,7 @@ export function prepareConflictRecoverySnapshot(
               dirtyPreAudit: args.dirtyPreAudit,
               dirtySections: args.dirtySections,
           }
-        : clearDirtyStateForAudit(
-              args.auditId,
-              args.dirtyMeta,
-              args.dirtyPreAudit,
-              args.dirtySections,
-          );
+        : clearDirtyStateForAudit(args.auditId, args.dirtyMeta, args.dirtyPreAudit, args.dirtySections);
     const retrySnapshot = buildDraftPatchSnapshot({
         auditId: args.auditId,
         session,
@@ -1313,16 +1253,10 @@ export function prepareConflictRecoverySnapshot(
  * @param args Existing session maps plus the next session to store.
  * @returns Both maps updated in lock-step.
  */
-export function upsertAuditSessionMaps(
-    args: UpsertAuditSessionMapsArgs,
-): UpsertAuditSessionMapsResult {
+export function upsertAuditSessionMaps(args: UpsertAuditSessionMapsArgs): UpsertAuditSessionMapsResult {
     const nextPairKey = getProjectPlaceKey(args.nextSession.project_id, args.nextSession.place_id);
     const nextSessionsByPairKey = { ...args.sessionsByPairKey };
-    const displacedAuditId = readDisplacedAuditId(
-        args.sessionsByPairKey,
-        nextPairKey,
-        args.nextSession.audit_id,
-    );
+    const displacedAuditId = readDisplacedAuditId(args.sessionsByPairKey, nextPairKey, args.nextSession.audit_id);
 
     for (const [pairKey, session] of Object.entries(args.sessionsByPairKey)) {
         if (session.audit_id === args.nextSession.audit_id && pairKey !== nextPairKey) {
@@ -1430,9 +1364,7 @@ export function deriveLocalDraftProgress(session: AuditSession): LocalDraftProgr
         readSectionResponsesBySection(session),
     );
     const requiredPreAuditComplete = isRequiredPreAuditComplete(
-        session.instrument.pre_audit_questions.filter(
-            (question) => question.page_key === "space_setup",
-        ),
+        session.instrument.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
         getPreAuditValues(session),
         executionMode,
     );
@@ -1456,9 +1388,7 @@ export function deriveLocalDraftProgress(session: AuditSession): LocalDraftProgr
         };
     });
     const draftProgressPercent =
-        totalVisibleQuestions === 0
-            ? 0
-            : Math.round((answeredVisibleQuestions / totalVisibleQuestions) * 10000) / 100;
+        totalVisibleQuestions === 0 ? 0 : Math.round((answeredVisibleQuestions / totalVisibleQuestions) * 10000) / 100;
 
     return {
         draftProgressPercent,
@@ -1468,9 +1398,7 @@ export function deriveLocalDraftProgress(session: AuditSession): LocalDraftProgr
             completed_section_count: completedSectionCount,
             total_visible_questions: totalVisibleQuestions,
             answered_visible_questions: answeredVisibleQuestions,
-            ready_to_submit:
-                requiredPreAuditComplete &&
-                progressSections.every((section) => section.is_complete),
+            ready_to_submit: requiredPreAuditComplete && progressSections.every((section) => section.is_complete),
             sections: progressSections,
         },
     };
@@ -1554,8 +1482,7 @@ export function applyLocalQuestionAnswerChange(
         };
     }
 
-    const currentAnswers =
-        args.session.sections[args.sectionKey]?.responses[args.questionKey] ?? {};
+    const currentAnswers = args.session.sections[args.sectionKey]?.responses[args.questionKey] ?? {};
     if (areQuestionResponsePayloadsEqual(currentAnswers, args.answers)) {
         return {
             session: args.session,
@@ -1564,10 +1491,7 @@ export function applyLocalQuestionAnswerChange(
         };
     }
 
-    const currentSection = cloneSectionState(
-        args.session.sections[args.sectionKey],
-        args.sectionKey,
-    );
+    const currentSection = cloneSectionState(args.session.sections[args.sectionKey], args.sectionKey);
     const nextResponses = cloneSectionResponses(currentSection.responses);
     nextResponses[args.questionKey] = cloneQuestionResponsePayload(args.answers);
 
@@ -1591,12 +1515,7 @@ export function applyLocalQuestionAnswerChange(
                 },
             },
         },
-        dirtySections: markSectionDirty(
-            args.dirtySections,
-            args.session.audit_id,
-            args.sectionKey,
-            args.nextVersion,
-        ),
+        dirtySections: markSectionDirty(args.dirtySections, args.session.audit_id, args.sectionKey, args.nextVersion),
         didChange: true,
     };
 }
@@ -1607,9 +1526,7 @@ export function applyLocalQuestionAnswerChange(
  * @param args Current session, target section, and dirty-state inputs.
  * @returns Updated pure result including dirty-state changes when needed.
  */
-export function applyLocalSectionNoteChange(
-    args: ApplyLocalSectionNoteChangeArgs,
-): ApplyLocalSectionNoteChangeResult {
+export function applyLocalSectionNoteChange(args: ApplyLocalSectionNoteChangeArgs): ApplyLocalSectionNoteChangeResult {
     if (!isAuditSessionEditable(args.session)) {
         return {
             session: args.session,
@@ -1618,10 +1535,7 @@ export function applyLocalSectionNoteChange(
         };
     }
 
-    const currentSection = cloneSectionState(
-        args.session.sections[args.sectionKey],
-        args.sectionKey,
-    );
+    const currentSection = cloneSectionState(args.session.sections[args.sectionKey], args.sectionKey);
     if (currentSection.note === args.note) {
         return {
             session: args.session,
@@ -1650,12 +1564,7 @@ export function applyLocalSectionNoteChange(
                 },
             },
         },
-        dirtySections: markSectionDirty(
-            args.dirtySections,
-            args.session.audit_id,
-            args.sectionKey,
-            args.nextVersion,
-        ),
+        dirtySections: markSectionDirty(args.dirtySections, args.session.audit_id, args.sectionKey, args.nextVersion),
         didChange: true,
     };
 }
@@ -1666,9 +1575,7 @@ export function applyLocalSectionNoteChange(
  * @param args Current session, incoming values, and dirty-state inputs.
  * @returns Updated pure result including dirty-state changes when needed.
  */
-export function applyLocalPreAuditChange(
-    args: ApplyLocalPreAuditChangeArgs,
-): ApplyLocalPreAuditChangeResult {
+export function applyLocalPreAuditChange(args: ApplyLocalPreAuditChangeArgs): ApplyLocalPreAuditChangeResult {
     if (!isAuditSessionEditable(args.session)) {
         return {
             session: args.session,
@@ -1695,11 +1602,7 @@ export function applyLocalPreAuditChange(
                 pre_audit: clonePreAuditValues(nextPreAudit),
             },
         },
-        dirtyPreAudit: markPreAuditDirty(
-            args.dirtyPreAudit,
-            args.session.audit_id,
-            args.nextVersion,
-        ),
+        dirtyPreAudit: markPreAuditDirty(args.dirtyPreAudit, args.session.audit_id, args.nextVersion),
         didChange: true,
     };
 }
@@ -1711,9 +1614,7 @@ export function applyLocalPreAuditChange(
  * @param args Current dirty state plus the acknowledged outbound snapshot.
  * @returns Dirty-state maps with only safe-to-clear versions removed.
  */
-export function clearAcknowledgedDirtyState(
-    args: ClearAcknowledgedDirtyStateArgs,
-): ClearAcknowledgedDirtyStateResult {
+export function clearAcknowledgedDirtyState(args: ClearAcknowledgedDirtyStateArgs): ClearAcknowledgedDirtyStateResult {
     if (args.auditId !== args.snapshot.auditId) {
         throw new Error(
             `Dirty state acknowledgement audit id mismatch: received ${JSON.stringify(args.auditId)}, snapshot ${JSON.stringify(args.snapshot.auditId)}.`,
@@ -1733,20 +1634,11 @@ export function clearAcknowledgedDirtyState(
             targetAuditId,
             args.snapshot.preAuditVersion,
         ),
-        dirtyMeta: clearAcknowledgedVersionMap(
-            args.currentDirtyMeta,
-            targetAuditId,
-            args.snapshot.metaVersion,
-        ),
+        dirtyMeta: clearAcknowledgedVersionMap(args.currentDirtyMeta, targetAuditId, args.snapshot.metaVersion),
     };
 }
 
-function markSectionDirty(
-    current: DirtySections,
-    auditId: string,
-    sectionKey: string,
-    version: number,
-): DirtySections {
+function markSectionDirty(current: DirtySections, auditId: string, sectionKey: string, version: number): DirtySections {
     const currentAuditSections = current[auditId];
     if (currentAuditSections === undefined) {
         return {
@@ -1766,11 +1658,7 @@ function markSectionDirty(
     };
 }
 
-function markPreAuditDirty(
-    current: DirtyPreAudit,
-    auditId: string,
-    version: number,
-): DirtyPreAudit {
+function markPreAuditDirty(current: DirtyPreAudit, auditId: string, version: number): DirtyPreAudit {
     return markDirtyVersion(current, auditId, version);
 }
 
@@ -1789,10 +1677,7 @@ function markDirtyVersion<TVersionMap extends Record<string, number>>(
     };
 }
 
-function areQuestionResponsePayloadsEqual(
-    current: QuestionResponsePayload,
-    next: QuestionResponsePayload,
-): boolean {
+function areQuestionResponsePayloadsEqual(current: QuestionResponsePayload, next: QuestionResponsePayload): boolean {
     const currentKeys = Object.keys(current);
     const nextKeys = Object.keys(next);
 
@@ -1822,10 +1707,7 @@ function areQuestionResponsePayloadsEqual(
  * @param next Incoming local answer value.
  * @returns True when both values are logically equivalent.
  */
-function areQuestionResponseValuesEqual(
-    current: QuestionResponseValue,
-    next: QuestionResponseValue,
-): boolean {
+function areQuestionResponseValuesEqual(current: QuestionResponseValue, next: QuestionResponseValue): boolean {
     if (typeof current === "string" || current === null) {
         return current === next;
     }
@@ -1851,10 +1733,7 @@ function areStringArraysEqual(current: string[], next: QuestionResponseValue): b
     return true;
 }
 
-function areStringRecordsEqual(
-    current: Record<string, string>,
-    next: QuestionResponseValue,
-): boolean {
+function areStringRecordsEqual(current: Record<string, string>, next: QuestionResponseValue): boolean {
     if (typeof next === "string" || next === null || Array.isArray(next)) {
         return false;
     }
@@ -1910,21 +1789,13 @@ function cloneSectionResponses(
     return nextResponses;
 }
 
-function readSectionResponsesBySection(
-    session: AuditSession,
-): Record<string, Record<string, QuestionResponsePayload>> {
+function readSectionResponsesBySection(session: AuditSession): Record<string, Record<string, QuestionResponsePayload>> {
     return Object.fromEntries(
-        Object.entries(session.sections).map(([sectionKey, sectionState]) => [
-            sectionKey,
-            sectionState.responses,
-        ]),
+        Object.entries(session.sections).map(([sectionKey, sectionState]) => [sectionKey, sectionState.responses]),
     );
 }
 
-function cloneSectionState(
-    section: AuditSectionState | undefined,
-    sectionKey: string,
-): AuditSectionState {
+function cloneSectionState(section: AuditSectionState | undefined, sectionKey: string): AuditSectionState {
     return {
         section_key: section?.section_key ?? sectionKey,
         responses: cloneSectionResponses(section?.responses),
@@ -1951,10 +1822,7 @@ function mergePreAuditValues(
     values: Record<string, string | string[] | null>,
 ): AuditPreAuditValues {
     const nextPreAudit = clonePreAuditValues(current);
-    nextPreAudit.place_size = readNullableStringValue(
-        values["place_size"],
-        nextPreAudit.place_size,
-    );
+    nextPreAudit.place_size = readNullableStringValue(values["place_size"], nextPreAudit.place_size);
     nextPreAudit.current_users_0_5 = readNullableStringValue(
         values["current_users_0_5"],
         nextPreAudit.current_users_0_5,
@@ -1980,10 +1848,7 @@ function mergePreAuditValues(
         values["weather_conditions"],
         nextPreAudit.weather_conditions,
     );
-    nextPreAudit.wind_conditions = readNullableStringValue(
-        values["wind_conditions"],
-        nextPreAudit.wind_conditions,
-    );
+    nextPreAudit.wind_conditions = readNullableStringValue(values["wind_conditions"], nextPreAudit.wind_conditions);
     return nextPreAudit;
 }
 
@@ -2021,20 +1886,13 @@ function arePreAuditStringArraysEqual(current: string[], next: string[]): boolea
     return areReadonlyStringArraysEqual(current, next);
 }
 
-function areCleanupComparableValuesEqual(
-    current: CleanupComparable,
-    next: CleanupComparable,
-): boolean {
+function areCleanupComparableValuesEqual(current: CleanupComparable, next: CleanupComparable): boolean {
     if (typeof current === "string" || typeof next === "string") {
         return typeof current === "string" && typeof next === "string" && current === next;
     }
 
     if (Array.isArray(current) || Array.isArray(next)) {
-        return (
-            Array.isArray(current) &&
-            Array.isArray(next) &&
-            areReadonlyStringArraysEqual(current, next)
-        );
+        return Array.isArray(current) && Array.isArray(next) && areReadonlyStringArraysEqual(current, next);
     }
 
     if (!isCleanupComparableRecord(current) || !isCleanupComparableRecord(next)) {
@@ -2044,10 +1902,7 @@ function areCleanupComparableValuesEqual(
     return areCleanupComparableRecordsEqual(current, next);
 }
 
-function areReadonlyStringArraysEqual(
-    current: readonly string[],
-    next: readonly string[],
-): boolean {
+function areReadonlyStringArraysEqual(current: readonly string[], next: readonly string[]): boolean {
     if (current.length !== next.length) {
         return false;
     }
@@ -2130,11 +1985,7 @@ function copyPreAuditDraftFromSession(source: AuditSession, target: AuditSession
     };
 }
 
-function copySectionDraftFromSession(
-    source: AuditSession,
-    target: AuditSession,
-    sectionKey: string,
-): AuditSession {
+function copySectionDraftFromSession(source: AuditSession, target: AuditSession, sectionKey: string): AuditSession {
     const sectionState = cloneSectionState(source.sections[sectionKey], sectionKey);
     return {
         ...target,

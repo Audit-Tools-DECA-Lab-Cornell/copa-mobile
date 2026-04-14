@@ -2,9 +2,9 @@ import * as BackgroundTask from "expo-background-task";
 import * as Network from "expo-network";
 import * as TaskManager from "expo-task-manager";
 import { readAuthSession } from "lib/auth/storage";
-import type { AuthSession } from "lib/auth/types";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
+import type { AuthSession } from "lib/auth/types";
 const AUDIT_BACKGROUND_TASK_NAME = "playspace-audit-background-sync";
 const AUDIT_BACKGROUND_MINIMUM_INTERVAL_MINUTES = 15;
 
@@ -13,9 +13,7 @@ let activeSyncPromise: Promise<boolean> | null = null;
 if (!TaskManager.isTaskDefined(AUDIT_BACKGROUND_TASK_NAME)) {
     TaskManager.defineTask(AUDIT_BACKGROUND_TASK_NAME, async () => {
         const wasSuccessful = await runPendingAuditSyncAsync();
-        return wasSuccessful
-            ? BackgroundTask.BackgroundTaskResult.Success
-            : BackgroundTask.BackgroundTaskResult.Failed;
+        return wasSuccessful ? BackgroundTask.BackgroundTaskResult.Success : BackgroundTask.BackgroundTaskResult.Failed;
     });
 }
 
@@ -66,9 +64,7 @@ export async function unregisterAuditBackgroundTaskAsync(): Promise<void> {
  * @param options Optional caller-provided authenticated session.
  * @returns True when the sync pass finished without API failures.
  */
-export async function runPendingAuditSyncAsync(
-    options: Readonly<RunPendingAuditSyncOptions> = {},
-): Promise<boolean> {
+export async function runPendingAuditSyncAsync(options: Readonly<RunPendingAuditSyncOptions> = {}): Promise<boolean> {
     if (activeSyncPromise !== null) {
         return activeSyncPromise;
     }
@@ -91,9 +87,7 @@ export async function runPendingAuditSyncAsync(
  * @param options Optional caller-provided authenticated session.
  * @returns True when the sync pass finished without API failures.
  */
-async function runPendingAuditSyncInternalAsync(
-    options: Readonly<RunPendingAuditSyncOptions>,
-): Promise<boolean> {
+async function runPendingAuditSyncInternalAsync(options: Readonly<RunPendingAuditSyncOptions>): Promise<boolean> {
     const session = options.session ?? (await readAuthSession());
     if (session === null) {
         return true;

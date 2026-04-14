@@ -134,8 +134,7 @@ function EnabledScreenshotBootstrapScreen() {
             return;
         }
 
-        const currentSessionEmail =
-            session === null ? null : session.user.email.trim().toLowerCase();
+        const currentSessionEmail = session === null ? null : session.user.email.trim().toLowerCase();
         if (authStatus === "authenticated" && currentSessionEmail === email) {
             hasNavigatedRef.current = true;
             setPhaseMessage(`Opening ${targetRoute}.`);
@@ -173,14 +172,7 @@ function EnabledScreenshotBootstrapScreen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
-            <YStack
-                flex={1}
-                items="center"
-                justify="center"
-                gap="$4"
-                px="$5"
-                bg={ds.colors.background}
-            >
+            <YStack flex={1} items="center" justify="center" gap="$4" px="$5" bg={ds.colors.background}>
                 <ActivityIndicator color={ds.colors.primary} size="large" />
                 <Text
                     color={ds.colors.foreground}
@@ -221,14 +213,7 @@ function ScreenshotBootstrapUnavailableScreen() {
     return (
         <>
             <Stack.Screen options={{ headerShown: false }} />
-            <YStack
-                flex={1}
-                items="center"
-                justify="center"
-                gap="$4"
-                px="$5"
-                bg={ds.colors.background}
-            >
+            <YStack flex={1} items="center" justify="center" gap="$4" px="$5" bg={ds.colors.background}>
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}

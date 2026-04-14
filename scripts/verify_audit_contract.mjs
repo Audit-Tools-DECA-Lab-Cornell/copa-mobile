@@ -70,11 +70,10 @@ function assert(condition, message) {
 }
 
 const { BASE_PLAYSPACE_INSTRUMENT } = loadTsModule(path.resolve(REPO_ROOT, "lib/instrument.ts"));
-const { auditDraftSaveSchema, auditSessionSchema } = loadTsModule(
-    path.resolve(REPO_ROOT, "lib/audit/types.ts"),
+const { auditDraftSaveSchema, auditSessionSchema } = loadTsModule(path.resolve(REPO_ROOT, "lib/audit/types.ts"));
+const { getActiveScaleKeysForQuestion, getVisibleSections, getInstrumentSectionLocalProgress } = loadTsModule(
+    path.resolve(REPO_ROOT, "lib/audit/selectors.ts"),
 );
-const { getActiveScaleKeysForQuestion, getVisibleSections, getInstrumentSectionLocalProgress } =
-    loadTsModule(path.resolve(REPO_ROOT, "lib/audit/selectors.ts"));
 
 const targetSection = BASE_PLAYSPACE_INSTRUMENT.sections[0];
 const targetQuestion = targetSection.questions.find((question) => question.scales.length > 1);
@@ -185,10 +184,7 @@ const sessionFixture = {
 
 const parsedSession = auditSessionSchema.parse(sessionFixture);
 assert(parsedSession.aggregate.revision === 3, "Expected aggregate revision to parse.");
-assert(
-    parsedSession.sections[targetSection.section_key] !== undefined,
-    "Expected section payload.",
-);
+assert(parsedSession.sections[targetSection.section_key] !== undefined, "Expected section payload.");
 
 const visibleSections = getVisibleSections(
     parsedSession.instrument,

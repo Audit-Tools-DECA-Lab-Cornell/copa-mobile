@@ -1,5 +1,13 @@
+import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { usePlayspaceAuditStore } from "stores/audit-store";
+
+import { deInstrumentTranslations } from "./locales/de/instrument";
+import { enInstrumentTranslations } from "./locales/en/instrument";
+import { frInstrumentTranslations } from "./locales/fr/instrument";
+import { hiInstrumentTranslations } from "./locales/hi/instrument";
+import { jaInstrumentTranslations } from "./locales/ja/instrument";
 
 import type {
     ChoiceOption,
@@ -12,15 +20,6 @@ import type {
     ScaleKey,
     ScaleOption,
 } from "lib/audit/types";
-import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
-import { usePlayspaceAuditStore } from "stores/audit-store";
-
-import { enInstrumentTranslations } from "./locales/en/instrument";
-import { deInstrumentTranslations } from "./locales/de/instrument";
-import { frInstrumentTranslations } from "./locales/fr/instrument";
-import { hiInstrumentTranslations } from "./locales/hi/instrument";
-import { jaInstrumentTranslations } from "./locales/ja/instrument";
-
 /**
  * Supported instrument translation locales.
  */
@@ -86,9 +85,7 @@ export type InstrumentTranslations = Readonly<{
     sections?: Readonly<Record<string, InstrumentSectionTranslation>>;
 }>;
 
-const INSTRUMENT_TRANSLATIONS_BY_LOCALE: Readonly<
-    Record<InstrumentLocale, InstrumentTranslations>
-> = {
+const INSTRUMENT_TRANSLATIONS_BY_LOCALE: Readonly<Record<InstrumentLocale, InstrumentTranslations>> = {
     en: enInstrumentTranslations,
     de: deInstrumentTranslations,
     fr: frInstrumentTranslations,
@@ -162,11 +159,7 @@ function resolveNullableString(
     }
 
     if (typeof translatedValue === "string") {
-        if (
-            typeof baseValue === "string" &&
-            baseValue.includes("**") &&
-            !hasBalancedBoldMarkers(translatedValue)
-        ) {
+        if (typeof baseValue === "string" && baseValue.includes("**") && !hasBalancedBoldMarkers(translatedValue)) {
             return baseValue;
         }
 
@@ -237,9 +230,7 @@ function localizeScaleDefinition(
         title: resolveString(baseScale.title, translation?.title),
         prompt: resolveString(baseScale.prompt, translation?.prompt),
         description: resolveString(baseScale.description, translation?.description),
-        options: baseScale.options.map((option) =>
-            localizeScaleOption(option, translation?.options?.[option.key]),
-        ),
+        options: baseScale.options.map((option) => localizeScaleOption(option, translation?.options?.[option.key])),
     };
 }
 
@@ -258,9 +249,7 @@ function localizeQuestionScale(
         ...baseScale,
         title: resolveString(baseScale.title, translation?.title),
         prompt: resolveString(baseScale.prompt, translation?.prompt),
-        options: baseScale.options.map((option) =>
-            localizeScaleOption(option, translation?.options?.[option.key]),
-        ),
+        options: baseScale.options.map((option) => localizeScaleOption(option, translation?.options?.[option.key])),
     };
 }
 
@@ -279,9 +268,7 @@ function localizePreAuditQuestion(
         ...baseQuestion,
         label: resolveString(baseQuestion.label, translation?.label),
         description: resolveNullableString(baseQuestion.description, translation?.description),
-        options: baseQuestion.options.map((option) =>
-            localizeChoiceOption(option, translation?.options?.[option.key]),
-        ),
+        options: baseQuestion.options.map((option) => localizeChoiceOption(option, translation?.options?.[option.key])),
     };
 }
 
@@ -301,9 +288,7 @@ function localizeInstrumentQuestion(
     return {
         ...baseQuestion,
         prompt: resolveString(baseQuestion.prompt, translation?.prompt),
-        scales: baseQuestion.scales.map((scale) =>
-            localizeQuestionScale(scale, scaleTranslations?.[scale.key]),
-        ),
+        scales: baseQuestion.scales.map((scale) => localizeQuestionScale(scale, scaleTranslations?.[scale.key])),
     };
 }
 
@@ -327,11 +312,7 @@ function localizeInstrumentSection(
         instruction: resolveString(baseSection.instruction, translation?.instruction),
         notes_prompt: resolveNullableString(baseSection.notes_prompt, translation?.notesPrompt),
         questions: baseSection.questions.map((question) =>
-            localizeInstrumentQuestion(
-                question,
-                translation?.questions?.[question.question_key],
-                scaleTranslations,
-            ),
+            localizeInstrumentQuestion(question, translation?.questions?.[question.question_key], scaleTranslations),
         ),
     };
 }
@@ -361,17 +342,9 @@ export function localizeInstrument(
 
     return {
         ...baseInstrument,
-        instrument_name: resolveString(
-            baseInstrument.instrument_name,
-            translations.metadata?.instrumentName,
-        ),
-        current_sheet: resolveString(
-            baseInstrument.current_sheet,
-            translations.metadata?.currentSheet,
-        ),
-        preamble: baseInstrument.preamble.map(
-            (paragraph, index) => translations.preamble?.[index] ?? paragraph,
-        ),
+        instrument_name: resolveString(baseInstrument.instrument_name, translations.metadata?.instrumentName),
+        current_sheet: resolveString(baseInstrument.current_sheet, translations.metadata?.currentSheet),
+        preamble: baseInstrument.preamble.map((paragraph, index) => translations.preamble?.[index] ?? paragraph),
         execution_modes: baseInstrument.execution_modes.map((mode) =>
             localizeChoiceOption(mode, translations.executionModes?.[mode.key]),
         ),
@@ -382,11 +355,7 @@ export function localizeInstrument(
             localizeScaleDefinition(scale, scaleTranslations?.[scale.key]),
         ),
         sections: baseInstrument.sections.map((section) =>
-            localizeInstrumentSection(
-                section,
-                translations.sections?.[section.section_key],
-                scaleTranslations,
-            ),
+            localizeInstrumentSection(section, translations.sections?.[section.section_key], scaleTranslations),
         ),
     };
 }

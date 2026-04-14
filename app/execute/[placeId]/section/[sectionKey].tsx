@@ -58,9 +58,7 @@ export default function ExecuteSectionScreen() {
     const hydrate = usePlayspaceAuditStore((state) => state.hydrate);
     const currentUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
-    const applyLocalQuestionAnswer = usePlayspaceAuditStore(
-        (state) => state.applyLocalQuestionAnswer,
-    );
+    const applyLocalQuestionAnswer = usePlayspaceAuditStore((state) => state.applyLocalQuestionAnswer);
     const applyLocalSectionNote = usePlayspaceAuditStore((state) => state.applyLocalSectionNote);
     const submitAuditSession = usePlayspaceAuditStore((state) => state.submitAuditSession);
     const isSavingDraft = usePlayspaceAuditStore((state) => state.isSavingDraft);
@@ -74,16 +72,13 @@ export default function ExecuteSectionScreen() {
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
     const sectionKey = readSingleParam(params.sectionKey);
-    const pairKey =
-        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
 
     const visibleSections = getVisibleSectionsStable(instrument, auditSession);
 
     const activeSection =
-        sectionKey === null
-            ? undefined
-            : visibleSections.find((section) => section.section_key === sectionKey);
+        sectionKey === null ? undefined : visibleSections.find((section) => section.section_key === sectionKey);
 
     const [localNote, setLocalNote] = useState("");
     const [isNoteFocused, setIsNoteFocused] = useState(false);
@@ -102,6 +97,7 @@ export default function ExecuteSectionScreen() {
             headerBlurEffect: "light",
             headerStyle: { backgroundColor: ds.colors.surface },
             headerTintColor: ds.colors.primary,
+            contentStyle: { paddingTop: 20 },
             headerTitleStyle: {
                 color: ds.colors.foreground,
                 fontFamily: ds.fonts.bodyBold,
@@ -125,37 +121,28 @@ export default function ExecuteSectionScreen() {
             navigation.setOptions({
                 ...themedHeaderOptions,
                 headerTitle: () => (
-                    <YStack justify="center" px="$1" gap="$1.5">
+                    <YStack justify="center" gap="$1.5" mb="$2" mt="$-2">
                         <Text
                             color={ds.colors.primary}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleMd.fontSize}
+                            fontSize={ds.typography.titleLg.fontSize}
                             lineHeight={ds.typography.titleMd.lineHeight}
                         >
-                            {truncate(auditSession?.place_name, layout.isTablet ? 80 : 30)}
+                            {truncate(auditSession?.place_name, layout.isTablet ? 120 : 40)}
                         </Text>
                         <Text
                             color={ds.colors.mutedForeground}
                             fontFamily={ds.fonts.bodyRegular}
-                            fontSize={ds.typography.labelLg.fontSize}
+                            fontSize={ds.typography.bodyLg.fontSize}
                             lineHeight={ds.typography.labelLg.lineHeight}
                         >
-                            Section: {truncate(activeSection.title, layout.isTablet ? 80 : 40)}
+                            Section: {truncate(activeSection.title, layout.isTablet ? 120 : 50)}
                         </Text>
                     </YStack>
                 ),
             });
         }
-    }, [
-        themedHeaderOptions,
-        navigation,
-        activeSection,
-        layout.isTablet,
-        t,
-        auditSession,
-        ds,
-        truncate,
-    ]);
+    }, [themedHeaderOptions, navigation, activeSection, layout.isTablet, t, auditSession, ds, truncate]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -194,11 +181,7 @@ export default function ExecuteSectionScreen() {
     }, [canEditInputs]);
 
     useEffect(() => {
-        if (
-            noteInitializedRef.current ||
-            auditSession === undefined ||
-            activeSection === undefined
-        ) {
+        if (noteInitializedRef.current || auditSession === undefined || activeSection === undefined) {
             return;
         }
         const storedNote = getSectionNote(auditSession, activeSection.section_key);
@@ -253,8 +236,7 @@ export default function ExecuteSectionScreen() {
     });
 
     const hasPendingLocalChanges =
-        auditSession !== undefined &&
-        Object.keys(dirtySections[auditSession.audit_id] ?? {}).length > 0;
+        auditSession !== undefined && Object.keys(dirtySections[auditSession.audit_id] ?? {}).length > 0;
 
     if (
         placeId === null ||
@@ -307,15 +289,10 @@ export default function ExecuteSectionScreen() {
     const nextSection = getNextSection(visibleSections, resolvedActiveSection.section_key);
     const activeSectionNumber =
         visibleSections.findIndex((s) => s.section_key === resolvedActiveSection.section_key) + 1;
-    const flowSubject = t(
-        `subjects.${getExecuteFlowSubject(resolvedAuditSession.selected_execution_mode)}`,
-        {
-            ns: "audit",
-        },
-    );
-    const questionByKey = new Map(
-        resolvedActiveSection.questions.map((question) => [question.question_key, question]),
-    );
+    const flowSubject = t(`subjects.${getExecuteFlowSubject(resolvedAuditSession.selected_execution_mode)}`, {
+        ns: "audit",
+    });
+    const questionByKey = new Map(resolvedActiveSection.questions.map((question) => [question.question_key, question]));
     const questionRows = resolvedActiveSection.questions.map((question) => {
         return {
             question,
@@ -335,10 +312,7 @@ export default function ExecuteSectionScreen() {
         }
 
         try {
-            const submittedSession = await submitAuditSession(
-                resolvedAuthSession,
-                resolvedAuditSession.audit_id,
-            );
+            const submittedSession = await submitAuditSession(resolvedAuthSession, resolvedAuditSession.audit_id);
             await loadPlaces(resolvedAuthSession).catch(() => undefined);
             router.replace(
                 `/execute/${submittedSession.place_id}?projectId=${encodeURIComponent(submittedSession.project_id)}` as Href,
@@ -394,9 +368,7 @@ export default function ExecuteSectionScreen() {
         }
 
         if (unansweredQuestions.length > 0) {
-            const questionList = unansweredQuestions
-                .map((q) => formatQuestionKey(q.question_key))
-                .join(", ");
+            const questionList = unansweredQuestions.map((q) => formatQuestionKey(q.question_key)).join(", ");
 
             Alert.alert(
                 t("section.incompleteTitle", { ns: "audit" }),
@@ -430,18 +402,9 @@ export default function ExecuteSectionScreen() {
             return;
         }
 
-        const currentAnswers = getQuestionAnswers(
-            resolvedAuditSession,
-            resolvedActiveSection.section_key,
-            questionKey,
-        );
+        const currentAnswers = getQuestionAnswers(resolvedAuditSession, resolvedActiveSection.section_key, questionKey);
         const nextAnswers = buildNextQuestionAnswers(currentAnswers, question, scaleKey, optionKey);
-        applyLocalQuestionAnswer(
-            resolvedPairKey,
-            resolvedActiveSection.section_key,
-            questionKey,
-            nextAnswers,
-        );
+        applyLocalQuestionAnswer(resolvedPairKey, resolvedActiveSection.section_key, questionKey, nextAnswers);
     };
     const notesPanel = (
         <YStack
@@ -563,21 +526,16 @@ export default function ExecuteSectionScreen() {
                 bottomPadding: 144,
                 gap: layout.sectionGap,
                 maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
+                includeTopPadding: false,
             })}
         >
             <YStack gap="$3">
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.displayLg.fontSize
-                            : ds.typography.displayMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
                     lineHeight={
-                        layout.isTablet
-                            ? ds.typography.displayLg.lineHeight
-                            : ds.typography.displayMd.lineHeight
+                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
                     }
                 >
                     {`${activeSectionNumber}. ${resolvedActiveSection.title}`}
@@ -592,9 +550,7 @@ export default function ExecuteSectionScreen() {
             </YStack>
 
             {layout.isTablet &&
-            !resolvedActiveSection.questions.some(
-                (question) => question.question_type === "checklist",
-            ) ? (
+            !resolvedActiveSection.questions.some((question) => question.question_type === "checklist") ? (
                 <YStack gap="$3">
                     <SectionQuestionTable
                         rows={questionRows}
@@ -731,21 +687,11 @@ interface CenteredMessageCardProps {
  * @param props Message card props.
  * @returns Centered loading/error card.
  */
-function CenteredMessageCard({
-    title,
-    message,
-    actionLabel,
-    onAction,
-}: Readonly<CenteredMessageCardProps>) {
+function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     return (
-        <YStack
-            flex={1}
-            justify="center"
-            px={layout.screenPaddingHorizontal}
-            bg={ds.colors.background}
-        >
+        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}

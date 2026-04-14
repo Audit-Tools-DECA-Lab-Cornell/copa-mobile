@@ -7,13 +7,7 @@ import {
     shouldAttemptAutomaticSync,
     shouldRetrySubmitResolution,
 } from "lib/audit/store-sync-core";
-import type {
-    AuditSession,
-    AuditSyncStateByAuditId,
-    DirtyMeta,
-    DirtyPreAudit,
-    DirtySections,
-} from "lib/audit/types";
+import type { AuditSession, AuditSyncStateByAuditId, DirtyMeta, DirtyPreAudit, DirtySections } from "lib/audit/types";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -40,9 +34,7 @@ function buildAutomaticSyncAuditIds(snapshot: AutomaticSyncSnapshot): string[] {
         dirtySections: snapshot.dirtySections,
         dirtyPreAudit: snapshot.dirtyPreAudit,
         dirtyMeta: snapshot.dirtyMeta,
-    }).filter((auditId) =>
-        shouldAttemptAutomaticSync(snapshot.syncStateByAuditId[auditId]?.phase ?? "dirty"),
-    );
+    }).filter((auditId) => shouldAttemptAutomaticSync(snapshot.syncStateByAuditId[auditId]?.phase ?? "dirty"));
 }
 
 /**
@@ -72,9 +64,7 @@ function hasPendingSubmitResolutionRetry(snapshot: AutomaticSyncSnapshot): boole
  * @returns True when an ordinary sync pass should be scheduled.
  */
 function hasPendingNormalSyncWork(snapshot: AutomaticSyncSnapshot): boolean {
-    return (
-        buildAutomaticSyncAuditIds(snapshot).length > 0 || hasPendingSubmitResolutionRetry(snapshot)
-    );
+    return buildAutomaticSyncAuditIds(snapshot).length > 0 || hasPendingSubmitResolutionRetry(snapshot);
 }
 
 /**
@@ -98,9 +88,7 @@ export function useAuditSync(): void {
     const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const isSyncing = usePlayspaceAuditStore((state) => state.isSyncing);
     const localChangeCounter = usePlayspaceAuditStore((state) => state.localChangeCounter);
-    const prepareAutomaticSyncAudits = usePlayspaceAuditStore(
-        (state) => state.prepareAutomaticSyncAudits,
-    );
+    const prepareAutomaticSyncAudits = usePlayspaceAuditStore((state) => state.prepareAutomaticSyncAudits);
 
     const hasPendingNormalWork = useMemo(
         () =>
@@ -161,14 +149,7 @@ export function useAuditSync(): void {
         return () => {
             clearTimeout(timer);
         };
-    }, [
-        hasPendingNormalWork,
-        isCurrentUserHydrated,
-        isHydrated,
-        isSyncing,
-        localChangeCounter,
-        session,
-    ]);
+    }, [hasPendingNormalWork, isCurrentUserHydrated, isHydrated, isSyncing, localChangeCounter, session]);
 
     useEffect(() => {
         if (!isHydrated || !isCurrentUserHydrated || session === null) {
@@ -189,8 +170,7 @@ export function useAuditSync(): void {
         }
 
         const networkSubscription = Network.addNetworkStateListener((networkState) => {
-            const isOnline =
-                networkState.isConnected !== false && networkState.isInternetReachable !== false;
+            const isOnline = networkState.isConnected !== false && networkState.isInternetReachable !== false;
             if (!isOnline) {
                 return;
             }
@@ -208,16 +188,13 @@ export function useAuditSync(): void {
             return;
         }
 
-        const appStateSubscription = AppState.addEventListener(
-            "change",
-            (nextAppState: AppStateStatus) => {
-                if (nextAppState !== "active") {
-                    return;
-                }
+        const appStateSubscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
+            if (nextAppState !== "active") {
+                return;
+            }
 
-                runTriggeredSync("foreground");
-            },
-        );
+            runTriggeredSync("foreground");
+        });
 
         return () => {
             appStateSubscription.remove();

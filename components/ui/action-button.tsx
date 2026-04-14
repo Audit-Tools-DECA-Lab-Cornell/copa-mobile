@@ -1,8 +1,9 @@
-import { ActivityIndicator } from "react-native";
-import { Download } from "@tamagui/lucide-icons-2";
-import { Button, Text, XStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
+import { ActivityIndicator } from "react-native";
+import { Button, Text, XStack } from "tamagui";
+
+import { Download } from "@tamagui/lucide-icons-2";
 
 interface ActionButtonProps {
     readonly label: string;
@@ -45,9 +46,7 @@ export function ActionButton({
         >
             <XStack items="center" gap="$2">
                 {isLoading ? (
-                    <ActivityIndicator
-                        color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
-                    />
+                    <ActivityIndicator color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground} />
                 ) : (
                     <Download
                         size={layout.isTablet ? 18 : 16}
@@ -57,16 +56,8 @@ export function ActionButton({
                 <Text
                     color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.labelLg.fontSize
-                            : ds.typography.labelMd.fontSize
-                    }
-                    lineHeight={
-                        layout.isTablet
-                            ? ds.typography.labelLg.lineHeight
-                            : ds.typography.labelMd.lineHeight
-                    }
+                    fontSize={layout.isTablet ? ds.typography.labelLg.fontSize : ds.typography.labelMd.fontSize}
+                    lineHeight={layout.isTablet ? ds.typography.labelLg.lineHeight : ds.typography.labelMd.lineHeight}
                     letterSpacing={layout.isTablet ? 1.35 : 1.2}
                 >
                     {label}

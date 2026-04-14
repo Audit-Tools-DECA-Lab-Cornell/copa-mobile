@@ -56,19 +56,14 @@ export function normalizePersistedPreferences(value: unknown): PersistedPreferen
 
     const highContrast = value["high_contrast"];
     const validHighContrast =
-        typeof highContrast === "boolean"
-            ? highContrast
-            : DEFAULT_PERSISTED_PREFERENCES.high_contrast;
+        typeof highContrast === "boolean" ? highContrast : DEFAULT_PERSISTED_PREFERENCES.high_contrast;
 
     const dyslexicFont = value["dyslexic_font"];
     const validDyslexicFont =
-        typeof dyslexicFont === "boolean"
-            ? dyslexicFont
-            : DEFAULT_PERSISTED_PREFERENCES.dyslexic_font;
+        typeof dyslexicFont === "boolean" ? dyslexicFont : DEFAULT_PERSISTED_PREFERENCES.dyslexic_font;
 
     const fieldMode = value["field_mode"];
-    const validFieldMode =
-        typeof fieldMode === "boolean" ? fieldMode : DEFAULT_PERSISTED_PREFERENCES.field_mode;
+    const validFieldMode = typeof fieldMode === "boolean" ? fieldMode : DEFAULT_PERSISTED_PREFERENCES.field_mode;
 
     return {
         theme_mode: validThemeMode,

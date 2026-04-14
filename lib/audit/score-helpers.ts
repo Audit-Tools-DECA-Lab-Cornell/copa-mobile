@@ -28,9 +28,7 @@ export function formatScoreValue(value: number): string {
  * @param scoreTotals Optional overall score totals.
  * @returns Combined play value plus usability score or `null` when unavailable.
  */
-export function getCombinedConstructScore(
-    scoreTotals: AuditScoreTotals | null | undefined,
-): number | null {
+export function getCombinedConstructScore(scoreTotals: AuditScoreTotals | null | undefined): number | null {
     if (scoreTotals === null || scoreTotals === undefined) {
         return null;
     }

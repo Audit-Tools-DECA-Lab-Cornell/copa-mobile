@@ -1,3 +1,5 @@
+import { Platform } from "react-native";
+
 export const FALLBACK_WINDOW_WIDTH = 390;
 export const TABLET_BREAKPOINT = 720;
 export const WIDE_TABLET_BREAKPOINT = 960;
@@ -10,7 +12,7 @@ export const WIDE_TABLET_FORM_MAX_WIDTH = 600;
 
 const PHONE_LAYOUT_TOKENS = {
     screenPaddingHorizontal: 15,
-    screenPaddingVertical: 16,
+    screenPaddingVertical: Platform.OS === "android" ? 64 : 16,
     contentMaxWidth: PHONE_CONTENT_MAX_WIDTH,
     formMaxWidth: PHONE_FORM_MAX_WIDTH,
     twoPaneGap: 20,
@@ -116,11 +118,7 @@ function getTabletWidthProgress(windowWidth: number): number {
         return 0;
     }
 
-    return clampNumber(
-        (windowWidth - TABLET_BREAKPOINT) / (WIDE_TABLET_BREAKPOINT - TABLET_BREAKPOINT),
-        0,
-        1,
-    );
+    return clampNumber((windowWidth - TABLET_BREAKPOINT) / (WIDE_TABLET_BREAKPOINT - TABLET_BREAKPOINT), 0, 1);
 }
 
 /**
@@ -216,9 +214,7 @@ export function createResponsiveLayoutTokens(width: number): ResponsiveLayoutTok
                   tabletWidthProgress,
               )
             : PHONE_LAYOUT_TOKENS.sectionGap,
-        cardPadding: isTablet
-            ? TABLET_LAYOUT_TOKENS_MIN.cardPadding
-            : PHONE_LAYOUT_TOKENS.cardPadding,
+        cardPadding: isTablet ? TABLET_LAYOUT_TOKENS_MIN.cardPadding : PHONE_LAYOUT_TOKENS.cardPadding,
         buttonHeight: isTablet
             ? interpolateLayoutValue(
                   TABLET_LAYOUT_TOKENS_MIN.buttonHeight,
@@ -262,8 +258,6 @@ export function createResponsiveLayoutTokens(width: number): ResponsiveLayoutTok
                   tabletWidthProgress,
               )
             : PHONE_LAYOUT_TOKENS.heroCardMinHeight,
-        statCardMinHeight: isTablet
-            ? LEGACY_TABLET_STAT_CARD_MIN_HEIGHT
-            : LEGACY_PHONE_STAT_CARD_MIN_HEIGHT,
+        statCardMinHeight: isTablet ? LEGACY_TABLET_STAT_CARD_MIN_HEIGHT : LEGACY_PHONE_STAT_CARD_MIN_HEIGHT,
     };
 }

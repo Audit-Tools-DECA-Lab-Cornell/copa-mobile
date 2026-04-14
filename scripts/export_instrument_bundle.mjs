@@ -32,9 +32,7 @@ function toInstrumentExportPrefix(locale) {
     const [firstSegment, ...remainingSegments] = segments;
     return [
         firstSegment,
-        ...remainingSegments.map(
-            (segment) => `${segment.charAt(0).toUpperCase()}${segment.slice(1)}`,
-        ),
+        ...remainingSegments.map((segment) => `${segment.charAt(0).toUpperCase()}${segment.slice(1)}`),
     ].join("");
 }
 
@@ -91,23 +89,17 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
         typeof localeOverrides.metadata === "object" && localeOverrides.metadata !== null
             ? localeOverrides.metadata
             : {};
-    const preambleOverrides = Array.isArray(localeOverrides.preamble)
-        ? localeOverrides.preamble
-        : [];
+    const preambleOverrides = Array.isArray(localeOverrides.preamble) ? localeOverrides.preamble : [];
     const executionModeOverrides =
-        typeof localeOverrides.executionModes === "object" &&
-        localeOverrides.executionModes !== null
+        typeof localeOverrides.executionModes === "object" && localeOverrides.executionModes !== null
             ? localeOverrides.executionModes
             : {};
     const preAuditOverrides =
-        typeof localeOverrides.preAuditQuestions === "object" &&
-        localeOverrides.preAuditQuestions !== null
+        typeof localeOverrides.preAuditQuestions === "object" && localeOverrides.preAuditQuestions !== null
             ? localeOverrides.preAuditQuestions
             : {};
     const scaleOverrides =
-        typeof localeOverrides.scales === "object" && localeOverrides.scales !== null
-            ? localeOverrides.scales
-            : {};
+        typeof localeOverrides.scales === "object" && localeOverrides.scales !== null ? localeOverrides.scales : {};
     const sectionOverrides =
         typeof localeOverrides.sections === "object" && localeOverrides.sections !== null
             ? localeOverrides.sections
@@ -115,10 +107,7 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
 
     const bundle = {
         metadata: {
-            instrumentName: mergeString(
-                baseInstrument.instrument_name,
-                metadataOverrides.instrumentName,
-            ),
+            instrumentName: mergeString(baseInstrument.instrument_name, metadataOverrides.instrumentName),
             currentSheet: mergeString(baseInstrument.current_sheet, metadataOverrides.currentSheet),
         },
         preamble: baseInstrument.preamble.map((paragraph, index) => {
@@ -135,8 +124,7 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
             baseInstrument.pre_audit_questions.map((question) => {
                 const questionTranslation = preAuditOverrides[question.key];
                 const optionTranslations =
-                    typeof questionTranslation?.options === "object" &&
-                    questionTranslation.options !== null
+                    typeof questionTranslation?.options === "object" && questionTranslation.options !== null
                         ? questionTranslation.options
                         : {};
 
@@ -144,10 +132,7 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
                     question.key,
                     {
                         label: mergeString(question.label, questionTranslation?.label),
-                        description: mergeNullableString(
-                            question.description,
-                            questionTranslation?.description,
-                        ),
+                        description: mergeNullableString(question.description, questionTranslation?.description),
                         options: Object.fromEntries(
                             question.options.map((option) => [
                                 option.key,
@@ -162,8 +147,7 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
             baseInstrument.scale_guidance.map((scale) => {
                 const scaleTranslation = scaleOverrides[scale.key];
                 const optionTranslations =
-                    typeof scaleTranslation?.options === "object" &&
-                    scaleTranslation.options !== null
+                    typeof scaleTranslation?.options === "object" && scaleTranslation.options !== null
                         ? scaleTranslation.options
                         : {};
 
@@ -177,10 +161,7 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
                             scale.options.map((option) => [
                                 option.key,
                                 {
-                                    label: mergeString(
-                                        option.label,
-                                        optionTranslations[option.key]?.label,
-                                    ),
+                                    label: mergeString(option.label, optionTranslations[option.key]?.label),
                                 },
                             ]),
                         ),
@@ -192,8 +173,7 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
             baseInstrument.sections.map((section) => {
                 const sectionTranslation = sectionOverrides[section.section_key];
                 const questionTranslations =
-                    typeof sectionTranslation?.questions === "object" &&
-                    sectionTranslation.questions !== null
+                    typeof sectionTranslation?.questions === "object" && sectionTranslation.questions !== null
                         ? sectionTranslation.questions
                         : {};
 
@@ -201,18 +181,9 @@ function buildResolvedInstrumentBundle(baseInstrument, localeOverrides) {
                     section.section_key,
                     {
                         title: mergeString(section.title, sectionTranslation?.title),
-                        description: mergeNullableString(
-                            section.description,
-                            sectionTranslation?.description,
-                        ),
-                        instruction: mergeString(
-                            section.instruction,
-                            sectionTranslation?.instruction,
-                        ),
-                        notesPrompt: mergeNullableString(
-                            section.notes_prompt,
-                            sectionTranslation?.notesPrompt,
-                        ),
+                        description: mergeNullableString(section.description, sectionTranslation?.description),
+                        instruction: mergeString(section.instruction, sectionTranslation?.instruction),
+                        notesPrompt: mergeNullableString(section.notes_prompt, sectionTranslation?.notesPrompt),
                         questions: Object.fromEntries(
                             section.questions.map((question) => [
                                 question.question_key,
@@ -290,10 +261,7 @@ async function main() {
     }
 
     if (mode === "source") {
-        const bundle = buildResolvedInstrumentBundle(
-            BASE_PLAYSPACE_INSTRUMENT,
-            enInstrumentTranslations,
-        );
+        const bundle = buildResolvedInstrumentBundle(BASE_PLAYSPACE_INSTRUMENT, enInstrumentTranslations);
         process.stdout.write(`${JSON.stringify(bundle, null, 2)}\n`);
         return;
     }

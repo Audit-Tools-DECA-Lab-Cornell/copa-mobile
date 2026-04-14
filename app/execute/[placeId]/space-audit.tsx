@@ -18,11 +18,7 @@ import {
 } from "lib/audit/selectors";
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import {
-    getResponsiveContentContainerStyle,
-    type ResponsiveLayout,
-    useResponsiveLayout,
-} from "lib/responsive-layout";
+import { getResponsiveContentContainerStyle, type ResponsiveLayout, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -84,8 +80,7 @@ export default function SpaceAuditScreen() {
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
-    const pairKey =
-        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
     const [formValues, setFormValues] = useState<Record<string, string | string[]>>({});
     const formValuesRef = useRef<Record<string, string | string[]>>({});
@@ -103,6 +98,7 @@ export default function SpaceAuditScreen() {
             headerBlurEffect: "light",
             headerStyle: { backgroundColor: ds.colors.surface },
             headerTintColor: ds.colors.primary,
+            contentStyle: { paddingTop: 20 },
             headerTitleStyle: {
                 color: ds.colors.foreground,
                 fontFamily: ds.fonts.bodyBold,
@@ -178,9 +174,23 @@ export default function SpaceAuditScreen() {
 
     useLayoutEffect(() => {
         if (auditSession !== undefined) {
-            navigation.setOptions({ ...themedHeaderOptions, title: `${auditSession.place_name}` });
+            navigation.setOptions({
+                ...themedHeaderOptions,
+                headerTitle: () => (
+                    <YStack justify="center">
+                        <Text
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodySemiBold}
+                            fontSize={ds.typography.titleLg.fontSize}
+                            lineHeight={ds.typography.titleLg.lineHeight}
+                        >
+                            {auditSession.place_name}
+                        </Text>
+                    </YStack>
+                ),
+            });
         }
-    }, [themedHeaderOptions, navigation, auditSession]);
+    }, [themedHeaderOptions, navigation, auditSession, ds]);
 
     const flushToStore = useCallback(() => {
         const latestAuditSession = latestAuditSessionRef.current;
@@ -239,12 +249,7 @@ export default function SpaceAuditScreen() {
         currentUserId !== authSession.user.id ||
         auditSession === undefined
     ) {
-        if (
-            placeId !== null &&
-            projectId !== null &&
-            authSession !== null &&
-            errorMessage !== null
-        ) {
+        if (placeId !== null && projectId !== null && authSession !== null && errorMessage !== null) {
             return (
                 <CenteredMessageCard
                     title={
@@ -277,9 +282,7 @@ export default function SpaceAuditScreen() {
                 message={t("auditInfo.modeMissingMessage", { ns: "audit" })}
                 actionLabel={t("auditInfo.backToPreamble", { ns: "audit" })}
                 onAction={() => {
-                    router.replace(
-                        `/execute/${placeId}?projectId=${encodeURIComponent(projectId)}` as Href,
-                    );
+                    router.replace(`/execute/${placeId}?projectId=${encodeURIComponent(projectId)}` as Href);
                 }}
             />
         );
@@ -295,9 +298,7 @@ export default function SpaceAuditScreen() {
                     subject: t("subjects.survey", { ns: "audit" }),
                 })}
                 onAction={() => {
-                    router.replace(
-                        getFirstSectionRoute(placeId, projectId, auditSession, instrument) as Href,
-                    );
+                    router.replace(getFirstSectionRoute(placeId, projectId, auditSession, instrument) as Href);
                 }}
             />
         );
@@ -307,12 +308,8 @@ export default function SpaceAuditScreen() {
         instrument.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
         selectedMode,
     );
-    const matrixQuestions = setupQuestions.filter(
-        (question) => question.group_key === "current_users_matrix",
-    );
-    const standaloneQuestions = setupQuestions.filter(
-        (question) => question.group_key !== "current_users_matrix",
-    );
+    const matrixQuestions = setupQuestions.filter((question) => question.group_key === "current_users_matrix");
+    const standaloneQuestions = setupQuestions.filter((question) => question.group_key !== "current_users_matrix");
     const isSetupComplete = isRequiredPreAuditComplete(setupQuestions, formValues, selectedMode);
     const nextRoute = getFirstSectionRoute(placeId, projectId, auditSession, instrument);
     const flowSubject = t(`subjects.${getExecuteFlowSubject(selectedMode)}`, { ns: "audit" });
@@ -375,9 +372,7 @@ export default function SpaceAuditScreen() {
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                 onPress={() => {
                     flushToStore();
-                    router.replace(
-                        `/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}`,
-                    );
+                    router.replace(`/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}`);
                 }}
             >
                 <Text
@@ -428,6 +423,7 @@ export default function SpaceAuditScreen() {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
                 maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
+                includeTopPadding: false,
             })}
         >
             <YStack gap="$3">
@@ -446,15 +442,9 @@ export default function SpaceAuditScreen() {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.displayLg.fontSize
-                            : ds.typography.displayMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
                     lineHeight={
-                        layout.isTablet
-                            ? ds.typography.displayLg.lineHeight
-                            : ds.typography.displayMd.lineHeight
+                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
                     }
                 >
                     {t("spaceAudit.title", { ns: "audit" })}
@@ -589,11 +579,7 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.titleLg.fontSize
-                            : ds.typography.titleMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize}
                 >
                     {title}
                 </Text>
@@ -601,16 +587,8 @@ function FieldCard({ title, description, children }: Readonly<FieldCardProps>) {
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
-                        fontSize={
-                            layout.isTablet
-                                ? ds.typography.bodyMd.fontSize
-                                : ds.typography.bodySm.fontSize
-                        }
-                        lineHeight={
-                            layout.isTablet
-                                ? ds.typography.bodyMd.lineHeight
-                                : ds.typography.bodySm.lineHeight
-                        }
+                        fontSize={layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize}
+                        lineHeight={layout.isTablet ? ds.typography.bodyMd.lineHeight : ds.typography.bodySm.lineHeight}
                     >
                         {description}
                     </Paragraph>
@@ -635,11 +613,8 @@ function ChoiceFieldCard({
     const layout = useResponsiveLayout();
     const selectedValues = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
     const optionWidth = getChoiceFieldOptionWidth(layout, question.options);
-    const hasOptionDescriptions = question.options.some(
-        (option) => (option.description ?? "").trim().length > 0,
-    );
-    const optionHeight =
-        hasOptionDescriptions || optionWidth === "100%" ? "auto" : layout.formOptionHeight;
+    const hasOptionDescriptions = question.options.some((option) => (option.description ?? "").trim().length > 0);
+    const optionHeight = hasOptionDescriptions || optionWidth === "100%" ? "auto" : layout.formOptionHeight;
 
     return (
         <FieldCard title={question.label} description={question.description ?? null}>
@@ -675,9 +650,7 @@ function ChoiceFieldCard({
                             <YStack p="$3" gap="$1" mx="$2" items="center">
                                 <Text
                                     color={isSelected ? ds.colors.primary : ds.colors.foreground}
-                                    fontFamily={
-                                        isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium
-                                    }
+                                    fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                     fontSize={ds.typography.bodyMd.fontSize}
                                     style={{ textAlign: "center" }}
                                 >
@@ -705,12 +678,7 @@ function ChoiceFieldCard({
 /**
  * Render the age-group-by-quantity matrix with a tablet-first layout.
  */
-function MatrixFieldCard({
-    questions,
-    values,
-    disabled,
-    onSelectValue,
-}: Readonly<MatrixFieldCardProps>) {
+function MatrixFieldCard({ questions, values, disabled, onSelectValue }: Readonly<MatrixFieldCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
@@ -723,12 +691,7 @@ function MatrixFieldCard({
     return (
         <FieldCard title={t("spaceAudit.matrixHeading")} description={t("spaceAudit.intro")}>
             {layout.isTablet ? (
-                <YStack
-                    rounded={ds.radii.sm}
-                    borderWidth={1}
-                    borderColor={ds.colors.border}
-                    overflow="hidden"
-                >
+                <YStack rounded={ds.radii.sm} borderWidth={1} borderColor={ds.colors.border} overflow="hidden">
                     <XStack bg={ds.colors.surfaceMuted}>
                         <MatrixHeaderCell
                             flex={MATRIX_PROMPT_COLUMN_FLEX}
@@ -779,9 +742,7 @@ function MatrixFieldCard({
                                         px="$3"
                                         py="$3"
                                         justify="center"
-                                        borderRightWidth={
-                                            columnIndex === matrixOptions.length - 1 ? 0 : 1
-                                        }
+                                        borderRightWidth={columnIndex === matrixOptions.length - 1 ? 0 : 1}
                                         borderColor={ds.colors.border}
                                     >
                                         <Button
@@ -790,12 +751,8 @@ function MatrixFieldCard({
                                             rounded={ds.radii.sm}
                                             disabled={disabled}
                                             borderWidth={1}
-                                            borderColor={
-                                                isSelected ? ds.colors.primary : ds.colors.border
-                                            }
-                                            bg={
-                                                isSelected ? ds.colors.primarySoft : ds.colors.input
-                                            }
+                                            borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                                            bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
                                             opacity={disabled ? 0.6 : 1}
                                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                             onPress={() => {
@@ -806,16 +763,8 @@ function MatrixFieldCard({
                                             }}
                                         >
                                             <Text
-                                                color={
-                                                    isSelected
-                                                        ? ds.colors.primary
-                                                        : ds.colors.foreground
-                                                }
-                                                fontFamily={
-                                                    isSelected
-                                                        ? ds.fonts.bodyBold
-                                                        : ds.fonts.bodyMedium
-                                                }
+                                                color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                                fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                                 fontSize={ds.typography.bodySm.fontSize}
                                                 style={{ textAlign: "center" }}
                                             >
@@ -896,9 +845,7 @@ function getChoiceFieldOptionWidth(
         return "100%";
     }
 
-    const hasSupportingDescriptions = options.some(
-        (option) => (option.description ?? "").trim().length > 0,
-    );
+    const hasSupportingDescriptions = options.some((option) => (option.description ?? "").trim().length > 0);
     if (hasSupportingDescriptions || options.length <= 3) {
         return "100%";
     }
@@ -928,11 +875,7 @@ function SummaryRow({ label, value }: Readonly<SummaryRowProps>) {
             >
                 {label}
             </Text>
-            <Text
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.bodyMd.fontSize}
-            >
+            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.bodyMd.fontSize}>
                 {value}
             </Text>
         </YStack>
@@ -942,22 +885,12 @@ function SummaryRow({ label, value }: Readonly<SummaryRowProps>) {
 /**
  * Generic centered loading or error placeholder.
  */
-function CenteredMessageCard({
-    title,
-    message,
-    actionLabel,
-    onAction,
-}: Readonly<CenteredMessageCardProps>) {
+function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
 
     return (
-        <YStack
-            flex={1}
-            justify="center"
-            px={layout.screenPaddingHorizontal}
-            bg={ds.colors.background}
-        >
+        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}

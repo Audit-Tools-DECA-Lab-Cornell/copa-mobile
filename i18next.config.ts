@@ -32,8 +32,7 @@ export default {
         secondaryLanguages: ["de", "fr", "hi", "ja"],
 
         // What happens for missing keys in non-primary locales
-        defaultValue: (key: string, ns: string, lng: string) =>
-            lng === "en" ? "" : `TODO: ${key} ${ns}`,
+        defaultValue: (key: string, ns: string, lng: string) => (lng === "en" ? "" : `TODO: ${key} ${ns}`),
 
         // Namespace/key behavior
         defaultNS: "common",

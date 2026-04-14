@@ -1,14 +1,11 @@
-import { mmkvStorage } from "lib/storage/mmkv";
 import {
     DEFAULT_PERSISTED_PREFERENCES,
     normalizePersistedPreferences,
     type PersistedPreferences,
 } from "lib/preferences/storage-schema";
+import { mmkvStorage } from "lib/storage/mmkv";
 
-export type {
-    PersistedLanguagePreference,
-    PersistedPreferences,
-} from "lib/preferences/storage-schema";
+export type { PersistedLanguagePreference, PersistedPreferences } from "lib/preferences/storage-schema";
 
 /**
  * Device-local persistence for user preferences (theme, language, accessibility).

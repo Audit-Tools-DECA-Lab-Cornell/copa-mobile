@@ -1,6 +1,6 @@
+import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import { useMemo } from "react";
 import { usePreferencesStore, type ResolvedTheme } from "stores/preferences-store";
-import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 
 /**
  * Place workflow status used for status pill rendering.
@@ -422,10 +422,7 @@ function getColorPalette(
  * @param theme Resolved light or dark theme.
  * @returns Full design system object.
  */
-export function getDesignSystem(
-    theme: ResolvedTheme,
-    options: Partial<DesignSystemOptions> = {},
-): DesignSystemTheme {
+export function getDesignSystem(theme: ResolvedTheme, options: Partial<DesignSystemOptions> = {}): DesignSystemTheme {
     const fieldModePresentation = resolveFieldModePresentation({
         fieldMode: options.fieldMode ?? false,
         fontScale: options.fontScale ?? 1,
@@ -505,19 +502,16 @@ type PaletteColorValue = ActiveColorPalette[keyof ColorPalette];
  * @param colors Active semantic color palette.
  * @returns Accent color string.
  */
-export function getScaleAccentColor(
-    scaleKey: string,
-    colors: ActiveColorPalette,
-): PaletteColorValue {
+export function getScaleAccentColor(scaleKey: string, colors: ActiveColorPalette): PaletteColorValue {
     switch (scaleKey) {
         case "quantity":
-            return colors.primary;
-        case "diversity":
-            return colors.info;
-        case "challenge":
             return colors.violet;
-        case "sociability":
+        case "diversity":
             return colors.success;
+        case "challenge":
+            return colors.danger;
+        case "sociability":
+            return colors.info;
         default:
             return colors.primary;
     }
@@ -533,13 +527,13 @@ export function getScaleAccentColor(
 export function getScaleSoftColor(scaleKey: string, colors: ActiveColorPalette): PaletteColorValue {
     switch (scaleKey) {
         case "quantity":
-            return colors.primarySoft;
-        case "diversity":
-            return colors.infoSoft;
-        case "challenge":
             return colors.violetSoft;
-        case "sociability":
+        case "diversity":
             return colors.successSoft;
+        case "challenge":
+            return colors.dangerSoft;
+        case "sociability":
+            return colors.infoSoft;
         default:
             return colors.primarySoft;
     }
@@ -567,10 +561,7 @@ export interface DesignTone {
  * @param colors Optional active color palette.
  * @returns Accent, surface, and text colors for the metric.
  */
-export function getMetricTone(
-    tone: MetricTone,
-    colors: ActiveColorPalette = DARK_COLORS,
-): DesignTone {
+export function getMetricTone(tone: MetricTone, colors: ActiveColorPalette = DARK_COLORS): DesignTone {
     const c = colors;
 
     if (tone === "green") {
@@ -590,10 +581,7 @@ export function getMetricTone(
  * @param colors Optional active color palette.
  * @returns Accent, surface, and text colors for the status.
  */
-export function getPlaceStatusTone(
-    status: PlaceStatus,
-    colors: ActiveColorPalette = DARK_COLORS,
-): DesignTone {
+export function getPlaceStatusTone(status: PlaceStatus, colors: ActiveColorPalette = DARK_COLORS): DesignTone {
     const c = colors;
 
     if (status === "submitted") {

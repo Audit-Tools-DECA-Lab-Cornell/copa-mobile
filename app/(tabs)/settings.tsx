@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from "react";
-import { ScrollView, TextStyle, type DimensionValue } from "react-native";
-import { useRouter } from "expo-router";
+import type { IconProps } from "@tamagui/helpers-icon";
 import {
     Accessibility,
     Check,
@@ -9,37 +7,26 @@ import {
     Globe,
     Info,
     LogOut,
-    Moon,
     Monitor,
+    Moon,
     Sun,
     Type,
     User,
 } from "@tamagui/lucide-icons-2";
-import type { IconProps } from "@tamagui/helpers-icon";
-import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Separator, Slider, Text, XStack, YStack } from "tamagui";
+import { useRouter } from "expo-router";
+import { fetchMyAccount, fetchMyAuditorProfile, type MyAccount, type MyAuditorProfile } from "lib/audit/profile-api";
 import { useDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { getSettingsPageMaxWidth } from "lib/responsive";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
-import {
-    fetchMyAccount,
-    fetchMyAuditorProfile,
-    type MyAccount,
-    type MyAuditorProfile,
-} from "lib/audit/profile-api";
-import {
-    getResponsiveContentContainerStyle,
-    ResponsiveLayout,
-    useResponsiveLayout,
-} from "lib/responsive-layout";
+import { getSettingsPageMaxWidth } from "lib/responsive";
+import { getResponsiveContentContainerStyle, ResponsiveLayout, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
+import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { ScrollView, TextStyle, type DimensionValue } from "react-native";
 import { useAuthStore } from "stores/auth-store";
-import {
-    usePreferencesStore,
-    type LanguagePreference,
-    type ThemeMode,
-} from "stores/preferences-store";
+import { usePreferencesStore, type LanguagePreference, type ThemeMode } from "stores/preferences-store";
+import { Button, Paragraph, Separator, Slider, Text, XStack, YStack } from "tamagui";
 
 const THEME_OPTIONS: readonly { key: ThemeMode; Icon: FC<IconProps> }[] = [
     { key: "system", Icon: Monitor },
@@ -147,19 +134,17 @@ export default function SettingsScreen() {
         setAccount(null);
         setProfile(null);
 
-        void Promise.allSettled([fetchMyAccount(session), fetchMyAuditorProfile(session)]).then(
-            (results) => {
-                if (!isSubscribed) {
-                    return;
-                }
+        void Promise.allSettled([fetchMyAccount(session), fetchMyAuditorProfile(session)]).then((results) => {
+            if (!isSubscribed) {
+                return;
+            }
 
-                const [accountResult, profileResult] = results;
+            const [accountResult, profileResult] = results;
 
-                setAccount(accountResult.status === "fulfilled" ? accountResult.value : null);
-                setProfile(profileResult.status === "fulfilled" ? profileResult.value : null);
-                setIsLoading(false);
-            },
-        );
+            setAccount(accountResult.status === "fulfilled" ? accountResult.value : null);
+            setProfile(profileResult.status === "fulfilled" ? profileResult.value : null);
+            setIsLoading(false);
+        });
 
         return () => {
             isSubscribed = false;
@@ -208,12 +193,7 @@ export default function SettingsScreen() {
         formMaxWidth: layout.formMaxWidth,
     });
     const appearanceCard = (
-        <SettingsCard
-            ds={ds}
-            label={t("appearance.label", { ns: "settings" })}
-            Icon={Sun}
-            stretch={layout.isTablet}
-        >
+        <SettingsCard ds={ds} label={t("appearance.label", { ns: "settings" })} Icon={Sun} stretch={layout.isTablet}>
             <YStack gap="$1.5">
                 <Text
                     color={ds.colors.foreground}
@@ -249,15 +229,11 @@ export default function SettingsScreen() {
                             <YStack items="center" gap="$1">
                                 <OptionIcon
                                     size={18}
-                                    color={
-                                        isSelected ? ds.colors.primary : ds.colors.mutedForeground
-                                    }
+                                    color={isSelected ? ds.colors.primary : ds.colors.mutedForeground}
                                 />
                                 <Text
                                     color={isSelected ? ds.colors.primary : ds.colors.foreground}
-                                    fontFamily={
-                                        isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium
-                                    }
+                                    fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                     fontSize={ds.typography.bodySm.fontSize}
                                 >
                                     {t(`appearance.${option.key}`, { ns: "settings" })}
@@ -387,15 +363,9 @@ export default function SettingsScreen() {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.displayLg.fontSize
-                            : ds.typography.displayMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
                     lineHeight={
-                        layout.isTablet
-                            ? ds.typography.displayLg.lineHeight
-                            : ds.typography.displayMd.lineHeight
+                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
                     }
                 >
                     {t("title", { ns: "settings" })}
@@ -411,23 +381,11 @@ export default function SettingsScreen() {
 
             {/* Profile Card (read-only) */}
             <SettingsCard ds={ds} label={t("profile.label", { ns: "settings" })} Icon={User}>
-                <ProfileRow
-                    ds={ds}
-                    label={t("profile.name", { ns: "settings" })}
-                    value={userName}
-                />
+                <ProfileRow ds={ds} label={t("profile.name", { ns: "settings" })} value={userName} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileRow
-                    ds={ds}
-                    label={t("profile.email", { ns: "settings" })}
-                    value={userEmail}
-                />
+                <ProfileRow ds={ds} label={t("profile.email", { ns: "settings" })} value={userEmail} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileRow
-                    ds={ds}
-                    label={t("profile.accountType", { ns: "settings" })}
-                    value={accountType}
-                />
+                <ProfileRow ds={ds} label={t("profile.accountType", { ns: "settings" })} value={accountType} />
 
                 {profile === null ? null : (
                     <>
@@ -551,10 +509,7 @@ export default function SettingsScreen() {
                     >
                         {selectedLanguageLabel}
                     </Text>
-                    <ChevronDown
-                        size={16}
-                        color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.mutedForeground}
-                    />
+                    <ChevronDown size={16} color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.mutedForeground} />
                 </Button>
 
                 {isLanguageMenuOpen ? (
@@ -587,12 +542,8 @@ export default function SettingsScreen() {
                                     }}
                                 >
                                     <Text
-                                        color={
-                                            isSelected ? ds.colors.primary : ds.colors.foreground
-                                        }
-                                        fontFamily={
-                                            isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium
-                                        }
+                                        color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                        fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                         fontSize={ds.typography.bodyMd.fontSize}
                                     >
                                         {getLanguageOptionLabel(option.key)}
@@ -669,18 +620,8 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
             })}
         >
             <YStack gap="$3">
-                <SkeletonBlock
-                    ds={ds}
-                    width="36%"
-                    height={layout.isTablet ? 40 : 28}
-                    rounded={ds.radii.sm}
-                />
-                <SkeletonBlock
-                    ds={ds}
-                    width="68%"
-                    height={layout.isTablet ? 28 : 18}
-                    rounded={ds.radii.sm}
-                />
+                <SkeletonBlock ds={ds} width="36%" height={layout.isTablet ? 40 : 28} rounded={ds.radii.sm} />
+                <SkeletonBlock ds={ds} width="68%" height={layout.isTablet ? 28 : 18} rounded={ds.radii.sm} />
             </YStack>
 
             <SettingsCardSkeleton ds={ds} labelWidth="26%">
@@ -691,12 +632,7 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                 <ProfileSkeletonRow ds={ds} labelWidth="32%" valueWidth="34%" layout={layout} />
                 <Separator borderColor={ds.colors.border} />
                 <ProfileSkeletonRow ds={ds} labelWidth="30%" valueWidth="28%" layout={layout} />
-                <SkeletonBlock
-                    ds={ds}
-                    width="78%"
-                    height={layout.isTablet ? 28 : 18}
-                    rounded={ds.radii.sm}
-                />
+                <SkeletonBlock ds={ds} width="78%" height={layout.isTablet ? 28 : 18} rounded={ds.radii.sm} />
                 <SkeletonBlock ds={ds} width="100%" height={layout.isTablet ? 64 : 48} />
             </SettingsCardSkeleton>
 
@@ -705,18 +641,8 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                     <YStack flex={1}>
                         <SettingsCardSkeleton ds={ds} labelWidth="48%" stretch>
                             <YStack gap="$3.5">
-                                <SkeletonBlock
-                                    ds={ds}
-                                    width="52%"
-                                    height={36}
-                                    rounded={ds.radii.sm}
-                                />
-                                <SkeletonBlock
-                                    ds={ds}
-                                    width="72%"
-                                    height={36}
-                                    rounded={ds.radii.sm}
-                                />
+                                <SkeletonBlock ds={ds} width="52%" height={36} rounded={ds.radii.sm} />
+                                <SkeletonBlock ds={ds} width="72%" height={36} rounded={ds.radii.sm} />
                             </YStack>
                             <XStack gap="$2">
                                 <SkeletonBlock ds={ds} flex={1} height={72} />
@@ -727,18 +653,8 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                     <YStack flex={1}>
                         <SettingsCardSkeleton ds={ds} labelWidth="48%" stretch>
                             <YStack gap="$3.5">
-                                <SkeletonBlock
-                                    ds={ds}
-                                    width="52%"
-                                    height={48}
-                                    rounded={ds.radii.sm}
-                                />
-                                <SkeletonBlock
-                                    ds={ds}
-                                    width="96%"
-                                    height={36}
-                                    rounded={ds.radii.sm}
-                                />
+                                <SkeletonBlock ds={ds} width="52%" height={48} rounded={ds.radii.sm} />
+                                <SkeletonBlock ds={ds} width="96%" height={36} rounded={ds.radii.sm} />
                             </YStack>
                             <SkeletonBlock ds={ds} width="100%" height={96} />
                             <SkeletonBlock ds={ds} width="100%" height={72} />
@@ -784,12 +700,7 @@ interface SettingsCardSkeletonProps {
 /**
  * Placeholder card wrapper that mirrors the spacing of a real settings card.
  */
-function SettingsCardSkeleton({
-    ds,
-    labelWidth,
-    children,
-    stretch = false,
-}: SettingsCardSkeletonProps) {
+function SettingsCardSkeleton({ ds, labelWidth, children, stretch = false }: SettingsCardSkeletonProps) {
     const layout = useResponsiveLayout();
     return (
         <YStack
@@ -809,12 +720,7 @@ function SettingsCardSkeleton({
                     height={layout.isTablet ? 20 : 16}
                     rounded={ds.radii.full}
                 />
-                <SkeletonBlock
-                    ds={ds}
-                    width={labelWidth}
-                    height={layout.isTablet ? 18 : 12}
-                    rounded={ds.radii.sm}
-                />
+                <SkeletonBlock ds={ds} width={labelWidth} height={layout.isTablet ? 18 : 12} rounded={ds.radii.sm} />
             </XStack>
             {children}
         </YStack>
@@ -860,18 +766,8 @@ interface ProfileSkeletonRowProps {
 function ProfileSkeletonRow({ ds, labelWidth, valueWidth, layout }: ProfileSkeletonRowProps) {
     return (
         <XStack justify="space-between" items="center" py="$3.5">
-            <SkeletonBlock
-                ds={ds}
-                width={labelWidth}
-                height={layout.isTablet ? 28 : 18}
-                rounded={ds.radii.sm}
-            />
-            <SkeletonBlock
-                ds={ds}
-                width={valueWidth}
-                height={layout.isTablet ? 28 : 18}
-                rounded={ds.radii.sm}
-            />
+            <SkeletonBlock ds={ds} width={labelWidth} height={layout.isTablet ? 28 : 18} rounded={ds.radii.sm} />
+            <SkeletonBlock ds={ds} width={valueWidth} height={layout.isTablet ? 28 : 18} rounded={ds.radii.sm} />
         </XStack>
     );
 }
@@ -938,17 +834,27 @@ function ProfileRow({ ds, label, value, textTransform }: ProfileRowProps) {
             >
                 {label}
             </Text>
-            <Text
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodySemiBold}
-                fontSize={ds.typography.bodyMd.fontSize}
-                numberOfLines={1}
-                overflow="hidden"
-                flex={1}
-                textTransform={textTransform}
-            >
-                {value}
-            </Text>
+            <YStack flex={1}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                        flexGrow: 1,
+                        justifyContent: "flex-end",
+                    }}
+                >
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodySemiBold}
+                        fontSize={ds.typography.bodyMd.fontSize}
+                        lineHeight={ds.typography.bodyMd.lineHeight}
+                        flex={1}
+                        textTransform={textTransform}
+                    >
+                        {value}
+                    </Text>
+                </ScrollView>
+            </YStack>
         </XStack>
     );
 }
@@ -965,14 +871,7 @@ interface ToggleRowProps {
 /**
  * Toggle switch row for boolean accessibility preferences.
  */
-function ToggleRow({
-    ds,
-    label,
-    description,
-    icon: ToggleIcon,
-    isEnabled,
-    onToggle,
-}: ToggleRowProps) {
+function ToggleRow({ ds, label, description, icon: ToggleIcon, isEnabled, onToggle }: ToggleRowProps) {
     const layout = useResponsiveLayout();
     const { t } = useTranslation("common");
     return (

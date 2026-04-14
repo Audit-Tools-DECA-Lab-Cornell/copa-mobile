@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { z } from "zod";
 
 export type DirtySections = Record<string, Record<string, number>>;
 export type DirtyPreAudit = Record<string, number>;
@@ -270,10 +270,7 @@ export const auditDraftSaveSchema = z.object({
 const dirtySectionVersionMapSchema = z.record(z.string(), z.number().int().nonnegative());
 
 const dirtySectionsSchema = z
-    .union([
-        z.record(z.string(), z.array(z.string())),
-        z.record(z.string(), dirtySectionVersionMapSchema),
-    ])
+    .union([z.record(z.string(), z.array(z.string())), z.record(z.string(), dirtySectionVersionMapSchema)])
     .transform<DirtySections>((value) => normalizeDirtySections(value));
 
 const dirtyPreAuditSchema = z
@@ -334,9 +331,7 @@ export interface PaginatedResponse<TItem> {
  * @param itemSchema Runtime schema for one item in the collection.
  * @returns Runtime schema for the paginated response envelope.
  */
-export const createPaginatedResponseSchema = <TItemSchema extends z.ZodType>(
-    itemSchema: TItemSchema,
-) =>
+export const createPaginatedResponseSchema = <TItemSchema extends z.ZodType>(itemSchema: TItemSchema) =>
     z.object({
         items: z.array(itemSchema),
         total_count: z.number().int().nonnegative(),
@@ -434,9 +429,7 @@ function normalizeDirtySections(
     const nextDirtySections: DirtySections = {};
     for (const [auditId, auditValue] of Object.entries(value)) {
         if (Array.isArray(auditValue)) {
-            nextDirtySections[auditId] = Object.fromEntries(
-                auditValue.map((sectionKey) => [sectionKey, 0]),
-            );
+            nextDirtySections[auditId] = Object.fromEntries(auditValue.map((sectionKey) => [sectionKey, 0]));
             continue;
         }
 

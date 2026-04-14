@@ -2,6 +2,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as XLSX from "xlsx";
+
 import type {
     AuditSession,
     ExecutionMode,
@@ -93,12 +94,7 @@ const SINGLE_RESPONSE_HEADERS = [
     "Challenge Opportunities",
     "Auditor Comment",
 ] as const;
-const BULK_RESPONSE_PREFIX_HEADERS = [
-    "Audit Code",
-    "Place Name",
-    "Project Name",
-    "Locality",
-] as const;
+const BULK_RESPONSE_PREFIX_HEADERS = ["Audit Code", "Place Name", "Project Name", "Locality"] as const;
 const PREVIEW_RESPONSE_COLUMN_INDEXES = [0, 1, 2, 3, 6, 7, 8, 9, 10] as const;
 const OVERVIEW_COLUMN_WIDTHS = [28, 56] as const;
 const SINGLE_PRE_AUDIT_COLUMN_WIDTHS = [42, 58] as const;
@@ -122,9 +118,7 @@ export function buildAuditExportPreview(
     instrument: PlayspaceInstrument,
     limit = 5,
 ): AuditExportPreview {
-    const headerRow = PREVIEW_RESPONSE_COLUMN_INDEXES.map(
-        (columnIndex) => SINGLE_RESPONSE_HEADERS[columnIndex],
-    );
+    const headerRow = PREVIEW_RESPONSE_COLUMN_INDEXES.map((columnIndex) => SINGLE_RESPONSE_HEADERS[columnIndex]);
     const detailRows = buildSingleAuditResponseRows(exportableAudit, instrument)
         .filter((row) => {
             const modeCell = row[1];
@@ -200,10 +194,7 @@ function validateExportableAudit(exportableAudit: ExportableAudit): void {
  * @param instrument Static PVUA instrument definition.
  * @returns Named workbook payload used by all export formats.
  */
-function buildSingleAuditWorkbook(
-    exportableAudit: ExportableAudit,
-    instrument: PlayspaceInstrument,
-): WorkbookPayload {
+function buildSingleAuditWorkbook(exportableAudit: ExportableAudit, instrument: PlayspaceInstrument): WorkbookPayload {
     const auditCodeSegment = slugifySegment(exportableAudit.auditSession.audit_code);
     const projectSegment = slugifySegment(exportableAudit.auditSession.project_name);
     return {
@@ -303,9 +294,7 @@ function buildBulkAuditOverviewTable(
     return {
         name: "Overview",
         title: "Audit Overview",
-        columnWidths: [
-            16, 24, 24, 24, 14, 28, 20, 20, 14, 14, 14, 14, 14, 14, 14, 14, 16, 16, 16, 16, 18,
-        ],
+        columnWidths: [16, 24, 24, 24, 14, 28, 20, 20, 14, 14, 14, 14, 14, 14, 14, 14, 16, 16, 16, 16, 18],
         rows: [
             [
                 "Audit Code",
@@ -330,9 +319,7 @@ function buildBulkAuditOverviewTable(
                 "Auditor Age",
                 "Auditor Role",
             ],
-            ...exportableAudits.map((exportableAudit) =>
-                buildBulkAuditOverviewRow(exportableAudit, instrument),
-            ),
+            ...exportableAudits.map((exportableAudit) => buildBulkAuditOverviewRow(exportableAudit, instrument)),
         ],
     };
 }
@@ -348,9 +335,7 @@ function buildSingleAuditPreAuditTable(
     exportableAudit: ExportableAudit,
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
-    const auditInfoQuestions = instrument.pre_audit_questions.filter(
-        (q) => q.page_key === "audit_info",
-    );
+    const auditInfoQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "audit_info");
     return {
         name: "PreAudit",
         title: "Pre-Audit",
@@ -375,9 +360,7 @@ function buildSingleAuditSpaceAuditTable(
     exportableAudit: ExportableAudit,
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
-    const spaceSetupQuestions = instrument.pre_audit_questions.filter(
-        (q) => q.page_key === "space_setup",
-    );
+    const spaceSetupQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "space_setup");
     return {
         name: "SpaceAudit",
         title: "Space Audit Setup",
@@ -402,9 +385,7 @@ function buildBulkAuditPreAuditTable(
     exportableAudits: readonly ExportableAudit[],
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
-    const auditInfoQuestions = instrument.pre_audit_questions.filter(
-        (q) => q.page_key === "audit_info",
-    );
+    const auditInfoQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "audit_info");
     const rows: SpreadsheetRow[] = [["Audit Code", "Place Name", "Question", "Recorded Answer"]];
 
     for (const exportableAudit of exportableAudits) {
@@ -432,9 +413,7 @@ function buildBulkAuditSpaceAuditTable(
     exportableAudits: readonly ExportableAudit[],
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
-    const spaceSetupQuestions = instrument.pre_audit_questions.filter(
-        (q) => q.page_key === "space_setup",
-    );
+    const spaceSetupQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "space_setup");
     const rows: SpreadsheetRow[] = [["Audit Code", "Place Name", "Question", "Recorded Answer"]];
 
     for (const exportableAudit of exportableAudits) {
@@ -472,11 +451,7 @@ function buildAuditGuidanceTable(instrument: PlayspaceInstrument): WorkbookTable
     const rows: SpreadsheetRow[] = [
         ["Topic", "Guidance", "Available options"],
         ["Instrument Overview", instrument.preamble.map(stripPromptMarkup).join("\n\n"), ""],
-        [
-            "Execution Modes",
-            "Choose the option that matches how the audit was completed.",
-            executionModeOptions,
-        ],
+        ["Execution Modes", "Choose the option that matches how the audit was completed.", executionModeOptions],
     ];
 
     for (const scale of instrument.scale_guidance) {
@@ -504,10 +479,7 @@ function buildAuditGuidanceTable(instrument: PlayspaceInstrument): WorkbookTable
  * @param instrument Localized PVUA instrument.
  * @returns One flat overview row for the bulk sheet.
  */
-function buildBulkAuditOverviewRow(
-    exportableAudit: ExportableAudit,
-    instrument: PlayspaceInstrument,
-): SpreadsheetRow {
+function buildBulkAuditOverviewRow(exportableAudit: ExportableAudit, instrument: PlayspaceInstrument): SpreadsheetRow {
     const { auditSession, context, auditorProfile } = exportableAudit;
     const overallScores = auditSession.scores.overall;
 
@@ -543,18 +515,10 @@ function buildBulkAuditOverviewRow(
  * @param question Localized pre-audit question.
  * @returns Single question/answer row.
  */
-function buildSingleAuditPreAuditRow(
-    auditSession: AuditSession,
-    question: PreAuditQuestion,
-): SpreadsheetRow {
+function buildSingleAuditPreAuditRow(auditSession: AuditSession, question: PreAuditQuestion): SpreadsheetRow {
     return [
         question.label,
-        joinDisplayValues(
-            resolvePreAuditDisplayValues(
-                question,
-                readPreAuditQuestionValues(auditSession, question),
-            ),
-        ),
+        joinDisplayValues(resolvePreAuditDisplayValues(question, readPreAuditQuestionValues(auditSession, question))),
     ];
 }
 
@@ -565,20 +529,12 @@ function buildSingleAuditPreAuditRow(
  * @param question Localized pre-audit question.
  * @returns Bulk pre-audit row with audit identifiers.
  */
-function buildBulkAuditPreAuditRow(
-    auditSession: AuditSession,
-    question: PreAuditQuestion,
-): SpreadsheetRow {
+function buildBulkAuditPreAuditRow(auditSession: AuditSession, question: PreAuditQuestion): SpreadsheetRow {
     return [
         auditSession.audit_code,
         auditSession.place_name,
         question.label,
-        joinDisplayValues(
-            resolvePreAuditDisplayValues(
-                question,
-                readPreAuditQuestionValues(auditSession, question),
-            ),
-        ),
+        joinDisplayValues(resolvePreAuditDisplayValues(question, readPreAuditQuestionValues(auditSession, question))),
     ];
 }
 
@@ -598,33 +554,21 @@ function buildSingleAuditResponseRows(
     const rows: SpreadsheetRow[] = [];
 
     for (const [sectionIndex, section] of instrument.sections.entries()) {
-        const visibleQuestions = section.questions.filter((question) =>
-            isQuestionVisible(question, executionMode),
-        );
+        const visibleQuestions = section.questions.filter((question) => isQuestionVisible(question, executionMode));
         if (visibleQuestions.length === 0) {
             continue;
         }
 
         const sectionState = auditSession.sections[section.section_key];
-        rows.push(
-            buildSectionHeaderRow(
-                sectionIndex,
-                section.title,
-                section.description,
-                section.instruction,
-            ),
-        );
+        rows.push(buildSectionHeaderRow(sectionIndex, section.title, section.description, section.instruction));
 
         for (const [questionIndex, question] of visibleQuestions.entries()) {
             const questionAnswers = sectionState?.responses[question.question_key] ?? {};
-            rows.push(
-                buildQuestionResponseRow(sectionIndex, questionIndex, question, questionAnswers),
-            );
+            rows.push(buildQuestionResponseRow(sectionIndex, questionIndex, question, questionAnswers));
         }
 
         const sectionNote = sectionState?.note ?? "";
-        const notesPrompt =
-            typeof section.notes_prompt === "string" ? stripPromptMarkup(section.notes_prompt) : "";
+        const notesPrompt = typeof section.notes_prompt === "string" ? stripPromptMarkup(section.notes_prompt) : "";
         if (notesPrompt.length > 0 || sectionNote.trim().length > 0) {
             rows.push(
                 buildSectionNoteRow(
@@ -741,11 +685,7 @@ function buildQuestionResponseRow(
         "",
         "",
         stripPromptMarkup(question.prompt),
-        formatQuestionAnswer(
-            question,
-            "quantity",
-            typeof answers.quantity === "string" ? answers.quantity : undefined,
-        ),
+        formatQuestionAnswer(question, "quantity", typeof answers.quantity === "string" ? answers.quantity : undefined),
         formatQuestionAnswer(
             question,
             "diversity",
@@ -823,9 +763,7 @@ function formatQuestionModeLabel(mode: ExecutionMode): string {
  * @param constructs Question construct keys.
  * @returns Display label for the construct column.
  */
-function formatConstructLabel(
-    constructs: readonly InstrumentQuestion["constructs"][number][],
-): string {
+function formatConstructLabel(constructs: readonly InstrumentQuestion["constructs"][number][]): string {
     const uniqueConstructs = Array.from(new Set(constructs));
     if (uniqueConstructs.length === 0) {
         return "";
@@ -893,10 +831,7 @@ function formatQuestionAnswer(
  * @param answers Stored answer payload with selected_option_keys.
  * @returns Pipe-separated list of selected option labels.
  */
-function formatChecklistAnswer(
-    question: InstrumentQuestion,
-    answers: QuestionResponsePayload,
-): string {
+function formatChecklistAnswer(question: InstrumentQuestion, answers: QuestionResponsePayload): string {
     const selectedKeys = answers["selected_option_keys"];
     if (!Array.isArray(selectedKeys) || selectedKeys.length === 0) {
         return "";
@@ -973,10 +908,7 @@ function formatAuditStatusLabel(status: AuditSession["status"]): string {
  * @param instrument Localized PVUA instrument.
  * @returns Human-readable execution mode label.
  */
-function formatExecutionModeLabel(
-    auditSession: AuditSession,
-    instrument: PlayspaceInstrument,
-): string {
+function formatExecutionModeLabel(auditSession: AuditSession, instrument: PlayspaceInstrument): string {
     const executionMode = resolveExecutionMode(auditSession);
     if (executionMode === null) {
         return "";
@@ -1022,18 +954,12 @@ function joinDisplayValues(values: readonly string[]): string {
  * @param instrument Static PVUA instrument definition.
  * @returns Detail table matching the workbook-like export format.
  */
-function buildResponsesTable(
-    exportableAudit: ExportableAudit,
-    instrument: PlayspaceInstrument,
-): WorkbookTable {
+function buildResponsesTable(exportableAudit: ExportableAudit, instrument: PlayspaceInstrument): WorkbookTable {
     return {
         name: "Responses",
         title: "PVUA Response Matrix",
         columnWidths: SINGLE_RESPONSE_COLUMN_WIDTHS,
-        rows: [
-            SINGLE_RESPONSE_HEADERS,
-            ...buildSingleAuditResponseRows(exportableAudit, instrument),
-        ],
+        rows: [SINGLE_RESPONSE_HEADERS, ...buildSingleAuditResponseRows(exportableAudit, instrument)],
     };
 }
 
@@ -1066,10 +992,7 @@ function buildBulkResponsesTable(
  * @param executionMode Effective execution mode.
  * @returns Whether the question is visible for the audit.
  */
-function isQuestionVisible(
-    question: InstrumentQuestion,
-    executionMode: ExecutionMode | null,
-): boolean {
+function isQuestionVisible(question: InstrumentQuestion, executionMode: ExecutionMode | null): boolean {
     if (executionMode === null) {
         return true;
     }
@@ -1093,10 +1016,7 @@ function resolveExecutionMode(auditSession: AuditSession): ExecutionMode | null 
  * @param question Pre-audit question definition.
  * @returns Raw selected ids or derived values.
  */
-function readPreAuditQuestionValues(
-    auditSession: AuditSession,
-    question: PreAuditQuestion,
-): readonly string[] {
+function readPreAuditQuestionValues(auditSession: AuditSession, question: PreAuditQuestion): readonly string[] {
     switch (question.key) {
         case "auditor_code":
             return [];
@@ -1109,13 +1029,9 @@ function readPreAuditQuestionValues(
         case "total_minutes":
             return [auditSession.total_minutes?.toString() ?? "Pending"];
         case "place_size":
-            return auditSession.pre_audit.place_size === null
-                ? []
-                : [auditSession.pre_audit.place_size];
+            return auditSession.pre_audit.place_size === null ? [] : [auditSession.pre_audit.place_size];
         case "current_users_0_5":
-            return auditSession.pre_audit.current_users_0_5 === null
-                ? []
-                : [auditSession.pre_audit.current_users_0_5];
+            return auditSession.pre_audit.current_users_0_5 === null ? [] : [auditSession.pre_audit.current_users_0_5];
         case "current_users_6_12":
             return auditSession.pre_audit.current_users_6_12 === null
                 ? []
@@ -1137,9 +1053,7 @@ function readPreAuditQuestionValues(
         case "weather_conditions":
             return auditSession.pre_audit.weather_conditions;
         case "wind_conditions":
-            return auditSession.pre_audit.wind_conditions === null
-                ? []
-                : [auditSession.pre_audit.wind_conditions];
+            return auditSession.pre_audit.wind_conditions === null ? [] : [auditSession.pre_audit.wind_conditions];
         default:
             return [];
     }
@@ -1152,10 +1066,7 @@ function readPreAuditQuestionValues(
  * @param rawValues Raw selected ids or derived values.
  * @returns Readable display labels.
  */
-function resolvePreAuditDisplayValues(
-    question: PreAuditQuestion,
-    rawValues: readonly string[],
-): readonly string[] {
+function resolvePreAuditDisplayValues(question: PreAuditQuestion, rawValues: readonly string[]): readonly string[] {
     if (question.options.length === 0) {
         return rawValues;
     }
@@ -1187,10 +1098,7 @@ function deriveSummaryScore(auditSession: AuditSession): number | string {
  * @param format Target file format.
  * @returns Shared file name for user feedback.
  */
-async function shareWorkbookPayload(
-    workbook: WorkbookPayload,
-    format: AuditExportFormat,
-): Promise<string> {
+async function shareWorkbookPayload(workbook: WorkbookPayload, format: AuditExportFormat): Promise<string> {
     switch (format) {
         case "csv":
             return await shareCsvWorkbook(workbook);
@@ -1279,12 +1187,7 @@ async function sharePdfWorkbook(workbook: WorkbookPayload): Promise<string> {
  * @param mimeType MIME type for Android/web.
  * @param uti Uniform type identifier for iOS.
  */
-async function shareLocalFile(
-    fileUri: string,
-    fileName: string,
-    mimeType: string,
-    uti: string,
-): Promise<void> {
+async function shareLocalFile(fileUri: string, fileName: string, mimeType: string, uti: string): Promise<void> {
     const sharingAvailable = await Sharing.isAvailableAsync();
     if (!sharingAvailable) {
         throw new Error(`File sharing is unavailable for ${fileName}.`);
@@ -1373,12 +1276,7 @@ function renderHtmlTable(rows: readonly SpreadsheetRow[]): string {
         })
         .join("");
 
-    return [
-        "<table>",
-        `<thead><tr>${headerHtml}</tr></thead>`,
-        `<tbody>${bodyHtml}</tbody>`,
-        "</table>",
-    ].join("");
+    return ["<table>", `<thead><tr>${headerHtml}</tr></thead>`, `<tbody>${bodyHtml}</tbody>`, "</table>"].join("");
 }
 
 /**

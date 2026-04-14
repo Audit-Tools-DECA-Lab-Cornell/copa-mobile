@@ -1,37 +1,23 @@
 import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import {
-    TriangleAlert,
-    ArrowRight,
-    Clock3,
-    FileBarChart,
-    MapPin,
-    Dot,
-} from "@tamagui/lucide-icons-2";
-import { useTranslation } from "react-i18next";
+import { ArrowRight, Clock3, Dot, FileBarChart, MapPin, TriangleAlert } from "@tamagui/lucide-icons-2";
 import { useToastController } from "@tamagui/toast";
-import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { ActionButton } from "components/ui/action-button";
 import { CollapsibleCard } from "components/ui/collapsible-card";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
-import {
-    buildExportableAuditForPlace,
-    loadOptionalExportAuditorProfile,
-} from "lib/audit/export-helpers";
+import { useRouter } from "expo-router";
 import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/audit/export";
 import { buildAuditExportPreview, shareBulkAuditExport } from "lib/audit/export";
-import type { AuditorPlace } from "lib/audit/places-api";
+import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     deriveLocality,
     derivePlaceStatus,
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
-import { getProjectPlaceKey } from "lib/audit/pair-key";
+import type { AuditorPlace } from "lib/audit/places-api";
 import {
     formatColumnSummary,
     formatConstructSummary,
@@ -40,16 +26,20 @@ import {
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
-import { useDesignSystem, getPlaceStatusTone, isGlassUiEnabled } from "lib/design-system";
+import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
-import { getCardTextLineLimit } from "lib/responsive";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
+import { getCardTextLineLimit } from "lib/responsive";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
-import { useAuthStore } from "stores/auth-store";
+import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
+import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
+import { Paragraph, Text, XStack, YStack } from "tamagui";
 
 type ReportFilter = "all" | "submitted" | "scored" | "not_scored";
 type ReportSortOption = "score" | "recent" | "name";
@@ -167,8 +157,7 @@ export default function ReportsScreen() {
             }
 
             const recentDifference =
-                getPlaceLastActivityTimestamp(rightPlace) -
-                getPlaceLastActivityTimestamp(leftPlace);
+                getPlaceLastActivityTimestamp(rightPlace) - getPlaceLastActivityTimestamp(leftPlace);
             if (recentDifference !== 0) {
                 return recentDifference;
             }
@@ -194,9 +183,7 @@ export default function ReportsScreen() {
     });
 
     const previewPlace = useMemo(() => {
-        const filteredScoredPlace = filteredReportPlaces.find(
-            (place) => place.score_totals !== null,
-        );
+        const filteredScoredPlace = filteredReportPlaces.find((place) => place.score_totals !== null);
         if (filteredScoredPlace !== undefined) {
             return filteredScoredPlace;
         }
@@ -213,8 +200,7 @@ export default function ReportsScreen() {
             const exportParams = {
                 session,
                 place,
-                cachedAudit:
-                    place.audit_id === null ? undefined : sessionsByAuditId[place.audit_id],
+                cachedAudit: place.audit_id === null ? undefined : sessionsByAuditId[place.audit_id],
                 exportSessionRequiredMessage: t("exportSessionRequired"),
                 exportAuditMissingMessage: t("exportAuditMissing"),
                 ...(auditorProfile === undefined ? {} : { auditorProfile }),
@@ -276,9 +262,7 @@ export default function ReportsScreen() {
     const showExportError = useCallback(
         (error: unknown) => {
             const message =
-                error instanceof Error && error.message.trim().length > 0
-                    ? error.message
-                    : t("exportFailedMessage");
+                error instanceof Error && error.message.trim().length > 0 ? error.message : t("exportFailedMessage");
             toast.show(t("exportFailedTitle"), {
                 message,
                 duration: 5000,
@@ -302,19 +286,10 @@ export default function ReportsScreen() {
             } catch (error) {
                 showExportError(error);
             } finally {
-                setActiveExportKey((currentValue) =>
-                    currentValue === exportKey ? null : currentValue,
-                );
+                setActiveExportKey((currentValue) => (currentValue === exportKey ? null : currentValue));
             }
         },
-        [
-            buildExportableAudit,
-            exportablePlaces,
-            instrument,
-            session,
-            showExportError,
-            showExportSuccess,
-        ],
+        [buildExportableAudit, exportablePlaces, instrument, session, showExportError, showExportSuccess],
     );
 
     const hasActiveFilters = searchQuery.trim().length > 0 || reportFilter !== "all";
@@ -332,10 +307,7 @@ export default function ReportsScreen() {
                 if (rightPlace === null) {
                     return (
                         <XStack gap="$3" items="stretch">
-                            <ReportQueueCard
-                                place={item.left}
-                                maxCombinedConstructScore={maxCombinedConstructScore}
-                            />
+                            <ReportQueueCard place={item.left} maxCombinedConstructScore={maxCombinedConstructScore} />
 
                             <YStack width="48.5%"></YStack>
                         </XStack>
@@ -344,24 +316,13 @@ export default function ReportsScreen() {
 
                 return (
                     <XStack gap="$3" items="stretch">
-                        <ReportQueueCard
-                            place={item.left}
-                            maxCombinedConstructScore={maxCombinedConstructScore}
-                        />
-                        <ReportQueueCard
-                            place={rightPlace}
-                            maxCombinedConstructScore={maxCombinedConstructScore}
-                        />
+                        <ReportQueueCard place={item.left} maxCombinedConstructScore={maxCombinedConstructScore} />
+                        <ReportQueueCard place={rightPlace} maxCombinedConstructScore={maxCombinedConstructScore} />
                     </XStack>
                 );
             }
 
-            return (
-                <ReportQueueCard
-                    place={item}
-                    maxCombinedConstructScore={maxCombinedConstructScore}
-                />
-            );
+            return <ReportQueueCard place={item} maxCombinedConstructScore={maxCombinedConstructScore} />;
         },
         [maxCombinedConstructScore],
     );
@@ -385,9 +346,7 @@ export default function ReportsScreen() {
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
                             fontSize={
-                                layout.isTablet
-                                    ? ds.typography.displayLg.fontSize
-                                    : ds.typography.displayMd.fontSize
+                                layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize
                             }
                             lineHeight={
                                 layout.isTablet
@@ -412,9 +371,7 @@ export default function ReportsScreen() {
                             <StatCard
                                 label={t("averageConstructScore")}
                                 value={
-                                    placesWithScores.length > 0
-                                        ? formatScoreValue(averageCombinedConstructScore)
-                                        : "--"
+                                    placesWithScores.length > 0 ? formatScoreValue(averageCombinedConstructScore) : "--"
                                 }
                                 accentColor={ds.colors.primary}
                                 helperText={t("scoredPlacesHelper", {
@@ -425,11 +382,7 @@ export default function ReportsScreen() {
                             />
                             <StatCard
                                 label={t("averageSociabilityScore")}
-                                value={
-                                    placesWithScores.length > 0
-                                        ? formatScoreValue(averageSociabilityScore)
-                                        : "--"
-                                }
+                                value={placesWithScores.length > 0 ? formatScoreValue(averageSociabilityScore) : "--"}
                                 accentColor={ds.colors.success}
                                 helperText={t("sociabilityHelper")}
                                 minHeight={layout.summaryCardMinHeight}
@@ -439,11 +392,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : formatScoreValue(
-                                              getCombinedConstructScore(
-                                                  topScoringPlace.score_totals,
-                                              ) ?? 0,
-                                          )
+                                        : formatScoreValue(getCombinedConstructScore(topScoringPlace.score_totals) ?? 0)
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -469,9 +418,7 @@ export default function ReportsScreen() {
                                 <StatCard
                                     label={t("averageSociabilityScore")}
                                     value={
-                                        placesWithScores.length > 0
-                                            ? formatScoreValue(averageSociabilityScore)
-                                            : "--"
+                                        placesWithScores.length > 0 ? formatScoreValue(averageSociabilityScore) : "--"
                                     }
                                     accentColor={ds.colors.success}
                                     helperText={t("sociabilityHelper")}
@@ -482,11 +429,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : formatScoreValue(
-                                              getCombinedConstructScore(
-                                                  topScoringPlace.score_totals,
-                                              ) ?? 0,
-                                          )
+                                        : formatScoreValue(getCombinedConstructScore(topScoringPlace.score_totals) ?? 0)
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -675,9 +618,7 @@ export default function ReportsScreen() {
                                               })}
                                     </Paragraph>
                                 </YStack>
-                                {isLoadingPreview ? (
-                                    <ActivityIndicator color={ds.colors.primary} />
-                                ) : null}
+                                {isLoadingPreview ? <ActivityIndicator color={ds.colors.primary} /> : null}
                             </XStack>
 
                             {previewData === null ? (
@@ -702,11 +643,7 @@ export default function ReportsScreen() {
                                                     width={150}
                                                     px="$2"
                                                     py="$2"
-                                                    borderRightWidth={
-                                                        index === previewData.headers.length - 1
-                                                            ? 0
-                                                            : 1
-                                                    }
+                                                    borderRightWidth={index === previewData.headers.length - 1 ? 0 : 1}
                                                     borderColor={ds.colors.border}
                                                 >
                                                     <Text
@@ -725,11 +662,7 @@ export default function ReportsScreen() {
                                                 borderWidth={1}
                                                 borderTopWidth={0}
                                                 borderColor={ds.colors.border}
-                                                bg={
-                                                    rowIndex % 2 === 0
-                                                        ? ds.colors.surface
-                                                        : ds.colors.input
-                                                }
+                                                bg={rowIndex % 2 === 0 ? ds.colors.surface : ds.colors.input}
                                             >
                                                 {row.map((value, valueIndex) => (
                                                     <YStack
@@ -737,9 +670,7 @@ export default function ReportsScreen() {
                                                         width={150}
                                                         px="$2"
                                                         py="$2"
-                                                        borderRightWidth={
-                                                            valueIndex === row.length - 1 ? 0 : 1
-                                                        }
+                                                        borderRightWidth={valueIndex === row.length - 1 ? 0 : 1}
                                                         borderColor={ds.colors.border}
                                                     >
                                                         <Text
@@ -846,12 +777,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
         hasScore && combinedConstructScore !== null && maxCombinedConstructScore > 0
             ? `${Math.max((combinedConstructScore / maxCombinedConstructScore) * 100, 6)}%`
             : "0%";
-    const updatedLabel = formatRelativeTimeLabel(
-        place.started_at,
-        place.submitted_at,
-        i18n.language,
-        t,
-    );
+    const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
 
     return (
         <Pressable
@@ -883,9 +809,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                 color={ds.colors.foreground}
                                 fontFamily={ds.fonts.headingBold}
                                 fontSize={
-                                    layout.isTablet
-                                        ? ds.typography.titleLg.fontSize
-                                        : ds.typography.titleMd.fontSize
+                                    layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize
                                 }
                                 lineHeight={
                                     layout.isTablet
@@ -926,9 +850,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                 color={hasScore ? ds.colors.primary : ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.headingBold}
                                 fontSize={
-                                    layout.isTablet
-                                        ? ds.typography.metricSm.fontSize
-                                        : ds.typography.metricXs.fontSize
+                                    layout.isTablet ? ds.typography.metricSm.fontSize : ds.typography.metricXs.fontSize
                                 }
                                 lineHeight={
                                     layout.isTablet

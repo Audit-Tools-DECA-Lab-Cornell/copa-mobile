@@ -65,13 +65,10 @@ export default function ExecuteIndexScreen() {
         return visiblePlaces.sort((leftPlace, rightPlace) => {
             const leftHasSession =
                 hasHydratedCurrentUser &&
-                sessionsByPairKey[getProjectPlaceKey(leftPlace.project_id, leftPlace.place_id)] !==
-                    undefined;
+                sessionsByPairKey[getProjectPlaceKey(leftPlace.project_id, leftPlace.place_id)] !== undefined;
             const rightHasSession =
                 hasHydratedCurrentUser &&
-                sessionsByPairKey[
-                    getProjectPlaceKey(rightPlace.project_id, rightPlace.place_id)
-                ] !== undefined;
+                sessionsByPairKey[getProjectPlaceKey(rightPlace.project_id, rightPlace.place_id)] !== undefined;
 
             if (leftHasSession !== rightHasSession) {
                 return leftHasSession ? -1 : 1;
@@ -81,10 +78,7 @@ export default function ExecuteIndexScreen() {
         });
     }, [executeFilter, hasHydratedCurrentUser, places, searchQuery, sessionsByPairKey]);
 
-    const featuredPlace =
-        searchQuery.trim().length === 0 && executeFilter === "active"
-            ? filteredPlaces[0]
-            : undefined;
+    const featuredPlace = searchQuery.trim().length === 0 && executeFilter === "active" ? filteredPlaces[0] : undefined;
     const listPlaces =
         featuredPlace === undefined
             ? filteredPlaces
@@ -135,9 +129,7 @@ export default function ExecuteIndexScreen() {
                     hasHydratedCurrentUser={hasHydratedCurrentUser}
                     sessionsByPairKey={sessionsByPairKey}
                     onPress={() => {
-                        router.push(
-                            `/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
-                        );
+                        router.push(`/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
                 />
             );
@@ -197,15 +189,9 @@ export default function ExecuteIndexScreen() {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.displayLg.fontSize
-                            : ds.typography.displayMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
                     lineHeight={
-                        layout.isTablet
-                            ? ds.typography.displayLg.lineHeight
-                            : ds.typography.displayMd.lineHeight
+                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
                     }
                 >
                     {t("executeLanding.title", { ns: "audit" })}
@@ -309,11 +295,7 @@ export default function ExecuteIndexScreen() {
             gap="$2"
             style={{ boxShadow: ds.shadows.card }}
         >
-            <Text
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.titleLg.fontSize}
-            >
+            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleLg.fontSize}>
                 {hasActiveFilters
                     ? t("executeLanding.emptyTitle", { ns: "audit" })
                     : t("executeLanding.title", { ns: "audit" })}
@@ -415,16 +397,8 @@ function ExecuteQueueCard({
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.titleLg.fontSize
-                            : ds.typography.titleMd.fontSize
-                    }
-                    lineHeight={
-                        layout.isTablet
-                            ? ds.typography.titleLg.lineHeight
-                            : ds.typography.titleMd.lineHeight
-                    }
+                    fontSize={layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize}
+                    lineHeight={layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.titleMd.lineHeight}
                 >
                     {place.place_name}
                 </Text>

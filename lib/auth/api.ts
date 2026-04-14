@@ -1,8 +1,8 @@
-import { z } from "zod";
-import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
-import { getApiBaseUrl } from "lib/api-base-url";
 import { t } from "i18next";
+import { getApiBaseUrl } from "lib/api-base-url";
+import { z } from "zod";
 
+import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
 const authResponseSchema = z.object({
     access_token: z.string().min(1),
     token_type: z.literal("bearer"),
@@ -84,10 +84,7 @@ async function postJson(path: string, payload: Record<string, string>): Promise<
             body: JSON.stringify(payload),
         });
     } catch (error) {
-        const message =
-            error instanceof Error
-                ? error.message
-                : t("networkRequestFailed", "Network request failed.");
+        const message = error instanceof Error ? error.message : t("networkRequestFailed", "Network request failed.");
         throw new AuthApiError(
             t("unableToReachAuthenticationService", "Unable to reach authentication service."),
             0,
@@ -108,10 +105,7 @@ async function postJson(path: string, payload: Record<string, string>): Promise<
         return await response.json();
     } catch {
         throw new AuthApiError(
-            t(
-                "authenticationServiceReturnedInvalidJson",
-                "Authentication service returned invalid JSON.",
-            ),
+            t("authenticationServiceReturnedInvalidJson", "Authentication service returned invalid JSON."),
             response.status,
         );
     }

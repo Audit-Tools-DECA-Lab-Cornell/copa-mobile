@@ -1,9 +1,6 @@
 import { useMemo } from "react";
 import { useWindowDimensions, type ViewStyle } from "react-native";
-import {
-    createResponsiveLayoutTokens,
-    type ResponsiveLayoutTokens,
-} from "lib/responsive-layout-tokens";
+import { createResponsiveLayoutTokens, type ResponsiveLayoutTokens } from "lib/responsive-layout-tokens";
 
 export {
     FALLBACK_WINDOW_WIDTH,
@@ -35,9 +32,7 @@ export type ResponsiveLayout = ResponsiveLayoutTokens;
  * @returns Safe max-width value.
  */
 function resolveMaxWidth(maxWidth: number | undefined, fallback: number): number {
-    return typeof maxWidth === "number" && Number.isFinite(maxWidth) && maxWidth > 0
-        ? maxWidth
-        : fallback;
+    return typeof maxWidth === "number" && Number.isFinite(maxWidth) && maxWidth > 0 ? maxWidth : fallback;
 }
 
 /**
@@ -49,10 +44,7 @@ function resolveMaxWidth(maxWidth: number | undefined, fallback: number): number
  * @returns Horizontal padding that centers tablet content without constraining
  *          the outer container.
  */
-function getAdaptiveHorizontalPadding(
-    layout: Readonly<ResponsiveLayout>,
-    resolvedMaxWidth: number,
-): number {
+function getAdaptiveHorizontalPadding(layout: Readonly<ResponsiveLayout>, resolvedMaxWidth: number): number {
     if (!layout.isTablet) {
         return layout.screenPaddingHorizontal;
     }
@@ -97,8 +89,7 @@ export function getResponsiveContentContainerStyle(
 ): ViewStyle {
     const resolvedMaxWidth = resolveMaxWidth(options.maxWidth, layout.contentMaxWidth);
     const horizontalPadding = getAdaptiveHorizontalPadding(layout, resolvedMaxWidth);
-    const usesAdaptiveTabletGutters =
-        layout.isTablet && horizontalPadding > layout.screenPaddingHorizontal;
+    const usesAdaptiveTabletGutters = layout.isTablet && horizontalPadding > layout.screenPaddingHorizontal;
     const style: ViewStyle = {
         width: "100%",
         paddingHorizontal: horizontalPadding,

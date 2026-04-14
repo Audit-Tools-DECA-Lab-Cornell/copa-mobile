@@ -10,12 +10,7 @@ import {
 } from "components/playspace-audit/section-question-table-layout";
 import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getActiveScaleKeysForQuestion } from "lib/audit/selectors";
-import type {
-    InstrumentQuestion,
-    QuestionResponsePayload,
-    QuestionScale,
-    ScaleKey,
-} from "lib/audit/types";
+import type { InstrumentQuestion, QuestionResponsePayload, QuestionScale, ScaleKey } from "lib/audit/types";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface PromptSegment {
@@ -34,22 +29,13 @@ interface SectionQuestionTableProps {
     readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
 }
 
-const SCALE_COLUMN_ORDER: readonly ScaleKey[] = [
-    "quantity",
-    "diversity",
-    "challenge",
-    "sociability",
-];
+const SCALE_COLUMN_ORDER: readonly ScaleKey[] = ["quantity", "diversity", "challenge", "sociability"];
 
 /**
  * Tablet-first section matrix that lays out prompts on the left and scale
  * selectors in columns to the right.
  */
-export function SectionQuestionTable({
-    rows,
-    disabled,
-    onSelectAnswer,
-}: Readonly<SectionQuestionTableProps>) {
+export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonly<SectionQuestionTableProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
@@ -98,10 +84,7 @@ export function SectionQuestionTable({
                     </XStack>
 
                     {rows.map((row, rowIndex) => {
-                        const activeScaleKeys = getActiveScaleKeysForQuestion(
-                            row.question,
-                            row.selectedAnswers,
-                        );
+                        const activeScaleKeys = getActiveScaleKeysForQuestion(row.question, row.selectedAnswers);
 
                         return (
                             <XStack
@@ -111,42 +94,29 @@ export function SectionQuestionTable({
                                 bg={rowIndex % 2 === 0 ? ds.colors.surface : ds.colors.surfaceMuted}
                                 items="stretch"
                             >
-                                <QuestionPromptCell
-                                    question={row.question}
-                                    width={columnMetrics.promptColumnWidth}
-                                />
+                                <QuestionPromptCell question={row.question} width={columnMetrics.promptColumnWidth} />
                                 {visibleScaleKeys.map((scaleKey, columnIndex) => {
                                     const scale = row.question.scales.find(
                                         (currentScale) => currentScale.key === scaleKey,
                                     );
-                                    const showTrailingBorder =
-                                        columnIndex < visibleScaleKeys.length - 1;
+                                    const showTrailingBorder = columnIndex < visibleScaleKeys.length - 1;
 
                                     if (scale === undefined) {
                                         return (
                                             <EmptyScaleCell
                                                 key={`${row.question.question_key}.${scaleKey}`}
-                                                width={readScaleColumnWidth(
-                                                    columnMetrics,
-                                                    scaleKey,
-                                                )}
+                                                width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                                 text={t("section.table.notAvailable")}
                                                 showTrailingBorder={showTrailingBorder}
                                             />
                                         );
                                     }
 
-                                    if (
-                                        scaleKey !== "quantity" &&
-                                        !activeScaleKeys.includes(scaleKey)
-                                    ) {
+                                    if (scaleKey !== "quantity" && !activeScaleKeys.includes(scaleKey)) {
                                         return (
                                             <EmptyScaleCell
                                                 key={`${row.question.question_key}.${scaleKey}`}
-                                                width={readScaleColumnWidth(
-                                                    columnMetrics,
-                                                    scaleKey,
-                                                )}
+                                                width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                                 text={t("section.table.followUpPending")}
                                                 showTrailingBorder={showTrailingBorder}
                                             />
@@ -202,11 +172,7 @@ function HeaderCell({ width, label, showTrailingBorder, accentColor }: Readonly<
             justify="center"
         >
             <Text
-                color={
-                    accentColor
-                        ? (accentColor as ColorTokens)
-                        : (ds.colors.mutedForeground as ColorTokens)
-                }
+                color={accentColor ? (accentColor as ColorTokens) : (ds.colors.mutedForeground as ColorTokens)}
                 fontFamily={ds.fonts.bodyBold}
                 fontSize={ds.typography.bodySm.fontSize}
                 textTransform="uppercase"
@@ -328,16 +294,8 @@ function ScaleOptionCell({
                         rounded={ds.radii.md}
                         disabled={disabled}
                         borderWidth={isSelected ? 2 : 1}
-                        borderColor={
-                            isSelected
-                                ? (scaleAccent as ColorTokens)
-                                : (ds.colors.border as ColorTokens)
-                        }
-                        bg={
-                            isSelected
-                                ? (scaleSoft as ColorTokens)
-                                : (ds.colors.input as ColorTokens)
-                        }
+                        borderColor={isSelected ? (scaleAccent as ColorTokens) : (ds.colors.border as ColorTokens)}
+                        bg={isSelected ? (scaleSoft as ColorTokens) : (ds.colors.input as ColorTokens)}
                         opacity={disabled ? 0.6 : 1}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={() => {
@@ -354,28 +312,19 @@ function ScaleOptionCell({
                                 rounded={ds.radii.sm}
                                 borderWidth={2}
                                 borderColor={
-                                    isSelected
-                                        ? (scaleAccent as ColorTokens)
-                                        : (ds.colors.border as ColorTokens)
+                                    isSelected ? (scaleAccent as ColorTokens) : (ds.colors.border as ColorTokens)
                                 }
                                 items="center"
                                 justify="center"
                             >
                                 {isSelected ? (
-                                    <YStack
-                                        width={6}
-                                        height={6}
-                                        rounded={ds.radii.sm}
-                                        bg={scaleAccent}
-                                    />
+                                    <YStack width={6} height={6} rounded={ds.radii.sm} bg={scaleAccent} />
                                 ) : null}
                             </YStack>
                             <Text
                                 flex={1}
                                 color={
-                                    isSelected
-                                        ? (scaleAccent as ColorTokens)
-                                        : (ds.colors.foreground as ColorTokens)
+                                    isSelected ? (scaleAccent as ColorTokens) : (ds.colors.foreground as ColorTokens)
                                 }
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={ds.typography.bodySm.fontSize}
@@ -502,10 +451,7 @@ function getScaleContentByKey(
  * Read a resolved width for one visible scale column, falling back to an even
  * split if a width is unexpectedly missing.
  */
-function readScaleColumnWidth(
-    columnMetrics: Readonly<SectionQuestionTableColumnMetrics>,
-    scaleKey: ScaleKey,
-): number {
+function readScaleColumnWidth(columnMetrics: Readonly<SectionQuestionTableColumnMetrics>, scaleKey: ScaleKey): number {
     const resolvedWidth = columnMetrics.scaleColumnWidths[scaleKey];
     if (typeof resolvedWidth === "number") {
         return resolvedWidth;
@@ -514,7 +460,5 @@ function readScaleColumnWidth(
     const visibleScaleCount = Object.keys(columnMetrics.scaleColumnWidths).length;
     return visibleScaleCount === 0
         ? 0
-        : Math.floor(
-              (columnMetrics.tableWidth - columnMetrics.promptColumnWidth) / visibleScaleCount,
-          );
+        : Math.floor((columnMetrics.tableWidth - columnMetrics.promptColumnWidth) / visibleScaleCount);
 }

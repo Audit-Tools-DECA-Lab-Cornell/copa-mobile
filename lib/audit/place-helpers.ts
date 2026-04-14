@@ -40,9 +40,7 @@ export function deriveLocality(
  * @param place Place summary from the auditor API.
  * @returns Unix timestamp in milliseconds or zero when unavailable.
  */
-export function getPlaceLastActivityTimestamp(
-    place: Pick<AuditorPlace, "started_at" | "submitted_at">,
-): number {
+export function getPlaceLastActivityTimestamp(place: Pick<AuditorPlace, "started_at" | "submitted_at">): number {
     const timestamp = place.submitted_at ?? place.started_at;
     if (timestamp === null) {
         return 0;

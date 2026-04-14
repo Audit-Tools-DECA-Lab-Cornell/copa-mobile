@@ -1,12 +1,13 @@
-import { useCallback, useRef } from "react";
-import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons-2";
-import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
+import { useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { ScrollView } from "react-native";
+import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+
+import { ArrowLeft, ShieldAlert } from "@tamagui/lucide-icons-2";
 
 /**
  * Signup route shares auditor access setup guidance.
@@ -39,11 +40,7 @@ export default function SignupScreen() {
                 backgroundColor: ds.colors.background,
             }}
         >
-            <YStack
-                gap="$6"
-                width="100%"
-                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-            >
+            <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                 <YStack items="center" gap="$4">
                     <YStack
                         width={88}
@@ -102,10 +99,7 @@ export default function SignupScreen() {
                             {t("signup.warningTitle")}
                         </Text>
                     </XStack>
-                    <Paragraph
-                        color={ds.colors.secondaryForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                    >
+                    <Paragraph color={ds.colors.secondaryForeground} fontFamily={ds.fonts.bodyMedium}>
                         {t("signup.warningBody")}
                     </Paragraph>
                 </YStack>

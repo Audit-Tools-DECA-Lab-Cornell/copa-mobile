@@ -52,11 +52,7 @@ function createStaticFont(family: string, sourceFont: typeof defaultConfig.fonts
         ...sourceFont,
         family,
         size: shrinkFontMetricScale(sourceFont.size, FONT_SIZE_DECREMENT, MINIMUM_FONT_SIZE),
-        lineHeight: shrinkFontMetricScale(
-            sourceFont.lineHeight,
-            FONT_LINE_HEIGHT_DECREMENT,
-            MINIMUM_LINE_HEIGHT,
-        ),
+        lineHeight: shrinkFontMetricScale(sourceFont.lineHeight, FONT_LINE_HEIGHT_DECREMENT, MINIMUM_LINE_HEIGHT),
         face: {
             400: { normal: family },
             500: { normal: family },
@@ -79,10 +75,7 @@ const bodyDyslexicFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.
 const bodyDyslexicMediumFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.fonts.body);
 const bodyDyslexicSemiBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.body);
 const bodyDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.body);
-const headingDyslexicMediumFont = createStaticFont(
-    "OpenDyslexic-Regular",
-    defaultConfig.fonts.heading,
-);
+const headingDyslexicMediumFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.fonts.heading);
 const headingDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.heading);
 const monoDyslexicMediumFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.fonts.body);
 const monoDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.body);

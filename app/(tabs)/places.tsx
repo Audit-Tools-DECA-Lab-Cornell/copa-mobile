@@ -1,43 +1,30 @@
 import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
 import { ArrowRight, Clock3 } from "@tamagui/lucide-icons-2";
-import { useTranslation } from "react-i18next";
-import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
-import type { AuditorPlace } from "lib/audit/places-api";
+import { useRouter } from "expo-router";
+import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     deriveLocality,
     derivePlaceStatus,
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
-import { getProjectPlaceKey } from "lib/audit/pair-key";
-import {
-    formatConstructSummary,
-    formatScoreValue,
-    type ScoreSummaryLabels,
-} from "lib/audit/score-helpers";
+import type { AuditorPlace } from "lib/audit/places-api";
+import { formatConstructSummary, formatScoreValue, type ScoreSummaryLabels } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
-import {
-    getPlaceStatusTone,
-    useDesignSystem,
-    isGlassUiEnabled,
-    type DesignTone,
-} from "lib/design-system";
-import {
-    formatRelativeTimeLabel,
-    getPlaceStatusLabel,
-    type LocalizedPlaceStatus,
-} from "lib/i18n/format";
+import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem, type DesignTone } from "lib/design-system";
+import { formatRelativeTimeLabel, getPlaceStatusLabel, type LocalizedPlaceStatus } from "lib/i18n/format";
 import { getCardTextLineLimit } from "lib/responsive";
-import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
+import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { ActivityIndicator, Pressable, ScrollView } from "react-native";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
+import { Paragraph, Text, XStack, YStack } from "tamagui";
 
 type PlaceStatusFilter = "all" | LocalizedPlaceStatus;
 type PlaceSortOption = "recent" | "progress" | "name";
@@ -114,16 +101,14 @@ export default function PlacesScreen() {
             }
 
             if (sortOption === "progress") {
-                const progressDifference =
-                    (rightPlace.progress_percent ?? 0) - (leftPlace.progress_percent ?? 0);
+                const progressDifference = (rightPlace.progress_percent ?? 0) - (leftPlace.progress_percent ?? 0);
                 if (progressDifference !== 0) {
                     return progressDifference;
                 }
             }
 
             const recentDifference =
-                getPlaceLastActivityTimestamp(rightPlace) -
-                getPlaceLastActivityTimestamp(leftPlace);
+                getPlaceLastActivityTimestamp(rightPlace) - getPlaceLastActivityTimestamp(leftPlace);
             if (recentDifference !== 0) {
                 return recentDifference;
             }
@@ -172,9 +157,7 @@ export default function PlacesScreen() {
                     place={place}
                     scoreSummaryLabels={scoreSummaryLabels}
                     onPress={() => {
-                        router.push(
-                            `/place/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
-                        );
+                        router.push(`/place/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
                 />
             );
@@ -229,11 +212,7 @@ export default function PlacesScreen() {
         return (
             <YStack flex={1} items="center" justify="center" bg={ds.colors.background}>
                 <ActivityIndicator size="large" color={ds.colors.primary} />
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    mt="$4"
-                >
+                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} mt="$4">
                     {t("loadingPlaces", { ns: "places" })}
                 </Paragraph>
             </YStack>
@@ -246,15 +225,9 @@ export default function PlacesScreen() {
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.displayLg.fontSize
-                            : ds.typography.displayMd.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
                     lineHeight={
-                        layout.isTablet
-                            ? ds.typography.displayLg.lineHeight
-                            : ds.typography.displayMd.lineHeight
+                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
                     }
                 >
                     {t("title", { ns: "places" })}
@@ -269,10 +242,7 @@ export default function PlacesScreen() {
             </YStack>
 
             <XStack gap="$3">
-                <SummaryTile
-                    label={t("status.inProgress", { ns: "common" })}
-                    value={placeStatusCounts.in_progress}
-                />
+                <SummaryTile label={t("status.inProgress", { ns: "common" })} value={placeStatusCounts.in_progress} />
                 <SummaryTile
                     label={t("status.notStarted", { ns: "common" })}
                     value={placeStatusCounts.not_started}
@@ -390,19 +360,11 @@ export default function PlacesScreen() {
             gap="$2"
             style={{ boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card }}
         >
-            <Text
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.titleLg.fontSize}
-            >
-                {hasActiveFilters
-                    ? t("emptyTitle", { ns: "places" })
-                    : t("title", { ns: "places" })}
+            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleLg.fontSize}>
+                {hasActiveFilters ? t("emptyTitle", { ns: "places" }) : t("title", { ns: "places" })}
             </Text>
             <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                {hasActiveFilters
-                    ? t("emptyMessage", { ns: "places" })
-                    : t("subtitle", { ns: "places" })}
+                {hasActiveFilters ? t("emptyMessage", { ns: "places" }) : t("subtitle", { ns: "places" })}
             </Paragraph>
         </YStack>
     );
@@ -471,12 +433,7 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                 : formatScoreValue(place.summary_score)
             : formatConstructSummary(place.score_totals, scoreSummaryLabels);
     const progressPercent = place.progress_percent ?? 0;
-    const updatedLabel = formatRelativeTimeLabel(
-        place.started_at,
-        place.submitted_at,
-        i18n.language,
-        t,
-    );
+    const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
 
     return (
         <Pressable
@@ -663,11 +620,7 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={
-                    layout.isTablet
-                        ? ds.typography.labelSm.fontSize
-                        : ds.typography.labelXs.fontSize
-                }
+                fontSize={layout.isTablet ? ds.typography.labelSm.fontSize : ds.typography.labelXs.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -675,16 +628,8 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
             </Paragraph>
             <Text
                 fontFamily={ds.fonts.headingBold}
-                fontSize={
-                    layout.isTablet
-                        ? ds.typography.metricMd.fontSize
-                        : ds.typography.metricSm.fontSize
-                }
-                lineHeight={
-                    layout.isTablet
-                        ? ds.typography.metricMd.lineHeight
-                        : ds.typography.metricSm.lineHeight
-                }
+                fontSize={layout.isTablet ? ds.typography.metricMd.fontSize : ds.typography.metricSm.fontSize}
+                lineHeight={layout.isTablet ? ds.typography.metricMd.lineHeight : ds.typography.metricSm.lineHeight}
                 mt="$2"
                 style={{ color: tileTone.text }}
             >
@@ -721,11 +666,7 @@ function ScoreTile({ label, value, valueColor }: Readonly<ScoreTileProps>) {
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={
-                    layout.isTablet
-                        ? ds.typography.labelMd.fontSize
-                        : ds.typography.labelSm.fontSize
-                }
+                fontSize={layout.isTablet ? ds.typography.labelMd.fontSize : ds.typography.labelSm.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -733,16 +674,8 @@ function ScoreTile({ label, value, valueColor }: Readonly<ScoreTileProps>) {
             </Paragraph>
             <Text
                 fontFamily={ds.fonts.headingBold}
-                fontSize={
-                    layout.isTablet
-                        ? ds.typography.metricSm.fontSize
-                        : ds.typography.metricXs.fontSize
-                }
-                lineHeight={
-                    layout.isTablet
-                        ? ds.typography.metricSm.lineHeight
-                        : ds.typography.metricXs.lineHeight
-                }
+                fontSize={layout.isTablet ? ds.typography.metricSm.fontSize : ds.typography.metricXs.fontSize}
+                lineHeight={layout.isTablet ? ds.typography.metricSm.lineHeight : ds.typography.metricXs.lineHeight}
                 mt="$2"
                 style={{ color: valueColor }}
                 numberOfLines={getCardTextLineLimit("meta")}

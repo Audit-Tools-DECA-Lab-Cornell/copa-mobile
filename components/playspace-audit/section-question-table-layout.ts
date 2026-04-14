@@ -13,10 +13,7 @@ export interface SectionQuestionTableColumnMetrics {
 }
 
 interface SectionQuestionTableColumnMetricOptions {
-    readonly layout: Pick<
-        ResponsiveLayout,
-        "windowWidth" | "screenPaddingHorizontal" | "contentMaxWidth"
-    >;
+    readonly layout: Pick<ResponsiveLayout, "windowWidth" | "screenPaddingHorizontal" | "contentMaxWidth">;
     readonly scaleKeys: readonly ScaleKey[];
     readonly scaleContentByKey?: Partial<Record<ScaleKey, SectionQuestionTableScaleContent>>;
 }
@@ -62,19 +59,12 @@ export function getSectionQuestionTableColumnMetrics(
 
     const scaleColumnWidths: Partial<Record<ScaleKey, number>> = {};
     for (const scaleKey of visibleScaleKeys) {
-        scaleColumnWidths[scaleKey] = resolveScaleColumnWidth(
-            options.scaleContentByKey?.[scaleKey],
-            widthProgress,
-        );
+        scaleColumnWidths[scaleKey] = resolveScaleColumnWidth(options.scaleContentByKey?.[scaleKey], widthProgress);
     }
 
-    const resolvedScaleWidth = visibleScaleKeys.reduce(
-        (sum, scaleKey) => sum + (scaleColumnWidths[scaleKey] ?? 0),
-        0,
-    );
+    const resolvedScaleWidth = visibleScaleKeys.reduce((sum, scaleKey) => sum + (scaleColumnWidths[scaleKey] ?? 0), 0);
     const naturalTableWidth = basePromptColumnWidth + resolvedScaleWidth;
-    const promptColumnWidth =
-        basePromptColumnWidth + Math.max(availableTrackWidth - naturalTableWidth, 0);
+    const promptColumnWidth = basePromptColumnWidth + Math.max(availableTrackWidth - naturalTableWidth, 0);
     const tableWidth = promptColumnWidth + resolvedScaleWidth;
 
     return {
@@ -92,14 +82,9 @@ export function getSectionQuestionTableColumnMetrics(
  * @returns Available content-track width for the section table.
  */
 function resolveAvailableTrackWidth(
-    layout: Readonly<
-        Pick<ResponsiveLayout, "windowWidth" | "screenPaddingHorizontal" | "contentMaxWidth">
-    >,
+    layout: Readonly<Pick<ResponsiveLayout, "windowWidth" | "screenPaddingHorizontal" | "contentMaxWidth">>,
 ): number {
-    return Math.max(
-        Math.min(layout.windowWidth - layout.screenPaddingHorizontal * 2, layout.contentMaxWidth),
-        0,
-    );
+    return Math.max(Math.min(layout.windowWidth - layout.screenPaddingHorizontal * 2, layout.contentMaxWidth), 0);
 }
 
 /**
@@ -130,11 +115,7 @@ function resolveScaleColumnWidth(
     );
     const extraCharacters = Math.max(longestLabelLength - LABEL_LENGTH_BASELINE, 0);
 
-    return clampNumber(
-        minimumWidth + extraCharacters * WIDTH_GROWTH_PER_EXTRA_CHARACTER,
-        minimumWidth,
-        maximumWidth,
-    );
+    return clampNumber(minimumWidth + extraCharacters * WIDTH_GROWTH_PER_EXTRA_CHARACTER, minimumWidth, maximumWidth);
 }
 
 /**
@@ -144,11 +125,7 @@ function resolveScaleColumnWidth(
  * @returns Width progress between the tablet and wide-tablet thresholds.
  */
 function getTabletWidthProgress(windowWidth: number): number {
-    return clampNumber(
-        (windowWidth - TABLET_BREAKPOINT) / (WIDE_TABLET_BREAKPOINT - TABLET_BREAKPOINT),
-        0,
-        1,
-    );
+    return clampNumber((windowWidth - TABLET_BREAKPOINT) / (WIDE_TABLET_BREAKPOINT - TABLET_BREAKPOINT), 0, 1);
 }
 
 /**

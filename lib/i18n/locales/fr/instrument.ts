@@ -7,8 +7,7 @@ import type { InstrumentTranslations } from "../../instrument-translations";
  */
 export const frInstrumentTranslations = {
     metadata: {
-        instrumentName:
-            "Outil d’audit de la valeur ludique et de l’utilisabilité des aires de jeux Playspace",
+        instrumentName: "Outil d’audit de la valeur ludique et de l’utilisabilité des aires de jeux Playspace",
         currentSheet: "PVUA v5.2",
     },
     preamble: [
@@ -76,8 +75,7 @@ export const frInstrumentTranslations = {
                 },
                 very_large: {
                     label: "Très grande",
-                    description:
-                        "Plus de 10 zones d’activité ; p. ex. une grande aire de jeu de destination",
+                    description: "Plus de 10 zones d’activité ; p. ex. une grande aire de jeu de destination",
                 },
             },
         },
@@ -313,8 +311,7 @@ export const frInstrumentTranslations = {
         challenge: {
             title: "Défi",
             prompt: "Dans quelle mesure cette caractéristique ou cet élément de l’environnement offre-t-il différents niveaux de défi ?",
-            description:
-                "Le défi évalue si l’équipement offre des possibilités avec différents niveaux de difficulté.",
+            description: "Le défi évalue si l’équipement offre des possibilités avec différents niveaux de difficulté.",
             options: {
                 not_applicable: {
                     label: "Non applicable",
@@ -356,8 +353,7 @@ export const frInstrumentTranslations = {
             title: "Caractère et communauté de l’aire de jeux",
             description:
                 "Caractère et communauté de l’aire de jeux décrit les aspects d’une aire de jeux qui offrent aux usagers des possibilités de se connecter au terrain de jeu. Ces aspects concernent l’histoire/le patrimoine/l’art/les récits locaux, les événements communautaires organisés dans l’aire de jeux, ainsi que la manière dont l’aire de jeux a été conçue et pour qui elle l’a été.",
-            instruction:
-                "Lisez chaque affirmation et répondez aux questions. Cette aire de jeux...",
+            instruction: "Lisez chaque affirmation et répondez aux questions. Cette aire de jeux...",
             notesPrompt:
                 "Des commentaires ? Décrivez une ou plusieurs recommandations pour améliorer le caractère et l’implication communautaire de cette aire de jeux :",
             questions: {
@@ -689,8 +685,7 @@ export const frInstrumentTranslations = {
             title: "Pièces détachées et équipements manufacturés",
             description:
                 "Les pièces détachées et équipements manufacturés sont des objets de jeu fabriqués par l’humain, parfois fournis dans l’aire de jeux mais parfois apportés sur place (p. ex. pièces détachées de formes variées, karts à pédales, trottinettes, vélos, ballons/frisbees ou autres jouets, jouets pour jouer avec le sable/la boue/l’eau)",
-            instruction:
-                "Lisez chaque affirmation et répondez aux questions. Cette aire de jeux...",
+            instruction: "Lisez chaque affirmation et répondez aux questions. Cette aire de jeux...",
             notesPrompt:
                 "Des commentaires ? Décrivez une ou plusieurs recommandations pour améliorer les pièces détachées et équipements manufacturés de cette aire de jeux :",
             questions: {
@@ -724,8 +719,7 @@ export const frInstrumentTranslations = {
             title: "Pièces naturelles mobiles et matériaux malléables",
             description:
                 "Les pièces naturelles mobiles et les matériaux malléables comprennent des matériaux comme la terre, la boue, le sable, l’eau ou toute pièce naturelle comme les feuilles, les fleurs, les bâtons, les pierres, les pommes de pin et autres. Les pièces naturelles mobiles permettent aux enfants de collecter, arranger, créer, construire, creuser, mélanger, explorer, et de les utiliser dans le jeu socio-dramatique et créatif. Les matériaux offrent des possibilités sensorielles ainsi que de mélange, de creusage, de transport, de remplissage et de vidage, de construction, …",
-            instruction:
-                "Lisez chaque affirmation et répondez aux questions. Cette aire de jeux...",
+            instruction: "Lisez chaque affirmation et répondez aux questions. Cette aire de jeux...",
             notesPrompt:
                 "Des commentaires ? Décrivez une ou plusieurs recommandations pour améliorer les pièces naturelles mobiles et les matériaux malléables de cette aire de jeux :",
             questions: {

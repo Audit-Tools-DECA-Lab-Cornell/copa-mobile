@@ -1,11 +1,11 @@
-import { create } from "zustand";
 import { unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { AuthApiError, loginWithPassword, signupWithPassword } from "lib/auth/api";
 import { clearAuthSession, readAuthSession, saveAuthSession } from "lib/auth/storage";
 import { t } from "lib/i18n";
-import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
 import { usePlayspaceAuditStore } from "stores/audit-store";
+import { create } from "zustand";
 
+import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
 /**
  * Auth loading states used by route guards.
  */

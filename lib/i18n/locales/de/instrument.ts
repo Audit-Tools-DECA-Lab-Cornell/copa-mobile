@@ -24,8 +24,7 @@ export const deInstrumentTranslations = {
     executionModes: {
         both: {
             label: "Ich kenne den Spielplatz sehr gut und bin vor Ort.",
-            description:
-                "Beantworten Sie sowohl die Befragungs- als auch die Vor-Ort-Audit-Elemente.",
+            description: "Beantworten Sie sowohl die Befragungs- als auch die Vor-Ort-Audit-Elemente.",
         },
         survey: {
             label: "Ich kenne den Spielplatz sehr gut, bin aber nicht vor Ort.",
@@ -296,8 +295,7 @@ export const deInstrumentTranslations = {
         quantity: {
             title: "Quantität",
             prompt: "In welcher Menge ist dieses Merkmal oder diese Umweltcharakteristik vorhanden?",
-            description:
-                "Quantität beschreibt, wie viele konkrete Angebote oder Umweltmerkmale vorhanden sind.",
+            description: "Quantität beschreibt, wie viele konkrete Angebote oder Umweltmerkmale vorhanden sind.",
             options: {
                 no: {
                     label: "Nein",
@@ -379,8 +377,7 @@ export const deInstrumentTranslations = {
             title: "Spielplatzcharakter und Gemeinschaft",
             description:
                 "Der Bereich „Spielplatzcharakter und Gemeinschaft“ beschreibt Aspekte eines Spielplatzs, die Benutzern helfen, eine Verbindung zum Spielplatz aufzubauen. Dazu gehoeren lokale Geschichte, Kulturerbe, Kunst oder Geschichten, Gemeinschaftsveranstaltungen auf dem Spielplatz sowie Aspekte der Gestaltung und Zielgruppenorientierung.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung des Charakters und der Einbindung der Gemeinschaft in diesen Spielplatz:",
             questions: {
@@ -411,8 +408,7 @@ export const deInstrumentTranslations = {
             title: "Standort und Konnektivität des Spielplatzs",
             description:
                 "Spielplatzstandort und Konnektivität darüber, wie der Spielplatz in den Ort integriert ist, ob andere Spiel- und Freizeitmöglichkeiten verfügbar sind und wie Benutzer auf den Spielplatz zugreifen.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung des Standorts und der Konnektivität dieses Spielplatzs:",
             questions: {
@@ -446,8 +442,7 @@ export const deInstrumentTranslations = {
             title: "Regeln und Einschraenkungen des Spielplatzs",
             description:
                 "Der Bereich „Regeln und Einschraenkungen“ prueft, ob Regeln und Einschraenkungen das Spielen im Freien behindern.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Regeln und Einschränkungen dieses Spielplatzes:",
             questions: {
@@ -466,8 +461,7 @@ export const deInstrumentTranslations = {
             title: "Informationen und Wegweiser zum Spielplatz",
             description:
                 "Information und Orientierung betrachten, wie sich Menschen auf dem Spielplatz zurechtfinden, wie leicht das Gelände zu navigieren ist und ob Hinweise zur Nutzung klar verfügbar sind.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Informationen und der Orientierung in diesem Spielplatz:",
             questions: {
@@ -495,8 +489,7 @@ export const deInstrumentTranslations = {
             title: "Verwaltung und Wartung",
             description:
                 "Management und Wartung beschreiben Überlegungen, die für eine sichere und spielbare Umgebung sorgen.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Verwaltung und Wartung dieses Spielplatzs:",
             questions: {
@@ -527,8 +520,7 @@ export const deInstrumentTranslations = {
             title: "Klimaschutz & Anpassungsfähigkeit",
             description:
                 "Klima- und Wetterschutz betrachtet, wie gut der Spielplatz die Nutzung bei Sonne, Wind, Regen, Jahreszeitenwechsel und unterschiedlichen Lichtverhältnissen unterstützt.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen, um Klima- und Wetterschutz auf diesem Spielplatz zu verbessern:",
             questions: {
@@ -553,8 +545,7 @@ export const deInstrumentTranslations = {
             title: "Grenzen und Eingänge",
             description:
                 "Der Bereich „Grenzen und Eingaenge“ betrachtet den Zugang zu und die Abgrenzung von Spielplaetzen. Grenzen sind klare Begrenzungen, die den Rand eines Bereichs markieren oder bestimmte Aktivitaetszonen definieren; dazu koennen Zaeune, Mauern oder Hecken gehoeren. Eingaenge sind die Stellen, an denen Menschen Spielplaetze oder Aktivitaetszonen betreten oder verlassen. Diese koennen formell sein, etwa Tore, oder informell, etwa Oeffnungen in Begrenzungen oder Veraenderungen der Bodenoberflaeche.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen, um Begrenzungen und Zugänge dieses Spielplatzes zu verbessern:",
             questions: {
@@ -576,8 +567,7 @@ export const deInstrumentTranslations = {
             title: "Wege",
             description:
                 "Wege betrachten, wie sich Menschen durch den Spielplatz bewegen, einschließlich Zugänglichkeit, Belag, Routenführung, Breite und dem Spielwert der Wege selbst.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen, um die Wege dieses Spielplatzes zu verbessern:",
             questions: {
@@ -599,8 +589,7 @@ export const deInstrumentTranslations = {
             title: "Freiraum",
             description:
                 "Ein offener Raum ist definiert als ein integrierter Bereich innerhalb oder um den Spielplatz herum ohne Spielelemente, andere bauliche Strukturen und ohne Bepflanzung. Freiflächen sind Mehrzweckflächen und werden flexibel genutzt und bieten vielfältige Möglichkeiten wie Laufen, Spazierengehen, Spielen mit losen Teilen (Bälle, Hula-Hoop-Reifen oder Naturelemente und andere), Sitzen oder Entspannen, Picknicken, Spielen in der Gruppe, …",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Freiflächen dieses Spielplatzs:",
             questions: {
@@ -616,8 +605,7 @@ export const deInstrumentTranslations = {
             title: "Geschlossene und begrenzte Räume",
             description:
                 "Geschlossene und begrenzte Räume werden durch eine klare Grenze definiert und sind ganz oder teilweise umschlossen. Diese kommen in der natürlichen und gebauten Umwelt vor. Beispiele hierfür sind Nischen, Nischen, niedrige erhöhte Begrenzungen, die einen kleineren Raum umrahmen, Spielhütten, Höhlen, über dem Boden erhöhte kleine Räume usw.). Geschlossene und begrenzte Räume bieten Kindern die Möglichkeit, allein zu sein, mit einer kleinen Gruppe von Kindern zusammen zu sein, Kontakte zu knüpfen, das Gefühl zu haben, sich zu verstecken und fern von Erwachsenen zu sein oder sich fern von den Augen Erwachsener zu fühlen. Geschlossene und begrenzte Räume können kreatives und fantasievolles Spielen ermöglichen.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der geschlossenen und begrenzten Räume dieses Spielplatzs:",
             questions: {
@@ -636,8 +624,7 @@ export const deInstrumentTranslations = {
             title: "Sport- und Spielplätze",
             description:
                 "Sport- und Spielplätze sind definierte Bereiche, die Kindern eine bestimmte Art von Spiel ermöglichen, beispielsweise Fußball, Basketball und (Tisch-)Tennis. Diese Sport- und Spielplatze sind teilweise vom Spielplatz getrennt. Wenn Sportbereiche in der Nähe des Spielplatzes liegen oder in diesen integriert sind, beziehen Sie diese in die Prüfung mit ein.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Sport- und Spielplatze dieses Spielplatzs:",
             questions: {
@@ -656,8 +643,7 @@ export const deInstrumentTranslations = {
             title: "Hergestellte Spielfunktionen",
             description:
                 "Hergestellte Spielelemente sind zum Spielen hergestellte Elemente, manchmal auch Spielgeräte oder Spielkomponenten genannt. Diese können aus verschiedenen Materialien wie Kunststoff, Material oder Holz hergestellt werden.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der hergestellten Spielfunktionen dieses Spielplatzs:",
             questions: {
@@ -723,8 +709,7 @@ export const deInstrumentTranslations = {
             title: "Lose hergestellte Teile und Ausrüstung",
             description:
                 "Bei lose hergestellten Teilen und Geräten handelt es sich um von Menschenhand hergestellte Spielgegenstände, die manchmal auf dem Spielplatz bereitgestellt, aber manchmal mitgebracht werden (z. B. lose geformte lose Teile, Gokarts, Roller, Fahrräder, Bälle/Frisbees oder anderes Spielzeug, Sand-/Schlamm-/Wasserspielspielzeug).",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der lose gefertigten Teile und Geräte dieses Spielplatzs:",
             questions: {
@@ -758,8 +743,7 @@ export const deInstrumentTranslations = {
             title: "Lose Naturteile und formbare Materialien",
             description:
                 "Zu den losen Naturteilen und formbaren Materialien zählen Materialien wie Erde, Schlamm, Sand, Wasser oder alle Naturteile wie Blätter, Blumen, Stöcke, Steine, Zapfen und andere. Natürliche lose Teile ermöglichen Kindern das Sammeln, Ordnen, Gestalten, Bauen, Graben, Mischen, Erkunden und werden in soziodramatischen und kreativen Spielen eingesetzt. Materialien bieten sensorische Möglichkeiten und zum Mischen, Graben, Transportieren, Füllen und Entleeren, Bauen, …",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der losen Naturteile und formbaren Materialien dieses Spielplatzs:",
             questions: {
@@ -799,8 +783,7 @@ export const deInstrumentTranslations = {
             title: "Sitzplätze",
             description:
                 "Sitzgelegenheiten sind ein tragendes Element von Spielplätzen. Formellere Sitzgelegenheiten könnten eher von Erwachsenen genutzt werden, die Kinder beaufsichtigen möchten. Informellere Sitzgelegenheiten können von Kindern zum Ausruhen, Sitzen, Beobachten anderer, zum Verweilen oder zum geselligen Beisammensein mit Gleichaltrigen genutzt werden, ermöglichen aber auch die Entwicklung kreativer und fantasievoller Spiele (Beispiele für informelle Sitzgelegenheiten: Plattformen, Baumstämme, Baumstümpfe, Stufen, niedrige erhöhte Begrenzungen, Steine, Picknicktische, Sitzgelegenheiten in kleineren Räumen und in der Natur …)",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Sitzgelegenheiten in diesem Spielplatz:",
             questions: {
@@ -837,8 +820,7 @@ export const deInstrumentTranslations = {
             title: "Ausstattung",
             description:
                 "Annehmlichkeiten sind unterstützende Merkmale eines Spielplatzes und tragen dazu bei, den Spielplatz attraktiver und komfortabler zu machen, insbesondere für Familien, Kinder mit Behinderungen und Mädchen.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Annehmlichkeiten dieses Spielplatzs:",
             questions: {
@@ -857,8 +839,7 @@ export const deInstrumentTranslations = {
             title: "Topographie und Oberflächen",
             description:
                 "Topographie und Oberflächen werden als Hügel, Hänge, Senken und Stufen im Gelände identifiziert. Sie ermöglichen abwechslungsreiche Spielmöglichkeiten wie Laufen, Herunterrollen, Herunterrollen, Fahren, Klettern, Balancieren, Rodeln, Rutschen, Ausblick genießen und Höhen erleben, Springen/Tauchen/in/über Pfützen rollen, …)",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der Topographie und Oberflächen dieses Spielplatzs:",
             questions: {
@@ -886,8 +867,7 @@ export const deInstrumentTranslations = {
             title: "Neuheit",
             description:
                 "Neuheit betrachtet, ob der Spielplatz überraschende, sich verändernde, erkundbare oder ungewöhnliche Erfahrungen bietet, die das Spielen über längere Zeit interessant halten.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen, um die Neuheit dieses Spielplatzs zu verbessern:",
             questions: {
@@ -921,8 +901,7 @@ export const deInstrumentTranslations = {
             title: "Sinnesqualitaeten und Reizregulation",
             description:
                 "Der Bereich „Sinnesqualitaeten und Reizregulation“ bewertet, wie gut ein Raum vielfaeltige Sinneserlebnisse unterstuetzt, die Engagement, Komfort und Wohlbefinden steigern. Beruecksichtigt werden visuelle, akustische, olfaktorische und taktile Elemente, die Interesse und Stimulation erzeugen, etwa Farbakzente, unterschiedliche Texturen, Geraeusche, angenehme Gerueche und interaktive Funktionen. Ausserdem wird beurteilt, ob die Umgebung Rueckzugsmoeglichkeiten mit reduzierter Stimulation bietet und ob eine anhaltende Laermbelastung vorliegt (umgekehrt kodiert), damit der Raum Menschen mit unterschiedlichen sensorischen Beduerfnissen unterstuetzt.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung der sensorischen Qualitäten dieses Spielplatzs:",
             questions: {
@@ -953,8 +932,7 @@ export const deInstrumentTranslations = {
             title: "Berücksichtigung unterschiedlicher Fähigkeiten",
             description:
                 "Die Berücksichtigung unterschiedlicher Fähigkeiten betrachtet, wie gut ein Spielplatz Kinder mit verschiedenen körperlichen, sensorischen und kommunikativen Bedürfnissen unterstützt. Bewertet werden Zugänglichkeit, Nutzbarkeit, Kommunikationshilfen, Übergänge und inklusive Teilhabe über ein breites Spektrum von Fähigkeiten hinweg.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung dieses Spielplatzs für unterschiedliche Altersgruppen und Fähigkeiten.",
             questions: {
@@ -994,8 +972,7 @@ export const deInstrumentTranslations = {
             title: "Spielplatzeignung für verschiedene Benutzer",
             description:
                 "Bei der Spielplatzeignung für unterschiedliche Nutzer wird beurteilt, wie gut der Spielplatz so gestaltet ist, dass er den Bedürfnissen von Kindern aller Altersgruppen und Fähigkeiten gerecht wird.",
-            instruction:
-                "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
+            instruction: "Lesen Sie jede Aussage und beantworten Sie die Fragen. Dieser Spielplatz...",
             notesPrompt:
                 "Irgendwelche Kommentare? Beschreiben Sie eine oder mehrere Empfehlungen zur Verbesserung dieses Spielplatzs für unterschiedliche Altersgruppen und Fähigkeiten.",
             questions: {

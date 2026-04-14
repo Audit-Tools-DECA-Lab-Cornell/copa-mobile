@@ -1,7 +1,7 @@
 import type { AuthSession } from "lib/auth/types";
-import { requestJson, parsePayload } from "lib/audit/api";
-import { z } from "zod";
 import { t } from "i18next";
+import { parsePayload, requestJson } from "lib/audit/api";
+import { z } from "zod";
 
 const myAccountSchema = z.object({
     account_id: z.string(),

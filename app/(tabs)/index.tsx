@@ -155,9 +155,7 @@ export default function DashboardScreen() {
     }, [highlightedPlaces]);
 
     const priorityPlace = useMemo<AuditorPlace | undefined>(() => {
-        const inProgress = places.find(
-            (p) => p.audit_status === "IN_PROGRESS" || p.audit_status === "PAUSED",
-        );
+        const inProgress = places.find((p) => p.audit_status === "IN_PROGRESS" || p.audit_status === "PAUSED");
         if (inProgress !== undefined) {
             return inProgress;
         }
@@ -201,8 +199,7 @@ export default function DashboardScreen() {
         ] as const;
     }, [inProgressCount, notStartedCount, submittedCount, t]);
 
-    const activeAuditorName =
-        session?.user.name ?? session?.user.email ?? t("activeAuditor", { ns: "dashboard" });
+    const activeAuditorName = session?.user.name ?? session?.user.email ?? t("activeAuditor", { ns: "dashboard" });
     const blockHeaderMinHeight = ds.typography.labelSm.lineHeight;
 
     const dateLabel = useMemo(() => {
@@ -388,10 +385,7 @@ export default function DashboardScreen() {
                         >
                             {t("offlineReadyTitle", { ns: "dashboard" })}
                         </Text>
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                        >
+                        <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                             {t("offlineReadyDescription", { ns: "dashboard" })}
                         </Paragraph>
                     </YStack>
@@ -402,11 +396,7 @@ export default function DashboardScreen() {
 
     const fieldPrioritiesBlock = (
         <YStack gap="$3">
-            <XStack
-                justify="space-between"
-                items="center"
-                style={{ minHeight: blockHeaderMinHeight }}
-            >
+            <XStack justify="space-between" items="center" style={{ minHeight: blockHeaderMinHeight }}>
                 <Text
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyBold}
@@ -472,11 +462,7 @@ export default function DashboardScreen() {
 
     const priorityTaskBlock = (
         <YStack gap="$3">
-            <XStack
-                justify="space-between"
-                items="center"
-                style={{ minHeight: blockHeaderMinHeight }}
-            >
+            <XStack justify="space-between" items="center" style={{ minHeight: blockHeaderMinHeight }}>
                 <Text
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyBold}
@@ -524,12 +510,7 @@ export default function DashboardScreen() {
                     >
                         <XStack gap="$2" items="center" flexWrap="wrap">
                             {showPriorityUrgentBadge ? (
-                                <YStack
-                                    rounded={ds.radii.sm}
-                                    px="$2"
-                                    py="$2"
-                                    bg={ds.colors.primary}
-                                >
+                                <YStack rounded={ds.radii.sm} px="$2" py="$2" bg={ds.colors.primary}>
                                     <Text
                                         color={ds.colors.primaryForeground}
                                         fontFamily={ds.fonts.bodyBold}
@@ -558,10 +539,7 @@ export default function DashboardScreen() {
                                     letterSpacing={1.3}
                                     numberOfLines={getCardTextLineLimit("meta")}
                                 >
-                                    {deriveLocality(
-                                        priorityPlace,
-                                        t("place.assignedPlace", { ns: "common" }),
-                                    )}
+                                    {deriveLocality(priorityPlace, t("place.assignedPlace", { ns: "common" }))}
                                 </Text>
                             </XStack>
                         </XStack>
@@ -595,12 +573,7 @@ export default function DashboardScreen() {
                         borderTopColor={ds.colors.border}
                     >
                         <YStack flex={1} gap="$2">
-                            <YStack
-                                height={6}
-                                rounded={ds.radii.full}
-                                bg={ds.colors.mutedSurface}
-                                overflow="hidden"
-                            >
+                            <YStack height={6} rounded={ds.radii.full} bg={ds.colors.mutedSurface} overflow="hidden">
                                 <YStack
                                     height={6}
                                     rounded={ds.radii.full}
@@ -708,11 +681,7 @@ export default function DashboardScreen() {
         return (
             <YStack flex={1} items="center" justify="center" bg={ds.colors.background}>
                 <ActivityIndicator size="large" color={ds.colors.primary} />
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    mt="$4"
-                >
+                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} mt="$4">
                     {t("loadingPlaces", { ns: "dashboard" })}
                 </Paragraph>
             </YStack>
@@ -805,10 +774,7 @@ export default function DashboardScreen() {
                         >
                             {t("title", { ns: "dashboard" })}
                         </Text>
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodySemiBold}
-                        >
+                        <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodySemiBold}>
                             {dateLabel}
                         </Paragraph>
                     </YStack>
@@ -946,15 +912,15 @@ export default function DashboardScreen() {
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 92,
-                gap: layout.isTablet ? 32 : 28,
+                gap: 28,
             })}
         >
             <YStack gap="$6">
                 <XStack justify="space-between" items="center" gap="$3">
                     <XStack items="center" gap="$3" flex={1}>
                         <YStack
-                            width={layout.isTablet ? 52 : 44}
-                            height={layout.isTablet ? 52 : 44}
+                            width={44}
+                            height={44}
                             items="center"
                             justify="center"
                             rounded={ds.radii.md}
@@ -1062,10 +1028,7 @@ export default function DashboardScreen() {
                                 {t("status.assigned", { ns: "common" })}
                             </Paragraph>
                         </YStack>
-                        <MapPinned
-                            size={layout.isTablet ? 32 : 28}
-                            color="rgba(255, 107, 0, 0.25)"
-                        />
+                        <MapPinned size={layout.isTablet ? 32 : 28} color="rgba(255, 107, 0, 0.25)" />
                     </YStack>
 
                     <YStack
@@ -1101,10 +1064,7 @@ export default function DashboardScreen() {
                                 {t("status.completed", { ns: "common" })}
                             </Paragraph>
                         </YStack>
-                        <ShieldCheck
-                            size={layout.isTablet ? 32 : 28}
-                            color="rgba(16, 185, 129, 0.28)"
-                        />
+                        <ShieldCheck size={layout.isTablet ? 32 : 28} color="rgba(16, 185, 129, 0.28)" />
                     </YStack>
                 </XStack>
             </YStack>
@@ -1155,12 +1115,7 @@ export default function DashboardScreen() {
                         >
                             <XStack gap="$2" items="center" flexWrap="wrap">
                                 {showPriorityUrgentBadge ? (
-                                    <YStack
-                                        rounded={ds.radii.sm}
-                                        px="$2"
-                                        py="$2"
-                                        bg={ds.colors.primary}
-                                    >
+                                    <YStack rounded={ds.radii.sm} px="$2" py="$2" bg={ds.colors.primary}>
                                         <Text
                                             color={ds.colors.primaryForeground}
                                             fontFamily={ds.fonts.bodyBold}
@@ -1188,10 +1143,7 @@ export default function DashboardScreen() {
                                         textTransform="uppercase"
                                         letterSpacing={1.3}
                                     >
-                                        {deriveLocality(
-                                            priorityPlace,
-                                            t("place.assignedPlace", { ns: "common" }),
-                                        )}
+                                        {deriveLocality(priorityPlace, t("place.assignedPlace", { ns: "common" }))}
                                     </Text>
                                 </XStack>
                             </XStack>
@@ -1398,10 +1350,7 @@ export default function DashboardScreen() {
                             >
                                 {t("offlineReadyTitle", { ns: "dashboard" })}
                             </Text>
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                            >
+                            <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                                 {t("offlineReadyDescription", { ns: "dashboard" })}
                             </Paragraph>
                         </YStack>
@@ -1539,14 +1488,8 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
     const status = derivePlaceStatus(place.audit_status);
     const placeTone = getPlaceStatusTone(status, ds.colors);
     const progressPercent = place.progress_percent ?? 0;
-    const combinedConstructScore =
-        getCombinedConstructScore(place.score_totals) ?? place.summary_score;
-    const updatedLabel = formatRelativeTimeLabel(
-        place.started_at,
-        place.submitted_at,
-        i18n.language,
-        t,
-    );
+    const combinedConstructScore = getCombinedConstructScore(place.score_totals) ?? place.summary_score;
+    const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
     const progressBarWidth = getVisibleProgressBarWidth(progressPercent);
     const activeAuditMetricState = createActiveAuditMetricState({
         combinedConstructScore,
@@ -1593,15 +1536,9 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                     <Text
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.headingBold}
-                        fontSize={
-                            layout.isTablet
-                                ? ds.typography.titleLg.fontSize
-                                : ds.typography.titleMd.fontSize
-                        }
+                        fontSize={layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize}
                         lineHeight={
-                            layout.isTablet
-                                ? ds.typography.titleLg.lineHeight
-                                : ds.typography.titleMd.lineHeight
+                            layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.titleMd.lineHeight
                         }
                         numberOfLines={1}
                     >
@@ -1638,18 +1575,8 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                     </Paragraph>
                 </XStack>
 
-                <YStack
-                    height={6}
-                    rounded={ds.radii.full}
-                    bg={ds.colors.mutedSurface}
-                    overflow="hidden"
-                >
-                    <YStack
-                        height={6}
-                        rounded={ds.radii.full}
-                        bg={ds.colors.primary}
-                        width={progressBarWidth}
-                    />
+                <YStack height={6} rounded={ds.radii.full} bg={ds.colors.mutedSurface} overflow="hidden">
+                    <YStack height={6} rounded={ds.radii.full} bg={ds.colors.primary} width={progressBarWidth} />
                 </YStack>
                 {activeAuditMetricState.constructSummary === undefined ? null : (
                     <Paragraph
@@ -1682,9 +1609,7 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                     bg={ds.colors.primary}
                     pressStyle={{ opacity: 0.92, scale: 0.985 }}
                     onPress={() => {
-                        router.push(
-                            `/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
-                        );
+                        router.push(`/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
                 >
                     <XStack items="center" justify="center" gap="$1.5">

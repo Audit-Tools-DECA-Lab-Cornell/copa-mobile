@@ -58,8 +58,7 @@ export default function PlaceDetailScreen() {
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
-    const pairKey =
-        placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
+    const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const localAuditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
 
     const place = useMemo(() => {
@@ -68,17 +67,13 @@ export default function PlaceDetailScreen() {
         }
         return places.find((candidate) => {
             return (
-                getProjectPlaceKey(candidate.project_id, candidate.place_id) ===
-                getProjectPlaceKey(projectId, placeId)
+                getProjectPlaceKey(candidate.project_id, candidate.place_id) === getProjectPlaceKey(projectId, placeId)
             );
         });
     }, [placeId, places, projectId]);
 
     useEffect(() => {
-        if (
-            session !== null &&
-            (places.length === 0 || (placeId !== null && place === undefined))
-        ) {
+        if (session !== null && (places.length === 0 || (placeId !== null && place === undefined))) {
             loadPlaces(session).catch(() => undefined);
         }
     }, [loadPlaces, place, placeId, places.length, session]);
@@ -96,9 +91,23 @@ export default function PlaceDetailScreen() {
         <>
             <Stack.Screen
                 options={{
-                    title: place?.place_name ?? t("detail.screenTitle", { ns: "places" }),
+                    contentStyle: { paddingTop: 20 },
+                    headerTitle: () => (
+                        <YStack justify="center">
+                            <Text
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodySemiBold}
+                                fontSize={ds.typography.titleLg.fontSize}
+                                lineHeight={ds.typography.titleLg.lineHeight}
+                            >
+                                {place?.place_name ?? t("detail.screenTitle", { ns: "places" })}
+                            </Text>
+                        </YStack>
+                    ),
                     headerShown: true,
-                    headerStyle: { backgroundColor: ds.colors.surface },
+                    headerStyle: {
+                        backgroundColor: ds.colors.surface,
+                    },
                     headerTintColor: ds.colors.primary,
                     headerTitleStyle: {
                         color: ds.colors.foreground,
@@ -115,11 +124,7 @@ export default function PlaceDetailScreen() {
             ) : place === undefined ? (
                 <DetailStateCard
                     title={t("detail.screenTitle", { ns: "places" })}
-                    message={
-                        isLoading
-                            ? t("loadingPlaces", { ns: "places" })
-                            : t("emptyMessage", { ns: "places" })
-                    }
+                    message={isLoading ? t("loadingPlaces", { ns: "places" }) : t("emptyMessage", { ns: "places" })}
                     isLoading={isLoading}
                 />
             ) : (
@@ -127,9 +132,7 @@ export default function PlaceDetailScreen() {
                     place={place}
                     scoreSummaryLabels={scoreSummaryLabels}
                     onOpenAudit={() => {
-                        router.push(
-                            `/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`,
-                        );
+                        router.push(`/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
                     onOpenReport={
                         place.audit_id === null ||
@@ -179,8 +182,7 @@ function PlaceDetailContent({
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
     const combinedConstructScore = getCombinedConstructScore(place.score_totals);
-    const summaryScore =
-        combinedConstructScore ?? (place.summary_score === null ? null : place.summary_score);
+    const summaryScore = combinedConstructScore ?? (place.summary_score === null ? null : place.summary_score);
     const pendingScoreMessage = useMemo(() => {
         return resolvePendingScoreMessage({
             auditSession,
@@ -205,10 +207,7 @@ function PlaceDetailContent({
     });
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, language, t);
     const mapsQuery = encodeURIComponent(`${place.place_name}, ${locality}`);
-    const placeCoordinate = useMemo(
-        () => getPlaceCoordinate(place.lat, place.lng),
-        [place.lat, place.lng],
-    );
+    const placeCoordinate = useMemo(() => getPlaceCoordinate(place.lat, place.lng), [place.lat, place.lng]);
     const scrollViewRef = useRef<ScrollView | null>(null);
     const mapRegion = useMemo(() => {
         if (placeCoordinate === null) {
@@ -273,11 +272,7 @@ function PlaceDetailContent({
                     value={updatedLabel}
                     minHeight={layout.summaryCardMinHeight}
                 />
-                <PlaceInfoCard
-                    label="Project"
-                    value={place.project_name}
-                    minHeight={layout.summaryCardMinHeight}
-                />
+                <PlaceInfoCard label="Project" value={place.project_name} minHeight={layout.summaryCardMinHeight} />
             </XStack>
         </YStack>
     );
@@ -294,11 +289,7 @@ function PlaceDetailContent({
                 boxShadow: ds.shadows.card,
             }}
         >
-            <Text
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.titleMd.fontSize}
-            >
+            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleMd.fontSize}>
                 {t("detail.currentAudit", { ns: "places" })}
             </Text>
             {place.audit_id === null ? (
@@ -353,11 +344,7 @@ function PlaceDetailContent({
                 boxShadow: ds.shadows.card,
             }}
         >
-            <Text
-                color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.titleMd.fontSize}
-            >
+            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleMd.fontSize}>
                 {t("detail.quickActions", { ns: "places" })}
             </Text>
 
@@ -394,9 +381,7 @@ function PlaceDetailContent({
             <QuickActionButton
                 icon={<MapPin size={16} color={ds.colors.foreground} />}
                 label="Open in Google Maps"
-                onPress={() =>
-                    openUrl(`https://www.google.com/maps/search/?api=1&query=${encodedMapsQuery}`)
-                }
+                onPress={() => openUrl(`https://www.google.com/maps/search/?api=1&query=${encodedMapsQuery}`)}
             />
         </YStack>
     );
@@ -466,11 +451,7 @@ function PlaceDetailContent({
                         onMapLoaded={handleMapLoaded}
                         onMapReady={handleMapReady}
                     >
-                        <Marker
-                            coordinate={placeCoordinate}
-                            title={place.place_name}
-                            description={locality}
-                        />
+                        <Marker coordinate={placeCoordinate} title={place.place_name} description={locality} />
                     </MapView>
                 </YStack>
             )}
@@ -485,6 +466,7 @@ function PlaceDetailContent({
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 112,
                 gap: layout.sectionGap,
+                includeTopPadding: false,
             })}
         >
             <YStack gap="$3">
@@ -494,14 +476,10 @@ function PlaceDetailContent({
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
                             fontSize={
-                                layout.isTablet
-                                    ? ds.typography.metricLg.fontSize
-                                    : ds.typography.metricMd.fontSize
+                                layout.isTablet ? ds.typography.metricLg.fontSize : ds.typography.metricMd.fontSize
                             }
                             lineHeight={
-                                layout.isTablet
-                                    ? ds.typography.metricLg.lineHeight
-                                    : ds.typography.metricMd.lineHeight
+                                layout.isTablet ? ds.typography.metricLg.lineHeight : ds.typography.metricMd.lineHeight
                             }
                         >
                             {place.place_name}
@@ -514,12 +492,7 @@ function PlaceDetailContent({
                             {place.project_name}
                         </Paragraph>
                     </YStack>
-                    <YStack
-                        rounded={ds.radii.full}
-                        px="$3"
-                        py="$1"
-                        style={{ backgroundColor: statusTone.surface }}
-                    >
+                    <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusTone.surface }}>
                         <Text
                             style={{ color: statusTone.text }}
                             fontFamily={ds.fonts.bodyBold}
@@ -612,7 +585,6 @@ function QuickActionButton({
             borderWidth={isPrimary ? 0 : 1}
             borderColor={isPrimary ? "transparent" : ds.colors.border}
             bg={isPrimary ? ds.colors.primary : ds.colors.input}
-            px={layout.isTablet ? "$9" : "$11"}
             pressStyle={{ opacity: 0.92, scale: 0.985 }}
             onPress={onPress}
         >
@@ -625,11 +597,7 @@ function QuickActionButton({
                     <Text
                         color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
                         fontFamily={ds.fonts.bodyBold}
-                        fontSize={
-                            isPrimary
-                                ? ds.typography.labelLg.fontSize
-                                : ds.typography.labelMd.fontSize
-                        }
+                        fontSize={isPrimary ? ds.typography.labelLg.fontSize : ds.typography.labelMd.fontSize}
                         textTransform="uppercase"
                         letterSpacing={1.2}
                         numberOfLines={1}
@@ -676,16 +644,8 @@ function PlaceInfoCard({ label, value, minHeight }: Readonly<PlaceInfoCardProps>
             <Text
                 color={ds.colors.primary}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={
-                    layout.isTablet
-                        ? ds.typography.titleLg.fontSize
-                        : ds.typography.titleMd.fontSize
-                }
-                lineHeight={
-                    layout.isTablet
-                        ? ds.typography.titleLg.lineHeight
-                        : ds.typography.titleMd.lineHeight
-                }
+                fontSize={layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize}
+                lineHeight={layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.titleMd.lineHeight}
             >
                 {value}
             </Text>
@@ -700,10 +660,7 @@ function PlaceInfoCard({ label, value, minHeight }: Readonly<PlaceInfoCardProps>
  * @param lng Optional longitude supplied by the backend.
  * @returns Native map coordinate or null when the payload is incomplete or invalid.
  */
-function getPlaceCoordinate(
-    lat: AuditorPlace["lat"],
-    lng: AuditorPlace["lng"],
-): PlaceCoordinate | null {
+function getPlaceCoordinate(lat: AuditorPlace["lat"], lng: AuditorPlace["lng"]): PlaceCoordinate | null {
     if (typeof lat !== "number" || !Number.isFinite(lat)) {
         return null;
     }
@@ -733,12 +690,7 @@ function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailS
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     return (
-        <YStack
-            flex={1}
-            justify="center"
-            px={layout.screenPaddingHorizontal}
-            bg={ds.colors.background}
-        >
+        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}

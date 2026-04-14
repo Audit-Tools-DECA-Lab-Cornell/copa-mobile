@@ -62,11 +62,7 @@ export function getVisibleQuestions(
     sectionResponses: Record<string, QuestionResponsePayload> = {},
 ): InstrumentQuestion[] {
     return questions.filter((question) => {
-        if (
-            executionMode !== "both" &&
-            question.mode !== "both" &&
-            question.mode !== executionMode
-        ) {
+        if (executionMode !== "both" && question.mode !== "both" && question.mode !== executionMode) {
             return false;
         }
 
@@ -85,9 +81,7 @@ export function getVisibleQuestions(
         }
 
         if (Array.isArray(selectedValue)) {
-            return selectedValue.some((entry) =>
-                question.display_if?.any_of_option_keys.includes(entry),
-            );
+            return selectedValue.some((entry) => question.display_if?.any_of_option_keys.includes(entry));
         }
 
         return false;
@@ -164,10 +158,7 @@ export function getVisiblePreAuditQuestions(
  * @param value Current value for that question.
  * @returns True when the question should count as answered.
  */
-export function isPreAuditQuestionComplete(
-    question: PreAuditQuestion,
-    value: string | string[] | undefined,
-): boolean {
+export function isPreAuditQuestionComplete(question: PreAuditQuestion, value: string | string[] | undefined): boolean {
     if (!question.required || question.input_type === "auto_timestamp") {
         return true;
     }
@@ -239,9 +230,7 @@ export function getActiveScaleKeysForQuestion(
     }
 
     const selectedQuantityKey = selectedAnswers[quantityScale.key];
-    const selectedQuantityOption = quantityScale.options.find(
-        (option) => option.key === selectedQuantityKey,
-    );
+    const selectedQuantityOption = quantityScale.options.find((option) => option.key === selectedQuantityKey);
     const showFollowUpScales = selectedQuantityOption?.allows_follow_up_scales === true;
     const keys: string[] = [quantityScale.key];
 
@@ -304,11 +293,7 @@ export function getInstrumentSectionLocalProgress(
     let answeredQuestionCount = 0;
 
     for (const question of completionQuestions) {
-        const selectedAnswers = getQuestionAnswers(
-            auditSession,
-            section.section_key,
-            question.question_key,
-        );
+        const selectedAnswers = getQuestionAnswers(auditSession, section.section_key, question.question_key);
         if (isInstrumentQuestionComplete(question, selectedAnswers)) {
             answeredQuestionCount += 1;
         }

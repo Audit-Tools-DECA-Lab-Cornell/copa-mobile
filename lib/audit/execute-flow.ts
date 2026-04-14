@@ -68,9 +68,7 @@ export function getExecuteFlowSubject(mode: ExecutionMode | null): ExecuteFlowSu
  * @param rows Ordered section rows.
  * @returns Aggregated overview summary.
  */
-export function buildExecuteOverviewSummary(
-    rows: readonly ExecuteOverviewSectionInput[],
-): ExecuteOverviewSummary {
+export function buildExecuteOverviewSummary(rows: readonly ExecuteOverviewSectionInput[]): ExecuteOverviewSummary {
     let completedCount = 0;
     let incompleteCount = 0;
     let firstIncompleteSectionKey: string | null = null;

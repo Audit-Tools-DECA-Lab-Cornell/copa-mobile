@@ -74,11 +74,8 @@ export function QuestionCard({
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
     const quantityScale = question.scales[0];
-    const selectedQuantityKey =
-        quantityScale !== undefined ? selectedAnswers[quantityScale.key] : undefined;
-    const selectedQuantityOption = quantityScale?.options.find(
-        (option) => option.key === selectedQuantityKey,
-    );
+    const selectedQuantityKey = quantityScale !== undefined ? selectedAnswers[quantityScale.key] : undefined;
+    const selectedQuantityOption = quantityScale?.options.find((option) => option.key === selectedQuantityKey);
     const showFollowUpScales = selectedQuantityOption?.allows_follow_up_scales === true;
     const promptSegments = parsePromptSegments(question.prompt);
     const selectedChecklistOptionKeys = readChecklistOptionKeys(selectedAnswers);
@@ -117,25 +114,13 @@ export function QuestionCard({
             <Text
                 color={ds.colors.foreground}
                 fontFamily={ds.fonts.bodyMedium}
-                fontSize={
-                    layout.isTablet
-                        ? ds.typography.titleMd.fontSize
-                        : ds.typography.titleSm.fontSize
-                }
-                lineHeight={
-                    layout.isTablet
-                        ? ds.typography.titleMd.lineHeight
-                        : ds.typography.titleSm.lineHeight
-                }
+                fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize}
+                lineHeight={layout.isTablet ? ds.typography.titleMd.lineHeight : ds.typography.titleSm.lineHeight}
             >
                 <Text
                     color={ds.colors.secondaryForeground}
                     fontFamily={ds.fonts.bodySemiBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.titleSm.fontSize
-                            : ds.typography.bodyLg.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.titleSm.fontSize : ds.typography.bodyLg.fontSize}
                 >
                     {`${t("thisPlayspace")}\n`}
                 </Text>
@@ -143,11 +128,7 @@ export function QuestionCard({
                     <Fragment key={`${question.question_key}-seg-${index.toString()}`}>
                         <Text
                             fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
-                            fontSize={
-                                layout.isTablet
-                                    ? ds.typography.titleMd.fontSize
-                                    : ds.typography.titleSm.fontSize
-                            }
+                            fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize}
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                         >
                             {segment.text}
@@ -191,9 +172,7 @@ export function QuestionCard({
                 </>
             )}
 
-            {question.question_type === "scaled" &&
-            question.scales.length > 1 &&
-            !showFollowUpScales ? (
+            {question.question_type === "scaled" && question.scales.length > 1 && !showFollowUpScales ? (
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -256,11 +235,7 @@ function ScaleSelector({
                 <Text
                     color={scaleAccent}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.titleMd.fontSize
-                            : ds.typography.titleSm.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize}
                     textTransform="uppercase"
                     letterSpacing={1.2}
                 >
@@ -269,11 +244,7 @@ function ScaleSelector({
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
-                    fontSize={
-                        layout.isTablet
-                            ? ds.typography.bodyMd.fontSize
-                            : ds.typography.bodySm.fontSize
-                    }
+                    fontSize={layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize}
                 >
                     {scale.prompt}
                 </Paragraph>
@@ -301,12 +272,7 @@ function ScaleSelector({
                                 }
                                 onChangeAnswers(
                                     questionKey,
-                                    buildNextScaledQuestionAnswers(
-                                        currentAnswers,
-                                        question,
-                                        scale.key,
-                                        option.key,
-                                    ),
+                                    buildNextScaledQuestionAnswers(currentAnswers, question, scale.key, option.key),
                                 );
                             }}
                         >
@@ -314,9 +280,7 @@ function ScaleSelector({
                                 color={isSelected ? scaleAccent : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isTablet
-                                        ? ds.typography.bodyMd.fontSize
-                                        : ds.typography.bodySm.fontSize
+                                    layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize
                                 }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
@@ -385,11 +349,7 @@ function ChecklistSelector({
                                 }
                                 onChangeAnswers(
                                     question.question_key,
-                                    toggleChecklistOption(
-                                        selectedOptionKeys,
-                                        option.key,
-                                        otherText,
-                                    ),
+                                    toggleChecklistOption(selectedOptionKeys, option.key, otherText),
                                 );
                             }}
                         >
@@ -397,9 +357,7 @@ function ChecklistSelector({
                                 color={isSelected ? ds.colors.primary : ds.colors.foreground}
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isTablet
-                                        ? ds.typography.bodyMd.fontSize
-                                        : ds.typography.bodySm.fontSize
+                                    layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize
                                 }
                                 numberOfLines={2}
                                 style={{ textAlign: "center" }}
@@ -416,10 +374,7 @@ function ChecklistSelector({
                     value={otherText}
                     editable={!disabled}
                     onChangeText={(nextText) => {
-                        onChangeAnswers(
-                            question.question_key,
-                            setChecklistOtherText(selectedOptionKeys, nextText),
-                        );
+                        onChangeAnswers(question.question_key, setChecklistOtherText(selectedOptionKeys, nextText));
                     }}
                     placeholder="Describe other"
                     placeholderTextColor={ds.colors.placeholderColor}
@@ -482,10 +437,7 @@ function toggleChecklistOption(
     return nextAnswers;
 }
 
-function setChecklistOtherText(
-    selectedOptionKeys: readonly string[],
-    nextText: string,
-): QuestionResponsePayload {
+function setChecklistOtherText(selectedOptionKeys: readonly string[], nextText: string): QuestionResponsePayload {
     const nextAnswers: QuestionResponsePayload = {
         selected_option_keys: [...selectedOptionKeys],
     };

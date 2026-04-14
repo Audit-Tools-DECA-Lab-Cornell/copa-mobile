@@ -9,10 +9,7 @@ import { ActionButton } from "components/ui/action-button";
 import { StatCard } from "components/ui/stat-card";
 import { fetchAuditSession } from "lib/audit/api";
 import { shareSingleAuditExport, type AuditExportFormat } from "lib/audit/export";
-import {
-    buildExportableAuditForPlace,
-    loadOptionalExportAuditorProfile,
-} from "lib/audit/export-helpers";
+import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { deriveLocality, derivePlaceStatus } from "lib/audit/place-helpers";
 import {
@@ -74,10 +71,7 @@ export default function AuditReportDetailScreen() {
     }, [auditId, places]);
 
     useEffect(() => {
-        if (
-            session !== null &&
-            (places.length === 0 || (auditId !== null && place === undefined))
-        ) {
+        if (session !== null && (places.length === 0 || (auditId !== null && place === undefined))) {
             loadPlaces(session).catch(() => undefined);
         }
     }, [auditId, loadPlaces, place, places.length, session]);
@@ -147,9 +141,7 @@ export default function AuditReportDetailScreen() {
         }
 
         const progressByKey = new Map(
-            auditSession.progress.sections.map(
-                (section) => [section.section_key, section] as const,
-            ),
+            auditSession.progress.sections.map((section) => [section.section_key, section] as const),
         );
         const scoresByKey = auditSession.scores.by_section;
 
@@ -244,9 +236,7 @@ export default function AuditReportDetailScreen() {
             } catch (error) {
                 showExportError(error);
             } finally {
-                setActiveExportKey((currentValue) =>
-                    currentValue === exportKey ? null : currentValue,
-                );
+                setActiveExportKey((currentValue) => (currentValue === exportKey ? null : currentValue));
             }
         },
         [cachedAudit, instrument, place, session, showExportError, showExportSuccess, t],
@@ -262,17 +252,28 @@ export default function AuditReportDetailScreen() {
         scrollToOffset: scrollReportDetailToOffset,
     });
 
-    const title =
-        place?.place_name ?? auditSession?.place_name ?? t("detail.screenTitle", { ns: "reports" });
+    const title = place?.place_name ?? auditSession?.place_name ?? t("detail.screenTitle", { ns: "reports" });
 
     return (
         <>
             <Stack.Screen
                 options={{
-                    title,
                     headerShown: true,
                     headerStyle: { backgroundColor: ds.colors.surface },
+                    contentStyle: { paddingTop: 20 },
                     headerTintColor: ds.colors.primary,
+                    headerTitle: () => (
+                        <YStack justify="center">
+                            <Text
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodySemiBold}
+                                fontSize={ds.typography.titleLg.fontSize}
+                                lineHeight={ds.typography.titleLg.lineHeight}
+                            >
+                                {title}
+                            </Text>
+                        </YStack>
+                    ),
                     headerTitleStyle: {
                         color: ds.colors.foreground,
                         fontFamily: ds.fonts.bodyBold,
@@ -303,13 +304,10 @@ export default function AuditReportDetailScreen() {
                     contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                         bottomPadding: 112,
                         gap: layout.sectionGap,
+                        includeTopPadding: false,
                     })}
                 >
-                    <AuditHeader
-                        auditSession={auditSession}
-                        place={place}
-                        language={i18n.language}
-                    />
+                    <AuditHeader auditSession={auditSession} place={place} language={i18n.language} />
 
                     {layout.isTablet ? (
                         <XStack gap={layout.twoPaneGap} items="flex-start">
@@ -351,27 +349,19 @@ export default function AuditReportDetailScreen() {
                                                     p="$4"
                                                     gap="$2"
                                                 >
-                                                    <XStack
-                                                        justify="space-between"
-                                                        items="flex-start"
-                                                        gap="$3"
-                                                    >
+                                                    <XStack justify="space-between" items="flex-start" gap="$3">
                                                         <YStack flex={1}>
                                                             <Text
                                                                 color={ds.colors.foreground}
                                                                 fontFamily={ds.fonts.bodyBold}
-                                                                fontSize={
-                                                                    ds.typography.bodyLg.fontSize
-                                                                }
+                                                                fontSize={ds.typography.bodyLg.fontSize}
                                                             >
                                                                 {`${sectionRow.sectionNumber}. ${sectionRow.title}`}
                                                             </Text>
                                                             <Paragraph
                                                                 color={ds.colors.mutedForeground}
                                                                 fontFamily={ds.fonts.bodyMedium}
-                                                                fontSize={
-                                                                    ds.typography.bodySm.fontSize
-                                                                }
+                                                                fontSize={ds.typography.bodySm.fontSize}
                                                             >
                                                                 {`${sectionRow.answeredCount}/${sectionRow.totalCount}`}
                                                             </Paragraph>
@@ -383,9 +373,7 @@ export default function AuditReportDetailScreen() {
                                                                     : ds.colors.primary
                                                             }
                                                             fontFamily={ds.fonts.bodyBold}
-                                                            fontSize={
-                                                                ds.typography.metricSm.fontSize
-                                                            }
+                                                            fontSize={ds.typography.metricSm.fontSize}
                                                         >
                                                             {sectionRow.scoreTotals === null
                                                                 ? "--"
@@ -411,9 +399,7 @@ export default function AuditReportDetailScreen() {
                                                             <Paragraph
                                                                 color={ds.colors.primary}
                                                                 fontFamily={ds.fonts.bodyMedium}
-                                                                fontSize={
-                                                                    ds.typography.bodyXs.fontSize
-                                                                }
+                                                                fontSize={ds.typography.bodyXs.fontSize}
                                                             >
                                                                 {formatConstructSummary(
                                                                     sectionRow.scoreTotals,
@@ -423,9 +409,7 @@ export default function AuditReportDetailScreen() {
                                                             <Paragraph
                                                                 color={ds.colors.primary}
                                                                 fontFamily={ds.fonts.bodyMedium}
-                                                                fontSize={
-                                                                    ds.typography.bodyXs.fontSize
-                                                                }
+                                                                fontSize={ds.typography.bodyXs.fontSize}
                                                             >
                                                                 {formatColumnSummary(
                                                                     sectionRow.scoreTotals,
@@ -467,9 +451,7 @@ export default function AuditReportDetailScreen() {
                                     <MetadataRow
                                         label={t("detail.status", { ns: "reports" })}
                                         value={getPlaceStatusLabel(
-                                            derivePlaceStatus(
-                                                place?.audit_status ?? auditSession.status,
-                                            ),
+                                            derivePlaceStatus(place?.audit_status ?? auditSession.status),
                                             t,
                                         )}
                                     />
@@ -481,20 +463,14 @@ export default function AuditReportDetailScreen() {
                                     )}
                                     <MetadataRow
                                         label={t("detail.startedAt", { ns: "reports" })}
-                                        value={formatDateTime(
-                                            auditSession.started_at,
-                                            i18n.language,
-                                        )}
+                                        value={formatDateTime(auditSession.started_at, i18n.language)}
                                     />
                                     <MetadataRow
                                         label={t("detail.submittedAt", { ns: "reports" })}
                                         value={
                                             auditSession.submitted_at === null
                                                 ? t("filters.notScored", { ns: "common" })
-                                                : formatDateTime(
-                                                      auditSession.submitted_at,
-                                                      i18n.language,
-                                                  )
+                                                : formatDateTime(auditSession.submitted_at, i18n.language)
                                         }
                                     />
                                     <MetadataRow
@@ -527,42 +503,27 @@ export default function AuditReportDetailScreen() {
                                             <ActionButton
                                                 label={t("exportPdf", { ns: "reports" })}
                                                 onPress={() => {
-                                                    handleSingleAuditExport("pdf").catch(
-                                                        () => undefined,
-                                                    );
+                                                    handleSingleAuditExport("pdf").catch(() => undefined);
                                                 }}
                                                 disabled={activeExportKey !== null}
-                                                isLoading={
-                                                    activeExportKey ===
-                                                    `single:${place.place_id}:pdf`
-                                                }
+                                                isLoading={activeExportKey === `single:${place.place_id}:pdf`}
                                             />
                                             <ActionButton
                                                 label={t("exportCsv", { ns: "reports" })}
                                                 variant="primary"
                                                 onPress={() => {
-                                                    handleSingleAuditExport("csv").catch(
-                                                        () => undefined,
-                                                    );
+                                                    handleSingleAuditExport("csv").catch(() => undefined);
                                                 }}
                                                 disabled={activeExportKey !== null}
-                                                isLoading={
-                                                    activeExportKey ===
-                                                    `single:${place.place_id}:csv`
-                                                }
+                                                isLoading={activeExportKey === `single:${place.place_id}:csv`}
                                             />
                                             <ActionButton
                                                 label={t("exportExcel", { ns: "reports" })}
                                                 onPress={() => {
-                                                    handleSingleAuditExport("xlsx").catch(
-                                                        () => undefined,
-                                                    );
+                                                    handleSingleAuditExport("xlsx").catch(() => undefined);
                                                 }}
                                                 disabled={activeExportKey !== null}
-                                                isLoading={
-                                                    activeExportKey ===
-                                                    `single:${place.place_id}:xlsx`
-                                                }
+                                                isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
                                             />
                                         </YStack>
                                     </YStack>
@@ -598,9 +559,7 @@ export default function AuditReportDetailScreen() {
                                 <MetadataRow
                                     label={t("detail.status", { ns: "reports" })}
                                     value={getPlaceStatusLabel(
-                                        derivePlaceStatus(
-                                            place?.audit_status ?? auditSession.status,
-                                        ),
+                                        derivePlaceStatus(place?.audit_status ?? auditSession.status),
                                         t,
                                     )}
                                 />
@@ -619,10 +578,7 @@ export default function AuditReportDetailScreen() {
                                     value={
                                         auditSession.submitted_at === null
                                             ? t("filters.notScored", { ns: "common" })
-                                            : formatDateTime(
-                                                  auditSession.submitted_at,
-                                                  i18n.language,
-                                              )
+                                            : formatDateTime(auditSession.submitted_at, i18n.language)
                                     }
                                 />
                                 <MetadataRow
@@ -655,39 +611,27 @@ export default function AuditReportDetailScreen() {
                                         <ActionButton
                                             label={t("exportPdf", { ns: "reports" })}
                                             onPress={() => {
-                                                handleSingleAuditExport("pdf").catch(
-                                                    () => undefined,
-                                                );
+                                                handleSingleAuditExport("pdf").catch(() => undefined);
                                             }}
                                             disabled={activeExportKey !== null}
-                                            isLoading={
-                                                activeExportKey === `single:${place.place_id}:pdf`
-                                            }
+                                            isLoading={activeExportKey === `single:${place.place_id}:pdf`}
                                         />
                                         <ActionButton
                                             label={t("exportCsv", { ns: "reports" })}
                                             variant="primary"
                                             onPress={() => {
-                                                handleSingleAuditExport("csv").catch(
-                                                    () => undefined,
-                                                );
+                                                handleSingleAuditExport("csv").catch(() => undefined);
                                             }}
                                             disabled={activeExportKey !== null}
-                                            isLoading={
-                                                activeExportKey === `single:${place.place_id}:csv`
-                                            }
+                                            isLoading={activeExportKey === `single:${place.place_id}:csv`}
                                         />
                                         <ActionButton
                                             label={t("exportExcel", { ns: "reports" })}
                                             onPress={() => {
-                                                handleSingleAuditExport("xlsx").catch(
-                                                    () => undefined,
-                                                );
+                                                handleSingleAuditExport("xlsx").catch(() => undefined);
                                             }}
                                             disabled={activeExportKey !== null}
-                                            isLoading={
-                                                activeExportKey === `single:${place.place_id}:xlsx`
-                                            }
+                                            isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
                                         />
                                     </XStack>
                                 </YStack>
@@ -729,11 +673,7 @@ export default function AuditReportDetailScreen() {
                                                 p="$4"
                                                 gap="$2"
                                             >
-                                                <XStack
-                                                    justify="space-between"
-                                                    items="flex-start"
-                                                    gap="$3"
-                                                >
+                                                <XStack justify="space-between" items="flex-start" gap="$3">
                                                     <YStack flex={1}>
                                                         <Text
                                                             color={ds.colors.foreground}
@@ -762,9 +702,8 @@ export default function AuditReportDetailScreen() {
                                                         {sectionRow.scoreTotals === null
                                                             ? "--"
                                                             : formatScoreValue(
-                                                                  getCombinedConstructScore(
-                                                                      sectionRow.scoreTotals,
-                                                                  ) ?? 0,
+                                                                  getCombinedConstructScore(sectionRow.scoreTotals) ??
+                                                                      0,
                                                               )}
                                                     </Text>
                                                 </XStack>
@@ -833,10 +772,7 @@ function AuditHeader({ auditSession, place, language }: Readonly<AuditHeaderProp
     const { t } = useTranslation(["reports", "common"]);
     const status = derivePlaceStatus(place?.audit_status ?? auditSession.status);
     const statusTone = getPlaceStatusTone(status, ds.colors);
-    const locality =
-        place === undefined
-            ? null
-            : deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+    const locality = place === undefined ? null : deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
 
     return (
         <YStack gap="$3">
@@ -845,15 +781,9 @@ function AuditHeader({ auditSession, place, language }: Readonly<AuditHeaderProp
                     <Text
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.headingBold}
-                        fontSize={
-                            layout.isTablet
-                                ? ds.typography.metricLg.fontSize
-                                : ds.typography.metricMd.fontSize
-                        }
+                        fontSize={layout.isTablet ? ds.typography.metricLg.fontSize : ds.typography.metricMd.fontSize}
                         lineHeight={
-                            layout.isTablet
-                                ? ds.typography.metricLg.lineHeight
-                                : ds.typography.metricMd.lineHeight
+                            layout.isTablet ? ds.typography.metricLg.lineHeight : ds.typography.metricMd.lineHeight
                         }
                     >
                         {place?.place_name ?? auditSession.place_name}
@@ -868,12 +798,7 @@ function AuditHeader({ auditSession, place, language }: Readonly<AuditHeaderProp
                         </Paragraph>
                     )}
                 </YStack>
-                <YStack
-                    rounded={ds.radii.full}
-                    px="$3"
-                    py="$1"
-                    style={{ backgroundColor: statusTone.surface }}
-                >
+                <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusTone.surface }}>
                     <Text
                         style={{ color: statusTone.text }}
                         fontFamily={ds.fonts.bodyBold}
@@ -997,18 +922,9 @@ interface MetadataRowProps {
  * @param props Metadata label and value.
  * @returns Horizontal metadata row.
  */
-function MetadataRow({
-    label,
-    value,
-    selectable = false,
-    isCode = false,
-}: Readonly<MetadataRowProps>) {
+function MetadataRow({ label, value, selectable = false, isCode = false }: Readonly<MetadataRowProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
-    const valueFontSize = isCode ? ds.typography.bodyXs.fontSize : ds.typography.bodySm.fontSize;
-    const valueLineHeight = isCode
-        ? ds.typography.bodyXs.lineHeight
-        : ds.typography.bodySm.lineHeight;
     return (
         <XStack justify="space-between" items="flex-start" gap="$3">
             <Paragraph
@@ -1033,8 +949,8 @@ function MetadataRow({
                             selectable={selectable}
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.monoMedium}
-                            fontSize={valueFontSize}
-                            lineHeight={valueLineHeight}
+                            fontSize={ds.typography.bodySm.fontSize}
+                            lineHeight={ds.typography.bodySm.lineHeight}
                             style={{
                                 minWidth: layout.isTablet ? layout.supportRailWidth - 48 : 0,
                                 textAlign: "right",
@@ -1049,8 +965,8 @@ function MetadataRow({
                     selectable={selectable}
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.bodyMedium}
-                    fontSize={valueFontSize}
-                    lineHeight={valueLineHeight}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    lineHeight={ds.typography.bodySm.lineHeight}
                     flex={1}
                     style={{ textAlign: "right" }}
                 >
@@ -1077,12 +993,7 @@ function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailS
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     return (
-        <YStack
-            flex={1}
-            justify="center"
-            px={layout.screenPaddingHorizontal}
-            bg={ds.colors.background}
-        >
+        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
             <YStack
                 width="100%"
                 style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}

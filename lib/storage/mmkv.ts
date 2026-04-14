@@ -1,13 +1,9 @@
-import { createMMKV } from "react-native-mmkv";
-import { setAtPath, internal } from "@legendapp/state";
-import type {
-    Change,
-    ObservablePersistLocal,
-    PersistMetadata,
-    PersistOptionsLocal,
-} from "@legendapp/state";
 import { createModuleLogger } from "lib/logger";
+import { createMMKV } from "react-native-mmkv";
 
+import { internal, setAtPath } from "@legendapp/state";
+
+import type { Change, ObservablePersistLocal, PersistMetadata, PersistOptionsLocal } from "@legendapp/state";
 const log = createModuleLogger("mmkv-storage");
 
 /**
@@ -32,11 +28,7 @@ export class ObservablePersistMMKV4 implements ObservablePersistLocal {
     private data: Record<string, unknown> = {};
 
     /** @inheritdoc */
-    getTable<T = Record<string, unknown>>(
-        table: string,
-        _config: PersistOptionsLocal,
-        init: object,
-    ): T {
+    getTable<T = Record<string, unknown>>(table: string, _config: PersistOptionsLocal, init: object): T {
         if (this.data[table] === undefined) {
             try {
                 const raw = mmkvStorage.getString(table);
@@ -60,12 +52,7 @@ export class ObservablePersistMMKV4 implements ObservablePersistLocal {
         }
         for (const change of changes) {
             const { path, valueAtPath, pathTypes } = change;
-            this.data[table] = setAtPath(
-                this.data[table] as Record<string, unknown>,
-                path,
-                pathTypes,
-                valueAtPath,
-            );
+            this.data[table] = setAtPath(this.data[table] as Record<string, unknown>, path, pathTypes, valueAtPath);
         }
         this.save(table);
     }
