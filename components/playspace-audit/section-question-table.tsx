@@ -405,13 +405,8 @@ function getVisibleScaleKeys(rows: readonly QuestionTableRow[]): ScaleKey[] {
  * Convert raw instrument question keys into a human-readable audit label.
  */
 function formatQuestionKey(questionKey: string): string {
-    const match = /^q_(\d+)_(\d+)$/i.exec(questionKey);
-    if (match === null) {
-        return questionKey.replaceAll("_", " ").toUpperCase();
-    }
-
-    const [, sectionNumber, questionNumber] = match;
-    return `Q ${sectionNumber}.${questionNumber}`;
+    const sections = questionKey.slice(2).split("_"); // Remove "q_" prefix
+    return `Q ${sections.map((section) => section.toUpperCase()).join(".")}`;
 }
 
 /**

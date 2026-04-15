@@ -75,7 +75,7 @@ export default function ExecuteSectionScreen() {
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
 
-    const visibleSections = getVisibleSectionsStable(instrument, auditSession);
+    const visibleSections = getVisibleSectionsStable(instrument!, auditSession);
 
     const activeSection =
         sectionKey === null ? undefined : visibleSections.find((section) => section.section_key === sectionKey);
@@ -777,13 +777,8 @@ function getNextSection(
  * Convert raw instrument question keys into a human-readable audit label.
  */
 function formatQuestionKey(questionKey: string): string {
-    const match = /^q_(\d+)_(\d+)$/i.exec(questionKey);
-    if (match === null) {
-        return questionKey.replaceAll("_", " ").toUpperCase();
-    }
-
-    const [, sectionNumber, questionNumber] = match;
-    return `Q ${sectionNumber}.${questionNumber}`;
+    const sections = questionKey.slice(2).split("_"); // Remove "q_" prefix
+    return `Q ${sections.map((section) => section.toUpperCase()).join(".")}`;
 }
 
 /**
