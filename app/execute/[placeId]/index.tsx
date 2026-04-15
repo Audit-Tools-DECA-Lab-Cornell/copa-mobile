@@ -154,7 +154,7 @@ export default function ExecutePlaceScreen() {
             session: auditSession,
             phase: syncStateByAuditId[auditSession.audit_id]?.phase,
         });
-    const preambleBlocks = instrument.preamble.map(parsePreambleBlock);
+    const preambleBlocks = instrument!.preamble.map(parsePreambleBlock);
     const selectedMode = auditSession?.selected_execution_mode ?? null;
     const visibleSections = useMemo(() => {
         if (auditSession === undefined) {
@@ -162,7 +162,7 @@ export default function ExecutePlaceScreen() {
         }
 
         return getVisibleSections(
-            instrument,
+            instrument!,
             selectedMode,
             Object.fromEntries(
                 Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
@@ -517,7 +517,7 @@ function ExecutionModeCard({
             </Paragraph>
 
             <YStack gap="$2.5">
-                {instrument.execution_modes
+                {instrument!.execution_modes
                     .filter((option) => allowedModes.includes(option.key as ExecutionMode))
                     .map((option) => {
                         const isSelected = selectedMode === option.key;

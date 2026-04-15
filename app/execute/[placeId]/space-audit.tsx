@@ -305,7 +305,7 @@ export default function SpaceAuditScreen() {
     }
 
     const setupQuestions = getVisiblePreAuditQuestions(
-        instrument.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
+        instrument!.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
         selectedMode,
     );
     const matrixQuestions = setupQuestions.filter((question) => question.group_key === "current_users_matrix");
@@ -948,7 +948,7 @@ function getFirstSectionRoute(
     instrument: ReturnType<typeof useLocalizedInstrument>,
 ): string {
     const sections = getVisibleSections(
-        instrument,
+        instrument!,
         auditSession.selected_execution_mode,
         Object.fromEntries(
             Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [

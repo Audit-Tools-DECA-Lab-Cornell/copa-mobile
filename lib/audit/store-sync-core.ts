@@ -1359,12 +1359,12 @@ export function pruneCanonicalSubmittedAuditState(args: PruneCanonicalSubmittedA
 export function deriveLocalDraftProgress(session: AuditSession): LocalDraftProgressSnapshot {
     const executionMode = session.selected_execution_mode ?? session.meta.execution_mode;
     const visibleSections = getVisibleSections(
-        session.instrument,
+        session.instrument!,
         executionMode,
         readSectionResponsesBySection(session),
     );
     const requiredPreAuditComplete = isRequiredPreAuditComplete(
-        session.instrument.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
+        session.instrument!.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
         getPreAuditValues(session),
         executionMode,
     );

@@ -145,7 +145,7 @@ export default function AuditReportDetailScreen() {
         );
         const scoresByKey = auditSession.scores.by_section;
 
-        return instrument.sections.reduce<SectionReportRow[]>((rows, section) => {
+        return instrument!.sections.reduce<SectionReportRow[]>((rows, section) => {
             const progress = progressByKey.get(section.section_key);
             const scoreTotals = scoresByKey[section.section_key] ?? null;
 
@@ -163,7 +163,7 @@ export default function AuditReportDetailScreen() {
             });
             return rows;
         }, []);
-    }, [auditSession, instrument.sections]);
+    }, [auditSession, instrument]);
 
     const showExportSuccess = useCallback(
         (fileName: string) => {
@@ -210,7 +210,7 @@ export default function AuditReportDetailScreen() {
                     exportAuditMissingMessage: t("exportAuditMissing", { ns: "reports" }),
                     auditorProfile,
                 });
-                await shareSingleAuditExport(exportableAudit, instrument, format);
+                await shareSingleAuditExport(exportableAudit, instrument!, format);
                 const placeAbbreviatedName = place.place_name
                     .split(" ")
                     .map((word) => word[0])

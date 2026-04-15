@@ -177,7 +177,7 @@ export default function PreAuditScreen() {
     }
 
     const visibleSections = getVisibleSections(
-        instrument,
+        instrument!,
         auditSession.selected_execution_mode,
         Object.fromEntries(
             Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
@@ -187,7 +187,7 @@ export default function PreAuditScreen() {
         ),
     );
     const firstSection = getNextSectionTarget(visibleSections, auditSession);
-    const auditInfoQuestions = instrument.pre_audit_questions.filter((question) => question.page_key === "audit_info");
+    const auditInfoQuestions = instrument!.pre_audit_questions.filter((question) => question.page_key === "audit_info");
     const flowSubject = t(`subjects.${getExecuteFlowSubject(auditSession.selected_execution_mode)}`, {
         ns: "audit",
     });

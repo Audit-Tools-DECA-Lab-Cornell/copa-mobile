@@ -811,7 +811,7 @@ function getRemainingExecutionParts(
     }
 
     const preAuditQuestions = getVisiblePreAuditQuestions(
-        instrument.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
+        instrument!.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
         selectedMode,
     );
     const preAuditValues = getPreAuditValues(auditSession);
@@ -822,7 +822,7 @@ function getRemainingExecutionParts(
     let surveyRemaining = false;
 
     const visibleSections = getVisibleSections(
-        instrument,
+        instrument!,
         selectedMode,
         Object.fromEntries(
             Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [

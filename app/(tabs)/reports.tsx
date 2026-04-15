@@ -228,7 +228,7 @@ export default function ReportsScreen() {
                 if (isCancelled) {
                     return;
                 }
-                setPreviewData(buildAuditExportPreview(exportableAudit, instrument));
+                setPreviewData(buildAuditExportPreview(exportableAudit, instrument!));
             })
             .catch(() => {
                 if (isCancelled) {
@@ -281,7 +281,7 @@ export default function ReportsScreen() {
                 const exportableAudits = await Promise.all(
                     exportablePlaces.map((place) => buildExportableAudit(place, auditorProfile)),
                 );
-                const fileName = await shareBulkAuditExport(exportableAudits, instrument, format);
+                const fileName = await shareBulkAuditExport(exportableAudits, instrument!, format);
                 showExportSuccess(fileName);
             } catch (error) {
                 showExportError(error);
