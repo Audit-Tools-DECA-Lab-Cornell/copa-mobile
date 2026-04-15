@@ -12,6 +12,8 @@
         "build": "expo export --platform all",
         "build:android": "expo export --platform android",
         "build:ios": "expo export --platform ios",
+        "submit:android": "eas build --platform android --profile production && --auto-submit",
+        "submit:ios": "eas build --platform ios --profile production && --auto-submit",
         "doctor": "npx expo-doctor",
         "test:contract": "node ./scripts/verify_audit_contract.mjs",
         "typecheck": "tsc --noEmit",
