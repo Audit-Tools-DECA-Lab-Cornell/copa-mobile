@@ -16,7 +16,7 @@ export function getOptionGridItemWidth(
     optionLabelLength: number,
     isPhone: boolean = false,
 ): `${number}%` {
-    const labelThreshold = isPhone ? 12 : 20;
+    const labelThreshold = isPhone ? 8 : 20;
 
     if (Number.isFinite(optionCount) && optionCount === 3 && optionLabelLength < labelThreshold) {
         return "31.5%";

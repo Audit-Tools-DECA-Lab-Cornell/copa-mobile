@@ -1,4 +1,3 @@
-import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -368,13 +367,16 @@ export function localizeInstrument(
  *
  * @returns The localized playspace instrument for the active language.
  */
-export function useLocalizedInstrument(): PlayspaceInstrument {
+export function useLocalizedInstrument(): PlayspaceInstrument | null {
     const { i18n } = useTranslation(["instrument"]);
     const activeLanguage = i18n.resolvedLanguage ?? i18n.language;
     const baseInstrument = usePlayspaceAuditStore((state) => state.instrument);
 
     return useMemo(() => {
+        if (!baseInstrument) {
+            return null;
+        }
         const translations = getInstrumentTranslations(activeLanguage);
-        return localizeInstrument(baseInstrument ?? BASE_PLAYSPACE_INSTRUMENT, translations);
+        return localizeInstrument(baseInstrument, translations);
     }, [activeLanguage, baseInstrument]);
 }

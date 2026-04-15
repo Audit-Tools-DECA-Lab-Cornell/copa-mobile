@@ -59,7 +59,7 @@ import type {
 } from "lib/audit/types";
 import { persistedAuditStateSchema } from "lib/audit/types";
 import { t } from "lib/i18n";
-import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
+import { syncInstrument } from "lib/services/instrument-sync";
 import { mmkvStorage } from "lib/storage/mmkv";
 
 const log = createModuleLogger("audit-store");
@@ -151,7 +151,7 @@ type PersistedAuditDataSnapshot = Pick<
 
 /** Persistent audit data — auto-saved to MMKV via an observer. */
 const auditData$ = observable({
-    instrument: BASE_PLAYSPACE_INSTRUMENT,
+    instrument: null as PlayspaceInstrument | null,
     sessions_by_audit_id: {} as Record<string, AuditSession>,
     sessions_by_pair_key: {} as Record<string, AuditSession>,
     dirty_sections: {} as DirtySections,
@@ -266,7 +266,7 @@ function parseStoredAuditData(raw: string): PersistedAuditDataSnapshot | null {
  */
 function applyPersistedDataBatch(data: PersistedAuditDataSnapshot): void {
     batch(() => {
-        auditData$.instrument.set(data.instrument ?? BASE_PLAYSPACE_INSTRUMENT);
+        auditData$.instrument.set(data.instrument ?? null);
         auditData$.sessions_by_audit_id.set(data.sessions_by_audit_id);
         auditData$.sessions_by_pair_key.set(data.sessions_by_pair_key);
         auditData$.dirty_sections.set(data.dirty_sections);
@@ -460,7 +460,7 @@ async function hydrate(accountId?: string | null): Promise<void> {
 
     batch(() => {
         auditData$.set({
-            instrument: BASE_PLAYSPACE_INSTRUMENT,
+            instrument: null,
             sessions_by_audit_id: {},
             sessions_by_pair_key: {},
             dirty_sections: {},
@@ -522,6 +522,16 @@ async function hydrate(accountId?: string | null): Promise<void> {
     if (requestId !== hydrateRequestCounter) return;
     setupAutoSave(targetUserId);
     auditUI$.isHydrated.set(true);
+
+    syncInstrument()
+        .then((synced) => {
+            if (hydrateRequestCounter === requestId && synced !== null) {
+                auditData$.instrument.set(synced);
+            }
+        })
+        .catch(() => {
+            /* instrument sync is best-effort; cached or session-provided instrument is used */
+        });
 }
 
 async function clearStoredState(accountId?: string | null): Promise<void> {
@@ -533,7 +543,7 @@ async function clearStoredState(accountId?: string | null): Promise<void> {
     }
     batch(() => {
         auditData$.set({
-            instrument: BASE_PLAYSPACE_INSTRUMENT,
+            instrument: null,
             sessions_by_audit_id: {},
             sessions_by_pair_key: {},
             dirty_sections: {},
@@ -1708,7 +1718,7 @@ const actions = {
  * properties it actually reads, preserving fine-grained reactivity.
  */
 const dataGetters: Record<string, () => unknown> = {
-    instrument: () => auditData$.instrument.get() ?? BASE_PLAYSPACE_INSTRUMENT,
+    instrument: () => auditData$.instrument.get() ?? null,
     sessionsByAuditId: () => auditData$.sessions_by_audit_id.get(),
     sessionsByPairKey: () => auditData$.sessions_by_pair_key.get(),
     currentUserId: () => auditUI$.currentUserId.get(),
@@ -1767,7 +1777,7 @@ function buildEagerState(): PlayspaceAuditStoreState {
     });
 
     return {
-        instrument: auditData$.instrument.peek() ?? BASE_PLAYSPACE_INSTRUMENT,
+        instrument: auditData$.instrument.peek() ?? null,
         sessionsByAuditId: auditData$.sessions_by_audit_id.peek(),
         sessionsByPairKey: auditData$.sessions_by_pair_key.peek(),
         currentUserId: auditUI$.currentUserId.peek(),

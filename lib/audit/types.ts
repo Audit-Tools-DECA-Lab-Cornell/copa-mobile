@@ -1,4 +1,3 @@
-import { BASE_PLAYSPACE_INSTRUMENT } from "lib/instrument";
 import { z } from "zod";
 
 export type DirtySections = Record<string, Record<string, number>>;
@@ -185,7 +184,7 @@ const auditSessionPayloadSchema = z.object({
     status: auditStatusSchema,
     instrument_key: z.string().min(1),
     instrument_version: z.string().min(1),
-    instrument: playspaceInstrumentSchema.optional().default(BASE_PLAYSPACE_INSTRUMENT),
+    instrument: playspaceInstrumentSchema.optional(),
     schema_version: z.number().int().positive().optional().default(1),
     revision: z.number().int().nonnegative().optional().default(0),
     aggregate: auditAggregateSchema.optional(),
