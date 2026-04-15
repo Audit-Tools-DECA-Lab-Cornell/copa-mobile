@@ -7,6 +7,7 @@ module.exports = defineConfig([
     prettierConfig,
     {
         ignores: [
+            "scripts/**",
             "android/**",
             "ios/**",
             ".expo/**",
