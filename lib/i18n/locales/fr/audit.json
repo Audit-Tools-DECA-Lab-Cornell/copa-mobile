@@ -115,7 +115,7 @@
         "intro": "Cette étape s’affiche uniquement lorsque le mode d’exécution sélectionné inclut l’audit sur site. Répondez aux questions de contexte actuelles avant d’ouvrir les pages des sections.",
         "matrixAgeColumn": "Tranche d’âge",
         "matrixHeading": "Décrivez les utilisateurs actuellement présents dans l’espace de jeu",
-        "matrixQuantityColumn": "Quantité",
+        "matrixProvisionColumn": "Quantité",
         "preparingMessage": "Chargement des questions de configuration sur site et des réponses enregistrées, le cas échéant...",
         "preparingTitle": "Préparation de la configuration de l’audit de l’espace",
         "sidebarDescription": "Ces questions définissent le contexte sur site avant le début de l’évaluation principale des sections.",
@@ -149,7 +149,7 @@
             "scaleColumns": {
                 "challenge": "Défi",
                 "diversity": "Diversité",
-                "quantity": "Disponibilité / Quantité",
+                "provision": "Disponibilité / Quantité",
                 "sociability": "Sociabilité"
             }
         },

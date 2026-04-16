@@ -265,7 +265,7 @@ export const hiInstrumentTranslations = {
         },
     },
     scales: {
-        quantity: {
+        provision: {
             title: "मात्रा",
             prompt: "यह सुविधा या पर्यावरणीय विशेषता किस मात्रा में उपलब्ध है?",
             description:

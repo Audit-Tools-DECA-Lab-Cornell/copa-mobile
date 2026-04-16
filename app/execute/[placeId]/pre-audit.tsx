@@ -117,15 +117,19 @@ export default function PreAuditScreen() {
         navigation.setOptions({
             ...themedHeaderOptions,
             headerTitle: () => (
-                <YStack justify="center">
-                    <Text
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodySemiBold}
-                        fontSize={ds.typography.titleLg.fontSize}
-                        lineHeight={ds.typography.titleLg.lineHeight}
-                    >
-                        {auditSession.place_name}
-                    </Text>
+                <YStack justify="center" my="$3" overflowX="scroll">
+                    <ScrollView horizontal>
+                        <YStack justify="center">
+                            <Text
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodySemiBold}
+                                fontSize={ds.typography.titleLg.fontSize}
+                                lineHeight={ds.typography.titleLg.lineHeight}
+                            >
+                                {auditSession.place_name}
+                            </Text>
+                        </YStack>
+                    </ScrollView>
                 </YStack>
             ),
         });

@@ -115,7 +115,7 @@
         "intro": "この手順は、選択された実行モードに現地監査が含まれる場合にのみ表示されます。セクションページを開く前に、現在の状況に関する質問を完了してください。",
         "matrixAgeColumn": "年齢層",
         "matrixHeading": "現在 playspace にいる利用者を記述してください",
-        "matrixQuantityColumn": "人数",
+        "matrixProvisionColumn": "人数",
         "preparingMessage": "現地セットアップの質問と保存済みの回答を読み込んでいます...",
         "preparingTitle": "スペース監査セットアップを準備しています",
         "sidebarDescription": "これらの質問は、メインのセクション採点が始まる前の現地状況を形作ります。",
@@ -149,7 +149,7 @@
             "scaleColumns": {
                 "challenge": "チャレンジ",
                 "diversity": "多様性",
-                "quantity": "提供 / 数量",
+                "provision": "提供 / 数量",
                 "sociability": "社交性"
             }
         },

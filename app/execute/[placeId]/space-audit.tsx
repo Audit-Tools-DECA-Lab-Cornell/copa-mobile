@@ -177,15 +177,19 @@ export default function SpaceAuditScreen() {
             navigation.setOptions({
                 ...themedHeaderOptions,
                 headerTitle: () => (
-                    <YStack justify="center">
-                        <Text
-                            color={ds.colors.primary}
-                            fontFamily={ds.fonts.bodySemiBold}
-                            fontSize={ds.typography.titleLg.fontSize}
-                            lineHeight={ds.typography.titleLg.lineHeight}
-                        >
-                            {auditSession.place_name}
-                        </Text>
+                    <YStack justify="center" my="$3" overflowX="scroll">
+                        <ScrollView horizontal>
+                            <YStack justify="center">
+                                <Text
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodySemiBold}
+                                    fontSize={ds.typography.titleLg.fontSize}
+                                    lineHeight={ds.typography.titleLg.lineHeight}
+                                >
+                                    {auditSession.place_name}
+                                </Text>
+                            </YStack>
+                        </ScrollView>
                     </YStack>
                 ),
             });
@@ -676,7 +680,7 @@ function ChoiceFieldCard({
 }
 
 /**
- * Render the age-group-by-quantity matrix with a tablet-first layout.
+ * Render the age-group-by-provision matrix with a tablet-first layout.
  */
 function MatrixFieldCard({ questions, values, disabled, onSelectValue }: Readonly<MatrixFieldCardProps>) {
     const ds = useDesignSystem();

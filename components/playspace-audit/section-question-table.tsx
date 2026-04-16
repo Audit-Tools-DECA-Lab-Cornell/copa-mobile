@@ -29,7 +29,7 @@ interface SectionQuestionTableProps {
     readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
 }
 
-const SCALE_COLUMN_ORDER: readonly ScaleKey[] = ["quantity", "diversity", "challenge", "sociability"];
+const SCALE_COLUMN_ORDER: readonly ScaleKey[] = ["provision", "diversity", "challenge", "sociability"];
 
 /**
  * Tablet-first section matrix that lays out prompts on the left and scale
@@ -112,7 +112,7 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
                                         );
                                     }
 
-                                    if (scaleKey !== "quantity" && !activeScaleKeys.includes(scaleKey)) {
+                                    if (scaleKey !== "provision" && !activeScaleKeys.includes(scaleKey)) {
                                         return (
                                             <EmptyScaleCell
                                                 key={`${row.question.question_key}.${scaleKey}`}

@@ -76,7 +76,7 @@ export default function PlacesScreen() {
             playValueShort: t("playValueShort"),
             usabilityShort: t("usabilityShort"),
             sociabilityShort: t("sociabilityShort"),
-            quantityShort: t("quantityShort"),
+            provisionShort: t("provisionShort"),
             diversityShort: t("diversityShort"),
             challengeShort: t("challengeShort"),
         };

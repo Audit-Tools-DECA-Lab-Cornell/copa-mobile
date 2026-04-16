@@ -62,9 +62,9 @@ export function CollapsibleCard({
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize}
+                            fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.bodyMd.fontSize}
                             lineHeight={
-                                layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.titleMd.lineHeight
+                                layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.bodyMd.lineHeight
                             }
                         >
                             {title}
@@ -74,10 +74,10 @@ export function CollapsibleCard({
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize
+                                    layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodyXs.fontSize
                                 }
                                 lineHeight={
-                                    layout.isTablet ? ds.typography.bodyMd.lineHeight : ds.typography.bodySm.lineHeight
+                                    layout.isTablet ? ds.typography.bodyMd.lineHeight : ds.typography.bodyXs.lineHeight
                                 }
                             >
                                 {subtitle}
@@ -88,10 +88,10 @@ export function CollapsibleCard({
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
                                 fontSize={
-                                    layout.isTablet ? ds.typography.bodySm.fontSize : ds.typography.bodyXs.fontSize
+                                    layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodyXs.fontSize
                                 }
                                 lineHeight={
-                                    layout.isTablet ? ds.typography.bodySm.lineHeight : ds.typography.bodyXs.lineHeight
+                                    layout.isTablet ? ds.typography.bodyMd.lineHeight : ds.typography.bodyXs.lineHeight
                                 }
                             >
                                 {visibleCollapsedHint}

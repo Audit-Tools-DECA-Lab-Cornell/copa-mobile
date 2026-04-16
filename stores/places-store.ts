@@ -1,5 +1,5 @@
 import { t } from "i18next";
-import { fetchAssignedPlaces } from "lib/audit/places-api";
+import { fetchAllAssignedPlaces, fetchAssignedPlacesPage } from "lib/audit/places-api";
 import { create } from "zustand";
 
 import type { AuthSession } from "lib/auth/types";
@@ -19,9 +19,18 @@ interface PlacesStoreState {
      *
      * @param session Authenticated mobile session.
      */
-    loadPlaces: (session: AuthSession) => Promise<void>;
+    loadPlaces: (session: AuthSession, options?: Readonly<LoadPlacesOptions>) => Promise<void>;
     /** Clear the current error message. */
     clearError: () => void;
+}
+
+interface LoadPlacesOptions {
+    /** Fetch all pages instead of a single page. Defaults to true. */
+    readonly fetchAll?: boolean;
+    /** 1-based page number used when `fetchAll` is false. Defaults to 1. */
+    readonly page?: number;
+    /** Page size used when `fetchAll` is false. Defaults to 8. */
+    readonly pageSize?: number;
 }
 
 /**
@@ -32,16 +41,19 @@ export const usePlacesStore = create<PlacesStoreState>((set) => ({
     isLoading: false,
     errorMessage: null,
 
-    loadPlaces: async (session: AuthSession) => {
+    loadPlaces: async (session: AuthSession, options: Readonly<LoadPlacesOptions> = {}) => {
         set(() => ({
             isLoading: true,
             errorMessage: null,
         }));
 
         try {
-            const response = await fetchAssignedPlaces(session);
+            const shouldFetchAll = options.fetchAll ?? true;
+            const allPlaces = shouldFetchAll
+                ? await fetchAllAssignedPlaces(session)
+                : (await fetchAssignedPlacesPage(session, options.page ?? 1, options.pageSize ?? 8)).items;
             set(() => ({
-                places: response.items,
+                places: allPlaces,
                 isLoading: false,
                 errorMessage: null,
             }));

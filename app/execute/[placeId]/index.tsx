@@ -121,23 +121,30 @@ export default function ExecutePlaceScreen() {
             navigation.setOptions({
                 ...themedHeaderOptions,
                 headerTitle: () => (
-                    <YStack justify="center" gap="$1.5" mb="$2" mt="$-2">
-                        <Text
-                            color={ds.colors.primary}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleLg.fontSize}
-                            lineHeight={ds.typography.titleLg.lineHeight}
-                        >
-                            {auditSession.place_name}
-                        </Text>
-                        <Text
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyRegular}
-                            fontSize={ds.typography.bodyLg.fontSize}
-                            lineHeight={ds.typography.bodyLg.lineHeight}
-                        >
-                            {suffix}
-                        </Text>
+                    <YStack justify="center">
+                        <ScrollView horizontal>
+                            <YStack justify="center">
+                                <Text
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.titleMd.fontSize}
+                                    lineHeight={ds.typography.titleMd.lineHeight}
+                                    className="no-scrollbar overflow-x-scroll whitespace-nowrap"
+                                >
+                                    {auditSession.place_name}
+                                </Text>
+                                {suffix && (
+                                    <Text
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyRegular}
+                                        fontSize={ds.typography.labelMd.fontSize}
+                                        lineHeight={ds.typography.labelMd.lineHeight}
+                                    >
+                                        {suffix}
+                                    </Text>
+                                )}
+                            </YStack>
+                        </ScrollView>
                     </YStack>
                 ),
             });
@@ -820,7 +827,7 @@ function PreambleBlockCard({ block }: Readonly<PreambleBlockCardProps>) {
     const layout = useResponsiveLayout();
     const isScaleBlock = block.headingLevel === 3;
 
-    let scaleKey = "quantity";
+    let scaleKey = "provision";
     if (isScaleBlock && block.heading) {
         const headingLower = block.heading.toLowerCase();
         if (headingLower.includes("diversity")) {

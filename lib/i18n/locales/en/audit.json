@@ -114,7 +114,7 @@
         "intro": "This step is shown only when the selected execution mode includes the onsite audit. Complete the current context questions before opening the section pages.",
         "matrixAgeColumn": "Age group",
         "matrixHeading": "Describe users currently in the playspace",
-        "matrixQuantityColumn": "Quantity",
+        "matrixProvisionColumn": "Provision",
         "preparingMessage": "Loading the onsite setup questions and any saved answers...",
         "preparingTitle": "Preparing Space Audit Setup",
         "sidebarDescription": "These questions shape the onsite context before the main section scoring begins.",
@@ -130,7 +130,7 @@
     "section": {
         "answeredCount": "{{answered}} / {{total}} answered",
         "backToOverview": "Back to overview",
-        "followUpHidden": "Diversity, Sociability, and Challenge appear only after a positive Quantity answer.",
+        "followUpHidden": "Diversity, Sociability, and Challenge appear only after a positive Provision answer.",
         "incompleteConfirmContinue": "Continue anyway",
         "incompleteGoBack": "Go back",
         "incompleteListLabel": "Unanswered questions:",
@@ -151,13 +151,13 @@
         "saveSection": "Save section",
         "sectionNotes": "Section Notes",
         "table": {
-            "followUpPending": "Choose a positive quantity answer to unlock this scale.",
+            "followUpPending": "Choose a positive provision answer to unlock this scale.",
             "itemColumn": "Question item",
             "notAvailable": "Not used for this item.",
             "scaleColumns": {
                 "challenge": "Challenge",
                 "diversity": "Diversity",
-                "quantity": "Provision",
+                "provision": "Provision",
                 "sociability": "Sociability"
             }
         },

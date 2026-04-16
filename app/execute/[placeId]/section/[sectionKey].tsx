@@ -27,6 +27,7 @@ import type {
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
+import { requestImmediateAuditSync } from "lib/audit/use-audit-sync";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
@@ -36,8 +37,8 @@ import { usePlacesStore } from "stores/places-store";
  *
  * Answers are written directly to the Zustand store on every tap so they
  * persist across navigation and survive app restarts.  The store debounces
- * disk writes and event-driven sync pushes dirty sections to the API when
- * connectivity is available.
+ * disk writes; foreground sync batches API pushes about 1.5–2s after edits,
+ * with extra flushes on note blur, section change, and app background.
  *
  * The section note is kept in local state for responsive typing and flushed
  * to the store on blur, explicit save, or component unmount.
@@ -121,23 +122,27 @@ export default function ExecuteSectionScreen() {
             navigation.setOptions({
                 ...themedHeaderOptions,
                 headerTitle: () => (
-                    <YStack justify="center" gap="$1.5" mb="$2" mt="$-2">
-                        <Text
-                            color={ds.colors.primary}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleLg.fontSize}
-                            lineHeight={ds.typography.titleMd.lineHeight}
-                        >
-                            {truncate(auditSession?.place_name, layout.isTablet ? 120 : 40)}
-                        </Text>
-                        <Text
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyRegular}
-                            fontSize={ds.typography.bodyLg.fontSize}
-                            lineHeight={ds.typography.labelLg.lineHeight}
-                        >
-                            Section: {truncate(activeSection.title, layout.isTablet ? 120 : 50)}
-                        </Text>
+                    <YStack justify="center" py="$1.5" overflowX="scroll">
+                        <ScrollView horizontal>
+                            <YStack justify="center">
+                                <Text
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.titleMd.fontSize}
+                                    lineHeight={ds.typography.titleMd.lineHeight}
+                                >
+                                    {truncate(auditSession?.place_name, layout.isTablet ? 120 : 40)}
+                                </Text>
+                                <Text
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyRegular}
+                                    fontSize={ds.typography.labelLg.fontSize}
+                                    lineHeight={ds.typography.labelLg.lineHeight}
+                                >
+                                    Section: {truncate(activeSection.title, layout.isTablet ? 120 : 50)}
+                                </Text>
+                            </YStack>
+                        </ScrollView>
                     </YStack>
                 ),
             });
@@ -217,8 +222,9 @@ export default function ExecuteSectionScreen() {
     useEffect(() => {
         return () => {
             flushNoteToStore();
+            requestImmediateAuditSync("section_change");
         };
-    }, [flushNoteToStore]);
+    }, [sectionKey, flushNoteToStore]);
 
     const handleNoteChange = useCallback((text: string) => {
         setLocalNote(text);
@@ -444,6 +450,7 @@ export default function ExecuteSectionScreen() {
                 onBlur={() => {
                     setIsNoteFocused(false);
                     flushNoteToStore();
+                    requestImmediateAuditSync("blur");
                 }}
                 placeholder={t("section.notesPlaceholder", { ns: "audit" })}
                 placeholderTextColor={ds.colors.placeholderColor}
@@ -783,7 +790,7 @@ function formatQuestionKey(questionKey: string): string {
 
 /**
  * Apply one option selection and clear gated follow-up answers when the
- * selected quantity option does not allow them.
+ * selected provision option does not allow them.
  *
  * @param currentAnswers Current scale answers for one question.
  * @param question Question definition with scale metadata.
@@ -802,15 +809,15 @@ function buildNextQuestionAnswers(
         [scaleKey]: optionKey,
     };
 
-    if (scaleKey !== "quantity") {
+    if (scaleKey !== "provision") {
         return nextAnswers;
     }
 
-    const quantityScale = question.scales.find((scale) => scale.key === "quantity");
-    const selectedOption = quantityScale?.options.find((option) => option.key === optionKey);
+    const provisionScale = question.scales.find((scale) => scale.key === "provision");
+    const selectedOption = provisionScale?.options.find((option) => option.key === optionKey);
     if (selectedOption?.allows_follow_up_scales !== false) {
         return nextAnswers;
     }
 
-    return { quantity: optionKey };
+    return { provision: optionKey };
 }

@@ -69,13 +69,142 @@ function assert(condition, message) {
     }
 }
 
-const { BASE_PLAYSPACE_INSTRUMENT } = loadTsModule(path.resolve(REPO_ROOT, "lib/instrument.ts"));
-const { auditDraftSaveSchema, auditSessionSchema } = loadTsModule(path.resolve(REPO_ROOT, "lib/audit/types.ts"));
+const { auditDraftSaveSchema, auditScoreTotalsSchema, auditSessionSchema } = loadTsModule(
+    path.resolve(REPO_ROOT, "lib/audit/types.ts"),
+);
 const { getActiveScaleKeysForQuestion, getVisibleSections, getInstrumentSectionLocalProgress } = loadTsModule(
     path.resolve(REPO_ROOT, "lib/audit/selectors.ts"),
 );
+const { calculateQuestionScores, formatPercentage, getCombinedConstructScore } = loadTsModule(
+    path.resolve(REPO_ROOT, "lib/audit/score-helpers.ts"),
+);
 
-const targetSection = BASE_PLAYSPACE_INSTRUMENT.sections[0];
+const instrumentFixture = {
+    instrument_key: "pvua_demo",
+    instrument_name: "Demo Playspace Instrument",
+    instrument_version: "1.0",
+    current_sheet: "Demo Sheet",
+    source_files: [],
+    preamble: [],
+    execution_modes: [
+        {
+            key: "survey",
+            label: "Survey",
+        },
+    ],
+    pre_audit_questions: [],
+    scale_guidance: [],
+    sections: [
+        {
+            section_key: "section_demo",
+            title: "Demo Section",
+            description: null,
+            instruction: "Answer the demo questions.",
+            notes_prompt: null,
+            questions: [
+                {
+                    question_key: "q_simple",
+                    mode: "survey",
+                    constructs: ["usability"],
+                    domains: ["Demo"],
+                    section_key: "section_demo",
+                    prompt: "Simple prompt",
+                    question_type: "scaled",
+                    required: true,
+                    display_if: null,
+                    options: [],
+                    scales: [
+                        {
+                            key: "provision",
+                            title: "Provision",
+                            prompt: "Provision prompt",
+                            options: [
+                                {
+                                    key: "no",
+                                    label: "No",
+                                    addition_value: 0,
+                                    boost_value: 0,
+                                    allows_follow_up_scales: false,
+                                    is_not_applicable: false,
+                                },
+                                {
+                                    key: "a_little_bit",
+                                    label: "A little bit",
+                                    addition_value: 1,
+                                    boost_value: 1,
+                                    allows_follow_up_scales: true,
+                                    is_not_applicable: false,
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    question_key: "q_follow_up",
+                    mode: "survey",
+                    constructs: ["play_value"],
+                    domains: ["Demo"],
+                    section_key: "section_demo",
+                    prompt: "Follow-up prompt",
+                    question_type: "scaled",
+                    required: true,
+                    display_if: null,
+                    options: [],
+                    scales: [
+                        {
+                            key: "provision",
+                            title: "Provision",
+                            prompt: "Provision prompt",
+                            options: [
+                                {
+                                    key: "no",
+                                    label: "No",
+                                    addition_value: 0,
+                                    boost_value: 0,
+                                    allows_follow_up_scales: false,
+                                    is_not_applicable: false,
+                                },
+                                {
+                                    key: "a_lot",
+                                    label: "A lot",
+                                    addition_value: 2,
+                                    boost_value: 2,
+                                    allows_follow_up_scales: true,
+                                    is_not_applicable: false,
+                                },
+                            ],
+                        },
+                        {
+                            key: "diversity",
+                            title: "Diversity",
+                            prompt: "Diversity prompt",
+                            options: [
+                                {
+                                    key: "not_applicable",
+                                    label: "Not applicable",
+                                    addition_value: 0,
+                                    boost_value: 1,
+                                    allows_follow_up_scales: false,
+                                    is_not_applicable: true,
+                                },
+                                {
+                                    key: "some_diversity",
+                                    label: "Some diversity",
+                                    addition_value: 2,
+                                    boost_value: 2,
+                                    allows_follow_up_scales: false,
+                                    is_not_applicable: false,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    ],
+};
+
+const targetSection = instrumentFixture.sections[0];
 const targetQuestion = targetSection.questions.find((question) => question.scales.length > 1);
 assert(targetQuestion !== undefined, "Expected an instrument question with follow-up scales.");
 
@@ -90,9 +219,9 @@ const sessionFixture = {
     allowed_execution_modes: ["survey", "audit", "both"],
     selected_execution_mode: "survey",
     status: "IN_PROGRESS",
-    instrument_key: BASE_PLAYSPACE_INSTRUMENT.instrument_key,
-    instrument_version: BASE_PLAYSPACE_INSTRUMENT.instrument_version,
-    instrument: BASE_PLAYSPACE_INSTRUMENT,
+    instrument_key: instrumentFixture.instrument_key,
+    instrument_version: instrumentFixture.instrument_version,
+    instrument: instrumentFixture,
     schema_version: 1,
     revision: 3,
     aggregate: {
@@ -116,10 +245,10 @@ const sessionFixture = {
                 note: "Local draft note",
                 responses: {
                     [targetSection.questions[0].question_key]: {
-                        quantity: "a_little_bit",
+                        provision: "a_little_bit",
                     },
                     [targetQuestion.question_key]: {
-                        quantity: "a_lot",
+                        provision: "a_lot",
                         [targetQuestion.scales[1].key]: targetQuestion.scales[1].options[1].key,
                     },
                 },
@@ -147,10 +276,10 @@ const sessionFixture = {
             note: "Local draft note",
             responses: {
                 [targetSection.questions[0].question_key]: {
-                    quantity: "a_little_bit",
+                    provision: "a_little_bit",
                 },
                 [targetQuestion.question_key]: {
-                    quantity: "a_lot",
+                    provision: "a_lot",
                     [targetQuestion.scales[1].key]: targetQuestion.scales[1].options[1].key,
                 },
             },
@@ -201,11 +330,11 @@ assert(visibleSections.length > 0, "Expected visible sections for survey mode.")
 getInstrumentSectionLocalProgress(parsedSession, visibleSections[0]);
 
 const hiddenFollowUpAnswers = getActiveScaleKeysForQuestion(targetQuestion, {
-    quantity: "no",
+    provision: "no",
 });
 assert(
-    hiddenFollowUpAnswers.length === 1 && hiddenFollowUpAnswers[0] === "quantity",
-    "Expected quantity=no to hide follow-up scales.",
+    hiddenFollowUpAnswers.length === 1 && hiddenFollowUpAnswers[0] === "provision",
+    "Expected provision=no to hide follow-up scales.",
 );
 
 const parsedSaveAck = auditDraftSaveSchema.parse({
@@ -217,5 +346,174 @@ const parsedSaveAck = auditDraftSaveSchema.parse({
     saved_at: "2026-03-24T10:05:00Z",
 });
 assert(parsedSaveAck.revision === 4, "Expected draft save ack revision to parse.");
+
+const parsedScoreTotals = auditScoreTotalsSchema.parse({
+    provision_total: 1,
+    provision_total_max: 2,
+    diversity_total: 1,
+    diversity_total_max: 2,
+    challenge_total: 2,
+    challenge_total_max: 2,
+    sociability_total: 1,
+    sociability_total_max: 2,
+    play_value_total: 6,
+    play_value_total_max: 18,
+    usability_total: 6,
+    usability_total_max: 18,
+});
+assert(parsedScoreTotals.play_value_total_max === 18, "Expected max score fields to parse.");
+assert(getCombinedConstructScore(parsedScoreTotals) === 12, "Expected combined construct total to remain stable.");
+
+const scoreFixtureQuestion = {
+    question_key: "q_construct",
+    mode: "audit",
+    constructs: ["play_value", "usability"],
+    domains: ["Construct Demo"],
+    section_key: "section_constructs",
+    prompt: "Demo prompt",
+    question_type: "scaled",
+    required: true,
+    display_if: null,
+    options: [],
+    scales: [
+        {
+            key: "provision",
+            title: "Provision",
+            prompt: "Provision prompt",
+            options: [
+                {
+                    key: "no",
+                    label: "No",
+                    addition_value: 0,
+                    boost_value: 0,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+                {
+                    key: "some",
+                    label: "Some",
+                    addition_value: 1,
+                    boost_value: 1,
+                    allows_follow_up_scales: true,
+                    is_not_applicable: false,
+                },
+                {
+                    key: "a_lot",
+                    label: "A lot",
+                    addition_value: 2,
+                    boost_value: 2,
+                    allows_follow_up_scales: true,
+                    is_not_applicable: false,
+                },
+            ],
+        },
+        {
+            key: "diversity",
+            title: "Diversity",
+            prompt: "Diversity prompt",
+            options: [
+                {
+                    key: "not_applicable",
+                    label: "Not applicable",
+                    addition_value: 0,
+                    boost_value: 1,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: true,
+                },
+                {
+                    key: "some_diversity",
+                    label: "Some diversity",
+                    addition_value: 2,
+                    boost_value: 2,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+                {
+                    key: "a_lot_of_diversity",
+                    label: "A lot of diversity",
+                    addition_value: 3,
+                    boost_value: 3,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+            ],
+        },
+        {
+            key: "challenge",
+            title: "Challenge",
+            prompt: "Challenge prompt",
+            options: [
+                {
+                    key: "not_applicable",
+                    label: "Not applicable",
+                    addition_value: 0,
+                    boost_value: 1,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: true,
+                },
+                {
+                    key: "some_challenge",
+                    label: "Some challenge",
+                    addition_value: 2,
+                    boost_value: 2,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+                {
+                    key: "a_lot_of_challenge",
+                    label: "A lot of challenge",
+                    addition_value: 3,
+                    boost_value: 3,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+            ],
+        },
+        {
+            key: "sociability",
+            title: "Sociability",
+            prompt: "Sociability prompt",
+            options: [
+                {
+                    key: "none",
+                    label: "None",
+                    addition_value: 1,
+                    boost_value: 1,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+                {
+                    key: "pairs",
+                    label: "Pairs",
+                    addition_value: 2,
+                    boost_value: 2,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+                {
+                    key: "groups",
+                    label: "Groups",
+                    addition_value: 3,
+                    boost_value: 3,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                },
+            ],
+        },
+    ],
+};
+
+const calculatedQuestionScores = calculateQuestionScores(scoreFixtureQuestion, {
+    provision: "some",
+    diversity: "some_diversity",
+    challenge: "a_lot_of_challenge",
+    sociability: "pairs",
+});
+assert(calculatedQuestionScores.provision_total === 1, "Expected question score helper to return provision total.");
+assert(
+    calculatedQuestionScores.play_value_total_max === 18,
+    "Expected question score helper to return construct max.",
+);
+assert(formatPercentage(6, 18) === "33.3%", "Expected percentage formatter to use compact percent text.");
 
 console.log("Mobile audit contract verification passed.");

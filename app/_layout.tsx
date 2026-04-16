@@ -211,7 +211,7 @@ function RootLayoutNav() {
 
     return (
         <ThemeProvider value={navigationTheme}>
-            <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} hidden={Platform.OS === "android"} />
+            <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
             <Stack
                 screenOptions={{
                     statusBarHidden: Platform.OS === "android",

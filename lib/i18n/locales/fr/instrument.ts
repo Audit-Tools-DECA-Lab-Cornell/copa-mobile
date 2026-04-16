@@ -268,7 +268,7 @@ export const frInstrumentTranslations = {
         },
     },
     scales: {
-        quantity: {
+        provision: {
             title: "Quantité",
             prompt: "Dans quelle quantité cette caractéristique ou cet élément de l’environnement est-il pris en compte ?",
             description:

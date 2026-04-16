@@ -210,7 +210,7 @@ export function getQuestionAnswers(
 
 /**
  * List scale keys the user must answer for one question, given current selections.
- * Follow-up scales (diversity, etc.) apply only when the quantity option allows them.
+ * Follow-up scales (diversity, etc.) apply only when the provision option allows them.
  *
  * @param question Instrument question including scales and options.
  * @param selectedAnswers Current scale key → option key map for the question.
@@ -224,15 +224,15 @@ export function getActiveScaleKeysForQuestion(
         return [];
     }
 
-    const quantityScale = question.scales[0];
-    if (quantityScale === undefined) {
+    const provisionScale = question.scales[0];
+    if (provisionScale === undefined) {
         return [];
     }
 
-    const selectedQuantityKey = selectedAnswers[quantityScale.key];
-    const selectedQuantityOption = quantityScale.options.find((option) => option.key === selectedQuantityKey);
-    const showFollowUpScales = selectedQuantityOption?.allows_follow_up_scales === true;
-    const keys: string[] = [quantityScale.key];
+    const selectedProvisionKey = selectedAnswers[provisionScale.key];
+    const selectedProvisionOption = provisionScale.options.find((option) => option.key === selectedProvisionKey);
+    const showFollowUpScales = selectedProvisionOption?.allows_follow_up_scales === true;
+    const keys: string[] = [provisionScale.key];
 
     if (showFollowUpScales) {
         for (let index = 1; index < question.scales.length; index += 1) {

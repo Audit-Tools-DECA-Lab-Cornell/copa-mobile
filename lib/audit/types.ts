@@ -8,7 +8,7 @@ export const executionModeSchema = z.enum(["audit", "survey", "both"]);
 export const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
 export const questionModeSchema = z.enum(["audit", "survey", "both"]);
 export const constructKeySchema = z.enum(["usability", "play_value"]);
-export const scaleKeySchema = z.enum(["quantity", "diversity", "sociability", "challenge"]);
+export const scaleKeySchema = z.enum(["provision", "diversity", "sociability", "challenge"]);
 export const preAuditInputTypeSchema = z.enum(["single_select", "multi_select", "auto_timestamp"]);
 export const preAuditPageKeySchema = z.enum(["audit_info", "space_setup"]);
 export const questionTypeSchema = z.enum(["scaled", "checklist"]);
@@ -57,7 +57,7 @@ export const questionScaleSchema = z.object({
 
 export const questionDisplayConditionSchema = z.object({
     question_key: z.string().min(1),
-    response_key: z.string().min(1).default("quantity"),
+    response_key: z.string().min(1).default("provision"),
     any_of_option_keys: z.array(z.string()).default([]),
 });
 
@@ -147,12 +147,18 @@ export const auditSectionStateSchema = z.object({
 });
 
 export const auditScoreTotalsSchema = z.object({
-    quantity_total: z.number(),
+    provision_total: z.number(),
+    provision_total_max: z.number(),
     diversity_total: z.number(),
+    diversity_total_max: z.number(),
     challenge_total: z.number(),
+    challenge_total_max: z.number(),
     sociability_total: z.number(),
+    sociability_total_max: z.number(),
     play_value_total: z.number(),
+    play_value_total_max: z.number(),
     usability_total: z.number(),
+    usability_total_max: z.number(),
 });
 
 export const auditScoresSchema = z.object({

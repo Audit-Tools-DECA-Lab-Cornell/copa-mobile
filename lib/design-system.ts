@@ -504,7 +504,7 @@ type PaletteColorValue = ActiveColorPalette[keyof ColorPalette];
  */
 export function getScaleAccentColor(scaleKey: string, colors: ActiveColorPalette): PaletteColorValue {
     switch (scaleKey) {
-        case "quantity":
+        case "provision":
             return colors.violet;
         case "diversity":
             return colors.success;
@@ -526,7 +526,7 @@ export function getScaleAccentColor(scaleKey: string, colors: ActiveColorPalette
  */
 export function getScaleSoftColor(scaleKey: string, colors: ActiveColorPalette): PaletteColorValue {
     switch (scaleKey) {
-        case "quantity":
+        case "provision":
             return colors.violetSoft;
         case "diversity":
             return colors.successSoft;

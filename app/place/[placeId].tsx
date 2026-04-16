@@ -82,7 +82,7 @@ export default function PlaceDetailScreen() {
         playValueShort: t("playValueShort", { ns: "places" }),
         usabilityShort: t("usabilityShort", { ns: "places" }),
         sociabilityShort: t("sociabilityShort", { ns: "places" }),
-        quantityShort: t("quantityShort", { ns: "places" }),
+        provisionShort: t("provisionShort", { ns: "places" }),
         diversityShort: t("diversityShort", { ns: "places" }),
         challengeShort: t("challengeShort", { ns: "places" }),
     };
@@ -93,15 +93,20 @@ export default function PlaceDetailScreen() {
                 options={{
                     contentStyle: { paddingTop: 20 },
                     headerTitle: () => (
-                        <YStack justify="center">
-                            <Text
-                                color={ds.colors.primary}
-                                fontFamily={ds.fonts.bodySemiBold}
-                                fontSize={ds.typography.titleLg.fontSize}
-                                lineHeight={ds.typography.titleLg.lineHeight}
-                            >
-                                {place?.place_name ?? t("detail.screenTitle", { ns: "places" })}
-                            </Text>
+                        <YStack justify="center" my="$3" overflowX="scroll">
+                            <ScrollView horizontal>
+                                <YStack justify="center">
+                                    <Text
+                                        color={ds.colors.primary}
+                                        fontFamily={ds.fonts.bodySemiBold}
+                                        fontSize={ds.typography.titleLg.fontSize}
+                                        lineHeight={ds.typography.titleLg.lineHeight}
+                                        className="no-scrollbar overflow-x-scroll whitespace-nowrap"
+                                    >
+                                        {place?.place_name ?? t("detail.screenTitle", { ns: "places" })}
+                                    </Text>
+                                </YStack>
+                            </ScrollView>
                         </YStack>
                     ),
                     headerShown: true,

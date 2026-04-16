@@ -115,7 +115,7 @@
         "intro": "Dieser Schritt wird nur angezeigt, wenn der ausgewählte Ausführungsmodus den Vor-Ort-Audit umfasst. Beantworten Sie die aktuellen Kontextfragen, bevor Sie die Abschnittsseiten öffnen.",
         "matrixAgeColumn": "Altersgruppe",
         "matrixHeading": "Beschreiben Sie die Personen, die sich derzeit im Playspace aufhalten",
-        "matrixQuantityColumn": "Anzahl",
+        "matrixProvisionColumn": "Anzahl",
         "preparingMessage": "Die Vor-Ort-Einrichtungsfragen und alle gespeicherten Antworten werden geladen...",
         "preparingTitle": "Space-Audit-Einrichtung wird vorbereitet",
         "sidebarDescription": "Diese Fragen bilden den Vor-Ort-Kontext, bevor die Bewertung der Hauptabschnitte beginnt.",
@@ -149,7 +149,7 @@
             "scaleColumns": {
                 "challenge": "Herausforderung",
                 "diversity": "Vielfalt",
-                "quantity": "Bereitstellung / Menge",
+                "provision": "Bereitstellung / Menge",
                 "sociability": "Kontaktfreudigkeit"
             }
         },

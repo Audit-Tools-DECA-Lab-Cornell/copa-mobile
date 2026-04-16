@@ -68,10 +68,10 @@ export function QuestionCard({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
-    const quantityScale = question.scales[0];
-    const selectedQuantityKey = quantityScale !== undefined ? selectedAnswers[quantityScale.key] : undefined;
-    const selectedQuantityOption = quantityScale?.options.find((option) => option.key === selectedQuantityKey);
-    const showFollowUpScales = selectedQuantityOption?.allows_follow_up_scales === true;
+    const provisionScale = question.scales[0];
+    const selectedProvisionKey = provisionScale !== undefined ? selectedAnswers[provisionScale.key] : undefined;
+    const selectedProvisionOption = provisionScale?.options.find((option) => option.key === selectedProvisionKey);
+    const showFollowUpScales = selectedProvisionOption?.allows_follow_up_scales === true;
     const promptSegments = parsePromptSegments(question.prompt);
     const selectedChecklistOptionKeys = readChecklistOptionKeys(selectedAnswers);
     const otherChecklistText = readChecklistOtherText(selectedAnswers);
@@ -455,15 +455,15 @@ function buildNextScaledQuestionAnswers(
         [scaleKey]: optionKey,
     };
 
-    if (scaleKey !== "quantity") {
+    if (scaleKey !== "provision") {
         return nextAnswers;
     }
 
-    const quantityScale = question.scales.find((currentScale) => currentScale.key === "quantity");
-    const selectedOption = quantityScale?.options.find((option) => option.key === optionKey);
+    const provisionScale = question.scales.find((currentScale) => currentScale.key === "provision");
+    const selectedOption = provisionScale?.options.find((option) => option.key === optionKey);
     if (selectedOption?.allows_follow_up_scales !== false) {
         return nextAnswers;
     }
 
-    return { quantity: optionKey };
+    return { provision: optionKey };
 }

@@ -63,14 +63,30 @@ export type AuditorPlacesResponse = PaginatedResponse<AuditorPlace>;
 const auditorPlacesResponseSchema = createPaginatedResponseSchema(auditorPlaceSchema);
 
 /**
- * Fetch all places assigned to the currently authenticated auditor.
+ * Maximum number of places the backend allows per page.
+ * Matches the `le=100` constraint on the backend Query parameter.
+ */
+const PLACES_MAX_PAGE_SIZE = 100;
+
+/**
+ * Fetch one page of places assigned to the currently authenticated auditor.
  *
  * @param session Authenticated mobile session.
- * @returns Validated paginated response of assigned auditor places.
+ * @param page 1-based page number to request.
+ * @param pageSize Number of items per page (capped at 100 by the backend).
+ * @returns Validated paginated response for the requested page.
  * @throws {PlayspaceAuditApiError} On network, auth, or validation failures.
  */
-export async function fetchAssignedPlaces(session: AuthSession): Promise<AuditorPlacesResponse> {
-    const payload = await requestJson(session, "/playspace/auditor/me/places", {
+export async function fetchAssignedPlacesPage(
+    session: AuthSession,
+    page: number,
+    pageSize: number,
+): Promise<AuditorPlacesResponse> {
+    const params = new URLSearchParams({
+        page: String(page),
+        page_size: String(pageSize),
+    });
+    const payload = await requestJson(session, `/playspace/auditor/me/places?${params.toString()}`, {
         method: "GET",
     });
     return parsePayload<AuditorPlacesResponse>(
@@ -78,4 +94,37 @@ export async function fetchAssignedPlaces(session: AuthSession): Promise<Auditor
         auditorPlacesResponseSchema,
         t("assignedPlacesResponseShapeIsInvalid", "Assigned places response shape is invalid."),
     );
+}
+
+/**
+ * Fetch ALL places assigned to the currently authenticated auditor by
+ * exhausting all available pages and merging results into a single flat list.
+ *
+ * The backend caps `page_size` at 100. When the auditor has more than 100
+ * places we fan out concurrent requests for the remaining pages so the round
+ * trip count is kept to a minimum (1 + ceil((total_pages - 1) / batch) calls).
+ *
+ * @param session Authenticated mobile session.
+ * @returns Flat array of every assigned auditor place.
+ * @throws {PlayspaceAuditApiError} On network, auth, or validation failures.
+ */
+export async function fetchAllAssignedPlaces(session: AuthSession): Promise<AuditorPlace[]> {
+    const firstPage = await fetchAssignedPlacesPage(session, 1, PLACES_MAX_PAGE_SIZE);
+    const allItems: AuditorPlace[] = [...firstPage.items];
+
+    if (firstPage.total_pages <= 1) {
+        return allItems;
+    }
+
+    const remainingPageNumbers = Array.from({ length: firstPage.total_pages - 1 }, (_, index) => index + 2);
+
+    const remainingPages = await Promise.all(
+        remainingPageNumbers.map((pageNumber) => fetchAssignedPlacesPage(session, pageNumber, PLACES_MAX_PAGE_SIZE)),
+    );
+
+    for (const page of remainingPages) {
+        allItems.push(...page.items);
+    }
+
+    return allItems;
 }

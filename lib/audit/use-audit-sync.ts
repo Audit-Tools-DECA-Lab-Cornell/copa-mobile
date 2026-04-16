@@ -6,13 +6,18 @@ import {
     buildSyncableAuditIds,
     shouldAttemptAutomaticSync,
     shouldRetrySubmitResolution,
+    type AutomaticSyncTrigger,
 } from "lib/audit/store-sync-core";
 import type { AuditSession, AuditSyncStateByAuditId, DirtyMeta, DirtyPreAudit, DirtySections } from "lib/audit/types";
+import type { AuthSession } from "lib/auth/types";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
-/** Debounce bursty local edits before attempting a foreground sync (ms). */
-const FOREGROUND_SYNC_DEBOUNCE_MS = 400;
+/**
+ * Debounce window after local edits before a passive foreground sync (ms).
+ * Long-form audits typically use ~1.5–2s; shorter intervals suit real-time collab.
+ */
+const FOREGROUND_SYNC_DEBOUNCE_MS = 1800;
 
 interface AutomaticSyncSnapshot {
     readonly sessionsByAuditId: Record<string, AuditSession>;
@@ -68,14 +73,56 @@ function hasPendingNormalSyncWork(snapshot: AutomaticSyncSnapshot): boolean {
 }
 
 /**
+ * Reopen trigger-eligible blocked audits when applicable, then enqueue one
+ * sync pass if any audit still has normal sync work.
+ *
+ * @param session Authenticated session for the API flush.
+ * @param trigger What caused this immediate attempt (checkpoint or lifecycle).
+ */
+function runImmediateForegroundSync(session: AuthSession, trigger: AutomaticSyncTrigger): void {
+    usePlayspaceAuditStore.getState().prepareAutomaticSyncAudits(trigger);
+    const currentState = usePlayspaceAuditStore.getState();
+    if (
+        !hasPendingNormalSyncWork({
+            sessionsByAuditId: currentState.sessionsByAuditId,
+            dirtySections: currentState.dirtySections,
+            dirtyPreAudit: currentState.dirtyPreAudit,
+            dirtyMeta: currentState.dirtyMeta,
+            syncStateByAuditId: currentState.syncStateByAuditId,
+        })
+    ) {
+        return;
+    }
+
+    runPendingAuditSyncAsync({ session }).catch(() => undefined);
+}
+
+/**
+ * Run one non-debounced sync after a user checkpoint (blur, section change) or
+ * when invoked from app background. Safe to call from any module; no-ops when
+ * the audit store is not hydrated for the signed-in user.
+ *
+ * @param trigger Checkpoint or lifecycle reason for this flush attempt.
+ */
+export function requestImmediateAuditSync(trigger: AutomaticSyncTrigger): void {
+    const authSession = useAuthStore.getState().session;
+    const { currentUserId, isHydrated } = usePlayspaceAuditStore.getState();
+    if (authSession === null || !isHydrated || authSession.user.id !== currentUserId) {
+        return;
+    }
+    runImmediateForegroundSync(authSession, trigger);
+}
+
+/**
  * Event-driven foreground sync hook that flushes locally-saved audit answers
  * when the authenticated tab tree is active.
  *
  * Sync attempts are triggered by:
  * - app startup once the authenticated user's audit store is hydrated
- * - debounced local edits
+ * - debounced local edits (~1.5–2s after the last change)
  * - connectivity restoration
  * - app foregrounding
+ * - leaving the active app state (background / inactive), for a forced flush
  */
 export function useAuditSync(): void {
     const session = useAuthStore((state) => state.session);
@@ -88,7 +135,6 @@ export function useAuditSync(): void {
     const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const isSyncing = usePlayspaceAuditStore((state) => state.isSyncing);
     const localChangeCounter = usePlayspaceAuditStore((state) => state.localChangeCounter);
-    const prepareAutomaticSyncAudits = usePlayspaceAuditStore((state) => state.prepareAutomaticSyncAudits);
 
     const hasPendingNormalWork = useMemo(
         () =>
@@ -106,37 +152,22 @@ export function useAuditSync(): void {
     sessionRef.current = session;
     const isCurrentUserHydrated = session?.user.id === currentUserId;
 
+    const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
     /**
      * Reopen trigger-eligible blocked audits, then run one sync pass only when
      * some audit is now phase-dirty.
      *
      * @param trigger Automatic trigger that may reopen retryable blocked phases.
      */
-    const runTriggeredSync = useCallback(
-        (trigger: Parameters<typeof prepareAutomaticSyncAudits>[0]) => {
-            const currentSession = sessionRef.current;
-            if (currentSession === null) {
-                return;
-            }
+    const runTriggeredSync = useCallback((trigger: AutomaticSyncTrigger) => {
+        const currentSession = sessionRef.current;
+        if (currentSession === null) {
+            return;
+        }
 
-            prepareAutomaticSyncAudits(trigger);
-            const currentState = usePlayspaceAuditStore.getState();
-            if (
-                !hasPendingNormalSyncWork({
-                    sessionsByAuditId: currentState.sessionsByAuditId,
-                    dirtySections: currentState.dirtySections,
-                    dirtyPreAudit: currentState.dirtyPreAudit,
-                    dirtyMeta: currentState.dirtyMeta,
-                    syncStateByAuditId: currentState.syncStateByAuditId,
-                })
-            ) {
-                return;
-            }
-
-            runPendingAuditSyncAsync({ session: currentSession }).catch(() => undefined);
-        },
-        [prepareAutomaticSyncAudits],
-    );
+        runImmediateForegroundSync(currentSession, trigger);
+    }, []);
 
     useEffect(() => {
         if (!isHydrated || !hasPendingNormalWork || !isCurrentUserHydrated || session === null) {
@@ -188,12 +219,19 @@ export function useAuditSync(): void {
             return;
         }
 
+        appStateRef.current = AppState.currentState;
+
         const appStateSubscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
-            if (nextAppState !== "active") {
-                return;
+            const previousState = appStateRef.current;
+            appStateRef.current = nextAppState;
+
+            if (previousState === "active" && nextAppState !== "active") {
+                runTriggeredSync("app_background");
             }
 
-            runTriggeredSync("foreground");
+            if (nextAppState === "active") {
+                runTriggeredSync("foreground");
+            }
         });
 
         return () => {

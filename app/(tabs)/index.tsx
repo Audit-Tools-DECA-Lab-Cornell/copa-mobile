@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -18,6 +18,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-helpers";
+import { fetchAuditorDashboardSummary, type AuditorDashboardSummary } from "lib/audit/dashboard-api";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import {
     createActiveAuditMetricState,
@@ -112,12 +113,39 @@ export default function DashboardScreen() {
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const scrollViewRef = useRef<ScrollView | null>(null);
+    const [dashboardSummary, setDashboardSummary] = useState<AuditorDashboardSummary | null>(null);
 
     useEffect(() => {
         if (session !== null) {
-            loadPlaces(session).catch(() => undefined);
+            loadPlaces(session, { fetchAll: false, page: 1, pageSize: 8 }).catch(() => undefined);
         }
     }, [session, loadPlaces]);
+
+    useEffect(() => {
+        let isMounted = true;
+        if (session === null) {
+            setDashboardSummary(null);
+            return () => {
+                isMounted = false;
+            };
+        }
+
+        fetchAuditorDashboardSummary(session)
+            .then((summary) => {
+                if (isMounted) {
+                    setDashboardSummary(summary);
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setDashboardSummary(null);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [session]);
 
     const scrollDashboardToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
@@ -129,19 +157,28 @@ export default function DashboardScreen() {
         scrollToOffset: scrollDashboardToOffset,
     });
 
-    const assignedCount = places.length;
+    const assignedCount = dashboardSummary?.total_assigned_places ?? places.length;
 
     const completedCount = useMemo(() => {
+        if (dashboardSummary !== null) {
+            return dashboardSummary.submitted_audits;
+        }
         return places.filter((p) => p.audit_status === "SUBMITTED").length;
-    }, [places]);
+    }, [dashboardSummary, places]);
 
     const inProgressCount = useMemo(() => {
+        if (dashboardSummary !== null) {
+            return dashboardSummary.in_progress_audits;
+        }
         return places.filter((p) => p.audit_status === "IN_PROGRESS").length;
-    }, [places]);
+    }, [dashboardSummary, places]);
 
     const notStartedCount = useMemo(() => {
+        if (dashboardSummary !== null) {
+            return dashboardSummary.pending_places;
+        }
         return places.filter((p) => p.audit_status === null).length;
-    }, [places]);
+    }, [dashboardSummary, places]);
 
     const submittedCount = completedCount;
 

@@ -38,7 +38,7 @@
         "production": {
             "android": {
                 "track": "internal",
-                "serviceAccountKeyPath": "./playspace-deca.json",
+                "serviceAccountKeyPath": "./credentials/google/playspace-deca.json",
                 "releaseStatus": "draft"
             }
         }

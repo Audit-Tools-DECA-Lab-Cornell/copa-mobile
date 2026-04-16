@@ -587,7 +587,7 @@ export default function ReportsScreen() {
                     <CollapsibleCard
                         title={t("exportPreview", { ns: "reports" })}
                         subtitle={t("exportDescription", { ns: "reports" })}
-                        icon={<FileBarChart size={16} color={ds.colors.primary} />}
+                        icon={<FileBarChart size={32} color={ds.colors.primary} />}
                     >
                         <YStack
                             rounded={ds.radii.md}
@@ -763,7 +763,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
             playValueShort: t("playValueShort"),
             usabilityShort: t("usabilityShort"),
             sociabilityShort: t("sociabilityShort"),
-            quantityShort: t("quantityShort"),
+            provisionShort: t("provisionShort"),
             diversityShort: t("diversityShort"),
             challengeShort: t("challengeShort"),
         };

@@ -292,7 +292,7 @@ export const deInstrumentTranslations = {
         },
     },
     scales: {
-        quantity: {
+        provision: {
             title: "Quantität",
             prompt: "In welcher Menge ist dieses Merkmal oder diese Umweltcharakteristik vorhanden?",
             description: "Quantität beschreibt, wie viele konkrete Angebote oder Umweltmerkmale vorhanden sind.",

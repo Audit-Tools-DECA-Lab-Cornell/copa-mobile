@@ -265,7 +265,7 @@ export const jaInstrumentTranslations = {
         },
     },
     scales: {
-        quantity: {
+        provision: {
             title: "量",
             prompt: "この特徴または環境特性は、どの程度の量として考えますか？",
             description: "量とは、特定の設備や環境特性がいくつ利用できるかを指します。",

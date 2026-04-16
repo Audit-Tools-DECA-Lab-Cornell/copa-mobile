@@ -1,9 +1,16 @@
 import * as FileSystem from "expo-file-system/legacy";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
+import {
+    addScoreTotals,
+    calculateQuestionScores,
+    createEmptyScoreTotals,
+    formatPercentage,
+} from "lib/audit/score-helpers";
 import type {
+    AuditScoreTotals,
     AuditSession,
     ExecutionMode,
     InstrumentQuestion,
@@ -92,9 +99,10 @@ const SINGLE_RESPONSE_HEADERS = [
     "Diversity",
     "Sociability",
     "Challenge Opportunities",
+    "Play Value (PV) Construct Score",
+    "Usability (U) Construct Score",
     "Auditor Comment",
 ] as const;
-const BULK_RESPONSE_PREFIX_HEADERS = ["Audit Code", "Place Name", "Project Name", "Locality"] as const;
 const PREVIEW_RESPONSE_COLUMN_INDEXES = [0, 1, 2, 3, 6, 7, 8, 9, 10] as const;
 const OVERVIEW_COLUMN_WIDTHS = [28, 56] as const;
 const SINGLE_PRE_AUDIT_COLUMN_WIDTHS = [42, 58] as const;
@@ -102,8 +110,8 @@ const SINGLE_SPACE_AUDIT_COLUMN_WIDTHS = [42, 58] as const;
 const BULK_PRE_AUDIT_COLUMN_WIDTHS = [16, 24, 40, 56] as const;
 const BULK_SPACE_AUDIT_COLUMN_WIDTHS = [16, 24, 40, 56] as const;
 const GUIDANCE_COLUMN_WIDTHS = [24, 64, 56] as const;
-const SINGLE_RESPONSE_COLUMN_WIDTHS = [12, 16, 16, 28, 42, 40, 56, 22, 22, 22, 26, 40] as const;
-const BULK_RESPONSE_COLUMN_WIDTHS = [16, 24, 24, 24, ...SINGLE_RESPONSE_COLUMN_WIDTHS] as const;
+const SINGLE_RESPONSE_COLUMN_WIDTHS = [12, 16, 16, 28, 42, 40, 56, 22, 22, 22, 26, 22, 22, 40] as const;
+const BULK_RESPONSE_COLUMN_WIDTHS = SINGLE_RESPONSE_COLUMN_WIDTHS;
 
 /**
  * Build a small workbook-like preview table for one submitted audit.
@@ -121,8 +129,14 @@ export function buildAuditExportPreview(
     const headerRow = PREVIEW_RESPONSE_COLUMN_INDEXES.map((columnIndex) => SINGLE_RESPONSE_HEADERS[columnIndex]);
     const detailRows = buildSingleAuditResponseRows(exportableAudit, instrument)
         .filter((row) => {
+            const idCell = row[0];
             const modeCell = row[1];
-            return typeof modeCell === "string" && modeCell.trim().length > 0;
+            return (
+                typeof idCell === "string" &&
+                idCell.includes(".") &&
+                typeof modeCell === "string" &&
+                modeCell.trim().length > 0
+            );
         })
         .slice(0, limit)
         .map((row) => PREVIEW_RESPONSE_COLUMN_INDEXES.map((columnIndex) => row[columnIndex] ?? ""));
@@ -267,7 +281,7 @@ function buildSingleAuditOverviewTable(
             ["Summary Score", deriveSummaryScore(auditSession)],
             ["Play Value Total", overallScores?.play_value_total ?? "Pending"],
             ["Usability Total", overallScores?.usability_total ?? "Pending"],
-            ["Quantity Total", overallScores?.quantity_total ?? "Pending"],
+            ["Provision Total", overallScores?.provision_total ?? "Pending"],
             ["Diversity Total", overallScores?.diversity_total ?? "Pending"],
             ["Sociability Total", overallScores?.sociability_total ?? "Pending"],
             ["Challenge Total", overallScores?.challenge_total ?? "Pending"],
@@ -309,7 +323,7 @@ function buildBulkAuditOverviewTable(
                 "Summary Score",
                 "Play Value Total",
                 "Usability Total",
-                "Quantity Total",
+                "Provision Total",
                 "Diversity Total",
                 "Sociability Total",
                 "Challenge Total",
@@ -496,7 +510,7 @@ function buildBulkAuditOverviewRow(exportableAudit: ExportableAudit, instrument:
         deriveSummaryScore(auditSession),
         overallScores?.play_value_total ?? "Pending",
         overallScores?.usability_total ?? "Pending",
-        overallScores?.quantity_total ?? "Pending",
+        overallScores?.provision_total ?? "Pending",
         overallScores?.diversity_total ?? "Pending",
         overallScores?.sociability_total ?? "Pending",
         overallScores?.challenge_total ?? "Pending",
@@ -552,19 +566,26 @@ function buildSingleAuditResponseRows(
     const { auditSession } = exportableAudit;
     const executionMode = resolveExecutionMode(auditSession);
     const rows: SpreadsheetRow[] = [];
+    let overallTotals = createEmptyScoreTotals();
 
     for (const [sectionIndex, section] of instrument.sections.entries()) {
-        const visibleQuestions = section.questions.filter((question) => isQuestionVisible(question, executionMode));
+        const sectionResponses = auditSession.sections[section.section_key]?.responses ?? {};
+        const visibleQuestions = section.questions.filter((question) =>
+            isQuestionVisible(question, executionMode, sectionResponses),
+        );
         if (visibleQuestions.length === 0) {
             continue;
         }
 
         const sectionState = auditSession.sections[section.section_key];
+        let sectionTotals = createEmptyScoreTotals();
         rows.push(buildSectionHeaderRow(sectionIndex, section.title, section.description, section.instruction));
 
         for (const [questionIndex, question] of visibleQuestions.entries()) {
             const questionAnswers = sectionState?.responses[question.question_key] ?? {};
-            rows.push(buildQuestionResponseRow(sectionIndex, questionIndex, question, questionAnswers));
+            const questionScores = calculateQuestionScores(question, questionAnswers);
+            rows.push(buildQuestionResponseRow(sectionIndex, questionIndex, question, questionAnswers, questionScores));
+            sectionTotals = addScoreTotals(sectionTotals, questionScores);
         }
 
         const sectionNote = sectionState?.note ?? "";
@@ -580,6 +601,14 @@ function buildSingleAuditResponseRows(
                 ),
             );
         }
+
+        rows.push(...buildSectionSummaryRows(sectionTotals));
+        overallTotals = addScoreTotals(overallTotals, sectionTotals);
+    }
+
+    if (rows.length > 0) {
+        rows.push(buildEmptyResponseRow());
+        rows.push(...buildOverallSummaryRows(overallTotals));
     }
 
     return rows;
@@ -599,15 +628,8 @@ function buildBulkAuditResponseRows(
     const rows: SpreadsheetRow[] = [];
 
     for (const exportableAudit of exportableAudits) {
-        const prefix: SpreadsheetRow = [
-            exportableAudit.auditSession.audit_code,
-            exportableAudit.auditSession.place_name,
-            exportableAudit.context?.projectName ?? "",
-            formatLocality(exportableAudit.context),
-        ];
-
         for (const row of buildSingleAuditResponseRows(exportableAudit, instrument)) {
-            rows.push([...prefix, ...row]);
+            rows.push(row);
         }
     }
 
@@ -642,6 +664,8 @@ function buildSectionHeaderRow(
         "",
         "",
         "",
+        "",
+        "",
     ];
 }
 
@@ -652,6 +676,7 @@ function buildSectionHeaderRow(
  * @param questionIndex Zero-based visible question index within the section.
  * @param question Localized instrument question.
  * @param answers Stored answer map for the question.
+ * @param questionScores Raw question score totals.
  * @returns One row containing the question prompt and chosen scale values.
  */
 function buildQuestionResponseRow(
@@ -659,6 +684,7 @@ function buildQuestionResponseRow(
     questionIndex: number,
     question: InstrumentQuestion,
     answers: QuestionResponsePayload,
+    questionScores: AuditScoreTotals,
 ): SpreadsheetRow {
     if (question.question_type === "checklist") {
         return [
@@ -673,6 +699,8 @@ function buildQuestionResponseRow(
             "",
             "",
             "",
+            "N/A",
+            "N/A",
             "",
         ];
     }
@@ -685,7 +713,11 @@ function buildQuestionResponseRow(
         "",
         "",
         stripPromptMarkup(question.prompt),
-        formatQuestionAnswer(question, "quantity", typeof answers.quantity === "string" ? answers.quantity : undefined),
+        formatQuestionAnswer(
+            question,
+            "provision",
+            typeof answers.provision === "string" ? answers.provision : undefined,
+        ),
         formatQuestionAnswer(
             question,
             "diversity",
@@ -701,6 +733,8 @@ function buildQuestionResponseRow(
             "challenge",
             typeof answers.challenge === "string" ? answers.challenge : undefined,
         ),
+        question.constructs.includes("play_value") ? questionScores.play_value_total : "N/A",
+        question.constructs.includes("usability") ? questionScores.usability_total : "N/A",
         "",
     ];
 }
@@ -734,8 +768,118 @@ function buildSectionNoteRow(
         "",
         "",
         "",
+        "",
+        "",
         submittedComment.trim(),
     ];
+}
+
+/**
+ * Build the raw/max/percentage summary rows for one section.
+ *
+ * @param totals Section score totals.
+ * @returns Three summary rows.
+ */
+function buildSectionSummaryRows(totals: AuditScoreTotals): readonly SpreadsheetRow[] {
+    return [
+        buildScoreSummaryRow("Total", "Raw Scores", totals, "raw"),
+        buildScoreSummaryRow("Max", "Max Possible", totals, "maximum"),
+        buildScoreSummaryRow("%", "Final Percentage", totals, "percentage"),
+    ];
+}
+
+/**
+ * Build the raw/max/percentage summary rows for the whole audit.
+ *
+ * @param totals Overall audit totals.
+ * @returns Three summary rows.
+ */
+function buildOverallSummaryRows(totals: AuditScoreTotals): readonly SpreadsheetRow[] {
+    return [
+        buildScoreSummaryRow("Overall Total", "Raw Scores", totals, "raw"),
+        buildScoreSummaryRow("Overall Max", "Max Possible", totals, "maximum"),
+        buildScoreSummaryRow("Overall %", "Final Percentage", totals, "percentage"),
+    ];
+}
+
+/**
+ * Build one summary row for raw totals, maximum totals, or percentages.
+ *
+ * @param idLabel Label placed in the first column.
+ * @param modeLabel Label placed in the second column.
+ * @param totals Score totals backing the row.
+ * @param rowKind Summary row kind.
+ * @returns One summary row sized to the response table.
+ */
+function buildScoreSummaryRow(
+    idLabel: string,
+    modeLabel: string,
+    totals: AuditScoreTotals,
+    rowKind: "raw" | "maximum" | "percentage",
+): SpreadsheetRow {
+    if (rowKind === "raw") {
+        return [
+            idLabel,
+            modeLabel,
+            "Summary",
+            "",
+            "",
+            "",
+            "",
+            totals.provision_total,
+            totals.diversity_total,
+            totals.sociability_total,
+            totals.challenge_total,
+            totals.play_value_total,
+            totals.usability_total,
+            "",
+        ];
+    }
+
+    if (rowKind === "maximum") {
+        return [
+            idLabel,
+            modeLabel,
+            "Summary",
+            "",
+            "",
+            "",
+            "",
+            totals.provision_total_max,
+            totals.diversity_total_max,
+            totals.sociability_total_max,
+            totals.challenge_total_max,
+            totals.play_value_total_max,
+            totals.usability_total_max,
+            "",
+        ];
+    }
+
+    return [
+        idLabel,
+        modeLabel,
+        "Summary",
+        "",
+        "",
+        "",
+        "",
+        formatPercentage(totals.provision_total, totals.provision_total_max),
+        formatPercentage(totals.diversity_total, totals.diversity_total_max),
+        formatPercentage(totals.sociability_total, totals.sociability_total_max),
+        formatPercentage(totals.challenge_total, totals.challenge_total_max),
+        formatPercentage(totals.play_value_total, totals.play_value_total_max),
+        formatPercentage(totals.usability_total, totals.usability_total_max),
+        "",
+    ];
+}
+
+/**
+ * Build one empty spacer row for the response table.
+ *
+ * @returns Blank response row.
+ */
+function buildEmptyResponseRow(): SpreadsheetRow {
+    return ["", "", "", "", "", "", "", "", "", "", "", "", "", ""];
 }
 
 /**
@@ -978,10 +1122,7 @@ function buildBulkResponsesTable(
         name: "Responses",
         title: "PVUA Response Matrix",
         columnWidths: BULK_RESPONSE_COLUMN_WIDTHS,
-        rows: [
-            [...BULK_RESPONSE_PREFIX_HEADERS, ...SINGLE_RESPONSE_HEADERS],
-            ...buildBulkAuditResponseRows(exportableAudits, instrument),
-        ],
+        rows: [SINGLE_RESPONSE_HEADERS, ...buildBulkAuditResponseRows(exportableAudits, instrument)],
     };
 }
 
@@ -990,13 +1131,39 @@ function buildBulkResponsesTable(
  *
  * @param question Instrument question definition.
  * @param executionMode Effective execution mode.
+ * @param sectionResponses Current section answers used for display rules.
  * @returns Whether the question is visible for the audit.
  */
-function isQuestionVisible(question: InstrumentQuestion, executionMode: ExecutionMode | null): boolean {
-    if (executionMode === null) {
+function isQuestionVisible(
+    question: InstrumentQuestion,
+    executionMode: ExecutionMode | null,
+    sectionResponses: Record<string, QuestionResponsePayload>,
+): boolean {
+    if (executionMode !== null && question.mode !== "both" && question.mode !== executionMode) {
+        return false;
+    }
+
+    if (question.display_if === null || question.display_if === undefined) {
         return true;
     }
-    return question.mode === "both" || question.mode === executionMode;
+
+    const parentAnswers = sectionResponses[question.display_if.question_key];
+    if (parentAnswers === undefined) {
+        return false;
+    }
+
+    const selectedValue = parentAnswers[question.display_if.response_key];
+    if (typeof selectedValue === "string") {
+        return question.display_if.any_of_option_keys.includes(selectedValue);
+    }
+
+    if (Array.isArray(selectedValue)) {
+        return selectedValue.some((entry) => {
+            return typeof entry === "string" && question.display_if?.any_of_option_keys.includes(entry);
+        });
+    }
+
+    return false;
 }
 
 /**
@@ -1112,6 +1279,136 @@ async function shareWorkbookPayload(workbook: WorkbookPayload, format: AuditExpo
 }
 
 /**
+ * Apply readable styles to one workbook sheet before export.
+ *
+ * @param sheet Mutable worksheet generated by SheetJS.
+ * @param table Source table for row classification.
+ */
+function styleWorkbookSheet(sheet: XLSX.WorkSheet, table: WorkbookTable): void {
+    const ref = sheet["!ref"];
+    if (typeof ref !== "string" || ref.length === 0) {
+        return;
+    }
+
+    const range = XLSX.utils.decode_range(ref);
+    const headerFill = { patternType: "solid", fgColor: { rgb: "E7EDF4" } };
+    const sectionFill = { patternType: "solid", fgColor: { rgb: "F5F8FC" } };
+    const summaryFill = { patternType: "solid", fgColor: { rgb: "F8F2EA" } };
+    const border = {
+        top: { style: "thin", color: { rgb: "D1D5DB" } },
+        bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+        left: { style: "thin", color: { rgb: "D1D5DB" } },
+        right: { style: "thin", color: { rgb: "D1D5DB" } },
+    };
+
+    for (let rowIndex = range.s.r; rowIndex <= range.e.r; rowIndex += 1) {
+        const row = table.rows[rowIndex];
+        if (row === undefined) {
+            continue;
+        }
+
+        const isHeaderRow = rowIndex === 0;
+        const isSummaryRow = row[2] === "Summary";
+        const isSectionHeaderRow =
+            !isHeaderRow &&
+            typeof row[0] === "string" &&
+            /^\d+$/u.test(row[0]) &&
+            row[1] === "" &&
+            row[2] === "" &&
+            typeof row[3] === "string" &&
+            row[3].trim().length > 0 &&
+            row[7] === "" &&
+            row[8] === "";
+
+        for (let colIndex = range.s.c; colIndex <= range.e.c; colIndex += 1) {
+            const address = XLSX.utils.encode_cell({ r: rowIndex, c: colIndex });
+            const cell = sheet[address] as XLSX.CellObject | undefined;
+            if (cell === undefined) {
+                continue;
+            }
+
+            const baseStyle = {
+                border,
+                alignment: {
+                    vertical: "top",
+                    wrapText: true,
+                    horizontal: colIndex >= 7 ? "right" : "left",
+                },
+                font: {
+                    name: "Aptos",
+                    sz: 10,
+                    color: { rgb: "111827" },
+                },
+            };
+
+            if (isHeaderRow) {
+                cell.s = {
+                    ...baseStyle,
+                    fill: headerFill,
+                    font: {
+                        ...baseStyle.font,
+                        bold: true,
+                        sz: 10.5,
+                    },
+                    alignment: { ...baseStyle.alignment, horizontal: "center" },
+                };
+                continue;
+            }
+
+            if (isSectionHeaderRow) {
+                cell.s = {
+                    ...baseStyle,
+                    fill: sectionFill,
+                    font: {
+                        ...baseStyle.font,
+                        bold: true,
+                    },
+                };
+                continue;
+            }
+
+            if (isSummaryRow) {
+                cell.s = {
+                    ...baseStyle,
+                    fill: summaryFill,
+                    font: {
+                        ...baseStyle.font,
+                        bold: true,
+                    },
+                };
+            } else {
+                cell.s = baseStyle;
+            }
+        }
+    }
+
+    sheet["!rows"] = table.rows.map((row, rowIndex) => {
+        const isHeaderRow = rowIndex === 0;
+        const isSummaryRow = row[2] === "Summary";
+        const isSectionHeaderRow =
+            !isHeaderRow &&
+            typeof row[0] === "string" &&
+            /^\d+$/u.test(row[0]) &&
+            row[1] === "" &&
+            row[2] === "" &&
+            typeof row[3] === "string" &&
+            row[3].trim().length > 0 &&
+            row[7] === "" &&
+            row[8] === "";
+        if (isHeaderRow) {
+            return { hpt: 22 };
+        }
+        if (isSectionHeaderRow) {
+            return { hpt: 26 };
+        }
+        if (isSummaryRow) {
+            return { hpt: 20 };
+        }
+        return { hpt: 18 };
+    });
+}
+
+/**
  * Write the workbook response table as CSV and share it.
  *
  * @param workbook Workbook-style tables to export.
@@ -1141,6 +1438,7 @@ async function shareXlsxWorkbook(workbook: WorkbookPayload): Promise<string> {
         if (table.columnWidths !== undefined) {
             sheet["!cols"] = table.columnWidths.map((width) => ({ wch: width }));
         }
+        styleWorkbookSheet(sheet, table);
         XLSX.utils.book_append_sheet(excelWorkbook, sheet, sanitizeSheetName(table.name));
     }
 
@@ -1149,6 +1447,7 @@ async function shareXlsxWorkbook(workbook: WorkbookPayload): Promise<string> {
     const workbookBase64 = XLSX.write(excelWorkbook, {
         type: "base64",
         bookType: "xlsx",
+        cellStyles: true,
     });
     await FileSystem.writeAsStringAsync(fileUri, workbookBase64, {
         encoding: FileSystem.EncodingType.Base64,
@@ -1240,7 +1539,7 @@ function buildWorkbookHtml(workbook: WorkbookPayload): string {
         `<title>${escapeHtml(workbook.title)}</title>`,
         "<style>",
         "@page { size: landscape; margin: 12mm; }",
-        "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; padding: 24px; }",
+        "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; padding: 24px; font-variant-numeric: tabular-nums; }",
         "h1 { margin: 0 0 8px; font-size: 24px; }",
         "h2 { margin: 24px 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: #4b5563; }",
         "p.meta { margin: 0 0 20px; color: #6b7280; font-size: 12px; }",
