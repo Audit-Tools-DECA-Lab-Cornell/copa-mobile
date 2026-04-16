@@ -3,6 +3,7 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as XLSX from "xlsx-js-style";
 
+import { DesignSystemTheme, getScaleAccentColor, getScaleSoftColor } from "lib/design-system";
 import {
     addScoreTotals,
     calculateQuestionScores,
@@ -110,7 +111,7 @@ const SINGLE_SPACE_AUDIT_COLUMN_WIDTHS = [42, 58] as const;
 const BULK_PRE_AUDIT_COLUMN_WIDTHS = [16, 24, 40, 56] as const;
 const BULK_SPACE_AUDIT_COLUMN_WIDTHS = [16, 24, 40, 56] as const;
 const GUIDANCE_COLUMN_WIDTHS = [24, 64, 56] as const;
-const SINGLE_RESPONSE_COLUMN_WIDTHS = [12, 16, 16, 28, 42, 40, 56, 22, 22, 22, 26, 22, 22, 40] as const;
+const SINGLE_RESPONSE_COLUMN_WIDTHS = [12, 16, 16, 28, 64, 40, 72, 22, 22, 22, 26, 22, 22, 40] as const;
 const BULK_RESPONSE_COLUMN_WIDTHS = SINGLE_RESPONSE_COLUMN_WIDTHS;
 
 /**
@@ -159,24 +160,28 @@ export async function shareSingleAuditExport(
     exportableAudit: ExportableAudit,
     instrument: PlayspaceInstrument,
     format: AuditExportFormat,
+    colors: DesignSystemTheme["colors"],
 ): Promise<string> {
     validateExportableAudit(exportableAudit);
     const workbook = buildSingleAuditWorkbook(exportableAudit, instrument);
-    return await shareWorkbookPayload(workbook, format);
+    return await shareWorkbookPayload(workbook, format, colors);
 }
 
 /**
  * Generate and share a bulk export across multiple submitted audits.
  *
  * @param exportableAudits Submitted audits to export together.
+ * @param auditorProfile Optional auditor profile for the bulk export.
  * @param instrument Static PVUA instrument definition.
  * @param format File format to generate.
  * @returns Shared file name for user feedback.
  */
 export async function shareBulkAuditExport(
     exportableAudits: readonly ExportableAudit[],
+    auditorProfile: ExportAuditorProfile | null,
     instrument: PlayspaceInstrument,
     format: AuditExportFormat,
+    colors: DesignSystemTheme["colors"],
 ): Promise<string> {
     if (exportableAudits.length === 0) {
         throw new Error("At least one submitted audit is required for bulk export.");
@@ -186,8 +191,8 @@ export async function shareBulkAuditExport(
         validateExportableAudit(exportableAudit);
     }
 
-    const workbook = buildBulkAuditWorkbook(exportableAudits, instrument);
-    return await shareWorkbookPayload(workbook, format);
+    const workbook = buildBulkAuditWorkbook(exportableAudits, instrument, auditorProfile ?? null);
+    return await shareWorkbookPayload(workbook, format, colors);
 }
 
 /**
@@ -234,14 +239,15 @@ function buildSingleAuditWorkbook(exportableAudit: ExportableAudit, instrument: 
 function buildBulkAuditWorkbook(
     exportableAudits: readonly ExportableAudit[],
     instrument: PlayspaceInstrument,
+    auditorProfile: ExportAuditorProfile | null,
 ): WorkbookPayload {
     return {
         fileBaseName: `pvua-bulk-${formatTimestampForFile(new Date())}`,
         title: `${instrument.instrument_name} Bulk Export`,
         tables: [
-            buildBulkAuditOverviewTable(exportableAudits, instrument),
-            buildBulkAuditPreAuditTable(exportableAudits, instrument),
-            buildBulkAuditSpaceAuditTable(exportableAudits, instrument),
+            buildBulkAuditOverviewTable(exportableAudits, auditorProfile ?? null, instrument),
+            buildBulkAuditPreAuditTable(exportableAudits, auditorProfile ?? null, instrument),
+            buildBulkAuditSpaceAuditTable(exportableAudits, auditorProfile ?? null, instrument),
             buildAuditGuidanceTable(instrument),
             buildBulkResponsesTable(exportableAudits, instrument),
         ],
@@ -303,6 +309,7 @@ function buildSingleAuditOverviewTable(
  */
 function buildBulkAuditOverviewTable(
     exportableAudits: readonly ExportableAudit[],
+    auditorProfile: ExportAuditorProfile | null,
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
     return {
@@ -333,7 +340,9 @@ function buildBulkAuditOverviewTable(
                 "Auditor Age",
                 "Auditor Role",
             ],
-            ...exportableAudits.map((exportableAudit) => buildBulkAuditOverviewRow(exportableAudit, instrument)),
+            ...exportableAudits.map((exportableAudit) =>
+                buildBulkAuditOverviewRow(exportableAudit, auditorProfile, instrument),
+            ),
         ],
     };
 }
@@ -350,6 +359,7 @@ function buildSingleAuditPreAuditTable(
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
     const auditInfoQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "audit_info");
+    const { auditSession, auditorProfile } = exportableAudit;
     return {
         name: "PreAudit",
         title: "Pre-Audit",
@@ -357,7 +367,7 @@ function buildSingleAuditPreAuditTable(
         rows: [
             ["Question", "Recorded Answer"],
             ...auditInfoQuestions.map((question) =>
-                buildSingleAuditPreAuditRow(exportableAudit.auditSession, question),
+                buildSingleAuditPreAuditRow(auditSession, auditorProfile, question),
             ),
         ],
     };
@@ -375,6 +385,7 @@ function buildSingleAuditSpaceAuditTable(
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
     const spaceSetupQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "space_setup");
+    const { auditSession, auditorProfile } = exportableAudit;
     return {
         name: "SpaceAudit",
         title: "Space Audit Setup",
@@ -382,7 +393,7 @@ function buildSingleAuditSpaceAuditTable(
         rows: [
             ["Question", "Recorded Answer"],
             ...spaceSetupQuestions.map((question) =>
-                buildSingleAuditPreAuditRow(exportableAudit.auditSession, question),
+                buildSingleAuditPreAuditRow(auditSession, auditorProfile, question),
             ),
         ],
     };
@@ -397,6 +408,7 @@ function buildSingleAuditSpaceAuditTable(
  */
 function buildBulkAuditPreAuditTable(
     exportableAudits: readonly ExportableAudit[],
+    auditorProfile: ExportAuditorProfile | null,
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
     const auditInfoQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "audit_info");
@@ -404,7 +416,7 @@ function buildBulkAuditPreAuditTable(
 
     for (const exportableAudit of exportableAudits) {
         for (const question of auditInfoQuestions) {
-            rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, question));
+            rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, auditorProfile, question));
         }
     }
 
@@ -425,6 +437,7 @@ function buildBulkAuditPreAuditTable(
  */
 function buildBulkAuditSpaceAuditTable(
     exportableAudits: readonly ExportableAudit[],
+    auditorProfile: ExportAuditorProfile | null,
     instrument: PlayspaceInstrument,
 ): WorkbookTable {
     const spaceSetupQuestions = instrument.pre_audit_questions.filter((q) => q.page_key === "space_setup");
@@ -432,7 +445,7 @@ function buildBulkAuditSpaceAuditTable(
 
     for (const exportableAudit of exportableAudits) {
         for (const question of spaceSetupQuestions) {
-            rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, question));
+            rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, auditorProfile, question));
         }
     }
 
@@ -493,8 +506,12 @@ function buildAuditGuidanceTable(instrument: PlayspaceInstrument): WorkbookTable
  * @param instrument Localized PVUA instrument.
  * @returns One flat overview row for the bulk sheet.
  */
-function buildBulkAuditOverviewRow(exportableAudit: ExportableAudit, instrument: PlayspaceInstrument): SpreadsheetRow {
-    const { auditSession, context, auditorProfile } = exportableAudit;
+function buildBulkAuditOverviewRow(
+    exportableAudit: ExportableAudit,
+    auditorProfile: ExportAuditorProfile | null,
+    instrument: PlayspaceInstrument,
+): SpreadsheetRow {
+    const { auditSession, context } = exportableAudit;
     const overallScores = auditSession.scores.overall;
 
     return [
@@ -514,12 +531,12 @@ function buildBulkAuditOverviewRow(exportableAudit: ExportableAudit, instrument:
         overallScores?.diversity_total ?? "Pending",
         overallScores?.sociability_total ?? "Pending",
         overallScores?.challenge_total ?? "Pending",
-        auditorProfile?.auditorCode ?? "",
-        auditorProfile?.country ?? "",
-        auditorProfile?.gender ?? "",
-        auditorProfile?.ageRange ?? "",
-        auditorProfile?.role ?? "",
-    ];
+        auditorProfile?.auditorCode,
+        auditorProfile?.country,
+        auditorProfile?.gender,
+        auditorProfile?.ageRange,
+        auditorProfile?.role,
+    ].map((value) => value ?? "N/A");
 }
 
 /**
@@ -529,10 +546,16 @@ function buildBulkAuditOverviewRow(exportableAudit: ExportableAudit, instrument:
  * @param question Localized pre-audit question.
  * @returns Single question/answer row.
  */
-function buildSingleAuditPreAuditRow(auditSession: AuditSession, question: PreAuditQuestion): SpreadsheetRow {
+function buildSingleAuditPreAuditRow(
+    auditSession: AuditSession,
+    auditorProfile: ExportAuditorProfile | null,
+    question: PreAuditQuestion,
+): SpreadsheetRow {
     return [
         question.label,
-        joinDisplayValues(resolvePreAuditDisplayValues(question, readPreAuditQuestionValues(auditSession, question))),
+        joinDisplayValues(
+            resolvePreAuditDisplayValues(question, readPreAuditQuestionValues(auditSession, auditorProfile, question)),
+        ),
     ];
 }
 
@@ -543,12 +566,18 @@ function buildSingleAuditPreAuditRow(auditSession: AuditSession, question: PreAu
  * @param question Localized pre-audit question.
  * @returns Bulk pre-audit row with audit identifiers.
  */
-function buildBulkAuditPreAuditRow(auditSession: AuditSession, question: PreAuditQuestion): SpreadsheetRow {
+function buildBulkAuditPreAuditRow(
+    auditSession: AuditSession,
+    auditorProfile: ExportAuditorProfile | null,
+    question: PreAuditQuestion,
+): SpreadsheetRow {
     return [
         auditSession.audit_code,
         auditSession.place_name,
         question.label,
-        joinDisplayValues(resolvePreAuditDisplayValues(question, readPreAuditQuestionValues(auditSession, question))),
+        joinDisplayValues(
+            resolvePreAuditDisplayValues(question, readPreAuditQuestionValues(auditSession, auditorProfile, question)),
+        ),
     ];
 }
 
@@ -1183,10 +1212,14 @@ function resolveExecutionMode(auditSession: AuditSession): ExecutionMode | null 
  * @param question Pre-audit question definition.
  * @returns Raw selected ids or derived values.
  */
-function readPreAuditQuestionValues(auditSession: AuditSession, question: PreAuditQuestion): readonly string[] {
+function readPreAuditQuestionValues(
+    auditSession: AuditSession,
+    auditorProfile: ExportAuditorProfile | null,
+    question: PreAuditQuestion,
+): readonly string[] {
     switch (question.key) {
         case "auditor_code":
-            return [];
+            return [auditorProfile?.auditorCode ?? ""];
         case "audit_date":
             return [formatDateForDisplay(auditSession.started_at)];
         case "started_at":
@@ -1265,17 +1298,70 @@ function deriveSummaryScore(auditSession: AuditSession): number | string {
  * @param format Target file format.
  * @returns Shared file name for user feedback.
  */
-async function shareWorkbookPayload(workbook: WorkbookPayload, format: AuditExportFormat): Promise<string> {
+async function shareWorkbookPayload(
+    workbook: WorkbookPayload,
+    format: AuditExportFormat,
+    colors: DesignSystemTheme["colors"],
+): Promise<string> {
     switch (format) {
         case "csv":
             return await shareCsvWorkbook(workbook);
         case "pdf":
-            return await sharePdfWorkbook(workbook);
+            return await sharePdfWorkbook(workbook, colors);
         case "xlsx":
-            return await shareXlsxWorkbook(workbook);
+            return await shareXlsxWorkbook(workbook, colors);
         default:
             throw new Error("Unsupported export format.");
     }
+}
+
+/**
+ * Helper to convert hex and rgb/rgba to SheetJS format (FFFFFF).
+ * Automatically blends rgba values with a white background to simulate opacity.
+ */
+function toSheetHex(colorValue: string): string {
+    // 1. Handle Hex format (e.g., #FFFFFF, #FFF)
+    if (colorValue.startsWith("#")) {
+        let hex = colorValue.replace("#", "").toUpperCase();
+
+        // Expand 3-digit and 4-digit hex shorthand
+        if (hex.length === 3 || hex.length === 4) {
+            hex = hex
+                .split("")
+                .map((char) => char + char)
+                .join("");
+        }
+
+        // Return only the RGB part (first 6 characters)
+        return hex.substring(0, 6);
+    }
+
+    // 2. Handle rgb() and rgba() formats
+    const rgbMatch = colorValue.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*([\d.]+))?\s*\)/i);
+    if (rgbMatch) {
+        const r = parseInt(rgbMatch[1] as string, 10);
+        const g = parseInt(rgbMatch[2] as string, 10);
+        const b = parseInt(rgbMatch[3] as string, 10);
+
+        // Use provided alpha, or default to 1 (solid) if it's just rgb()
+        const a = rgbMatch[4] !== undefined ? parseFloat(rgbMatch[4] as string) : 1;
+
+        // Blend with a pure white background (255, 255, 255)
+        const blendedR = Math.round((1 - a) * 255 + a * r);
+        const blendedG = Math.round((1 - a) * 255 + a * g);
+        const blendedB = Math.round((1 - a) * 255 + a * b);
+
+        // Convert 0-255 numbers to 2-character hex strings
+        const toHex = (n: number) => Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0").toUpperCase();
+
+        return `${toHex(blendedR)}${toHex(blendedG)}${toHex(blendedB)}`;
+    }
+
+    // 3. Fallback: strip non-alphanumeric characters and cap at 6 characters
+    return colorValue
+        .replace(/[^A-Fa-f0-9]/g, "")
+        .toUpperCase()
+        .substring(0, 6);
 }
 
 /**
@@ -1284,127 +1370,126 @@ async function shareWorkbookPayload(workbook: WorkbookPayload, format: AuditExpo
  * @param sheet Mutable worksheet generated by SheetJS.
  * @param table Source table for row classification.
  */
-function styleWorkbookSheet(sheet: XLSX.WorkSheet, table: WorkbookTable): void {
+function styleWorkbookSheet(sheet: XLSX.WorkSheet, table: WorkbookTable, colors: DesignSystemTheme["colors"]): void {
     const ref = sheet["!ref"];
     if (typeof ref !== "string" || ref.length === 0) {
         return;
     }
 
     const range = XLSX.utils.decode_range(ref);
-    const headerFill = { patternType: "solid", fgColor: { rgb: "E7EDF4" } };
-    const sectionFill = { patternType: "solid", fgColor: { rgb: "F5F8FC" } };
-    const summaryFill = { patternType: "solid", fgColor: { rgb: "F8F2EA" } };
-    const border = {
-        top: { style: "thin", color: { rgb: "D1D5DB" } },
-        bottom: { style: "thin", color: { rgb: "D1D5DB" } },
-        left: { style: "thin", color: { rgb: "D1D5DB" } },
-        right: { style: "thin", color: { rgb: "D1D5DB" } },
-    };
+
+    const headerFill = { patternType: "solid", fgColor: { rgb: "1F2937" } };
+    const headerTextColor = { rgb: "FFFFFF" };
+    const sectionFill = { patternType: "solid", fgColor: { rgb: "E2E8F0" } };
+    const summaryFill = { patternType: "solid", fgColor: { rgb: "FEF3C7" } };
+    const altRowFill = { patternType: "solid", fgColor: { rgb: "F8FAFC" } };
+
+    const heavyBorder = { style: "medium", color: { rgb: "94A3B8" } };
+    const lightBorder = { style: "thin", color: { rgb: "E2E8F0" } };
+
+    const isResponsesTable = table.name === "Responses";
 
     for (let rowIndex = range.s.r; rowIndex <= range.e.r; rowIndex += 1) {
         const row = table.rows[rowIndex];
-        if (row === undefined) {
-            continue;
-        }
+        if (row === undefined) continue;
 
         const isHeaderRow = rowIndex === 0;
         const isSummaryRow = row[2] === "Summary";
         const isSectionHeaderRow =
-            !isHeaderRow &&
-            typeof row[0] === "string" &&
-            /^\d+$/u.test(row[0]) &&
-            row[1] === "" &&
-            row[2] === "" &&
-            typeof row[3] === "string" &&
-            row[3].trim().length > 0 &&
-            row[7] === "" &&
-            row[8] === "";
+            !isHeaderRow && typeof row[0] === "string" && /^\d+$/u.test(row[0]) && row[1] === "" && row[2] === "";
+
+        const isEvenRow = rowIndex % 2 === 0;
 
         for (let colIndex = range.s.c; colIndex <= range.e.c; colIndex += 1) {
             const address = XLSX.utils.encode_cell({ r: rowIndex, c: colIndex });
             const cell = sheet[address] as XLSX.CellObject | undefined;
-            if (cell === undefined) {
-                continue;
-            }
+            if (cell === undefined) continue;
 
             const baseStyle = {
-                border,
-                alignment: {
-                    vertical: "top",
-                    wrapText: true,
-                    horizontal: colIndex >= 7 ? "right" : "left",
-                },
-                font: {
-                    name: "Aptos",
-                    sz: 10,
-                    color: { rgb: "111827" },
-                },
+                alignment: { vertical: "top", wrapText: true, horizontal: colIndex >= 7 ? "right" : "left" },
+                font: { name: "Arial", sz: 10, color: { rgb: "334155" } },
+                border: { bottom: lightBorder, right: lightBorder, top: undefined as never, left: undefined as never },
             };
 
             if (isHeaderRow) {
                 cell.s = {
                     ...baseStyle,
                     fill: headerFill,
-                    font: {
-                        ...baseStyle.font,
-                        bold: true,
-                        sz: 10.5,
-                    },
-                    alignment: { ...baseStyle.alignment, horizontal: "center" },
+                    font: { ...baseStyle.font, bold: true, color: headerTextColor, sz: 11 },
+                    alignment: { ...baseStyle.alignment, horizontal: "center", vertical: "center" },
+                    border: { bottom: heavyBorder, right: lightBorder },
                 };
-                continue;
-            }
-
-            if (isSectionHeaderRow) {
+            } else if (isSectionHeaderRow) {
                 cell.s = {
                     ...baseStyle,
                     fill: sectionFill,
-                    font: {
-                        ...baseStyle.font,
-                        bold: true,
-                    },
+                    font: { ...baseStyle.font, bold: true, color: { rgb: "0F172A" } },
+                    border: { bottom: heavyBorder, top: heavyBorder },
                 };
-                continue;
-            }
-
-            if (isSummaryRow) {
+            } else if (isSummaryRow) {
                 cell.s = {
                     ...baseStyle,
                     fill: summaryFill,
-                    font: {
-                        ...baseStyle.font,
-                        bold: true,
-                    },
+                    font: { ...baseStyle.font, bold: true, color: { rgb: "92400E" } },
+                    border: { bottom: heavyBorder, top: lightBorder },
                 };
             } else {
-                cell.s = baseStyle;
+                cell.s = { ...baseStyle, fill: isEvenRow ? altRowFill : { patternType: "none" } };
+            }
+
+            if (isResponsesTable && !isSectionHeaderRow && !isSummaryRow) {
+                let scaleKey: string | null = null;
+
+                if (colIndex === 7) scaleKey = "provision";
+                else if (colIndex === 8) scaleKey = "diversity";
+                else if (colIndex === 9) scaleKey = "sociability";
+                else if (colIndex === 10) scaleKey = "challenge";
+
+                if (scaleKey !== null) {
+                    const softHex = toSheetHex(getScaleSoftColor(scaleKey, colors));
+                    const borderHex = toSheetHex(getScaleAccentColor(scaleKey, colors));
+                    cell.s = {
+                        ...cell.s,
+                        fill: { patternType: "solid", fgColor: { rgb: softHex } },
+                        border: {
+                            ...cell.s.border,
+                            left: { style: "medium", color: { rgb: borderHex } },
+                            right: { style: "medium", color: { rgb: borderHex } },
+                        },
+                    };
+
+                    if (isHeaderRow) {
+                        cell.s.font.color = { rgb: "0F172A" };
+                        cell.s.border.bottom = heavyBorder;
+                    }
+                }
             }
         }
     }
 
+    // Apply dynamic row heights
     sheet["!rows"] = table.rows.map((row, rowIndex) => {
         const isHeaderRow = rowIndex === 0;
         const isSummaryRow = row[2] === "Summary";
         const isSectionHeaderRow =
-            !isHeaderRow &&
-            typeof row[0] === "string" &&
-            /^\d+$/u.test(row[0]) &&
-            row[1] === "" &&
-            row[2] === "" &&
-            typeof row[3] === "string" &&
-            row[3].trim().length > 0 &&
-            row[7] === "" &&
-            row[8] === "";
-        if (isHeaderRow) {
-            return { hpt: 22 };
+            !isHeaderRow && typeof row[0] === "string" && /^\d+$/u.test(row[0]) && row[1] === "" && row[2] === "";
+
+        let maxLines = 1;
+
+        for (let colIndex = 0; colIndex < row.length; colIndex++) {
+            const cellText = String(row[colIndex] ?? "");
+            const colWidth = sheet["!cols"]?.[colIndex]?.wch || 20;
+            const explicitLines = cellText.split("\n").length;
+            const wrappedLines = Math.ceil(cellText.length / colWidth);
+            maxLines = Math.max(maxLines, explicitLines, wrappedLines);
         }
-        if (isSectionHeaderRow) {
-            return { hpt: 26 };
-        }
-        if (isSummaryRow) {
-            return { hpt: 20 };
-        }
-        return { hpt: 18 };
+
+        const calculatedHeight = maxLines * 14 + 8;
+
+        if (isHeaderRow) return { hpt: Math.max(28, calculatedHeight) };
+        if (isSectionHeaderRow) return { hpt: Math.max(26, calculatedHeight) };
+        if (isSummaryRow) return { hpt: Math.max(24, calculatedHeight) };
+        return { hpt: Math.max(20, calculatedHeight) };
     });
 }
 
@@ -1426,19 +1511,47 @@ async function shareCsvWorkbook(workbook: WorkbookPayload): Promise<string> {
 }
 
 /**
+ * Scans a table's data to determine the maximum width needed for each column.
+ *
+ * @param rows Table rows to analyze.
+ * @returns Array of column widths with dynamic sizing.
+ */
+function calculateDynamicColumnWidths(rows: readonly SpreadsheetRow[]): { wch: number }[] {
+    const maxWidths: number[] = [];
+    const MIN_WIDTH = 12;
+    const MAX_WIDTH = 60;
+
+    for (const row of rows) {
+        for (let colIndex = 0; colIndex < row.length; colIndex++) {
+            const cellText = String(row[colIndex] ?? "");
+            const longestLine = cellText.split("\n").reduce((max, line) => Math.max(max, line.length), 0);
+            const estimatedWidth = longestLine + 2;
+
+            if (!maxWidths[colIndex] || (maxWidths[colIndex] !== undefined && estimatedWidth > maxWidths[colIndex]!)) {
+                maxWidths[colIndex] = Math.min(Math.max(estimatedWidth, MIN_WIDTH), MAX_WIDTH);
+            }
+        }
+    }
+
+    return maxWidths.map((width) => ({ wch: width }));
+}
+
+/**
  * Write the workbook as XLSX and share it.
  *
  * @param workbook Workbook-style tables to export.
+ * @param colors Design system colors.
  * @returns Shared file name for user feedback.
  */
-async function shareXlsxWorkbook(workbook: WorkbookPayload): Promise<string> {
+async function shareXlsxWorkbook(workbook: WorkbookPayload, colors: DesignSystemTheme["colors"]): Promise<string> {
     const excelWorkbook = XLSX.utils.book_new();
     for (const table of workbook.tables) {
         const sheet = XLSX.utils.aoa_to_sheet(table.rows.map((row) => [...row]));
-        if (table.columnWidths !== undefined) {
-            sheet["!cols"] = table.columnWidths.map((width) => ({ wch: width }));
-        }
-        styleWorkbookSheet(sheet, table);
+
+        // Apply dynamic widths
+        sheet["!cols"] = calculateDynamicColumnWidths(table.rows);
+
+        styleWorkbookSheet(sheet, table, colors);
         XLSX.utils.book_append_sheet(excelWorkbook, sheet, sanitizeSheetName(table.name));
     }
 
@@ -1462,8 +1575,8 @@ async function shareXlsxWorkbook(workbook: WorkbookPayload): Promise<string> {
  * @param workbook Workbook-style tables to export.
  * @returns Shared file name for user feedback.
  */
-async function sharePdfWorkbook(workbook: WorkbookPayload): Promise<string> {
-    const html = buildWorkbookHtml(workbook);
+async function sharePdfWorkbook(workbook: WorkbookPayload, colors: DesignSystemTheme["colors"]): Promise<string> {
+    const html = buildWorkbookHtml(workbook, colors);
     const printResult = await Print.printToFileAsync({
         html,
     });
@@ -1518,14 +1631,15 @@ function buildCacheFileUri(fileName: string): string {
  * @param workbook Workbook-style tables to export.
  * @returns Printable HTML document.
  */
-function buildWorkbookHtml(workbook: WorkbookPayload): string {
+function buildWorkbookHtml(workbook: WorkbookPayload, colors: DesignSystemTheme["colors"]): string {
     const renderedTables = workbook.tables
         .map((table, index) => {
             const pageBreakClass = index === 0 ? "" : "page-break";
+            const landscapeClass = index === workbook.tables.length - 1 ? "wide-page" : "";
             return [
-                `<section class="${pageBreakClass}">`,
+                `<section class="${landscapeClass} ${pageBreakClass}">`,
                 `<h2>${escapeHtml(table.title)}</h2>`,
-                renderHtmlTable(table.rows),
+                renderHtmlTable(table.rows, table.name),
                 "</section>",
             ].join("");
         })
@@ -1538,21 +1652,48 @@ function buildWorkbookHtml(workbook: WorkbookPayload): string {
         '<meta charset="utf-8" />',
         `<title>${escapeHtml(workbook.title)}</title>`,
         "<style>",
-        "@page { size: landscape; margin: 12mm; }",
-        "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; padding: 24px; font-variant-numeric: tabular-nums; }",
-        "h1 { margin: 0 0 8px; font-size: 24px; }",
-        "h2 { margin: 24px 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: #4b5563; }",
-        "p.meta { margin: 0 0 20px; color: #6b7280; font-size: 12px; }",
-        "table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }",
-        "thead th { background: #f3f4f6; }",
-        "th, td { border: 1px solid #d1d5db; padding: 6px; vertical-align: top; text-align: left; word-break: break-word; white-space: pre-wrap; }",
-        "tbody tr:nth-child(even) td { background: #fafafa; }",
-        ".page-break { page-break-before: always; }",
+        "@page { size: portrait; margin: 15mm; }",
+        "@page wide-page { size: landscape; margin: 15mm; }",
+        ":root { ",
+        "  --primary: #2563eb; ",
+        "  --text-main: #1f2937; ",
+        "  --text-muted: #6b7280; ",
+        "  --bg-alt: #f8fafc; ",
+        "  --border: #e2e8f0; ",
+        /* Semantic Scale Colors directly from theme */
+        `  --scale-provision-soft: ${getScaleSoftColor("provision", colors)}; --scale-provision-border: ${getScaleAccentColor("provision", colors)}; `,
+        `  --scale-diversity-soft: ${getScaleSoftColor("diversity", colors)}; --scale-diversity-border: ${getScaleAccentColor("diversity", colors)}; `,
+        `  --scale-sociability-soft: ${getScaleSoftColor("sociability", colors)}; --scale-sociability-border: ${getScaleAccentColor("sociability", colors)}; `,
+        `  --scale-challenge-soft: ${getScaleSoftColor("challenge", colors)}; --scale-challenge-border: ${getScaleAccentColor("challenge", colors)}; `,
+        "}",
+        "body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--text-main); padding: 0; margin: 0; font-size: 10px; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }",
+        ".report-header { border-bottom: 3px solid var(--primary); padding-bottom: 16px; margin-bottom: 32px; }",
+        "h1 { margin-top: 8px; margin-bottom: 8px; font-size: 26px; font-weight: 700; letter-spacing: 1px; color: #111827; }",
+        "p.meta { margin: 0; color: var(--text-muted); font-size: 12px; }",
+        "h2 { margin: 32px 0 12px; padding-top: 16px; padding-bottom: 12px; font-size: 14px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--border); padding-bottom: 6px; }",
+
+        /* Auto layout allows browser to size dynamically based on content */
+        "table { width: 100%; border-collapse: collapse; margin-bottom: 24px; table-layout: auto; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }",
+        "thead th { background: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }",
+        "th, td { padding: 8px 10px; vertical-align: top; text-align: left; overflow-wrap: break-word; word-break: normal; white-space: pre-wrap; line-height: 1.4; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }",
+        "th:last-child, td:last-child { border-right: none; }",
+        "tbody tr:last-child td",
+        "tbody tr:nth-child(even) td { background: var(--bg-alt); }",
+
+        /* Scale Column Highlights */
+        "table[data-table-name='Responses'] th:nth-child(8), table[data-table-name='Responses'] td:nth-child(8) { background: var(--scale-provision-soft); background-color: var(--scale-provision-soft); border-left: 2px solid var(--scale-provision-border); border-right: 2px solid var(--scale-provision-border); }",
+        "table[data-table-name='Responses'] th:nth-child(9), table[data-table-name='Responses'] td:nth-child(9) { background: var(--scale-diversity-soft); background-color: var(--scale-diversity-soft); border-left: 2px solid var(--scale-diversity-border); border-right: 2px solid var(--scale-diversity-border); }",
+        "table[data-table-name='Responses'] th:nth-child(10), table[data-table-name='Responses'] td:nth-child(10) { background: var(--scale-challenge-soft); background-color: var(--scale-challenge-soft); border-left: 2px solid var(--scale-challenge-border); border-right: 2px solid var(--scale-challenge-border); }",
+        "table[data-table-name='Responses'] th:nth-child(11), table[data-table-name='Responses'] td:nth-child(11) { background: var(--scale-sociability-soft); background-color: var(--scale-sociability-soft); border-left: 2px solid var(--scale-sociability-border); border-right: 2px solid var(--scale-sociability-border); }",
+
+        ".page-break { page-break-before: always; margin-top: 32px; }",
         "</style>",
         "</head>",
         "<body>",
+        '<div class="report-header">',
         `<h1>${escapeHtml(workbook.title)}</h1>`,
-        '<p class="meta">PVUA export generated from the current instrument and the submitted audit data.</p>',
+        '<p class="meta">PVUA export generated from the current instrument and submitted audit data.</p>',
+        "</div>",
         renderedTables,
         "</body>",
         "</html>",
@@ -1563,9 +1704,10 @@ function buildWorkbookHtml(workbook: WorkbookPayload): string {
  * Render one spreadsheet-like table as HTML.
  *
  * @param rows Table rows including a header row.
+ * @param tableName Name of the table to attach as a data attribute.
  * @returns HTML table markup.
  */
-function renderHtmlTable(rows: readonly SpreadsheetRow[]): string {
+function renderHtmlTable(rows: readonly SpreadsheetRow[], tableName: string): string {
     const [headerRow, ...bodyRows] = rows;
     const headerHtml = (headerRow ?? []).map((cell) => `<th>${escapeHtml(cell)}</th>`).join("");
     const bodyHtml = bodyRows
@@ -1575,7 +1717,12 @@ function renderHtmlTable(rows: readonly SpreadsheetRow[]): string {
         })
         .join("");
 
-    return ["<table>", `<thead><tr>${headerHtml}</tr></thead>`, `<tbody>${bodyHtml}</tbody>`, "</table>"].join("");
+    return [
+        `<table data-table-name="${escapeHtml(tableName)}">`,
+        `<thead><tr>${headerHtml}</tr></thead>`,
+        `<tbody>${bodyHtml}</tbody>`,
+        "</table>",
+    ].join("");
 }
 
 /**

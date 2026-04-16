@@ -318,7 +318,12 @@ function ScaleOptionCell({
                                 justify="center"
                             >
                                 {isSelected ? (
-                                    <YStack width={6} height={6} rounded={ds.radii.sm} bg={scaleAccent} />
+                                    <YStack
+                                        width={6}
+                                        height={6}
+                                        rounded={ds.radii.sm}
+                                        bg={scaleAccent as ColorTokens}
+                                    />
                                 ) : null}
                             </YStack>
                             <Text

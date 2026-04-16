@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowRight, ClipboardList, Shapes, TriangleAlert } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
-import { Button, ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
+import { Button, type ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 import {
     buildExecuteOverviewSummary,
     filterExecuteOverviewRows,
@@ -86,7 +86,7 @@ export default function ExecutePlaceScreen() {
             headerBackButtonDisplayMode: "generic",
             headerBackVisible: true,
             headerBlurEffect: "light",
-            headerStyle: { backgroundColor: ds.colors.surface },
+            headerStyle: { backgroundColor: ds.colors.surfaceMuted },
             headerTintColor: ds.colors.primary,
             contentStyle: { paddingTop: 20 },
             headerTitleStyle: {
@@ -133,12 +133,13 @@ export default function ExecutePlaceScreen() {
                                 >
                                     {auditSession.place_name}
                                 </Text>
+
                                 {suffix && (
                                     <Text
                                         color={ds.colors.mutedForeground}
                                         fontFamily={ds.fonts.bodyRegular}
-                                        fontSize={ds.typography.labelMd.fontSize}
-                                        lineHeight={ds.typography.labelMd.lineHeight}
+                                        fontSize={ds.typography.labelLg.fontSize}
+                                        lineHeight={ds.typography.labelLg.lineHeight}
                                     >
                                         {suffix}
                                     </Text>
@@ -847,8 +848,8 @@ function PreambleBlockCard({ block }: Readonly<PreambleBlockCardProps>) {
         <YStack
             rounded={ds.radii.sm}
             borderWidth={1}
-            borderColor={blockColor}
-            bg={blockSoftColor}
+            borderColor={blockColor as ColorTokens}
+            bg={blockSoftColor as ColorTokens}
             px={layout.cardPadding}
             py={layout.isTablet ? "$4" : "$3.5"}
             gap="$2.5"

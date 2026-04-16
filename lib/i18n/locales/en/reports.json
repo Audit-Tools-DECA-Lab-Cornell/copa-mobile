@@ -23,7 +23,7 @@
         "playValueCardLabel": "Play value",
         "progress": "Progress",
         "project": "Project",
-        "questionsAnswered": "{{answered}} / {{total}} questions",
+        "questionsAnswered": "{{answered}} / {{total}} questions answered",
         "scaleColumnsHeading": "Scale column totals",
         "scaleColumnsHint": "Raw points from provision, diversity, and challenge scales in this section. They feed the scores above but use different units than the headline.",
         "screenTitle": "Audit detail",

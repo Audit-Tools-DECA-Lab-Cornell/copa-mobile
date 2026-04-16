@@ -181,7 +181,7 @@ export function formatScoreMeta(value: number, maximum: number): string {
         return "--";
     }
 
-    return `${formatScoreValue(maximum)} max | ${formatPercentage(value, maximum)}`;
+    return `max = ${formatScoreValue(maximum)} | ${formatPercentage(value, maximum)}`;
 }
 
 /**

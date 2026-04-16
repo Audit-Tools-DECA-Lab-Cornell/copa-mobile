@@ -93,7 +93,7 @@ export default function PlaceDetailScreen() {
                 options={{
                     contentStyle: { paddingTop: 20 },
                     headerTitle: () => (
-                        <YStack justify="center" my="$3" overflowX="scroll">
+                        <YStack justify="center" my="$2.5" overflowX="scroll">
                             <ScrollView horizontal>
                                 <YStack justify="center">
                                     <Text

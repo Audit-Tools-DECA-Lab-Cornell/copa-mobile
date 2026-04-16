@@ -4,7 +4,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useToastController } from "@tamagui/toast";
 import { FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
-import { Paragraph, Text, XStack, YStack } from "tamagui";
+import { type ColorTokens, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { ActionButton } from "components/ui/action-button";
 import { StatCard } from "components/ui/stat-card";
 import { fetchAuditSession } from "lib/audit/api";
@@ -22,7 +22,7 @@ import {
 } from "lib/audit/score-helpers";
 import type { AuditScoreTotals, AuditSession } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
-import { getPlaceStatusTone, getScaleSoftColor, useDesignSystem } from "lib/design-system";
+import { getPlaceStatusTone, getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -71,40 +71,41 @@ function ScoreMetricRow(
         value: number;
         maximum: number;
         barColor: string;
+        scaleColor?: ColorTokens | undefined;
     }>,
 ) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
-    const { label, value, maximum, barColor } = props;
+    const { label, value, maximum, barColor, scaleColor } = props;
     const isNotApplicable = maximum <= 0;
     const percentageText = formatPercentage(value, maximum);
     const fractionText = isNotApplicable ? "N/A" : `${formatScoreValue(value)} / ${formatScoreValue(maximum)}`;
 
     return (
-        <YStack gap="$1.5" width="100%" py="$2.5">
+        <YStack gap="$2" width="100%" bg={scaleColor ?? ds.colors.mutedSurface} px="$3" py="$3" rounded={ds.radii.sm}>
             <YStack justify="space-between" items="flex-start" gap="$2">
                 <Paragraph
-                    color={ds.colors.primaryForeground}
+                    color={ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.bodySm.fontSize}
-                    lineHeight={ds.typography.bodySm.lineHeight}
+                    fontSize={ds.typography.bodyLg.fontSize}
+                    lineHeight={ds.typography.bodyLg.lineHeight}
                     flex={1}
                 >
-                    {label}
+                    {label}:
                 </Paragraph>
                 <XStack items="center" justify="space-between" gap="$0.5" minW="100%">
                     <Text
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.monoMedium}
-                        fontSize={layout.isTablet ? ds.typography.metricSm.fontSize : ds.typography.bodySm.fontSize}
+                        fontSize={layout.isTablet ? ds.typography.titleSm.fontSize : ds.typography.bodyXs.fontSize}
                     >
                         {fractionText}
                     </Text>
                     <Text
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
-                        fontSize={layout.isTablet ? ds.typography.metricSm.fontSize : ds.typography.bodySm.fontSize}
+                        fontSize={layout.isTablet ? ds.typography.titleSm.fontSize : ds.typography.bodyXs.fontSize}
                     >
                         {isNotApplicable ? t("detail.metricNotAssessed", { ns: "reports" }) : percentageText}
                     </Text>
@@ -133,22 +134,24 @@ function SectionScoreDetail({ scoreTotals, scoreSummaryLabels }: Readonly<Sectio
         scoreTotals.provision_total === scoreTotals.usability_total &&
         scoreTotals.provision_total_max === scoreTotals.usability_total_max;
     // Keep report scale colors in sync with the question-card selected background accents.
-    const provisionScaleSoft = getScaleSoftColor("provision", ds.colors);
-    const diversityScaleSoft = getScaleSoftColor("diversity", ds.colors);
-    const challengeScaleSoft = getScaleSoftColor("challenge", ds.colors);
-
+    const provisionScaleAccent = getScaleAccentColor("provision", ds.colors);
+    const diversityScaleAccent = getScaleAccentColor("diversity", ds.colors);
+    const challengeScaleAccent = getScaleAccentColor("challenge", ds.colors);
+    const provisionScaleSoft = getScaleSoftColor("provision", ds.colors) as ColorTokens;
+    const diversityScaleSoft = getScaleSoftColor("diversity", ds.colors) as ColorTokens;
+    const challengeScaleSoft = getScaleSoftColor("challenge", ds.colors) as ColorTokens;
     return (
-        <YStack gap="$6" pt="$2">
-            <YStack gap="$2">
+        <YStack gap="$4" pt="$2">
+            <YStack>
                 <Text
                     color={ds.colors.primary}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
-                    lineHeight={ds.typography.titleMd.lineHeight}
+                    fontSize={ds.typography.titleSm.fontSize}
+                    lineHeight={ds.typography.titleSm.lineHeight}
                 >
                     {t("detail.constructHeading", { ns: "reports" })}
                 </Text>
-                <YStack gap="$3">
+                <YStack gap="$2" py="$2">
                     <ScoreMetricRow
                         label={t("detail.playValueCardLabel", { ns: "reports" })}
                         value={scoreTotals.play_value_total}
@@ -169,37 +172,40 @@ function SectionScoreDetail({ scoreTotals, scoreSummaryLabels }: Readonly<Sectio
                     />
                 </YStack>
             </YStack>
-
+            <Separator />
             <YStack gap="$2">
                 <Text
                     color={ds.colors.primary}
                     fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
-                    lineHeight={ds.typography.titleMd.lineHeight}
+                    fontSize={ds.typography.titleSm.fontSize}
+                    lineHeight={ds.typography.titleSm.lineHeight}
                 >
                     {t("detail.scaleColumnsHeading", { ns: "reports" })}
                 </Text>
 
-                <YStack gap="$3">
+                <YStack gap="$2" py="$2">
                     {provisionMatchesUsability ? null : (
                         <ScoreMetricRow
                             label={`${t("detail.metricProvision", { ns: "reports" })} (${scoreSummaryLabels.provisionShort})`}
                             value={scoreTotals.provision_total}
                             maximum={scoreTotals.provision_total_max}
-                            barColor={provisionScaleSoft}
+                            barColor={provisionScaleAccent}
+                            scaleColor={provisionScaleSoft}
                         />
                     )}
                     <ScoreMetricRow
                         label={`${t("detail.metricDiversity", { ns: "reports" })} (${scoreSummaryLabels.diversityShort})`}
                         value={scoreTotals.diversity_total}
                         maximum={scoreTotals.diversity_total_max}
-                        barColor={diversityScaleSoft}
+                        barColor={diversityScaleAccent}
+                        scaleColor={diversityScaleSoft}
                     />
                     <ScoreMetricRow
                         label={`${t("detail.metricChallenge", { ns: "reports" })} (${scoreSummaryLabels.challengeShort})`}
                         value={scoreTotals.challenge_total}
                         maximum={scoreTotals.challenge_total_max}
-                        barColor={challengeScaleSoft}
+                        barColor={challengeScaleAccent}
+                        scaleColor={challengeScaleSoft}
                     />
                 </YStack>
             </YStack>
@@ -290,7 +296,7 @@ function SectionBreakdownCard({
                                     <Text
                                         color={ds.colors.foreground}
                                         fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.bodyLg.fontSize}
+                                        fontSize={ds.typography.titleMd.fontSize}
                                     >
                                         {`${sectionRow.sectionNumber}. ${sectionRow.title}`}
                                     </Text>
@@ -316,13 +322,13 @@ function SectionBreakdownCard({
                                         fontFamily={ds.fonts.headingBold}
                                         fontSize={
                                             layout.isTablet
-                                                ? ds.typography.metricSm.fontSize
-                                                : ds.typography.metricXs.fontSize
+                                                ? ds.typography.metricXs.fontSize
+                                                : ds.typography.titleMd.fontSize
                                         }
                                         lineHeight={
                                             layout.isTablet
-                                                ? ds.typography.metricSm.lineHeight
-                                                : ds.typography.metricXs.lineHeight
+                                                ? ds.typography.metricXs.lineHeight
+                                                : ds.typography.titleMd.lineHeight
                                         }
                                         style={{ textAlign: "right" }}
                                     >
@@ -417,32 +423,66 @@ function SectionNavigatorCard({ sectionRows, onSectionPress }: Readonly<SectionN
                         <Pressable
                             key={sectionRow.sectionKey}
                             accessibilityRole="button"
+                            className="border-2 bg-accent m-4"
                             accessibilityLabel={`Jump to section ${sectionRow.sectionNumber}: ${sectionRow.title}`}
                             onPress={() => {
                                 onSectionPress(sectionRow.sectionKey);
                             }}
+                            style={{
+                                borderColor: ds.colors.border,
+                                borderWidth: 0.5,
+                                paddingVertical: 12,
+                                paddingHorizontal: 12,
+                                borderRadius: 6,
+                                backgroundColor: ds.colors.surfaceMuted,
+                            }}
                         >
                             {({ pressed }) => (
-                                <YStack gap="$1.5" opacity={pressed ? 0.85 : 1}>
-                                    <XStack justify="space-between" items="flex-start" gap="$2">
+                                <YStack gap="$2" opacity={pressed ? 0.85 : 1} className="border-2 bg-accent m-4">
+                                    <YStack justify="center" gap="$2" className="border-2 bg-accent">
                                         <Text
                                             color={ds.colors.foreground}
                                             fontFamily={ds.fonts.bodyBold}
-                                            fontSize={ds.typography.bodySm.fontSize}
+                                            fontSize={ds.typography.bodyMd.fontSize}
                                             flex={1}
                                         >
                                             {`${sectionRow.sectionNumber}. ${sectionRow.title}`}
                                         </Text>
-                                        <Text
-                                            color={ds.colors.mutedForeground}
-                                            fontFamily={ds.fonts.bodyMedium}
-                                            fontSize={ds.typography.bodyXs.fontSize}
-                                        >
-                                            {sectionRow.scoreTotals === null
-                                                ? t("detail.scorePending", { ns: "reports" })
-                                                : formatScoreWithPercentage(combinedScore ?? 0, combinedMaximum ?? 0)}
-                                        </Text>
-                                    </XStack>
+                                        <XStack justify="space-between" items="center" gap="$2">
+                                            {sectionRow.scoreTotals === null ? (
+                                                <Text
+                                                    color={ds.colors.mutedForeground}
+                                                    fontFamily={ds.fonts.bodyMedium}
+                                                    fontSize={ds.typography.bodySm.fontSize}
+                                                    lineHeight={ds.typography.bodySm.lineHeight}
+                                                    flex={1}
+                                                >
+                                                    {t("detail.scorePending", { ns: "reports" })}
+                                                </Text>
+                                            ) : (
+                                                <>
+                                                    <Text
+                                                        color={ds.colors.mutedForeground}
+                                                        fontFamily={ds.fonts.bodyMedium}
+                                                        fontSize={ds.typography.bodySm.fontSize}
+                                                        lineHeight={ds.typography.bodySm.lineHeight}
+                                                        flex={1}
+                                                    >
+                                                        {combinedScore ?? 0} / {combinedMaximum ?? 0}
+                                                    </Text>
+                                                    <Text
+                                                        color={ds.colors.mutedForeground}
+                                                        fontFamily={ds.fonts.bodyMedium}
+                                                        fontSize={ds.typography.bodySm.fontSize}
+                                                        lineHeight={ds.typography.bodySm.lineHeight}
+                                                        self="flex-end"
+                                                    >
+                                                        {percentage !== null ? `${Math.round(percentage)}%` : "-"}
+                                                    </Text>
+                                                </>
+                                            )}
+                                        </XStack>
+                                    </YStack>
                                     <XStack
                                         height={7}
                                         rounded={9999}
@@ -638,7 +678,7 @@ export default function AuditReportDetailScreen() {
                     exportAuditMissingMessage: t("exportAuditMissing", { ns: "reports" }),
                     auditorProfile,
                 });
-                await shareSingleAuditExport(exportableAudit, instrument!, format);
+                await shareSingleAuditExport(exportableAudit, instrument!, format, ds.colors);
                 const placeAbbreviatedName = place.place_name
                     .split(" ")
                     .map((word) => word[0])
@@ -667,13 +707,13 @@ export default function AuditReportDetailScreen() {
     }, []);
 
     const handleSectionLayout = useCallback((sectionKey: string, event: LayoutChangeEvent) => {
-        sectionOffsetsRef.current[sectionKey] = event.nativeEvent.layout.y;
+        sectionOffsetsRef.current[sectionKey] = event.nativeEvent.layout.y + 2900;
     }, []);
 
     const scrollToSection = useCallback((sectionKey: string) => {
         const offset = sectionOffsetsRef.current[sectionKey];
         if (typeof offset === "number") {
-            scrollViewRef.current?.scrollTo({ animated: true, x: 0, y: Math.max(0, offset - 12) });
+            scrollViewRef.current?.scrollTo({ animated: true, x: 0, y: Math.max(0, offset) });
         }
     }, []);
 
@@ -690,22 +730,24 @@ export default function AuditReportDetailScreen() {
             <Stack.Screen
                 options={{
                     headerShown: true,
-                    headerStyle: { backgroundColor: ds.colors.surface },
+                    headerStyle: { backgroundColor: ds.colors.surfaceMuted },
                     contentStyle: { paddingTop: 20 },
                     headerTintColor: ds.colors.primary,
                     headerTitle: () => (
-                        <YStack justify="center" my="$2" style={{ maxWidth: "88%" }}>
+                        <YStack justify="center" my="$2.5" overflowX="scroll">
                             <ScrollView horizontal>
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodySemiBold}
-                                    fontSize={ds.typography.titleLg.fontSize}
-                                    lineHeight={ds.typography.titleLg.lineHeight}
-                                    numberOfLines={1}
-                                    ellipsizeMode="tail"
-                                >
-                                    {title}
-                                </Text>
+                                <YStack justify="center">
+                                    <Text
+                                        color={ds.colors.primary}
+                                        fontFamily={ds.fonts.bodySemiBold}
+                                        fontSize={ds.typography.titleLg.fontSize}
+                                        lineHeight={ds.typography.titleLg.lineHeight}
+                                        numberOfLines={1}
+                                        ellipsizeMode="tail"
+                                    >
+                                        {title}
+                                    </Text>
+                                </YStack>
                             </ScrollView>
                         </YStack>
                     ),
@@ -1043,7 +1085,7 @@ function formatMetricMaxHelper(maximum: number | null): string | undefined {
     if (maximum === null || maximum <= 0) {
         return undefined;
     }
-    return `${formatScoreValue(maximum)} max`;
+    return `max = ${formatScoreValue(maximum)}`;
 }
 
 interface AuditMetricsProps {
@@ -1084,7 +1126,7 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const overallHelperText =
         overall === null || overallMaximum === null || overallMaximum <= 0
             ? undefined
-            : `${t("detail.overallScoreHint", { ns: "reports" })} · ${formatScoreValue(overallMaximum)} max`;
+            : `${t("detail.overallScoreHint", { ns: "reports" })} · max = ${formatScoreValue(overallMaximum)}`;
 
     return (
         <YStack gap="$3">

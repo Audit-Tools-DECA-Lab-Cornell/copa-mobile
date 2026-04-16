@@ -96,7 +96,7 @@ export default function ExecuteSectionScreen() {
             headerBackButtonDisplayMode: "generic",
             headerBackVisible: true,
             headerBlurEffect: "light",
-            headerStyle: { backgroundColor: ds.colors.surface },
+            headerStyle: { backgroundColor: ds.colors.surfaceMuted },
             headerTintColor: ds.colors.primary,
             contentStyle: { paddingTop: 20 },
             headerTitleStyle: {

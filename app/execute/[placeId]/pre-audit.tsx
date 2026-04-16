@@ -55,7 +55,7 @@ export default function PreAuditScreen() {
             headerBackButtonDisplayMode: "generic",
             headerBackVisible: true,
             headerBlurEffect: "light",
-            headerStyle: { backgroundColor: ds.colors.surface },
+            headerStyle: { backgroundColor: ds.colors.surfaceMuted },
             headerTintColor: ds.colors.primary,
             contentStyle: { paddingTop: 20 },
             headerTitleStyle: {
@@ -117,7 +117,7 @@ export default function PreAuditScreen() {
         navigation.setOptions({
             ...themedHeaderOptions,
             headerTitle: () => (
-                <YStack justify="center" my="$3" overflowX="scroll">
+                <YStack justify="center" my="$2.5" overflowX="scroll">
                     <ScrollView horizontal>
                         <YStack justify="center">
                             <Text

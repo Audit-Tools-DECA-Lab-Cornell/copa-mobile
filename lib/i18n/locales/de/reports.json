@@ -22,7 +22,7 @@
         "playValueCardLabel": "Spielfeld",
         "progress": "Fortschritt",
         "project": "Projekt",
-        "questionsAnswered": "{{answered}} / {{total}} Fragen",
+        "questionsAnswered": "{{answered}} / {{total}} Fragen beantwortet",
         "scaleColumnsHeading": "Skalen-Spalten",
         "scaleColumnsHint": "Rohpunkte aus Mengen-, Diversitäts- und Herausforderungs-Skalen in diesem Abschnitt. Sie speisen die obigen Scores, haben aber andere Einheiten als die Kopfzeile.",
         "screenTitle": "Audit-Details",

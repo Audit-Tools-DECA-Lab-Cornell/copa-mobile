@@ -128,6 +128,7 @@ const LIGHT_COLORS = {
     danger: "#B54A38",
     info: "#4A619A",
     violet: "#6B5A8A",
+    amber: "FFB400",
     overlay: "rgba(255, 255, 255, 0.56)",
     primarySoft: "rgba(166, 99, 52, 0.12)",
     successSoft: "rgba(61, 107, 79, 0.12)",
@@ -135,7 +136,6 @@ const LIGHT_COLORS = {
     dangerSoft: "rgba(181, 74, 56, 0.12)",
     infoSoft: "rgba(74, 97, 154, 0.12)",
     violetSoft: "rgba(107, 90, 138, 0.12)",
-    amber: "rgba(255, 180, 0, 0.1)",
     amberSoft: "rgba(204, 136, 0, 0.1)",
     placeholderColor: "#645A52",
 } as const satisfies ColorPalette;

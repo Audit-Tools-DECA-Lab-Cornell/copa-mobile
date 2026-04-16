@@ -23,7 +23,6 @@ import { applyLanguagePreference } from "lib/i18n";
 import { logger } from "lib/logger";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Platform } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { usePreferencesStore } from "stores/preferences-store";
@@ -212,14 +211,7 @@ function RootLayoutNav() {
     return (
         <ThemeProvider value={navigationTheme}>
             <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
-            <Stack
-                screenOptions={{
-                    statusBarHidden: Platform.OS === "android",
-                    contentStyle: {
-                        backgroundColor: ds.colors.background,
-                    },
-                }}
-            >
+            <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background } }}>
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen

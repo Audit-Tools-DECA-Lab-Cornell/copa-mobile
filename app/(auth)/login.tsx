@@ -259,8 +259,8 @@ export default function LoginScreen() {
                         {__DEV__ && errorMessage ? (
                             <YStack
                                 borderWidth={1}
-                                borderColor={ds.colors.amber}
-                                bg={ds.colors.amberSoft}
+                                borderColor={ds.colors.amber as ColorTokens}
+                                bg={ds.colors.amberSoft as ColorTokens}
                                 rounded={ds.radii.md}
                                 p="$3"
                             >

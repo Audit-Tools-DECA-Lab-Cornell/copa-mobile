@@ -281,7 +281,13 @@ export default function ReportsScreen() {
                 const exportableAudits = await Promise.all(
                     exportablePlaces.map((place) => buildExportableAudit(place, auditorProfile)),
                 );
-                const fileName = await shareBulkAuditExport(exportableAudits, instrument!, format);
+                const fileName = await shareBulkAuditExport(
+                    exportableAudits,
+                    auditorProfile,
+                    instrument!,
+                    format,
+                    ds.colors,
+                );
                 showExportSuccess(fileName);
             } catch (error) {
                 showExportError(error);
@@ -289,7 +295,7 @@ export default function ReportsScreen() {
                 setActiveExportKey((currentValue) => (currentValue === exportKey ? null : currentValue));
             }
         },
-        [buildExportableAudit, exportablePlaces, instrument, session, showExportError, showExportSuccess],
+        [buildExportableAudit, exportablePlaces, instrument, session, showExportError, showExportSuccess, ds.colors],
     );
 
     const hasActiveFilters = searchQuery.trim().length > 0 || reportFilter !== "all";

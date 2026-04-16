@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { TextInput } from "react-native";
 import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { Button, type ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getOptionGridItemWidth } from "lib/option-grid";
 import { useResponsiveLayout } from "lib/responsive-layout";
@@ -224,11 +224,11 @@ function ScaleSelector({
             p={layout.isTablet ? 16 : 12}
             gap={layout.isTablet ? "$3" : "$2.5"}
             borderLeftWidth={3}
-            borderLeftColor={scaleAccent}
+            borderLeftColor={scaleAccent as ColorTokens}
         >
             <YStack gap="$1">
                 <Text
-                    color={scaleAccent}
+                    color={scaleAccent as ColorTokens}
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize}
                     textTransform="uppercase"
@@ -257,8 +257,8 @@ function ScaleSelector({
                             height={layout.isTablet ? layout.formOptionHeight : 52}
                             disabled={disabled}
                             borderWidth={isSelected ? 2 : 1}
-                            borderColor={isSelected ? scaleAccent : ds.colors.border}
-                            bg={isSelected ? scaleSoft : ds.colors.surfaceMuted}
+                            borderColor={isSelected ? (scaleAccent as ColorTokens) : (ds.colors.border as ColorTokens)}
+                            bg={isSelected ? (scaleSoft as ColorTokens) : (ds.colors.surfaceMuted as ColorTokens)}
                             opacity={disabled ? 0.6 : 1}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
@@ -272,7 +272,9 @@ function ScaleSelector({
                             }}
                         >
                             <Text
-                                color={isSelected ? scaleAccent : ds.colors.foreground}
+                                color={
+                                    isSelected ? (scaleAccent as ColorTokens) : (ds.colors.foreground as ColorTokens)
+                                }
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
                                     layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize
@@ -334,8 +336,14 @@ function ChecklistSelector({
                             height={layout.isTablet ? layout.formOptionHeight : 42}
                             disabled={disabled}
                             borderWidth={isSelected ? 2 : 1}
-                            borderColor={isSelected ? ds.colors.primary : ds.colors.border}
-                            bg={isSelected ? ds.colors.primarySoft : ds.colors.surfaceMuted}
+                            borderColor={
+                                isSelected ? (ds.colors.primary as ColorTokens) : (ds.colors.border as ColorTokens)
+                            }
+                            bg={
+                                isSelected
+                                    ? (ds.colors.primarySoft as ColorTokens)
+                                    : (ds.colors.surfaceMuted as ColorTokens)
+                            }
                             opacity={disabled ? 0.6 : 1}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
                             onPress={() => {
@@ -349,7 +357,11 @@ function ChecklistSelector({
                             }}
                         >
                             <Text
-                                color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                color={
+                                    isSelected
+                                        ? (ds.colors.primary as ColorTokens)
+                                        : (ds.colors.foreground as ColorTokens)
+                                }
                                 fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={
                                     layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize
