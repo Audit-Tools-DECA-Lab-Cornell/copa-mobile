@@ -4,6 +4,7 @@ import { Tabs } from "expo-router";
 import { useAuditSync } from "lib/audit/use-audit-sync";
 import { isGlassUiEnabled, useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout, type ResponsiveLayout } from "lib/responsive-layout";
+import { useNotificationsStore } from "stores/notifications-store";
 import { useTranslation } from "react-i18next";
 import type { ColorTokens } from "tamagui";
 
@@ -24,16 +25,20 @@ export default function TabLayout() {
     useAuditSync();
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const unreadCount = useNotificationsStore((state) => state.unreadCount);
     const { t } = useTranslation("common");
     const isGlassEnabled = isGlassUiEnabled();
     const insets = useSafeAreaInsets();
     const tabBarActiveTintColor = ds.colors.primary;
     const tabBarInactiveTintColor = layout.isTablet ? ds.colors.secondaryForeground : ds.colors.mutedForeground;
-    const tabBarHeight = (layout.isTablet ? layout.buttonHeight + 12 : 78) + insets.bottom;
+    const tabBarHeight = (layout.isTablet ? layout.buttonHeight : 42) + insets.bottom;
     const tabBarPaddingTop = layout.isTablet ? 10 : 8;
-    const tabBarPaddingBottom = (layout.isTablet ? 16 : 12) + insets.bottom;
+    const tabBarPaddingBottom = (layout.isTablet ? 6 : 2) + insets.bottom;
     const tabBarLabelFontSize = layout.isTablet ? ds.typography.labelSm.fontSize : ds.typography.labelXs.fontSize;
     const tabBarLabelLineHeight = layout.isTablet ? ds.typography.labelSm.lineHeight : ds.typography.labelXs.lineHeight;
+
+    /** Matches header bell cap so tab badge and in-app count stay consistent. */
+    const homeTabBadgeOptions = unreadCount > 0 ? { tabBarBadge: unreadCount > 99 ? "99+" : unreadCount } : {};
 
     return (
         <Tabs
@@ -70,6 +75,7 @@ export default function TabLayout() {
                 name="index"
                 options={{
                     title: t("tabs.home"),
+                    ...homeTabBadgeOptions,
                     tabBarIcon: ({ size, color }: TabIconProps) => (
                         <LayoutDashboard color={color as ColorTokens} size={getResponsiveTabIconSize(layout, size)} />
                     ),

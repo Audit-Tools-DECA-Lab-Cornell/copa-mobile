@@ -3,6 +3,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TamaguiProvider, type TamaguiProviderProps } from "tamagui";
 import { config } from "../tamagui.config";
 import { CurrentToast } from "./CurrentToast";
+import { usePreferencesStore } from "stores/preferences-store";
+import { NotificationsPanel } from "./NotificationsPanel";
 
 interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "defaultTheme"> {
     /** Tamagui theme name — typically "light" or "dark". */
@@ -23,7 +25,7 @@ function SafeToastViewport() {
             right={right}
             paddingTop="$2"
             paddingHorizontal="$4"
-            items="center"
+            alignItems="center"
         />
     );
 }
@@ -31,12 +33,14 @@ function SafeToastViewport() {
 /**
  * Global provider wrapping Tamagui, toasts, and theme selection.
  */
-export function Provider({ children, theme = "dark", ...rest }: Readonly<ProviderProps>) {
+export function Provider({ children, ...rest }: Readonly<ProviderProps>) {
+    const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     return (
-        <TamaguiProvider config={config} defaultTheme={theme} {...rest}>
+        <TamaguiProvider config={config} defaultTheme={resolvedTheme} {...rest}>
             <ToastProvider swipeDirection="vertical" duration={6000} native={[]}>
                 {children}
                 <CurrentToast />
+                <NotificationsPanel />
                 <SafeToastViewport />
             </ToastProvider>
         </TamaguiProvider>

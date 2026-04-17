@@ -1,4 +1,5 @@
 import { defaultConfig } from "@tamagui/config/v5";
+import { createAnimations } from "@tamagui/animations-react-native";
 import { createFont, createTamagui, type Variable } from "tamagui";
 import { themes } from "./themes";
 
@@ -80,8 +81,30 @@ const headingDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultCon
 const monoDyslexicMediumFont = createStaticFont("OpenDyslexic-Regular", defaultConfig.fonts.body);
 const monoDyslexicBoldFont = createStaticFont("OpenDyslexic-Bold", defaultConfig.fonts.body);
 
+const animations = createAnimations({
+    fast: {
+        type: "spring",
+        damping: 20,
+        mass: 1.2,
+        stiffness: 250,
+    },
+    medium: {
+        type: "spring",
+        damping: 10,
+        mass: 0.9,
+        stiffness: 100,
+    },
+    slow: {
+        type: "spring",
+        damping: 20,
+        mass: 1.5,
+        stiffness: 60,
+    },
+});
+
 export const config = createTamagui({
     ...defaultConfig,
+    animations,
     fonts: {
         ...defaultConfig.fonts,
         body: bodyFont,

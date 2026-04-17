@@ -2,6 +2,7 @@ import { unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { AuthApiError, loginWithPassword, signupWithPassword } from "lib/auth/api";
 import { clearAuthSession, readAuthSession, saveAuthSession } from "lib/auth/storage";
 import { t } from "lib/i18n";
+import { clearNotificationsCache } from "lib/storage/notification-cache";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { create } from "zustand";
 
@@ -14,7 +15,7 @@ export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 /**
  * Global auth store shape.
  */
-interface AuthStoreState {
+export interface AuthStoreState {
     readonly status: AuthStatus;
     readonly session: AuthSession | null;
     readonly isSubmitting: boolean;
@@ -138,6 +139,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
             await usePlayspaceAuditStore.getState().clearStoredState(currentSession.user.id);
         }
         await unregisterAuditBackgroundTaskAsync().catch(() => undefined);
+        await clearNotificationsCache();
         await clearAuthSession();
         set(() => ({
             session: null,

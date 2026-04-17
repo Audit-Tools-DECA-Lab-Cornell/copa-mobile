@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import {
     ArrowUpRight,
     BarChart3,
-    Bell,
     ClipboardCheck,
     Clock3,
     LogOut,
@@ -15,6 +14,7 @@ import {
     UserRound,
     WifiOff,
 } from "@tamagui/lucide-icons-2";
+import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-helpers";
@@ -773,18 +773,7 @@ export default function DashboardScreen() {
                         </XStack>
 
                         <XStack gap="$2">
-                            <YStack
-                                width={46}
-                                height={46}
-                                items="center"
-                                justify="center"
-                                rounded={ds.radii.full}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={ds.colors.surfaceMuted}
-                            >
-                                <Bell size={20} color={ds.colors.foreground} />
-                            </YStack>
+                            <NotificationBellIcon />
                             <Button
                                 width={46}
                                 height={46}
@@ -988,18 +977,7 @@ export default function DashboardScreen() {
                     </XStack>
 
                     <XStack gap="$2">
-                        <YStack
-                            width={layout.isTablet ? 46 : 42}
-                            height={layout.isTablet ? 46 : 42}
-                            items="center"
-                            justify="center"
-                            rounded={ds.radii.full}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surfaceMuted}
-                        >
-                            <Bell size={layout.isTablet ? 20 : 18} color={ds.colors.foreground} />
-                        </YStack>
+                        <NotificationBellIcon />
                         <Button
                             width={layout.isTablet ? 46 : 42}
                             height={layout.isTablet ? 46 : 42}

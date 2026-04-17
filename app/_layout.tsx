@@ -21,10 +21,13 @@ import { registerAuditBackgroundTaskAsync, unregisterAuditBackgroundTaskAsync } 
 import { useDesignSystem } from "lib/design-system";
 import { applyLanguagePreference } from "lib/i18n";
 import { logger } from "lib/logger";
+import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { AppState, type AppStateStatus } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
+import { useNotificationsStore } from "stores/notifications-store";
 import { usePreferencesStore } from "stores/preferences-store";
 import { StatusBar } from "expo-status-bar";
 export { ErrorBoundary } from "expo-router";
@@ -89,22 +92,10 @@ export default function RootLayout() {
     }
 
     return (
-        <Providers>
+        <Provider>
             <RootLayoutNav />
-        </Providers>
+        </Provider>
     );
-}
-
-interface ProvidersProps {
-    readonly children: React.ReactNode;
-}
-
-/**
- * Wrapper for all global providers, passing the resolved theme to Tamagui.
- */
-function Providers({ children }: ProvidersProps) {
-    const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
-    return <Provider theme={resolvedTheme}>{children}</Provider>;
 }
 
 /**
@@ -116,6 +107,7 @@ function RootLayoutNav() {
     const authStatus = useAuthStore((state) => state.status);
     const authSession = useAuthStore((state) => state.session);
     const initializeAuth = useAuthStore((state) => state.initialize);
+    const refreshUnreadCount = useNotificationsStore((state) => state.refreshUnreadCount);
     const hydrateAuditStore = usePlayspaceAuditStore((state) => state.hydrate);
     const isAuditHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const currentAuditUserId = usePlayspaceAuditStore((state) => state.currentUserId);
@@ -178,6 +170,60 @@ function RootLayoutNav() {
 
         registerAuditBackgroundTaskAsync().catch(() => undefined);
     }, [authSession, authStatus, currentAuditUserId, isAuditHydrated]);
+
+    useEffect(() => {
+        if (authStatus !== "authenticated" || authSession === null || authSession.user.id.length === 0) {
+            return;
+        }
+
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+        const startPolling = () => {
+            if (pollTimer !== null) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+
+            void refreshUnreadCount();
+
+            const intervalMs = computeNotificationPollIntervalMs();
+
+            logger.info(`Starting notification polling: ${String(Math.round(intervalMs / 1000))}s interval`);
+
+            pollTimer = setInterval(() => {
+                void refreshUnreadCount();
+            }, intervalMs);
+        };
+
+        const stopPolling = () => {
+            if (pollTimer !== null) {
+                logger.info("Stopping notification polling");
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+        };
+
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+            if (nextAppState === "active") {
+                logger.info("App foregrounded, resuming notification polling");
+                startPolling();
+            } else {
+                logger.info("App backgrounded, pausing notification polling");
+                stopPolling();
+            }
+        };
+
+        if (AppState.currentState === "active") {
+            startPolling();
+        }
+
+        const subscription = AppState.addEventListener("change", handleAppStateChange);
+
+        return () => {
+            stopPolling();
+            subscription.remove();
+        };
+    }, [authSession, authStatus, refreshUnreadCount]);
 
     useEffect(() => {
         if (authStatus === "loading") {
