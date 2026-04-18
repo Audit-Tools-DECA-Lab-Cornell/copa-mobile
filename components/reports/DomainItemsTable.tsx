@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { ScrollView } from "react-native";
 import { Text, XStack, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,7 @@ import type { DomainQuestionRow } from "lib/audit/report-helpers";
 import { formatQuestionKeyForDisplay } from "lib/audit/prompt-segments";
 import { formatScoreValue } from "lib/audit/score-helpers";
 import { useDesignSystem } from "lib/design-system";
+import { useResponsiveLayout } from "lib/responsive-layout";
 import { PromptRichText } from "components/reports/PromptRichText";
 
 export interface DomainItemsTableProps {
@@ -32,17 +33,38 @@ function scaleCell(label: string | null, notAssessed: string): string {
     return label === null || label.trim().length === 0 ? notAssessed : label;
 }
 
-const ID_COL_WIDTH = 84;
-const ITEM_COL_WIDTH = 440;
-const SCALE_COL_WIDTH = 120;
-const PVU_COL_WIDTH = 140;
+/** Column width constants scaled by viewport tier. */
+interface ItemsTableLayout {
+    readonly idColWidth: number;
+    readonly itemColWidth: number;
+    readonly scaleColWidth: number;
+    readonly pvuColWidth: number;
+    readonly minTableWidth: number;
+}
+
+function computeItemsTableLayout(isTablet: boolean, isWideTablet: boolean): ItemsTableLayout {
+    const idColWidth = isTablet ? 92 : 80;
+    const itemColWidth = isWideTablet ? 520 : isTablet ? 460 : 400;
+    const scaleColWidth = isTablet ? 130 : 112;
+    const pvuColWidth = isTablet ? 152 : 132;
+    const minTableWidth = idColWidth + itemColWidth + scaleColWidth * 4 + pvuColWidth * 2;
+    return { idColWidth, itemColWidth, scaleColWidth, pvuColWidth, minTableWidth };
+}
 
 /**
- * Per-question breakdown for extended report view.
+ * Per-question breakdown table for the extended report view.
+ * Column widths adapt to the viewport tier.
  */
 export const DomainItemsTable = memo(function DomainItemsTable({ questions }: DomainItemsTableProps) {
     const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
+
+    const cols = useMemo(
+        () => computeItemsTableLayout(layout.isTablet, layout.isWideTablet),
+        [layout.isTablet, layout.isWideTablet],
+    );
+
     const notAssessed = t("detail.metricNotAssessed", { ns: "reports" });
     const translatePv = {
         notApplicable: () => t("extendedTable.notApplicable"),
@@ -50,22 +72,59 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         maxScore: (maxText: string) => t("extendedTable.maxScore", { max: maxText }),
     };
 
-    if (questions.length === 0) {
-        return null;
-    }
+    if (questions.length === 0) return null;
 
-    const minTableWidth = ID_COL_WIDTH + ITEM_COL_WIDTH + SCALE_COL_WIDTH * 4 + PVU_COL_WIDTH * 2;
     const cellFont = ds.typography.bodyXs.fontSize;
     const cellLine = ds.typography.bodyXs.lineHeight;
+
+    const HeaderCell = ({
+        children,
+        width,
+        isFirst = false,
+    }: {
+        children: string;
+        width: number;
+        isFirst?: boolean;
+    }) => (
+        <YStack
+            width={width}
+            p="$2"
+            items="center"
+            justify="center"
+            borderLeftWidth={isFirst ? 0 : 1}
+            borderColor={ds.colors.primaryForeground}
+        >
+            <Text
+                color={ds.colors.primaryForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={cellFont}
+                width="100%"
+                style={{ textAlign: "center" }}
+            >
+                {children}
+            </Text>
+        </YStack>
+    );
 
     const DataText = ({
         children,
         textAlign = "center",
-    }: Readonly<{
+        mono = false,
+        muted = false,
+    }: {
         children: string;
-        textAlign?: "center" | "left" | "right";
-    }>) => (
-        <Text color={ds.colors.foreground} fontSize={cellFont} lineHeight={cellLine} width="100%" style={{ textAlign }}>
+        textAlign?: "center" | "left";
+        mono?: boolean;
+        muted?: boolean;
+    }) => (
+        <Text
+            color={muted ? ds.colors.mutedForeground : ds.colors.foreground}
+            fontFamily={mono ? ds.fonts.monoMedium : undefined}
+            fontSize={cellFont}
+            lineHeight={cellLine}
+            width="100%"
+            style={{ textAlign }}
+        >
             {children}
         </Text>
     );
@@ -74,254 +133,120 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         <ScrollView horizontal showsHorizontalScrollIndicator>
             <YStack
                 style={{
-                    minWidth: minTableWidth,
+                    minWidth: cols.minTableWidth,
                     borderWidth: 1,
                     borderColor: ds.colors.border,
                     borderRadius: ds.radii.sm,
                 }}
                 overflow="hidden"
             >
+                {/* Header */}
                 <XStack bg={ds.colors.primary} borderBottomWidth={1} borderColor={ds.colors.border}>
-                    <YStack
-                        width={ID_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderRightWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnQuestionId", { ns: "reports" })}
-                        </Text>
-                    </YStack>
-                    <YStack
-                        width={ITEM_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderLeftWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            width="100%"
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnItems", { ns: "reports" })}
-                        </Text>
-                    </YStack>
-                    <YStack
-                        width={SCALE_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderLeftWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            width="100%"
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnProvision", { ns: "reports" })}
-                        </Text>
-                    </YStack>
-                    <YStack
-                        width={SCALE_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderLeftWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            width="100%"
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnDiversity", { ns: "reports" })}
-                        </Text>
-                    </YStack>
-                    <YStack
-                        width={SCALE_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderLeftWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            width="100%"
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnChallenge", { ns: "reports" })}
-                        </Text>
-                    </YStack>
-                    <YStack
-                        width={SCALE_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderLeftWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            width="100%"
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnSociability", { ns: "reports" })}
-                        </Text>
-                    </YStack>
-                    <YStack
-                        width={PVU_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderLeftWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            width="100%"
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnPlayValue", { ns: "reports" })}
-                        </Text>
-                    </YStack>
-                    <YStack
-                        width={PVU_COL_WIDTH}
-                        p="$2"
-                        items="center"
-                        justify="center"
-                        borderLeftWidth={1}
-                        borderColor={ds.colors.border}
-                    >
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            width="100%"
-                            style={{ textAlign: "center" }}
-                        >
-                            {t("extendedTable.columnUsability", { ns: "reports" })}
-                        </Text>
-                    </YStack>
+                    <HeaderCell width={cols.idColWidth} isFirst>
+                        {t("extendedTable.columnQuestionId", { ns: "reports" })}
+                    </HeaderCell>
+                    <HeaderCell width={cols.itemColWidth}>
+                        {t("extendedTable.columnItems", { ns: "reports" })}
+                    </HeaderCell>
+                    <HeaderCell width={cols.scaleColWidth}>
+                        {t("extendedTable.columnProvision", { ns: "reports" })}
+                    </HeaderCell>
+                    <HeaderCell width={cols.scaleColWidth}>
+                        {t("extendedTable.columnDiversity", { ns: "reports" })}
+                    </HeaderCell>
+                    <HeaderCell width={cols.scaleColWidth}>
+                        {t("extendedTable.columnChallenge", { ns: "reports" })}
+                    </HeaderCell>
+                    <HeaderCell width={cols.scaleColWidth}>
+                        {t("extendedTable.columnSociability", { ns: "reports" })}
+                    </HeaderCell>
+                    <HeaderCell width={cols.pvuColWidth}>
+                        {t("extendedTable.columnPlayValue", { ns: "reports" })}
+                    </HeaderCell>
+                    <HeaderCell width={cols.pvuColWidth}>
+                        {t("extendedTable.columnUsability", { ns: "reports" })}
+                    </HeaderCell>
                 </XStack>
+
+                {/* Data rows */}
                 {questions.map((question, index) => {
-                    const rowBg = index % 2 === 0 ? ds.colors.input : ds.colors.surface;
-                    return (
-                        <XStack
-                            key={question.questionKey}
-                            bg={rowBg}
-                            borderTopWidth={1}
+                    const isEven = index % 2 === 0;
+                    const rowBg = isEven ? ds.colors.input : ds.colors.surface;
+                    const borderProps = {
+                        borderTopWidth: 1,
+                        borderColor: ds.colors.border,
+                    } as const;
+
+                    const CellWrapper = ({
+                        children,
+                        width,
+                        align = "center",
+                        first = false,
+                    }: {
+                        children: React.ReactNode;
+                        width: number;
+                        align?: "center" | "flex-start";
+                        first?: boolean;
+                    }) => (
+                        <YStack
+                            width={width}
+                            p="$2"
+                            items={align}
+                            justify="center"
+                            borderLeftWidth={first ? 0 : 1}
                             borderColor={ds.colors.border}
-                            accessibilityRole="none"
+                            bg={rowBg}
                         >
-                            <YStack
-                                width={ID_COL_WIDTH}
-                                p="$2"
-                                items="center"
-                                justify="center"
-                                borderRightWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
-                                <Text
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.monoMedium}
-                                    fontSize={ds.typography.bodyXs.fontSize}
-                                    style={{ textAlign: "center" }}
-                                >
+                            {children}
+                        </YStack>
+                    );
+
+                    return (
+                        <XStack key={question.questionKey} {...borderProps} accessibilityRole="none">
+                            {/* Question ID */}
+                            <CellWrapper width={cols.idColWidth} first>
+                                <DataText textAlign="center" mono muted>
                                     {formatQuestionKeyForDisplay(question.questionKey)}
-                                </Text>
-                            </YStack>
-                            <YStack
-                                width={ITEM_COL_WIDTH}
-                                p="$2"
-                                justify="center"
-                                items="flex-start"
-                                borderLeftWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
+                                </DataText>
+                            </CellWrapper>
+
+                            {/* Prompt text */}
+                            <CellWrapper width={cols.itemColWidth} align="flex-start">
                                 <PromptRichText raw={question.questionText} fontSize={cellFont} lineHeight={cellLine} />
-                            </YStack>
-                            <YStack
-                                width={SCALE_COL_WIDTH}
-                                p="$2"
-                                items="center"
-                                justify="center"
-                                borderLeftWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
-                                <DataText>{scaleCell(question.provisionLabel, notAssessed)}</DataText>
-                            </YStack>
-                            <YStack
-                                width={SCALE_COL_WIDTH}
-                                p="$2"
-                                items="center"
-                                justify="center"
-                                borderLeftWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
-                                <DataText>{scaleCell(question.diversityLabel, notAssessed)}</DataText>
-                            </YStack>
-                            <YStack
-                                width={SCALE_COL_WIDTH}
-                                p="$2"
-                                items="center"
-                                justify="center"
-                                borderLeftWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
-                                <DataText>
+                            </CellWrapper>
+
+                            {/* Provision */}
+                            <CellWrapper width={cols.scaleColWidth}>
+                                <DataText textAlign="center">
+                                    {scaleCell(question.provisionLabel, notAssessed)}
+                                </DataText>
+                            </CellWrapper>
+
+                            {/* Diversity */}
+                            <CellWrapper width={cols.scaleColWidth}>
+                                <DataText textAlign="center">
+                                    {scaleCell(question.diversityLabel, notAssessed)}
+                                </DataText>
+                            </CellWrapper>
+
+                            {/* Challenge */}
+                            <CellWrapper width={cols.scaleColWidth}>
+                                <DataText textAlign="center">
                                     {question.challengeApplicable
                                         ? scaleCell(question.challengeLabel, notAssessed)
                                         : t("extendedTable.notApplicable")}
                                 </DataText>
-                            </YStack>
-                            <YStack
-                                width={SCALE_COL_WIDTH}
-                                p="$2"
-                                items="center"
-                                justify="center"
-                                borderLeftWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
-                                <DataText>{scaleCell(question.sociabilityLabel, notAssessed)}</DataText>
-                            </YStack>
-                            <YStack
-                                width={PVU_COL_WIDTH}
-                                p="$2"
-                                items="flex-start"
-                                justify="center"
-                                borderLeftWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
+                            </CellWrapper>
+
+                            {/* Sociability */}
+                            <CellWrapper width={cols.scaleColWidth}>
+                                <DataText textAlign="center">
+                                    {scaleCell(question.sociabilityLabel, notAssessed)}
+                                </DataText>
+                            </CellWrapper>
+
+                            {/* Play value */}
+                            <CellWrapper width={cols.pvuColWidth} align="flex-start">
                                 <DataText textAlign="left">
                                     {formatPlayUsabilityCell(
                                         question.playValueScore,
@@ -329,16 +254,10 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                                         translatePv,
                                     )}
                                 </DataText>
-                            </YStack>
-                            <YStack
-                                width={PVU_COL_WIDTH}
-                                p="$2"
-                                items="flex-start"
-                                justify="center"
-                                borderLeftWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={rowBg}
-                            >
+                            </CellWrapper>
+
+                            {/* Usability */}
+                            <CellWrapper width={cols.pvuColWidth} align="flex-start">
                                 <DataText textAlign="left">
                                     {formatPlayUsabilityCell(
                                         question.usabilityScore,
@@ -346,7 +265,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                                         translatePv,
                                     )}
                                 </DataText>
-                            </YStack>
+                            </CellWrapper>
                         </XStack>
                     );
                 })}

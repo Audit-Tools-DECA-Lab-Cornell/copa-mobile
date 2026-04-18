@@ -1,26 +1,24 @@
 import { memo, useMemo } from "react";
-import { Pressable } from "react-native";
-import { Paragraph, Separator, Text, XStack, YStack } from "tamagui";
-import { ChevronDown } from "@tamagui/lucide-icons-2";
+import { Paragraph, Separator, Text, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
 import type { DomainReportRow } from "lib/audit/report-helpers";
 import type { AuditScoreTotals } from "lib/audit/types";
 import { useDesignSystem } from "lib/design-system";
 import { BestWorstTable } from "components/reports/BestWorstTable";
 import { DomainCard } from "components/reports/DomainCard";
-import { DomainScoreBars } from "components/reports/DomainScoreBars";
-import { DomainScoreTable } from "components/reports/DomainScoreTable";
+import { DomainScoreDisplay } from "components/reports/DomainScoreDisplay";
+import { DomainSectionHeader, ExpandCollapseControl } from "components/reports/DomainSectionHeader";
 import { useDomainExpansion } from "components/reports/use-domain-expansion";
 
 export interface ShortReportContentProps {
     readonly domainRows: DomainReportRow[];
     readonly overallScores: AuditScoreTotals | null;
-    /** Distinct scaled questions with at least one domain (avoids double-counting multi-domain questions). */
+    /** Distinct scaled questions with at least one domain (avoids double-counting). */
     readonly overallItemCount: number;
 }
 
 /**
- * Short report: per-domain bars/tables, overall scores, best/worst summary.
+ * Short report: per-domain bars + tables (no item-level breakdown), overall scores, best/worst summary.
  */
 export const ShortReportContent = memo(function ShortReportContent({
     domainRows,
@@ -36,34 +34,7 @@ export const ShortReportContent = memo(function ShortReportContent({
     return (
         <YStack gap="$4" width="100%">
             {domainRows.length > 0 ? (
-                <XStack justify="flex-end" items="center" gap="$4" flexWrap="wrap">
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t("domain.expandAll")}
-                        onPress={expandAll}
-                    >
-                        <Text
-                            color={ds.colors.primary}
-                            fontFamily={allExpanded ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {t("domain.expandAll")}
-                        </Text>
-                    </Pressable>
-                    <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t("domain.collapseAll")}
-                        onPress={collapseAll}
-                    >
-                        <Text
-                            color={ds.colors.primary}
-                            fontFamily={allExpanded ? ds.fonts.bodyMedium : ds.fonts.bodyBold}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {t("domain.collapseAll")}
-                        </Text>
-                    </Pressable>
-                </XStack>
+                <ExpandCollapseControl onExpandAll={expandAll} onCollapseAll={collapseAll} allExpanded={allExpanded} />
             ) : null}
 
             {domainRows.map((row, index) => {
@@ -71,75 +42,16 @@ export const ShortReportContent = memo(function ShortReportContent({
                 return (
                     <YStack key={row.domainKey} gap="$3" width="100%">
                         <DomainCard accessibilityLabel={row.domainTitle}>
-                            <Pressable
-                                accessibilityRole="button"
-                                accessibilityState={{ expanded: open }}
-                                accessibilityLabel={`${row.domainTitle}. ${open ? t("domain.collapseSection") : t("domain.expandSection")}`}
-                                onPress={() => {
-                                    toggle(row.domainKey);
-                                }}
-                            >
-                                <XStack justify="space-between" items="center" gap="$2" width="100%">
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.titleMd.fontSize}
-                                        numberOfLines={2}
-                                        ellipsizeMode="tail"
-                                        flex={1}
-                                    >
-                                        {row.domainTitle}
-                                    </Text>
-                                    <ChevronDown
-                                        size={22}
-                                        color={ds.colors.mutedForeground}
-                                        style={{
-                                            transform: [{ rotate: open ? "0deg" : "-90deg" }],
-                                        }}
-                                    />
-                                </XStack>
-                            </Pressable>
+                            <DomainSectionHeader
+                                title={row.domainTitle}
+                                isExpanded={open}
+                                onToggle={() => toggle(row.domainKey)}
+                                scoreTotals={row.scoreTotals}
+                            />
                             {open ? (
                                 <YStack gap="$3" width="100%">
-                                    <DomainScoreBars scoreTotals={row.scoreTotals} />
-                                    <DomainScoreTable scoreTotals={row.scoreTotals} itemCount={row.itemCount} />
-                                    {row.sectionNotes.length === 0 ? (
-                                        <YStack gap="$1">
-                                            <Text
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.bodySm.fontSize}
-                                            >
-                                                {t("domain.auditorNotesLabel")}
-                                            </Text>
-                                            <Paragraph
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodySm.fontSize}
-                                            >
-                                                {t("domain.noNotesPlaceholder")}
-                                            </Paragraph>
-                                        </YStack>
-                                    ) : (
-                                        row.sectionNotes.map((note, noteIndex) => (
-                                            <YStack key={`${row.domainKey}-note-${noteIndex}`} gap="$1">
-                                                <Text
-                                                    color={ds.colors.mutedForeground}
-                                                    fontFamily={ds.fonts.bodyBold}
-                                                    fontSize={ds.typography.bodySm.fontSize}
-                                                >
-                                                    {t("domain.auditorNotesLabel")}
-                                                </Text>
-                                                <Paragraph
-                                                    color={ds.colors.foreground}
-                                                    fontFamily={ds.fonts.bodyMedium}
-                                                    fontSize={ds.typography.bodySm.fontSize}
-                                                >
-                                                    {note}
-                                                </Paragraph>
-                                            </YStack>
-                                        ))
-                                    )}
+                                    <DomainScoreDisplay scoreTotals={row.scoreTotals} itemCount={row.itemCount} />
+                                    <AuditorNotes notes={row.sectionNotes} domainKey={row.domainKey} />
                                 </YStack>
                             ) : null}
                         </DomainCard>
@@ -149,40 +61,73 @@ export const ShortReportContent = memo(function ShortReportContent({
             })}
 
             <DomainCard accessibilityLabel={t("domain.overallScoresTitle")}>
-                <Pressable
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: isExpanded("__overall__") }}
-                    accessibilityLabel={`${t("domain.overallScoresTitle")}. ${isExpanded("__overall__") ? t("domain.collapseSection") : t("domain.expandSection")}`}
-                    onPress={() => {
-                        toggle("__overall__");
-                    }}
-                >
-                    <XStack justify="space-between" items="center" gap="$2" width="100%">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.titleMd.fontSize}
-                        >
-                            {t("domain.overallScoresTitle")}
-                        </Text>
-                        <ChevronDown
-                            size={22}
-                            color={ds.colors.mutedForeground}
-                            style={{
-                                transform: [{ rotate: isExpanded("__overall__") ? "0deg" : "-90deg" }],
-                            }}
-                        />
-                    </XStack>
-                </Pressable>
+                <DomainSectionHeader
+                    title={t("domain.overallScoresTitle")}
+                    isExpanded={isExpanded("__overall__")}
+                    onToggle={() => toggle("__overall__")}
+                    scoreTotals={overallScores}
+                />
                 {isExpanded("__overall__") ? (
-                    <YStack gap="$3" width="100%">
-                        <DomainScoreBars scoreTotals={overallScores} />
-                        <DomainScoreTable scoreTotals={overallScores} itemCount={overallItemCount} />
-                    </YStack>
+                    <DomainScoreDisplay scoreTotals={overallScores} itemCount={overallItemCount} />
                 ) : null}
             </DomainCard>
 
             <BestWorstTable domainRows={domainRows} />
         </YStack>
+    );
+});
+
+interface AuditorNotesProps {
+    readonly notes: string[];
+    readonly domainKey: string;
+}
+
+const AuditorNotes = memo(function AuditorNotes({ notes, domainKey }: AuditorNotesProps) {
+    const ds = useDesignSystem();
+    const { t } = useTranslation("reports");
+
+    if (notes.length === 0) {
+        return (
+            <YStack gap="$1">
+                <Text
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.bodySm.fontSize}
+                >
+                    {t("domain.auditorNotesLabel")}
+                </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    style={{ fontStyle: "italic" }}
+                >
+                    {t("domain.noNotesPlaceholder")}
+                </Paragraph>
+            </YStack>
+        );
+    }
+
+    return (
+        <>
+            {notes.map((note, noteIndex) => (
+                <YStack key={`${domainKey}-note-${noteIndex}`} gap="$1">
+                    <Text
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {t("domain.auditorNotesLabel")}
+                    </Text>
+                    <Paragraph
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {note}
+                    </Paragraph>
+                </YStack>
+            ))}
+        </>
     );
 });

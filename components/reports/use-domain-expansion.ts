@@ -13,7 +13,6 @@ export function useDomainExpansion(domainKeys: readonly string[]): {
     readonly allExpanded: boolean;
 } {
     const [expandedByKey, setExpandedByKey] = useState<Record<string, boolean>>({});
-    const [allExpanded, setAllExpanded] = useState(true);
 
     const stableKeys = useMemo(() => [...domainKeys], [domainKeys]);
 
@@ -25,24 +24,29 @@ export function useDomainExpansion(domainKeys: readonly string[]): {
                     next[key] = true;
                 }
             }
+
+            for (const key of Object.keys(next)) {
+                if (!stableKeys.includes(key)) {
+                    delete next[key];
+                }
+            }
+
             return next;
         });
     }, [stableKeys]);
 
     const expandAll = useCallback(() => {
         setExpandedByKey(Object.fromEntries(stableKeys.map((key) => [key, true])));
-        setAllExpanded(true);
     }, [stableKeys]);
 
     const collapseAll = useCallback(() => {
         setExpandedByKey(Object.fromEntries(stableKeys.map((key) => [key, false])));
-        setAllExpanded(false);
     }, [stableKeys]);
 
     const toggle = useCallback((key: string) => {
         setExpandedByKey((previous) => ({
             ...previous,
-            [key]: !previous[key],
+            [key]: previous[key] === false,
         }));
     }, []);
 
@@ -52,6 +56,14 @@ export function useDomainExpansion(domainKeys: readonly string[]): {
         },
         [expandedByKey],
     );
+
+    const allExpanded = useMemo(() => {
+        if (stableKeys.length === 0) {
+            return false;
+        }
+
+        return Object.values(expandedByKey).every(Boolean);
+    }, [expandedByKey, stableKeys]);
 
     return { expandedByKey, expandAll, collapseAll, toggle, isExpanded, allExpanded };
 }

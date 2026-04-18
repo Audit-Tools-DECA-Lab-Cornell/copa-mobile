@@ -6,31 +6,30 @@ import type { AuditScoreTotals } from "lib/audit/types";
 import { formatScoreValue } from "lib/audit/score-helpers";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
+import { useReportScoreTableLayout } from "lib/report-table-layout";
 
 export interface DomainScoreTableProps {
     readonly scoreTotals: AuditScoreTotals | null;
     readonly itemCount: number;
 }
 
-export const REPORT_SCORE_LABEL_COL_WIDTH = 145;
-export const REPORT_SCORE_LEFT_DATA_COL_WIDTH = 76;
-export const REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET = 152;
+// ── Legacy constants (kept for any external consumers) ──
+export const REPORT_SCORE_LABEL_COL_WIDTH = 120;
+export const REPORT_SCORE_LEFT_DATA_COL_WIDTH = 72;
+export const REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET = 132;
+export const REPORT_SCORE_LEFT_TABLE_WIDTH = REPORT_SCORE_LABEL_COL_WIDTH + REPORT_SCORE_LEFT_DATA_COL_WIDTH * 4;
+export const REPORT_SCORE_RIGHT_TABLE_WIDTH =
+    REPORT_SCORE_LABEL_COL_WIDTH + REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET * 2;
 
 function cellValue(totals: AuditScoreTotals | null, value: (row: AuditScoreTotals) => number): string {
-    if (totals === null) {
-        return "—";
-    }
+    if (totals === null) return "—";
     return formatScoreValue(value(totals));
 }
 
 function cellMax(totals: AuditScoreTotals | null, max: (row: AuditScoreTotals) => number): string {
-    if (totals === null) {
-        return "—";
-    }
+    if (totals === null) return "—";
     const raw = max(totals);
-    if (raw <= 0) {
-        return "—";
-    }
+    if (raw <= 0) return "—";
     return formatScoreValue(raw);
 }
 
@@ -45,29 +44,29 @@ interface ColumnDef {
 const LEFT_COLUMNS: readonly ColumnDef[] = [
     {
         key: "provision",
-        value: (row) => row.provision_total,
-        max: (row) => row.provision_total_max,
+        value: (r) => r.provision_total,
+        max: (r) => r.provision_total_max,
         headerKey: "extendedTable.columnProvision",
         shortHeaderKey: "domain.barProvisionShort",
     },
     {
         key: "diversity",
-        value: (row) => row.diversity_total,
-        max: (row) => row.diversity_total_max,
+        value: (r) => r.diversity_total,
+        max: (r) => r.diversity_total_max,
         headerKey: "extendedTable.columnDiversity",
         shortHeaderKey: "domain.barDiversityShort",
     },
     {
         key: "challenge",
-        value: (row) => row.challenge_total,
-        max: (row) => row.challenge_total_max,
+        value: (r) => r.challenge_total,
+        max: (r) => r.challenge_total_max,
         headerKey: "extendedTable.columnChallenge",
         shortHeaderKey: "domain.barChallengeShort",
     },
     {
         key: "sociability",
-        value: (row) => row.sociability_total,
-        max: (row) => row.sociability_total_max,
+        value: (r) => r.sociability_total,
+        max: (r) => r.sociability_total_max,
         headerKey: "extendedTable.columnSociability",
         shortHeaderKey: "domain.barSociabilityShort",
     },
@@ -76,36 +75,27 @@ const LEFT_COLUMNS: readonly ColumnDef[] = [
 const RIGHT_COLUMNS: readonly ColumnDef[] = [
     {
         key: "play_value",
-        value: (row) => row.play_value_total,
-        max: (row) => row.play_value_total_max,
+        value: (r) => r.play_value_total,
+        max: (r) => r.play_value_total_max,
         headerKey: "extendedTable.columnPlayValue",
     },
     {
         key: "usability",
-        value: (row) => row.usability_total,
-        max: (row) => row.usability_total_max,
+        value: (r) => r.usability_total,
+        max: (r) => r.usability_total_max,
         headerKey: "extendedTable.columnUsability",
     },
 ];
 
-export const REPORT_SCORE_LEFT_TABLE_WIDTH =
-    REPORT_SCORE_LABEL_COL_WIDTH + REPORT_SCORE_LEFT_DATA_COL_WIDTH * LEFT_COLUMNS.length;
-export const REPORT_SCORE_RIGHT_TABLE_WIDTH =
-    REPORT_SCORE_LABEL_COL_WIDTH + REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET * RIGHT_COLUMNS.length;
-
-interface SubTableProps {
-    readonly columns: readonly ColumnDef[];
-    readonly scoreTotals: AuditScoreTotals | null;
-    readonly itemCount: number;
-    readonly labels: readonly { readonly text: string }[];
-    readonly dataColumnWidth: number;
-    readonly tableWidth: number;
+interface DataCellProps {
+    readonly children: string;
+    readonly borderLeft: boolean;
+    readonly width: number;
+    readonly ds: ReturnType<typeof useDesignSystem>;
+    readonly isAlt?: boolean;
 }
 
-function DataCell(
-    props: Readonly<{ children: string; borderLeft: boolean; ds: ReturnType<typeof useDesignSystem>; width: number }>,
-) {
-    const { children, borderLeft, ds, width } = props;
+function DataCell({ children, borderLeft, width, ds, isAlt }: DataCellProps) {
     return (
         <YStack
             width={width}
@@ -114,10 +104,11 @@ function DataCell(
             justify="center"
             borderLeftWidth={borderLeft ? 1 : 0}
             borderColor={ds.colors.border}
+            style={{ backgroundColor: isAlt ? ds.colors.mutedSurface : undefined }}
         >
             <Text
                 color={ds.colors.foreground}
-                fontFamily={ds.fonts.bodyMedium}
+                fontFamily={ds.fonts.monoMedium}
                 fontSize={ds.typography.bodyXs.fontSize}
                 width="100%"
                 style={{ textAlign: "center" }}
@@ -128,11 +119,50 @@ function DataCell(
     );
 }
 
-function ScoreSubTable({ columns, scoreTotals, itemCount, labels, dataColumnWidth, tableWidth }: SubTableProps) {
+interface SubTableProps {
+    readonly columns: readonly ColumnDef[];
+    readonly scoreTotals: AuditScoreTotals | null;
+    readonly itemCount: number;
+    readonly labels: readonly { readonly text: string }[];
+    readonly dataColumnWidth: number;
+    readonly tableWidth: number;
+    readonly labelColWidth: number;
+}
+
+function ScoreSubTable({
+    columns,
+    scoreTotals,
+    itemCount,
+    labels,
+    dataColumnWidth,
+    tableWidth,
+    labelColWidth,
+}: SubTableProps) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
-    const itemsLabel = itemCount.toString();
+
+    const LabelCell = ({ text, borderBottom, isLast }: { text: string; borderBottom?: boolean; isLast?: boolean }) => (
+        <YStack
+            width={labelColWidth}
+            p="$2"
+            justify="center"
+            items="flex-start"
+            borderRightWidth={1}
+            borderColor={ds.colors.border}
+            borderBottomWidth={borderBottom ? 1 : 0}
+        >
+            <Text
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.bodyXs.fontSize}
+                numberOfLines={3}
+                width="100%"
+            >
+                {text}
+            </Text>
+        </YStack>
+    );
 
     return (
         <YStack
@@ -142,24 +172,25 @@ function ScoreSubTable({ columns, scoreTotals, itemCount, labels, dataColumnWidt
             overflow="hidden"
             width={tableWidth}
         >
+            {/* Header row */}
             <XStack bg={ds.colors.primary} borderBottomWidth={1} borderColor={ds.colors.border}>
                 <YStack
-                    width={REPORT_SCORE_LABEL_COL_WIDTH}
+                    width={labelColWidth}
                     p="$2"
                     justify="center"
                     items="center"
                     borderRightWidth={1}
-                    borderColor={ds.colors.border}
+                    borderColor={ds.colors.primaryForeground}
                 />
-                {columns.map((column, colIndex) => (
+                {columns.map((col, i) => (
                     <YStack
-                        key={column.key}
+                        key={col.key}
                         width={dataColumnWidth}
                         p="$2"
                         items="center"
                         justify="center"
-                        borderLeftWidth={colIndex === 0 ? 0 : 1}
-                        borderColor={ds.colors.border}
+                        borderLeftWidth={i === 0 ? 0 : 1}
+                        borderColor={ds.colors.primaryForeground}
                     >
                         <Text
                             color={ds.colors.primaryForeground}
@@ -169,93 +200,40 @@ function ScoreSubTable({ columns, scoreTotals, itemCount, labels, dataColumnWidt
                             width="100%"
                             style={{ textAlign: "center" }}
                         >
-                            {layout.isTablet && column.shortHeaderKey !== undefined
-                                ? t(column.shortHeaderKey, { ns: "reports" })
-                                : t(column.headerKey, { ns: "reports" })}
+                            {layout.isTablet && col.shortHeaderKey !== undefined
+                                ? t(col.shortHeaderKey, { ns: "reports" })
+                                : t(col.headerKey, { ns: "reports" })}
                         </Text>
                     </YStack>
                 ))}
             </XStack>
+
+            {/* Score achieved row */}
             <XStack bg={ds.colors.input} borderBottomWidth={1} borderColor={ds.colors.border}>
-                <YStack
-                    width={REPORT_SCORE_LABEL_COL_WIDTH}
-                    p="$2"
-                    justify="center"
-                    items="center"
-                    borderRightWidth={1}
-                    borderColor={ds.colors.border}
-                >
-                    <Text
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.bodyXs.fontSize}
-                        numberOfLines={3}
-                        width="100%"
-                        style={{ textAlign: "center" }}
-                    >
-                        {labels[0]?.text ?? ""}
-                    </Text>
-                </YStack>
-                {columns.map((column, colIndex) => (
-                    <DataCell
-                        key={`${column.key}-achieved`}
-                        borderLeft={colIndex !== 0}
-                        ds={ds}
-                        width={dataColumnWidth}
-                    >
-                        {cellValue(scoreTotals, column.value)}
+                <LabelCell text={labels[0]?.text ?? ""} borderBottom />
+                {columns.map((col, i) => (
+                    <DataCell key={`${col.key}-achieved`} borderLeft={i !== 0} ds={ds} width={dataColumnWidth}>
+                        {cellValue(scoreTotals, col.value)}
                     </DataCell>
                 ))}
             </XStack>
-            <XStack bg={ds.colors.input} borderBottomWidth={1} borderColor={ds.colors.border}>
-                <YStack
-                    width={REPORT_SCORE_LABEL_COL_WIDTH}
-                    p="$2"
-                    justify="center"
-                    items="center"
-                    borderRightWidth={1}
-                    borderColor={ds.colors.border}
-                >
-                    <Text
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.bodyXs.fontSize}
-                        numberOfLines={3}
-                        width="100%"
-                        style={{ textAlign: "center" }}
-                    >
-                        {labels[1]?.text ?? ""}
-                    </Text>
-                </YStack>
-                {columns.map((column, colIndex) => (
-                    <DataCell key={`${column.key}-max`} borderLeft={colIndex !== 0} ds={ds} width={dataColumnWidth}>
-                        {cellMax(scoreTotals, column.max)}
+
+            {/* Max score row */}
+            <XStack bg={ds.colors.mutedSurface} borderBottomWidth={1} borderColor={ds.colors.border}>
+                <LabelCell text={labels[1]?.text ?? ""} borderBottom />
+                {columns.map((col, i) => (
+                    <DataCell key={`${col.key}-max`} borderLeft={i !== 0} ds={ds} width={dataColumnWidth} isAlt>
+                        {cellMax(scoreTotals, col.max)}
                     </DataCell>
                 ))}
             </XStack>
+
+            {/* Item count row */}
             <XStack bg={ds.colors.input}>
-                <YStack
-                    width={REPORT_SCORE_LABEL_COL_WIDTH}
-                    p="$2"
-                    justify="center"
-                    items="center"
-                    borderRightWidth={1}
-                    borderColor={ds.colors.border}
-                >
-                    <Text
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.bodyXs.fontSize}
-                        numberOfLines={3}
-                        width="100%"
-                        style={{ textAlign: "center" }}
-                    >
-                        {labels[2]?.text ?? ""}
-                    </Text>
-                </YStack>
-                {columns.map((column, colIndex) => (
-                    <DataCell key={`${column.key}-items`} borderLeft={colIndex !== 0} ds={ds} width={dataColumnWidth}>
-                        {itemsLabel}
+                <LabelCell text={labels[2]?.text ?? ""} />
+                {columns.map((col, i) => (
+                    <DataCell key={`${col.key}-items`} borderLeft={i !== 0} ds={ds} width={dataColumnWidth}>
+                        {itemCount.toString()}
                     </DataCell>
                 ))}
             </XStack>
@@ -264,10 +242,12 @@ function ScoreSubTable({ columns, scoreTotals, itemCount, labels, dataColumnWidt
 }
 
 /**
- * Score achieved / max / item count tables split across four + two columns.
+ * Score achieved / max / item count tables split across four scale columns + two construct columns.
+ * Column widths adapt to the viewport tier via useReportScoreTableLayout().
  */
 export const DomainScoreTable = memo(function DomainScoreTable({ scoreTotals, itemCount }: DomainScoreTableProps) {
     const layout = useResponsiveLayout();
+    const tableLayout = useReportScoreTableLayout();
     const { t } = useTranslation("reports");
 
     const labels = [
@@ -276,65 +256,57 @@ export const DomainScoreTable = memo(function DomainScoreTable({ scoreTotals, it
         { text: t("domain.itemsContributingLabel", { ns: "reports" }) },
     ];
 
-    return (
-        <YStack gap="$2" width="100%">
-            {layout.isTablet ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator>
+    const commonLeftProps = {
+        columns: LEFT_COLUMNS,
+        scoreTotals,
+        itemCount,
+        labels,
+        dataColumnWidth: tableLayout.leftDataColWidth,
+        tableWidth: tableLayout.leftTableWidth,
+        labelColWidth: tableLayout.labelColWidth,
+    } as const;
+
+    const commonRightProps = {
+        columns: RIGHT_COLUMNS,
+        scoreTotals,
+        itemCount,
+        labels,
+        dataColumnWidth: tableLayout.rightDataColWidth,
+        tableWidth: tableLayout.rightTableWidth,
+        labelColWidth: tableLayout.labelColWidth,
+    } as const;
+
+    if (layout.isTablet) {
+        return (
+            <YStack gap="$2" minW="100%">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <XStack
                         gap="$2"
                         items="stretch"
-                        style={{ minWidth: REPORT_SCORE_LEFT_TABLE_WIDTH + REPORT_SCORE_RIGHT_TABLE_WIDTH + 8 }}
+                        style={{ minWidth: tableLayout.leftTableWidth + tableLayout.rightTableWidth }}
                     >
-                        <YStack width={REPORT_SCORE_LEFT_TABLE_WIDTH}>
-                            <ScoreSubTable
-                                columns={LEFT_COLUMNS}
-                                scoreTotals={scoreTotals}
-                                itemCount={itemCount}
-                                labels={labels}
-                                dataColumnWidth={REPORT_SCORE_LEFT_DATA_COL_WIDTH}
-                                tableWidth={REPORT_SCORE_LEFT_TABLE_WIDTH}
-                            />
-                        </YStack>
-                        <YStack width={REPORT_SCORE_RIGHT_TABLE_WIDTH}>
-                            <ScoreSubTable
-                                columns={RIGHT_COLUMNS}
-                                scoreTotals={scoreTotals}
-                                itemCount={itemCount}
-                                labels={labels}
-                                dataColumnWidth={REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET}
-                                tableWidth={REPORT_SCORE_RIGHT_TABLE_WIDTH}
-                            />
-                        </YStack>
+                        <ScoreSubTable {...commonLeftProps} />
+                        <ScoreSubTable {...commonRightProps} />
                     </XStack>
                 </ScrollView>
-            ) : (
-                <YStack gap="$2" width="100%">
-                    <ScrollView horizontal showsHorizontalScrollIndicator>
-                        <ScoreSubTable
-                            columns={LEFT_COLUMNS}
-                            scoreTotals={scoreTotals}
-                            itemCount={itemCount}
-                            labels={labels}
-                            dataColumnWidth={REPORT_SCORE_LEFT_DATA_COL_WIDTH}
-                            tableWidth={
-                                REPORT_SCORE_LABEL_COL_WIDTH + REPORT_SCORE_LEFT_DATA_COL_WIDTH * LEFT_COLUMNS.length
-                            }
-                        />
-                    </ScrollView>
-                    <ScrollView horizontal showsHorizontalScrollIndicator>
-                        <ScoreSubTable
-                            columns={RIGHT_COLUMNS}
-                            scoreTotals={scoreTotals}
-                            itemCount={itemCount}
-                            labels={labels}
-                            dataColumnWidth={REPORT_SCORE_LEFT_DATA_COL_WIDTH}
-                            tableWidth={
-                                REPORT_SCORE_LABEL_COL_WIDTH + REPORT_SCORE_LEFT_DATA_COL_WIDTH * RIGHT_COLUMNS.length
-                            }
-                        />
-                    </ScrollView>
-                </YStack>
-            )}
+            </YStack>
+        );
+    }
+
+    return (
+        <YStack gap="$2" width="100%">
+            <ScrollView horizontal showsHorizontalScrollIndicator>
+                <ScoreSubTable {...commonLeftProps} />
+            </ScrollView>
+            <ScrollView horizontal showsHorizontalScrollIndicator>
+                <ScoreSubTable
+                    {...commonRightProps}
+                    dataColumnWidth={tableLayout.rightDataColWidth}
+                    tableWidth={tableLayout.labelColWidth + tableLayout.rightDataColWidth * RIGHT_COLUMNS.length}
+                />
+            </ScrollView>
         </YStack>
     );
 });
+
+const RIGHT_COLUMNS_LENGTH = RIGHT_COLUMNS.length;

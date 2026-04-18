@@ -10,14 +10,25 @@ export interface ReportToggleProps {
 }
 
 /**
- * Segmented control switching between short and extended report layouts.
+ * Segmented pill control switching between short and extended report layouts.
+ *
+ * Active tab: primary-tinted surface with bold text.
+ * Inactive tab: transparent background with muted text.
  */
 export const ReportToggle = memo(function ReportToggle({ value, onChange }: ReportToggleProps) {
     const ds = useDesignSystem();
     const { t } = useTranslation("reports");
 
     return (
-        <XStack rounded={ds.radii.md} p="$1" gap="$1" width="100%" style={{ backgroundColor: ds.colors.input }}>
+        <XStack
+            rounded={ds.radii.full}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            p="$0.5"
+            gap="$0.5"
+            width="100%"
+            style={{ backgroundColor: ds.colors.input }}
+        >
             {(["short", "extended"] as const).map((mode) => {
                 const isActive = value === mode;
                 return (
@@ -33,18 +44,22 @@ export const ReportToggle = memo(function ReportToggle({ value, onChange }: Repo
                     >
                         <XStack
                             minH={44}
-                            px="$4"
+                            px="$3"
                             rounded={ds.radii.full}
-                            bg={isActive ? ds.colors.surfaceMuted : ds.colors.surface}
                             justify="center"
                             items="center"
+                            style={{
+                                backgroundColor: isActive ? ds.colors.primary : "transparent",
+                                // Subtle shadow only on active segment
+                                boxShadow: isActive ? ds.shadows.accent : undefined,
+                            }}
                         >
                             <Text
-                                color={isActive ? ds.colors.mutedForeground : ds.colors.foreground}
+                                color={isActive ? ds.colors.primaryForeground : ds.colors.mutedForeground}
                                 fontFamily={isActive ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
                                 fontSize={ds.typography.bodyMd.fontSize}
                                 lineHeight={ds.typography.bodyMd.lineHeight}
-                                style={{ textAlign: "center" }}
+                                style={{ textAlign: "center", letterSpacing: isActive ? 0.1 : 0 }}
                             >
                                 {t(`toggle.${mode}`, { ns: "reports" })}
                             </Text>

@@ -3,24 +3,21 @@ import { Text, XStack, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
 import type { AuditScoreTotals } from "lib/audit/types";
 import { formatPercentage } from "lib/audit/score-helpers";
-import { getScaleAccentColor, useDesignSystem } from "lib/design-system";
+import { type DesignSystemTheme, getScaleAccentColor, useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
-import {
-    REPORT_SCORE_LEFT_DATA_COL_WIDTH,
-    REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET,
-    REPORT_SCORE_LABEL_COL_WIDTH,
-    REPORT_SCORE_LEFT_TABLE_WIDTH,
-    REPORT_SCORE_RIGHT_TABLE_WIDTH,
-} from "components/reports/DomainScoreTable";
+import { useReportScoreTableLayout } from "lib/report-table-layout";
 
 export interface DomainScoreBarsProps {
     readonly scoreTotals: AuditScoreTotals | null;
     readonly compact?: boolean;
 }
 
+type MetricKey = "provision" | "diversity" | "challenge" | "sociability" | "play_value" | "usability";
+
 interface MetricConfig {
-    readonly key: "provision" | "diversity" | "challenge" | "sociability" | "play_value" | "usability";
+    readonly key: MetricKey;
     readonly labelKey: string;
+    readonly shortLabelKey?: string;
     readonly value: (totals: AuditScoreTotals) => number;
     readonly max: (totals: AuditScoreTotals) => number;
 }
@@ -29,44 +26,46 @@ const METRICS: readonly MetricConfig[] = [
     {
         key: "provision",
         labelKey: "domain.barProvision",
-        value: (totals) => totals.provision_total,
-        max: (totals) => totals.provision_total_max,
+        shortLabelKey: "domain.barProvisionShort",
+        value: (t) => t.provision_total,
+        max: (t) => t.provision_total_max,
     },
     {
         key: "diversity",
         labelKey: "domain.barDiversity",
-        value: (totals) => totals.diversity_total,
-        max: (totals) => totals.diversity_total_max,
+        shortLabelKey: "domain.barDiversityShort",
+        value: (t) => t.diversity_total,
+        max: (t) => t.diversity_total_max,
     },
     {
         key: "challenge",
         labelKey: "domain.barChallenge",
-        value: (totals) => totals.challenge_total,
-        max: (totals) => totals.challenge_total_max,
+        shortLabelKey: "domain.barChallengeShort",
+        value: (t) => t.challenge_total,
+        max: (t) => t.challenge_total_max,
     },
     {
         key: "sociability",
         labelKey: "domain.barSociability",
-        value: (totals) => totals.sociability_total,
-        max: (totals) => totals.sociability_total_max,
+        shortLabelKey: "domain.barSociabilityShort",
+        value: (t) => t.sociability_total,
+        max: (t) => t.sociability_total_max,
     },
     {
         key: "play_value",
         labelKey: "domain.barPlayValue",
-        value: (totals) => totals.play_value_total,
-        max: (totals) => totals.play_value_total_max,
+        value: (t) => t.play_value_total,
+        max: (t) => t.play_value_total_max,
     },
     {
         key: "usability",
         labelKey: "domain.barUsability",
-        value: (totals) => totals.usability_total,
-        max: (totals) => totals.usability_total_max,
+        value: (t) => t.usability_total,
+        max: (t) => t.usability_total_max,
     },
 ];
 
-/** Scale-column bars (provision → sociability); mobile row 1. */
 const SCALE_BAR_METRICS = METRICS.slice(0, 4);
-/** Play value + usability; mobile row 2. */
 const PVU_BAR_METRICS = METRICS.slice(4, 6);
 
 interface LegendItem {
@@ -75,133 +74,95 @@ interface LegendItem {
     readonly color: string;
 }
 
-function resolveMetricLabel(
-    metric: MetricConfig,
-    translate: (key: string) => string,
-    useShortScaleLabels: boolean,
-): string {
-    if (!useShortScaleLabels) {
-        return translate(metric.labelKey);
-    }
-    switch (metric.key) {
-        case "provision":
-            return translate("domain.barProvisionShort");
-        case "diversity":
-            return translate("domain.barDiversityShort");
-        case "challenge":
-            return translate("domain.barChallengeShort");
-        case "sociability":
-            return translate("domain.barSociabilityShort");
-        default:
-            return translate(metric.labelKey);
-    }
-}
-
-function getBarColorForPercentage(
-    pct: number | null,
-    colors: {
-        readonly border: string;
-        readonly success: string;
-        readonly warning: string;
-        readonly danger: string;
-    },
-): string {
-    if (pct === null) {
-        return colors.border;
-    }
-    if (pct >= 85) {
-        return colors.success;
-    }
-    if (pct >= 60) {
-        return colors.warning;
-    }
-    return colors.danger;
+/**
+ * Map a metric key to its semantic accent color from the design system.
+ * Scale metrics use their dedicated construct colors; construct metrics use
+ * warning (play value) and primary (usability).
+ */
+function getMetricAccentColor(key: MetricKey, ds: DesignSystemTheme): string {
+    if (key === "play_value") return ds.colors.warning;
+    if (key === "usability") return ds.colors.primary;
+    return getScaleAccentColor(key as Parameters<typeof getScaleAccentColor>[0], ds.colors);
 }
 
 /**
  * Six vertical score bars for one domain or overall totals.
- * On phone, scale scores and PV/U scores render as two rows; tablets keep one row.
+ *
+ * Phone: two rows (scale scores + construct scores)
+ * Tablet: single aligned row matched to DomainScoreTable column widths
  */
 export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, compact = true }: DomainScoreBarsProps) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const tableLayout = useReportScoreTableLayout();
     const { t } = useTranslation("reports");
-    const trackHeight = compact && !layout.isTablet ? 120 : 160;
-    const barWidth = layout.isTablet ? 44 : 40;
 
-    const colorTokens = useMemo(
-        () => ({
-            border: ds.colors.border,
-            success: ds.colors.success,
-            warning: ds.colors.warning,
-            danger: ds.colors.danger,
-        }),
-        [ds.colors.border, ds.colors.danger, ds.colors.success, ds.colors.warning],
+    // Fluid bar dimensions — scale up for tablets and wide tablets
+    const trackHeight = layout.isWideTablet ? 196 : layout.isTablet ? 172 : compact ? 128 : 156;
+    const barWidth = layout.isWideTablet ? 52 : layout.isTablet ? 46 : 40;
+
+    const leftLegendItems = useMemo<readonly LegendItem[]>(
+        () =>
+            (["provision", "diversity", "challenge", "sociability"] as const).map((key) => {
+                const metric = METRICS.find((m) => m.key === key)!;
+                return {
+                    shortLabel: t(metric.shortLabelKey ?? metric.labelKey, { ns: "reports" }),
+                    fullLabel: t(metric.labelKey, { ns: "reports" }),
+                    color: getMetricAccentColor(key, ds),
+                };
+            }),
+        [ds, t],
     );
 
-    const leftLegendItems = useMemo<readonly LegendItem[]>(() => {
-        return [
-            {
-                shortLabel: t("domain.barProvisionShort", { ns: "reports" }),
-                fullLabel: t("domain.barProvision", { ns: "reports" }),
-                color: getScaleAccentColor("provision", ds.colors),
-            },
-            {
-                shortLabel: t("domain.barDiversityShort", { ns: "reports" }),
-                fullLabel: t("domain.barDiversity", { ns: "reports" }),
-                color: getScaleAccentColor("diversity", ds.colors),
-            },
-            {
-                shortLabel: t("domain.barChallengeShort", { ns: "reports" }),
-                fullLabel: t("domain.barChallenge", { ns: "reports" }),
-                color: getScaleAccentColor("challenge", ds.colors),
-            },
-            {
-                shortLabel: t("domain.barSociabilityShort", { ns: "reports" }),
-                fullLabel: t("domain.barSociability", { ns: "reports" }),
-                color: getScaleAccentColor("sociability", ds.colors),
-            },
-        ];
-    }, [ds.colors, t]);
+    const rightLegendItems = useMemo<readonly LegendItem[]>(
+        () =>
+            (["play_value", "usability"] as const).map((key) => {
+                const metric = METRICS.find((m) => m.key === key)!;
+                return {
+                    shortLabel: t(metric.labelKey, { ns: "reports" }),
+                    fullLabel: t(metric.labelKey, { ns: "reports" }),
+                    color: getMetricAccentColor(key, ds),
+                };
+            }),
+        [ds, t],
+    );
 
-    const rightLegendItems = useMemo<readonly LegendItem[]>(() => {
-        return [
-            {
-                shortLabel: t("domain.barPlayValue", { ns: "reports" }),
-                fullLabel: t("domain.barPlayValue", { ns: "reports" }),
-                color: ds.colors.warning,
-            },
-            {
-                shortLabel: t("domain.barUsability", { ns: "reports" }),
-                fullLabel: t("domain.barUsability", { ns: "reports" }),
-                color: ds.colors.primary,
-            },
-        ];
-    }, [ds.colors.primary, ds.colors.warning, t]);
-
-    const renderMetricBar = (metric: MetricConfig, cellWidth?: number) => {
-        const totals = scoreTotals;
-        const value = totals === null ? 0 : metric.value(totals);
-        const maximum = totals === null ? 0 : metric.max(totals);
-        const isNaMetric = totals === null || maximum <= 0;
-        const pct = isNaMetric ? null : (value / maximum) * 100;
-        const fillHeight = isNaMetric ? 0 : Math.round(Math.min(1, value / maximum) * trackHeight * 100) / 100;
-        const barColor = getBarColorForPercentage(isNaMetric ? null : pct, colorTokens);
-        const pctLabel = isNaMetric ? t("extendedTable.notApplicable", { ns: "reports" }) : `${Math.round(pct ?? 0)}%`;
-        const a11yPct = isNaMetric
-            ? t("detail.metricNotAssessed", { ns: "reports" })
-            : formatPercentage(value, maximum);
-        const label = resolveMetricLabel(metric, (key) => t(key, { ns: "reports" }), layout.isTablet);
+    const renderBar = (metric: MetricConfig, cellWidth?: number) => {
+        const value = scoreTotals === null ? 0 : metric.value(scoreTotals);
+        const maximum = scoreTotals === null ? 0 : metric.max(scoreTotals);
+        const isNa = scoreTotals === null || maximum <= 0;
+        const pct = isNa ? null : (value / maximum) * 100;
+        const fillRatio = isNa ? 0 : Math.min(1, value / maximum);
+        const fillHeight = Math.round(fillRatio * trackHeight * 100) / 100;
+        const barColor = getMetricAccentColor(metric.key, ds);
+        const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${Math.round(pct ?? 0)}%`;
+        const shortLabel =
+            metric.shortLabelKey !== undefined
+                ? t(metric.shortLabelKey, { ns: "reports" })
+                : t(metric.labelKey, { ns: "reports" });
+        const a11yLabel = isNa ? t("detail.metricNotAssessed", { ns: "reports" }) : formatPercentage(value, maximum);
 
         return (
             <YStack
-                key={metric.labelKey}
+                key={metric.key}
                 items="center"
-                gap="$1"
+                gap="$1.5"
                 flex={cellWidth === undefined ? 1 : undefined}
                 width={cellWidth}
-                style={cellWidth === undefined ? { maxWidth: barWidth + 16 } : undefined}
+                style={cellWidth === undefined ? { maxWidth: barWidth + 20 } : undefined}
             >
+                {/* Percentage label above bar */}
+                <Text
+                    color={isNa ? ds.colors.mutedForeground : ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.bodyXs.fontSize}
+                    style={{ textAlign: "center" }}
+                    numberOfLines={1}
+                >
+                    {pctLabel}
+                </Text>
+
+                {/* Bar track */}
                 <YStack
                     height={trackHeight}
                     width={barWidth}
@@ -211,38 +172,32 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
                     overflow="hidden"
                     justify="flex-end"
                     accessibilityRole="progressbar"
-                    accessibilityLabel={`${label}: ${a11yPct}`}
+                    accessibilityLabel={`${t(metric.labelKey, { ns: "reports" })}: ${a11yLabel}`}
+                    style={{ backgroundColor: ds.colors.input }}
                 >
-                    {isNaMetric ? (
-                        <YStack flex={1} justify="center" items="center" width="100%">
-                            <Text
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.bodyXs.fontSize}
-                                style={{ textAlign: "center" }}
-                            >
-                                {pctLabel}
-                            </Text>
-                        </YStack>
-                    ) : (
+                    {!isNa && fillHeight > 0 ? (
                         <YStack
                             height={fillHeight}
                             width="100%"
-                            justify="flex-end"
-                            p="$0.5"
-                            style={{ backgroundColor: barColor }}
-                        >
+                            style={{
+                                backgroundColor: barColor,
+                                opacity: 0.9,
+                            }}
+                        />
+                    ) : isNa ? (
+                        <YStack flex={1} justify="center" items="center" px="$0.5">
                             <Text
-                                color={ds.colors.primaryForeground}
-                                fontFamily={ds.fonts.bodyBold}
+                                color={ds.colors.mutedForeground}
                                 fontSize={ds.typography.bodyXs.fontSize}
                                 style={{ textAlign: "center" }}
                             >
-                                {pctLabel}
+                                —
                             </Text>
                         </YStack>
-                    )}
+                    ) : null}
                 </YStack>
+
+                {/* Metric label below bar */}
                 <Text
                     color={ds.colors.mutedForeground}
                     fontSize={ds.typography.bodyXs.fontSize}
@@ -251,92 +206,98 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
                     width="100%"
                     style={{ textAlign: "center" }}
                 >
-                    {label}
+                    {shortLabel}
                 </Text>
             </YStack>
         );
     };
 
-    const useTwoRows = compact && !layout.isTablet;
-
-    if (useTwoRows) {
-        return (
-            <YStack gap="$4" width="100%">
-                <YStack gap="$1">
+    const renderLegend = (items: readonly LegendItem[]) => (
+        <YStack width={tableLayout.labelColWidth} justify="flex-end" pb="$1" gap="$1.5">
+            {items.map((item) => (
+                <XStack key={item.shortLabel} items="center" gap="$1.5">
+                    <YStack
+                        width={8}
+                        height={8}
+                        rounded={9999}
+                        style={{ backgroundColor: item.color, flexShrink: 0 }}
+                    />
                     <Text
                         color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
+                        fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyXs.fontSize}
+                        numberOfLines={1}
+                        style={{ flexShrink: 1 }}
                     >
-                        {t("domain.barRowScaleScores", { ns: "reports" })}
+                        {`${item.shortLabel} = ${item.fullLabel}`}
                     </Text>
-                    <XStack justify="space-evenly" items="flex-end" gap="$2" width="100%">
-                        {SCALE_BAR_METRICS.map((m) => renderMetricBar(m))}
-                    </XStack>
-                </YStack>
-                <YStack gap="$1">
-                    <Text
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.bodyXs.fontSize}
-                    >
-                        {t("domain.barRowPlayValueUsability", { ns: "reports" })}
-                    </Text>
-                    <XStack justify="space-evenly" items="flex-end" gap="$2" width="100%">
-                        {PVU_BAR_METRICS.map((m) => renderMetricBar(m))}
-                    </XStack>
-                </YStack>
-            </YStack>
-        );
-    }
+                </XStack>
+            ))}
+        </YStack>
+    );
 
+    // ── Tablet layout: single row with legend columns aligned to score table ──
     if (layout.isTablet) {
-        const renderLegend = (items: readonly LegendItem[]) => (
-            <YStack width={REPORT_SCORE_LABEL_COL_WIDTH} justify="flex-end" pb="$1" gap="$1.5">
-                {items.map((item) => (
-                    <XStack key={`${item.shortLabel}-${item.fullLabel}`} items="center" gap="$1.5">
-                        <YStack width={8} height={8} rounded={9999} style={{ backgroundColor: item.color }} />
-                        <Text
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyXs.fontSize}
-                            numberOfLines={1}
-                            style={{ flexShrink: 1 }}
-                        >
-                            {`${item.shortLabel} = ${item.fullLabel}`}
-                        </Text>
-                    </XStack>
-                ))}
-            </YStack>
-        );
-
         return (
             <XStack
                 gap="$2"
                 items="flex-end"
-                style={{ minWidth: REPORT_SCORE_LEFT_TABLE_WIDTH + REPORT_SCORE_RIGHT_TABLE_WIDTH + 8 }}
+                style={{ minWidth: tableLayout.leftTableWidth + tableLayout.rightTableWidth + 8 }}
             >
-                <YStack width={REPORT_SCORE_LEFT_TABLE_WIDTH} gap="$1" items="flex-start">
-                    <XStack width={REPORT_SCORE_LEFT_TABLE_WIDTH} items="flex-end">
+                <YStack width={tableLayout.leftTableWidth} gap="$1" items="flex-start">
+                    <XStack width={tableLayout.leftTableWidth} items="flex-end">
                         {renderLegend(leftLegendItems)}
-                        {SCALE_BAR_METRICS.map((metric) => renderMetricBar(metric, REPORT_SCORE_LEFT_DATA_COL_WIDTH))}
+                        {SCALE_BAR_METRICS.map((m) => renderBar(m, tableLayout.leftDataColWidth))}
                     </XStack>
                 </YStack>
-                <YStack width={REPORT_SCORE_RIGHT_TABLE_WIDTH} gap="$1" items="flex-start">
-                    <XStack width={REPORT_SCORE_RIGHT_TABLE_WIDTH} items="flex-end">
+                <YStack width={tableLayout.rightTableWidth} gap="$1" items="flex-start">
+                    <XStack width={tableLayout.rightTableWidth} items="flex-end">
                         {renderLegend(rightLegendItems)}
-                        {PVU_BAR_METRICS.map((metric) =>
-                            renderMetricBar(metric, REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET),
-                        )}
+                        {PVU_BAR_METRICS.map((m) => renderBar(m, tableLayout.rightDataColWidth))}
                     </XStack>
                 </YStack>
             </XStack>
         );
     }
 
+    // ── Phone compact: two labeled rows ──
+    if (compact) {
+        return (
+            <YStack gap="$4" width="100%">
+                <YStack gap="$1.5">
+                    <Text
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.bodyXs.fontSize}
+                        style={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                    >
+                        {t("domain.barRowScaleScores", { ns: "reports" })}
+                    </Text>
+                    <XStack justify="space-evenly" items="flex-end" gap="$2" width="100%">
+                        {SCALE_BAR_METRICS.map((m) => renderBar(m))}
+                    </XStack>
+                </YStack>
+                <YStack gap="$1.5">
+                    <Text
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.bodyXs.fontSize}
+                        style={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                    >
+                        {t("domain.barRowPlayValueUsability", { ns: "reports" })}
+                    </Text>
+                    <XStack justify="space-evenly" items="flex-end" gap="$2" width="100%">
+                        {PVU_BAR_METRICS.map((m) => renderBar(m))}
+                    </XStack>
+                </YStack>
+            </YStack>
+        );
+    }
+
+    // ── Phone non-compact: single row with all six bars ──
     return (
         <XStack justify="space-evenly" items="flex-end" gap="$2" width="100%">
-            {METRICS.map((metric) => renderMetricBar(metric))}
+            {METRICS.map((m) => renderBar(m))}
         </XStack>
     );
 });
