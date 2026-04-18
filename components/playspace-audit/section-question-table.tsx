@@ -12,11 +12,7 @@ import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/des
 import { getActiveScaleKeysForQuestion } from "lib/audit/selectors";
 import type { InstrumentQuestion, QuestionResponsePayload, QuestionScale, ScaleKey } from "lib/audit/types";
 import { useResponsiveLayout } from "lib/responsive-layout";
-
-interface PromptSegment {
-    readonly text: string;
-    readonly bold: boolean;
-}
+import { formatQuestionKeyForDisplay, parsePromptSegments } from "lib/audit/prompt-segments";
 
 interface QuestionTableRow {
     readonly question: InstrumentQuestion;
@@ -215,7 +211,7 @@ function QuestionPromptCell({ question, width }: Readonly<QuestionPromptCellProp
                 textTransform="uppercase"
                 letterSpacing={1.1}
             >
-                {formatQuestionKey(question.question_key)}
+                {formatQuestionKeyForDisplay(question.question_key)}
             </Text>
             <Text
                 color={ds.colors.foreground}
@@ -379,39 +375,12 @@ function EmptyScaleCell({ width, text, showTrailingBorder }: Readonly<EmptyScale
 }
 
 /**
- * Parse `**bold**` markers into prompt segments.
- */
-function parsePromptSegments(raw: string): PromptSegment[] {
-    const segments: PromptSegment[] = [];
-    const parts = raw.split("**");
-
-    for (let index = 0; index < parts.length; index += 1) {
-        const part = parts[index] ?? "";
-        if (part.length === 0) {
-            continue;
-        }
-
-        segments.push({ text: part, bold: index % 2 === 1 });
-    }
-
-    return segments;
-}
-
-/**
  * Resolve the ordered scale columns that should appear for this section.
  */
 function getVisibleScaleKeys(rows: readonly QuestionTableRow[]): ScaleKey[] {
     return SCALE_COLUMN_ORDER.filter((scaleKey) => {
         return rows.some((row) => row.question.scales.some((scale) => scale.key === scaleKey));
     });
-}
-
-/**
- * Convert raw instrument question keys into a human-readable audit label.
- */
-function formatQuestionKey(questionKey: string): string {
-    const sections = questionKey.slice(2).split("_"); // Remove "q_" prefix
-    return `Q ${sections.map((section) => section.toUpperCase()).join(".")}`;
 }
 
 /**

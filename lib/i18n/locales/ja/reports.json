@@ -35,6 +35,7 @@
         "startedAt": "開始",
         "status": "ステータス",
         "submittedAt": "完了",
+        "scrollToTop": "先頭へ",
         "unavailableMessage": "この監査レポートは現在利用できません。",
         "unavailableTitle": "監査が見つかりません",
         "usabilityCardLabel": "ユーザビリティ"
@@ -68,5 +69,59 @@
     "subtitle": "割り当てられた場所の監査結果を確認します。",
     "title": "Playspace スコアリング",
     "topScoringPlace": "最高スコアの場所",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "toggle": {
+        "short": "簡易",
+        "extended": "詳細"
+    },
+    "domain": {
+        "overallScoresTitle": "総合スコア",
+        "bestWorstTitle": "最高・最低スコア",
+        "auditorNotesLabel": "監査員コメント / メモ",
+        "noNotesPlaceholder": "このドメインにはメモが記録されていません。",
+        "scoreAchievedLabel": "達成スコア",
+        "maxScoreLabel": "最大スコア",
+        "itemsContributingLabel": "寄与項目数",
+        "barProvision": "設備",
+        "barProvisionShort": "Prov",
+        "barDiversity": "多様性",
+        "barDiversityShort": "Div",
+        "barChallenge": "チャレンジ",
+        "barChallengeShort": "Chal",
+        "barSociability": "社会性サポート",
+        "barSociabilityShort": "Soc",
+        "barPlayValue": "プレイ価値",
+        "barUsability": "使いやすさ",
+        "scaleLegend": "Legend: Chal = Challenge Opportunities, Soc = Social Support",
+        "barRowScaleScores": "スケールスコア",
+        "barRowPlayValueUsability": "プレイバリューと使いやすさ",
+        "expandAll": "すべて展開",
+        "collapseAll": "すべて折りたたむ",
+        "expandSection": "セクションを展開",
+        "collapseSection": "セクションを折りたたむ"
+    },
+    "extendedTable": {
+        "columnQuestionId": "項目ID",
+        "columnItems": "項目",
+        "columnProvision": "設備",
+        "columnDiversity": "多様性",
+        "columnChallenge": "チャレンジ",
+        "columnSociability": "社会的支援",
+        "columnPlayValue": "プレイ価値",
+        "columnUsability": "使いやすさ",
+        "scoreAchieved": "達成スコア: {{score}}",
+        "maxScore": "最大スコア: {{max}}",
+        "notApplicable": "該当なし"
+    },
+    "bestWorst": {
+        "bestScored": "最高スコア",
+        "worstScored": "最低スコア",
+        "insufficientData": "データが不足しています（最高・最低の比較には少なくとも2つのドメインが必要です）。",
+        "constructProvision": "設備",
+        "constructDiversity": "多様性",
+        "constructChallenge": "挑戦的な機会",
+        "constructSociability": "社会的支援",
+        "constructPlayValue": "プレイ価値",
+        "constructUsability": "使いやすさ"
+    }
 }

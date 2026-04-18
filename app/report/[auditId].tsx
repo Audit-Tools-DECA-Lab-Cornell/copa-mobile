@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, ScrollView, type LayoutChangeEvent } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useToastController } from "@tamagui/toast";
-import { FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
+import { ChevronUp, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { type ColorTokens, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { ActionButton } from "components/ui/action-button";
+import { ExtendedReportContent } from "components/reports/ExtendedReportContent";
+import { ReportToggle } from "components/reports/ReportToggle";
+import { ShortReportContent } from "components/reports/ShortReportContent";
 import { StatCard } from "components/ui/stat-card";
+import { buildDomainReportRows, countUniqueScaledQuestionsWithDomains } from "lib/audit/report-helpers";
 import { fetchAuditSession } from "lib/audit/api";
 import { shareSingleAuditExport, type AuditExportFormat } from "lib/audit/export";
 import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
@@ -526,6 +530,8 @@ export default function AuditReportDetailScreen() {
     const [isLoadingAudit, setIsLoadingAudit] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [activeExportKey, setActiveExportKey] = useState<string | null>(null);
+    const [reportMode, setReportMode] = useState<"short" | "extended">("short");
+    const [reportScrollY, setReportScrollY] = useState(0);
     const auditId = readSingleParam(params.auditId);
     const scrollViewRef = useRef<ScrollView | null>(null);
     const sectionOffsetsRef = useRef<Record<string, number>>({});
@@ -633,6 +639,22 @@ export default function AuditReportDetailScreen() {
         }, []);
     }, [auditSession, instrument]);
 
+    const isSubmitted = auditSession?.status === "SUBMITTED";
+
+    const domainRows = useMemo(() => {
+        if (auditSession === null || instrument === null) {
+            return [];
+        }
+        return buildDomainReportRows(auditSession, instrument);
+    }, [auditSession, instrument]);
+
+    const overallItemCount = useMemo(() => {
+        if (instrument === null) {
+            return 0;
+        }
+        return countUniqueScaledQuestionsWithDomains(instrument);
+    }, [instrument]);
+
     const showExportSuccess = useCallback(
         (fileName: string) => {
             toast.show(t("exportReadyTitle", { ns: "reports" }), {
@@ -699,7 +721,7 @@ export default function AuditReportDetailScreen() {
                 setActiveExportKey((currentValue) => (currentValue === exportKey ? null : currentValue));
             }
         },
-        [cachedAudit, instrument, place, session, showExportError, showExportSuccess, t],
+        [cachedAudit, instrument, place, session, showExportError, showExportSuccess, t, ds.colors],
     );
 
     const scrollReportDetailToOffset = useCallback((offset: number) => {
@@ -724,6 +746,8 @@ export default function AuditReportDetailScreen() {
     });
 
     const title = place?.place_name ?? auditSession?.place_name ?? t("detail.screenTitle", { ns: "reports" });
+
+    const showScrollToTopButton = isSubmitted && reportScrollY > 280;
 
     return (
         <>
@@ -774,123 +798,24 @@ export default function AuditReportDetailScreen() {
                     isLoading={errorMessage === null && (isLoadingAudit || isLoadingPlaces)}
                 />
             ) : (
-                <ScrollView
-                    ref={scrollViewRef}
-                    contentInsetAdjustmentBehavior="automatic"
-                    style={{ backgroundColor: ds.colors.background }}
-                    contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                        bottomPadding: 112,
-                        gap: layout.sectionGap,
-                        includeTopPadding: false,
-                    })}
-                >
-                    <AuditHeader auditSession={auditSession} place={place} />
+                <View style={{ flex: 1, backgroundColor: ds.colors.background }}>
+                    <ScrollView
+                        ref={scrollViewRef}
+                        contentInsetAdjustmentBehavior="automatic"
+                        style={{ backgroundColor: ds.colors.background }}
+                        contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                            bottomPadding: 112,
+                            gap: layout.sectionGap,
+                            includeTopPadding: false,
+                        })}
+                        onScroll={(event) => {
+                            setReportScrollY(event.nativeEvent.contentOffset.y);
+                        }}
+                        scrollEventThrottle={16}
+                    >
+                        <AuditHeader auditSession={auditSession} place={place} />
 
-                    {layout.isTablet ? (
-                        <XStack gap={layout.twoPaneGap} items="flex-start">
-                            <YStack flex={1} gap="$3">
-                                <AuditMetrics auditSession={auditSession} />
-                                <SectionNavigatorCard sectionRows={sectionRows} onSectionPress={scrollToSection} />
-                                <SectionBreakdownCard
-                                    sectionRows={sectionRows}
-                                    scoreSummaryLabels={scoreSummaryLabels}
-                                    onSectionLayout={handleSectionLayout}
-                                />
-                            </YStack>
-
-                            <YStack width={layout.supportRailWidth} gap="$3">
-                                <SurfaceCard>
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.titleMd.fontSize}
-                                    >
-                                        {t("detail.auditMetadata", { ns: "reports" })}
-                                    </Text>
-                                    <MetadataRow
-                                        label={t("detail.auditCode", { ns: "reports" })}
-                                        value={auditSession.audit_code}
-                                        selectable
-                                        isCode
-                                    />
-                                    <MetadataRow
-                                        label={t("detail.status", { ns: "reports" })}
-                                        value={getPlaceStatusLabel(
-                                            derivePlaceStatus(place?.audit_status ?? auditSession.status),
-                                            t,
-                                        )}
-                                    />
-                                    {place === undefined ? null : (
-                                        <MetadataRow
-                                            label={t("detail.project", { ns: "reports" })}
-                                            value={place.project_name}
-                                        />
-                                    )}
-                                    <MetadataRow
-                                        label={t("detail.startedAt", { ns: "reports" })}
-                                        value={formatDateTime(auditSession.started_at)}
-                                    />
-                                    <MetadataRow
-                                        label={t("detail.submittedAt", { ns: "reports" })}
-                                        value={
-                                            auditSession.submitted_at === null
-                                                ? t("filters.notScored", { ns: "common" })
-                                                : formatDateTime(auditSession.submitted_at)
-                                        }
-                                    />
-                                    <MetadataRow
-                                        label={t("detail.progress", { ns: "reports" })}
-                                        value={`${auditSession.progress.answered_visible_questions}/${auditSession.progress.total_visible_questions}`}
-                                    />
-                                </SurfaceCard>
-
-                                {place === undefined ? null : (
-                                    <SurfaceCard>
-                                        <XStack items="center" gap="$2">
-                                            <FileBarChart size={16} color={ds.colors.primary} />
-                                            <Text
-                                                color={ds.colors.foreground}
-                                                fontFamily={ds.fonts.bodyBold}
-                                                fontSize={ds.typography.titleMd.fontSize}
-                                            >
-                                                {t("detail.exportThisAudit", { ns: "reports" })}
-                                            </Text>
-                                        </XStack>
-                                        <YStack gap="$2" mt="$1">
-                                            <ActionButton
-                                                label={t("exportPdf", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("pdf").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:pdf`}
-                                            />
-                                            <ActionButton
-                                                label={t("exportCsv", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("csv").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:csv`}
-                                            />
-                                            <ActionButton
-                                                label={t("exportExcel", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("xlsx").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
-                                            />
-                                        </YStack>
-                                    </SurfaceCard>
-                                )}
-                            </YStack>
-                        </XStack>
-                    ) : (
                         <YStack gap="$3">
-                            <AuditMetrics auditSession={auditSession} />
-                            <SectionNavigatorCard sectionRows={sectionRows} onSectionPress={scrollToSection} />
-
                             <SurfaceCard>
                                 <Text
                                     color={ds.colors.foreground}
@@ -948,43 +873,123 @@ export default function AuditReportDetailScreen() {
                                             {t("detail.exportThisAudit", { ns: "reports" })}
                                         </Text>
                                     </XStack>
-                                    <YStack gap="$2" mt="$1">
-                                        <ActionButton
-                                            label={t("exportPdf", { ns: "reports" })}
-                                            onPress={() => {
-                                                handleSingleAuditExport("pdf").catch(() => undefined);
-                                            }}
-                                            disabled={activeExportKey !== null}
-                                            isLoading={activeExportKey === `single:${place.place_id}:pdf`}
-                                        />
-                                        <ActionButton
-                                            label={t("exportCsv", { ns: "reports" })}
-                                            onPress={() => {
-                                                handleSingleAuditExport("csv").catch(() => undefined);
-                                            }}
-                                            disabled={activeExportKey !== null}
-                                            isLoading={activeExportKey === `single:${place.place_id}:csv`}
-                                        />
-                                        <ActionButton
-                                            label={t("exportExcel", { ns: "reports" })}
-                                            onPress={() => {
-                                                handleSingleAuditExport("xlsx").catch(() => undefined);
-                                            }}
-                                            disabled={activeExportKey !== null}
-                                            isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
-                                        />
-                                    </YStack>
+                                    {layout.isTablet ? (
+                                        <XStack gap="$2" mt="$1" width="100%">
+                                            <ActionButton
+                                                label={t("exportPdf", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("pdf").catch(() => undefined);
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={activeExportKey === `single:${place.place_id}:pdf`}
+                                            />
+                                            <ActionButton
+                                                label={t("exportCsv", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("csv").catch(() => undefined);
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={activeExportKey === `single:${place.place_id}:csv`}
+                                            />
+                                            <ActionButton
+                                                label={t("exportExcel", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("xlsx").catch(() => undefined);
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
+                                            />
+                                        </XStack>
+                                    ) : (
+                                        <YStack gap="$2" mt="$1">
+                                            <ActionButton
+                                                label={t("exportPdf", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("pdf").catch(() => undefined);
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={activeExportKey === `single:${place.place_id}:pdf`}
+                                            />
+                                            <ActionButton
+                                                label={t("exportCsv", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("csv").catch(() => undefined);
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={activeExportKey === `single:${place.place_id}:csv`}
+                                            />
+                                            <ActionButton
+                                                label={t("exportExcel", { ns: "reports" })}
+                                                onPress={() => {
+                                                    handleSingleAuditExport("xlsx").catch(() => undefined);
+                                                }}
+                                                disabled={activeExportKey !== null}
+                                                isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
+                                            />
+                                        </YStack>
+                                    )}
                                 </SurfaceCard>
                             )}
 
-                            <SectionBreakdownCard
-                                sectionRows={sectionRows}
-                                scoreSummaryLabels={scoreSummaryLabels}
-                                onSectionLayout={handleSectionLayout}
-                            />
+                            <AuditMetrics auditSession={auditSession} />
+                            {isSubmitted ? (
+                                <YStack gap="$2">
+                                    <ReportToggle value={reportMode} onChange={setReportMode} />
+                                    {reportMode === "short" ? (
+                                        <ShortReportContent
+                                            domainRows={domainRows}
+                                            overallScores={auditSession.scores.overall}
+                                            overallItemCount={overallItemCount}
+                                        />
+                                    ) : (
+                                        <ExtendedReportContent
+                                            domainRows={domainRows}
+                                            overallScores={auditSession.scores.overall}
+                                            overallItemCount={overallItemCount}
+                                        />
+                                    )}
+                                </YStack>
+                            ) : (
+                                <YStack gap="$2">
+                                    <SectionNavigatorCard sectionRows={sectionRows} onSectionPress={scrollToSection} />
+                                    <SectionBreakdownCard
+                                        sectionRows={sectionRows}
+                                        scoreSummaryLabels={scoreSummaryLabels}
+                                        onSectionLayout={handleSectionLayout}
+                                    />
+                                </YStack>
+                            )}
                         </YStack>
-                    )}
-                </ScrollView>
+                    </ScrollView>
+                    {showScrollToTopButton ? (
+                        <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel={t("detail.scrollToTop", { ns: "reports" })}
+                            onPress={() => {
+                                scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                            }}
+                            style={{
+                                position: "absolute",
+                                right: 16,
+                                bottom: 96,
+                                zIndex: 40,
+                                elevation: 8,
+                            }}
+                        >
+                            <YStack
+                                width={48}
+                                height={48}
+                                rounded={9999}
+                                bg={ds.colors.primary}
+                                items="center"
+                                justify="center"
+                                style={{ boxShadow: ds.shadows.card }}
+                            >
+                                <ChevronUp size={24} color={ds.colors.primaryForeground} />
+                            </YStack>
+                        </Pressable>
+                    ) : null}
+                </View>
             )}
         </>
     );
@@ -1085,7 +1090,7 @@ function formatMetricMaxHelper(maximum: number | null): string | undefined {
     if (maximum === null || maximum <= 0) {
         return undefined;
     }
-    return `max = ${formatScoreValue(maximum)}`;
+    return `Max score = ${formatScoreValue(maximum)}`;
 }
 
 interface AuditMetricsProps {
@@ -1126,45 +1131,97 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const overallHelperText =
         overall === null || overallMaximum === null || overallMaximum <= 0
             ? undefined
-            : `${t("detail.overallScoreHint", { ns: "reports" })} · max = ${formatScoreValue(overallMaximum)}`;
+            : `${t("detail.overallScoreHint", { ns: "reports" })} \nMax score = ${formatScoreValue(overallMaximum)}`;
+    const summaryCardMinHeight = layout.isTablet
+        ? Math.max(140, layout.summaryCardMinHeight - 18)
+        : layout.summaryCardMinHeight;
 
     return (
         <YStack gap="$3">
             <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleMd.fontSize}>
                 {t("detail.scoreSummaryTitle", { ns: "reports" })}
             </Text>
-            <XStack gap="$3">
-                <StatCard
-                    label={t("detail.overallScore", { ns: "reports" })}
-                    value={overallMetricValue}
-                    accentColor={ds.colors.primary}
-                    helperText={overallHelperText}
-                    minHeight={layout.summaryCardMinHeight}
-                />
-                <StatCard
-                    label={t("detail.playValueCardLabel", { ns: "reports" })}
-                    value={playValueMetricValue}
-                    accentColor={ds.colors.primary}
-                    helperText={overall === null ? undefined : formatMetricMaxHelper(overall.play_value_total_max)}
-                    minHeight={layout.summaryCardMinHeight}
-                />
-            </XStack>
-            <XStack gap="$3">
-                <StatCard
-                    label={t("detail.usabilityCardLabel", { ns: "reports" })}
-                    value={usabilityMetricValue}
-                    accentColor={ds.colors.primary}
-                    helperText={overall === null ? undefined : formatMetricMaxHelper(overall.usability_total_max)}
-                    minHeight={layout.summaryCardMinHeight}
-                />
-                <StatCard
-                    label={t("detail.sociabilityCardLabel", { ns: "reports" })}
-                    value={sociabilityMetricValue}
-                    accentColor={ds.colors.primary}
-                    helperText={overall === null ? undefined : formatMetricMaxHelper(overall.sociability_total_max)}
-                    minHeight={layout.summaryCardMinHeight}
-                />
-            </XStack>
+            {layout.isTablet ? (
+                <XStack gap="$2">
+                    <StatCard
+                        label={t("detail.overallScore", { ns: "reports" })}
+                        value={overallMetricValue}
+                        accentColor={ds.colors.primary}
+                        helperText={overallHelperText}
+                        minHeight={summaryCardMinHeight}
+                        dense={layout.isTablet}
+                    />
+                    <StatCard
+                        label={t("detail.playValueCardLabel", { ns: "reports" })}
+                        value={playValueMetricValue}
+                        accentColor={ds.colors.primary}
+                        helperText={overall === null ? undefined : formatMetricMaxHelper(overall.play_value_total_max)}
+                        minHeight={summaryCardMinHeight}
+                        dense={layout.isTablet}
+                    />
+                    <StatCard
+                        label={t("detail.usabilityCardLabel", { ns: "reports" })}
+                        value={usabilityMetricValue}
+                        accentColor={ds.colors.primary}
+                        helperText={overall === null ? undefined : formatMetricMaxHelper(overall.usability_total_max)}
+                        minHeight={summaryCardMinHeight}
+                        dense={layout.isTablet}
+                    />
+                    <StatCard
+                        label={t("detail.sociabilityCardLabel", { ns: "reports" })}
+                        value={sociabilityMetricValue}
+                        accentColor={ds.colors.primary}
+                        helperText={overall === null ? undefined : formatMetricMaxHelper(overall.sociability_total_max)}
+                        minHeight={summaryCardMinHeight}
+                        dense={layout.isTablet}
+                    />
+                </XStack>
+            ) : (
+                <YStack gap="$2">
+                    <XStack gap="$3">
+                        <StatCard
+                            label={t("detail.overallScore", { ns: "reports" })}
+                            value={overallMetricValue}
+                            accentColor={ds.colors.primary}
+                            helperText={overallHelperText}
+                            minHeight={layout.summaryCardMinHeight}
+                            dense={layout.isTablet}
+                        />
+                        <StatCard
+                            label={t("detail.playValueCardLabel", { ns: "reports" })}
+                            value={playValueMetricValue}
+                            accentColor={ds.colors.primary}
+                            helperText={
+                                overall === null ? undefined : formatMetricMaxHelper(overall.play_value_total_max)
+                            }
+                            minHeight={layout.summaryCardMinHeight}
+                            dense={layout.isTablet}
+                        />
+                    </XStack>
+                    <XStack gap="$3">
+                        <StatCard
+                            label={t("detail.usabilityCardLabel", { ns: "reports" })}
+                            value={usabilityMetricValue}
+                            accentColor={ds.colors.primary}
+                            helperText={
+                                overall === null ? undefined : formatMetricMaxHelper(overall.usability_total_max)
+                            }
+                            minHeight={layout.summaryCardMinHeight}
+                            dense={layout.isTablet}
+                        />
+                        <StatCard
+                            label={t("detail.sociabilityCardLabel", { ns: "reports" })}
+                            value={sociabilityMetricValue}
+                            accentColor={ds.colors.primary}
+                            helperText={
+                                overall === null ? undefined : formatMetricMaxHelper(overall.sociability_total_max)
+                            }
+                            minHeight={layout.summaryCardMinHeight}
+                            dense={layout.isTablet}
+                        />
+                    </XStack>
+                </YStack>
+            )}
         </YStack>
     );
 }
@@ -1184,25 +1241,25 @@ interface MetadataRowProps {
  */
 function MetadataRow({ label, value, selectable = false, isCode = false }: Readonly<MetadataRowProps>) {
     const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
     return (
-        <XStack justify="space-between" items="flex-start" gap="$3">
+        <XStack items="flex-start" gap="$3">
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
                 fontSize={ds.typography.bodySm.fontSize}
-                flex={1}
+                width={140}
+                shrink={0}
             >
                 {label}
             </Paragraph>
             {isCode ? (
-                <YStack flex={1}>
+                <YStack flex={1} style={{ minWidth: 0 }}>
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{
                             flexGrow: 1,
-                            justifyContent: "flex-end",
+                            justifyContent: "flex-start",
                             alignItems: "center",
                         }}
                     >
@@ -1212,11 +1269,7 @@ function MetadataRow({ label, value, selectable = false, isCode = false }: Reado
                             fontFamily={ds.fonts.monoMedium}
                             fontSize={ds.typography.bodySm.fontSize}
                             lineHeight={ds.typography.bodySm.lineHeight}
-                            style={{
-                                minWidth: layout.isTablet ? layout.supportRailWidth - 48 : 0,
-                                textAlign: "right",
-                                alignItems: "center",
-                            }}
+                            style={{ textAlign: "left" }}
                         >
                             {value}
                         </Text>
@@ -1230,7 +1283,7 @@ function MetadataRow({ label, value, selectable = false, isCode = false }: Reado
                     fontSize={ds.typography.bodySm.fontSize}
                     lineHeight={ds.typography.bodySm.lineHeight}
                     flex={1}
-                    style={{ textAlign: "right" }}
+                    style={{ textAlign: "left" }}
                 >
                     {value}
                 </Text>

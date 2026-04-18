@@ -9,6 +9,9 @@ import { loadNotificationsCache, saveNotificationsCache } from "lib/storage/noti
 import { create } from "zustand";
 
 import { useAuthStore } from "stores/auth-store";
+import { createModuleLogger } from "lib/logger";
+
+const log = createModuleLogger("notifications-store");
 
 /**
  * In-app notification list and badge state, with optimistic read updates.
@@ -80,7 +83,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
                 isLoading: false,
             });
         } catch (error: unknown) {
-            console.error("Failed to fetch notifications:", error);
+            log.error(`Failed to fetch notifications: ${error}`);
             const { notifications } = get();
             if (notifications.length > 0) {
                 set({ isLoading: false });
@@ -103,7 +106,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
             const count = await getUnreadCount(session);
             set({ unreadCount: count });
         } catch (error: unknown) {
-            console.error("Failed to refresh unread count:", error);
+            log.error(`Failed to refresh unread count: ${error}`);
         }
     },
 
@@ -133,7 +136,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
         try {
             await markNotificationAsRead(session, notificationId);
         } catch (error: unknown) {
-            console.error("Failed to mark notification as read:", error);
+            log.error(`Failed to mark notification as read: ${error}`);
             set({
                 notifications,
                 unreadCount: notifications.filter((n) => !n.is_read).length,
@@ -159,9 +162,9 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
 
         try {
             const count = await markAllNotificationsAsRead(session);
-            console.log(`Marked ${String(count)} notifications as read`);
+            log.info(`Marked ${String(count)} notifications as read`);
         } catch (error: unknown) {
-            console.error("Failed to mark all notifications as read:", error);
+            log.error(`Failed to mark all notifications as read: ${error}`);
             set({
                 notifications,
                 unreadCount: notifications.filter((n) => !n.is_read).length,

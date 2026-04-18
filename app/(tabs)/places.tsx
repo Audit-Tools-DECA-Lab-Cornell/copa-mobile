@@ -269,84 +269,169 @@ export default function PlacesScreen() {
                 placeholder={t("searchPlaceholder", { ns: "places" })}
             />
 
-            <YStack gap="$2">
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelSm.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    Filters
-                </Paragraph>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <XStack gap="$2">
-                        <FilterChip
-                            label={t("filters.all", { ns: "common" })}
-                            isSelected={statusFilter === "all"}
-                            onPress={() => {
-                                setStatusFilter("all");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("status.inProgress", { ns: "common" })}
-                            isSelected={statusFilter === "in_progress"}
-                            onPress={() => {
-                                setStatusFilter("in_progress");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("status.notStarted", { ns: "common" })}
-                            isSelected={statusFilter === "not_started"}
-                            onPress={() => {
-                                setStatusFilter("not_started");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("status.submitted", { ns: "common" })}
-                            isSelected={statusFilter === "submitted"}
-                            onPress={() => {
-                                setStatusFilter("submitted");
-                            }}
-                        />
-                    </XStack>
-                </ScrollView>
+            {layout.isTablet ? (
+                <XStack gap="$4" items="flex-start">
+                    <YStack flex={1} gap="$2">
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelSm.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            Filters
+                        </Paragraph>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <XStack gap="$2">
+                                <FilterChip
+                                    label={t("filters.all", { ns: "common" })}
+                                    isSelected={statusFilter === "all"}
+                                    onPress={() => {
+                                        setStatusFilter("all");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("status.inProgress", { ns: "common" })}
+                                    isSelected={statusFilter === "in_progress"}
+                                    onPress={() => {
+                                        setStatusFilter("in_progress");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("status.notStarted", { ns: "common" })}
+                                    isSelected={statusFilter === "not_started"}
+                                    onPress={() => {
+                                        setStatusFilter("not_started");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("status.submitted", { ns: "common" })}
+                                    isSelected={statusFilter === "submitted"}
+                                    onPress={() => {
+                                        setStatusFilter("submitted");
+                                    }}
+                                />
+                            </XStack>
+                        </ScrollView>
+                    </YStack>
 
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelSm.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    Sort By
-                </Paragraph>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <XStack gap="$2">
-                        <FilterChip
-                            label={t("sort.recent", { ns: "common" })}
-                            isSelected={sortOption === "recent"}
-                            onPress={() => {
-                                setSortOption("recent");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("sort.progress", { ns: "common" })}
-                            isSelected={sortOption === "progress"}
-                            onPress={() => {
-                                setSortOption("progress");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("sort.name", { ns: "common" })}
-                            isSelected={sortOption === "name"}
-                            onPress={() => {
-                                setSortOption("name");
-                            }}
-                        />
-                    </XStack>
-                </ScrollView>
-            </YStack>
+                    <YStack flex={1} gap="$2">
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelSm.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            Sort By
+                        </Paragraph>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <XStack gap="$2">
+                                <FilterChip
+                                    label={t("sort.recent", { ns: "common" })}
+                                    isSelected={sortOption === "recent"}
+                                    onPress={() => {
+                                        setSortOption("recent");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("sort.progress", { ns: "common" })}
+                                    isSelected={sortOption === "progress"}
+                                    onPress={() => {
+                                        setSortOption("progress");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("sort.name", { ns: "common" })}
+                                    isSelected={sortOption === "name"}
+                                    onPress={() => {
+                                        setSortOption("name");
+                                    }}
+                                />
+                            </XStack>
+                        </ScrollView>
+                    </YStack>
+                </XStack>
+            ) : (
+                <YStack gap="$2">
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        Filters
+                    </Paragraph>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            <FilterChip
+                                label={t("filters.all", { ns: "common" })}
+                                isSelected={statusFilter === "all"}
+                                onPress={() => {
+                                    setStatusFilter("all");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("status.inProgress", { ns: "common" })}
+                                isSelected={statusFilter === "in_progress"}
+                                onPress={() => {
+                                    setStatusFilter("in_progress");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("status.notStarted", { ns: "common" })}
+                                isSelected={statusFilter === "not_started"}
+                                onPress={() => {
+                                    setStatusFilter("not_started");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("status.submitted", { ns: "common" })}
+                                isSelected={statusFilter === "submitted"}
+                                onPress={() => {
+                                    setStatusFilter("submitted");
+                                }}
+                            />
+                        </XStack>
+                    </ScrollView>
+
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        Sort By
+                    </Paragraph>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            <FilterChip
+                                label={t("sort.recent", { ns: "common" })}
+                                isSelected={sortOption === "recent"}
+                                onPress={() => {
+                                    setSortOption("recent");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("sort.progress", { ns: "common" })}
+                                isSelected={sortOption === "progress"}
+                                onPress={() => {
+                                    setSortOption("progress");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("sort.name", { ns: "common" })}
+                                isSelected={sortOption === "name"}
+                                onPress={() => {
+                                    setSortOption("name");
+                                }}
+                            />
+                        </XStack>
+                    </ScrollView>
+                </YStack>
+            )}
         </YStack>
     );
 

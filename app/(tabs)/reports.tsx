@@ -6,7 +6,7 @@ import { CollapsibleCard } from "components/ui/collapsible-card";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/audit/export";
 import { buildAuditExportPreview, shareBulkAuditExport } from "lib/audit/export";
 import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
@@ -790,7 +790,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
             accessibilityRole="button"
             onPress={() => {
                 if (place.audit_id !== null) {
-                    router.push(`/report/${place.audit_id}`);
+                    router.push(`/report/${place.audit_id}` as Href);
                 }
             }}
             style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1, flex: 1 })}
