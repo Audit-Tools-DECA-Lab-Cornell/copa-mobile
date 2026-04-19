@@ -142,7 +142,7 @@ function ScoreSubTable({
     const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
 
-    const LabelCell = ({ text, borderBottom, isLast }: { text: string; borderBottom?: boolean; isLast?: boolean }) => (
+    const LabelCell = ({ text, borderBottom }: { text: string; borderBottom?: boolean }) => (
         <YStack
             width={labelColWidth}
             p="$2"
@@ -308,5 +308,3 @@ export const DomainScoreTable = memo(function DomainScoreTable({ scoreTotals, it
         </YStack>
     );
 });
-
-const RIGHT_COLUMNS_LENGTH = RIGHT_COLUMNS.length;

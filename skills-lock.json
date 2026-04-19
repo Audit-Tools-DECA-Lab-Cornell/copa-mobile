@@ -36,6 +36,11 @@
             "sourceType": "github",
             "computedHash": "f9a0f18d522b307981b6f188b8501c9c9326adeb8aca5b46b679731dc69681ae"
         },
+        "responsiveness-check": {
+            "source": "jezweb/claude-skills",
+            "sourceType": "github",
+            "computedHash": "7b7e74472ecdfb8fa1b2a5d00af7c6caa4a1969e5f38367b314e13e6a77700de"
+        },
         "tamagui": {
             "source": "tamagui/tamagui",
             "sourceType": "github",
