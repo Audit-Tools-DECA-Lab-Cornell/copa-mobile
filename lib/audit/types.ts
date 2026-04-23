@@ -12,6 +12,14 @@ export const scaleKeySchema = z.enum(["provision", "diversity", "sociability", "
 export const preAuditInputTypeSchema = z.enum(["single_select", "multi_select", "auto_timestamp"]);
 export const preAuditPageKeySchema = z.enum(["audit_info", "space_setup"]);
 export const questionTypeSchema = z.enum(["scaled", "checklist"]);
+export const playspaceTypeSchema = z.enum([
+    "Public Playspace",
+    "Pre-School Playspace",
+    "Nature Playspace",
+    "Neighborhood Playspace",
+    "Waterfront Playspace",
+    "School Playspace",
+]);
 
 export const choiceOptionSchema = z.object({
     key: z.string().min(1),
@@ -184,7 +192,7 @@ const auditSessionPayloadSchema = z.object({
     project_name: z.string().min(1),
     place_id: z.uuid(),
     place_name: z.string().min(1),
-    place_type: z.string().nullable(),
+    place_type: playspaceTypeSchema.nullable(),
     allowed_execution_modes: z.array(executionModeSchema),
     selected_execution_mode: executionModeSchema.nullable(),
     status: auditStatusSchema,
@@ -353,6 +361,7 @@ export type ScaleKey = z.infer<typeof scaleKeySchema>;
 export type PreAuditInputType = z.infer<typeof preAuditInputTypeSchema>;
 export type PreAuditPageKey = z.infer<typeof preAuditPageKeySchema>;
 export type QuestionType = z.infer<typeof questionTypeSchema>;
+export type PlayspaceType = z.infer<typeof playspaceTypeSchema>;
 export type ChoiceOption = z.infer<typeof choiceOptionSchema>;
 export type ScaleOption = z.infer<typeof scaleOptionSchema>;
 export type ScaleDefinition = z.infer<typeof scaleDefinitionSchema>;

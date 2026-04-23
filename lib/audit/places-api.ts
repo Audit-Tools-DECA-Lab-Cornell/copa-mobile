@@ -11,6 +11,18 @@ import type { PaginatedResponse } from "lib/audit/types";
 const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
 
 /**
+ * Playspace types returned by the backend.
+ */
+const playspaceTypeSchema = z.enum([
+    "Public Playspace",
+    "Pre-School Playspace",
+    "Nature Playspace",
+    "Neighborhood Playspace",
+    "Waterfront Playspace",
+    "School Playspace",
+]);
+
+/**
  * Accept coordinates when present while remaining backward compatible with
  * older payloads until the mobile client and backend ship together.
  */
@@ -27,7 +39,7 @@ const nullableCoordinateSchema = z
 const auditorPlaceSchema = z.object({
     place_id: z.uuid(),
     place_name: z.string(),
-    place_type: z.string().nullable(),
+    place_type: playspaceTypeSchema.nullable(),
     project_id: z.uuid(),
     project_name: z.string(),
     city: z.string().nullable(),
