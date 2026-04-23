@@ -94,7 +94,7 @@ This replaces the older custom audit persistence path and gives the app a clear 
 - Start or resume an audit for an assigned place
 - Select or inherit execution mode: `audit`, `survey`, or `both`
 - Complete pre-audit questions
-- Answer section questions with quantity-gated follow-up scales
+- Answer section questions with provision-gated follow-up scales
 - Add section notes
 - Auto-save locally and resume later
 - Submit only when visible questions and pre-audit are complete
@@ -193,7 +193,7 @@ Score displays use **raw total buckets**, not percent summaries:
 | Type             | Fields                                                       |
 | ---------------- | ------------------------------------------------------------ |
 | Construct totals | `play_value_total` · `usability_total` · `sociability_total` |
-| Column totals    | `quantity_total` · `diversity_total` · `challenge_total`     |
+| Column totals    | `provision_total` · `diversity_total` · `challenge_total`    |
 | Compact labels   | `PV` · `U` · `S` · `Q` · `D` · `C`                           |
 
 > **Fallback:** when `score_totals` is not present, the app falls back to the legacy `summary_score` field for compatibility with older backend payloads.
