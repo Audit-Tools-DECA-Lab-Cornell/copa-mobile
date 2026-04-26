@@ -4,23 +4,7 @@ import { parsePayload, requestJson } from "lib/audit/api";
 import { auditScoreTotalsSchema, createPaginatedResponseSchema, executionModeSchema } from "lib/audit/types";
 import { z } from "zod";
 
-import type { PaginatedResponse } from "lib/audit/types";
-/**
- * Audit lifecycle statuses returned by the backend.
- */
-const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
-
-/**
- * Playspace types returned by the backend.
- */
-const playspaceTypeSchema = z.enum([
-    "Public Playspace",
-    "Pre-School Playspace",
-    "Nature Playspace",
-    "Neighborhood Playspace",
-    "Waterfront Playspace",
-    "School Playspace",
-]);
+import { type PaginatedResponse, auditStatusSchema, playspaceTypeSchema } from "lib/audit/types";
 
 /**
  * Accept coordinates when present while remaining backward compatible with
@@ -42,6 +26,8 @@ const auditorPlaceSchema = z.object({
     place_type: playspaceTypeSchema.nullable(),
     project_id: z.uuid(),
     project_name: z.string(),
+    address: z.string().nullable(),
+    postal_code: z.string().nullable(),
     city: z.string().nullable(),
     province: z.string().nullable(),
     country: z.string().nullable(),

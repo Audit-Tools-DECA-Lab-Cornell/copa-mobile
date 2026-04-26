@@ -568,6 +568,16 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                                     >
                                         {place.project_name}
                                     </Paragraph>
+                                    {place.address !== null && place.address !== undefined && (
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                            numberOfLines={getCardTextLineLimit("supporting")}
+                                        >
+                                            {place.address}
+                                        </Paragraph>
+                                    )}
                                 </YStack>
                                 <YStack
                                     rounded={ds.radii.full}

@@ -15,6 +15,7 @@ export const questionTypeSchema = z.enum(["scaled", "checklist"]);
 export const playspaceTypeSchema = z.enum([
     "Public Playspace",
     "Pre-School Playspace",
+    "Destination Playspace",
     "Nature Playspace",
     "Neighborhood Playspace",
     "Waterfront Playspace",

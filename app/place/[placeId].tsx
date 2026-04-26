@@ -496,6 +496,33 @@ function PlaceDetailContent({
                         >
                             {place.project_name}
                         </Paragraph>
+                        {place.address !== null && place.address !== undefined && (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {place.address}
+                            </Paragraph>
+                        )}
+                        {place.postal_code !== null && place.postal_code !== undefined && (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {place.postal_code}
+                            </Paragraph>
+                        )}
+                        {place.city !== null && place.city !== undefined && (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {place.city}
+                            </Paragraph>
+                        )}
                     </YStack>
                     <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusTone.surface }}>
                         <Text

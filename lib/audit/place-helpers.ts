@@ -67,6 +67,8 @@ export function matchesPlaceSearch(place: AuditorPlace, query: string): boolean 
         place.place_name,
         place.project_name,
         place.place_type,
+        place.postal_code,
+        place.address,
         place.city,
         place.province,
         place.country,
