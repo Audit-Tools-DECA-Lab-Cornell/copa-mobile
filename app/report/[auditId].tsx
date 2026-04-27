@@ -15,12 +15,12 @@ import { fetchAuditSession } from "lib/audit/api";
 import { shareSingleAuditExport, type AuditExportFormat } from "lib/audit/export";
 import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
-import { deriveLocality, derivePlaceStatus } from "lib/audit/place-helpers";
+import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import {
     formatPercentage,
+    formatScorePair,
     formatScoreValue,
     formatScoreWithPercentage,
-    getCombinedConstructScore,
     getCombinedConstructMaxScore,
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
@@ -338,10 +338,10 @@ function SectionBreakdownCard({
                                     >
                                         {sectionRow.scoreTotals === null
                                             ? "—"
-                                            : formatPercentage(
-                                                  getCombinedConstructScore(sectionRow.scoreTotals) ?? 0,
-                                                  getCombinedConstructMaxScore(sectionRow.scoreTotals) ?? 0,
-                                              )}
+                                            : (() => {
+                                                  const st = sectionRow.scoreTotals;
+                                                  return `PV ${formatPercentage(st.play_value_total, st.play_value_total_max)} · U ${formatPercentage(st.usability_total, st.usability_total_max)}`;
+                                              })()}
                                     </Text>
                                 </YStack>
                             </XStack>
@@ -413,14 +413,16 @@ function SectionNavigatorCard({ sectionRows, onSectionPress }: Readonly<SectionN
 
             <YStack gap="$3">
                 {sectionRows.map((sectionRow) => {
-                    const combinedScore =
-                        sectionRow.scoreTotals === null ? null : getCombinedConstructScore(sectionRow.scoreTotals);
-                    const combinedMaximum =
-                        sectionRow.scoreTotals === null ? null : getCombinedConstructMaxScore(sectionRow.scoreTotals);
-                    const percentage =
-                        combinedScore === null || combinedMaximum === null || combinedMaximum <= 0
-                            ? null
-                            : (combinedScore / combinedMaximum) * 100;
+                    const st = sectionRow.scoreTotals;
+                    const pvPct =
+                        st !== null && st.play_value_total_max > 0
+                            ? (st.play_value_total / st.play_value_total_max) * 100
+                            : null;
+                    const uPct =
+                        st !== null && st.usability_total_max > 0
+                            ? (st.usability_total / st.usability_total_max) * 100
+                            : null;
+                    const percentage = pvPct === null || uPct === null ? null : (pvPct + uPct) / 2;
                     const barColor = getScoreTone(percentage);
 
                     return (
@@ -472,7 +474,13 @@ function SectionNavigatorCard({ sectionRows, onSectionPress }: Readonly<SectionN
                                                         lineHeight={ds.typography.bodySm.lineHeight}
                                                         flex={1}
                                                     >
-                                                        {combinedScore ?? 0} / {combinedMaximum ?? 0}
+                                                        {(() => {
+                                                            const st = sectionRow.scoreTotals;
+                                                            if (st === null) {
+                                                                return "—";
+                                                            }
+                                                            return `PV ${formatScoreValue(st.play_value_total)}/${formatScoreValue(st.play_value_total_max)} · U ${formatScoreValue(st.usability_total)}/${formatScoreValue(st.usability_total_max)}`;
+                                                        })()}
                                                     </Text>
                                                     <Text
                                                         color={ds.colors.mutedForeground}
@@ -832,10 +840,7 @@ export default function AuditReportDetailScreen() {
                                 />
                                 <MetadataRow
                                     label={t("detail.status", { ns: "reports" })}
-                                    value={getPlaceStatusLabel(
-                                        derivePlaceStatus(place?.audit_status ?? auditSession.status),
-                                        t,
-                                    )}
+                                    value={getPlaceStatusLabel(derivePlaceRequirementStatus(place!), t)}
                                 />
                                 {place === undefined ? null : (
                                     <MetadataRow
@@ -1010,7 +1015,7 @@ function AuditHeader({ auditSession, place }: Readonly<AuditHeaderProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["reports", "common"]);
-    const status = derivePlaceStatus(place?.audit_status ?? auditSession.status);
+    const status = derivePlaceRequirementStatus(place!);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = place === undefined ? null : deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
 
@@ -1108,13 +1113,15 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
     const overall = auditSession.scores.overall;
-    const overallScore = overall === null ? null : getCombinedConstructScore(overall);
     const overallMaximum = overall === null ? null : getCombinedConstructMaxScore(overall);
     const pendingMetricText = t("detail.pendingMetric", { ns: "reports" });
     const overallMetricValue =
-        overallScore === null || overallMaximum === null
+        overall === null || overallMaximum === null
             ? pendingMetricText
-            : formatScoreWithPercentage(overallScore, overallMaximum);
+            : (formatScorePair({
+                  pv: overall.play_value_total,
+                  u: overall.usability_total,
+              }) ?? pendingMetricText);
     const playValueMetricValue =
         overall === null
             ? pendingMetricText

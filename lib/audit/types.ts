@@ -173,6 +173,8 @@ export const auditScoreTotalsSchema = z.object({
 export const auditScoresSchema = z.object({
     draft_progress_percent: z.number().nullable(),
     execution_mode: executionModeSchema.nullable(),
+    audit: auditScoreTotalsSchema.nullable().optional(),
+    survey: auditScoreTotalsSchema.nullable().optional(),
     overall: auditScoreTotalsSchema.nullable(),
     by_section: z.record(z.string(), auditScoreTotalsSchema),
     by_domain: z.record(z.string(), auditScoreTotalsSchema),

@@ -18,6 +18,11 @@ export interface ScoreSummaryLabels {
     readonly challengeShort: string;
 }
 
+export interface ScorePair {
+    readonly pv: number;
+    readonly u: number;
+}
+
 interface MultiplierScaleScore {
     readonly columnTotal: number;
     readonly boostValue: number;
@@ -46,6 +51,20 @@ const EMPTY_SCORE_TOTALS: AuditScoreTotals = {
  */
 export function formatScoreValue(value: number): string {
     return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
+
+/**
+ * Format a compact PV/U score pair for mobile summary surfaces.
+ *
+ * @param value Score pair or null.
+ * @returns `PV x | U y` or `null` when unavailable.
+ */
+export function formatScorePair(value: ScorePair | null | undefined): string | null {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    return `PV ${formatScoreValue(value.pv)} | U ${formatScoreValue(value.u)}`;
 }
 
 /**

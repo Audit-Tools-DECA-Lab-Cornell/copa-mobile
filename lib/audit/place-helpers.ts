@@ -4,14 +4,32 @@ import type { LocalizedPlaceStatus } from "lib/i18n/format";
 /**
  * Map a backend audit lifecycle value into the local place-status model.
  *
- * @param auditStatus Raw backend audit status.
+ * @param auditStatus Raw backend submission status.
  * @returns UI-friendly place status used for filters and status pills.
  */
-export function derivePlaceStatus(auditStatus: AuditorPlace["audit_status"]): LocalizedPlaceStatus {
+export function derivePlaceStatus(auditStatus: AuditorPlace["status"]): LocalizedPlaceStatus {
     if (auditStatus === "SUBMITTED") {
         return "submitted";
     }
     if (auditStatus === "IN_PROGRESS" || auditStatus === "PAUSED") {
+        return "in_progress";
+    }
+    return "not_started";
+}
+
+const axisTerminal = (value: string): boolean => value === "submitted" || value === "complete";
+
+/**
+ * Combine audit-axis and survey-axis place status into one UI status
+ * (both axes must be terminal for "submitted").
+ */
+export function derivePlaceRequirementStatus(
+    place: Pick<AuditorPlace, "place_audit_status" | "place_survey_status">,
+): LocalizedPlaceStatus {
+    if (axisTerminal(place.place_audit_status) && axisTerminal(place.place_survey_status)) {
+        return "submitted";
+    }
+    if (place.place_audit_status === "in_progress" || place.place_survey_status === "in_progress") {
         return "in_progress";
     }
     return "not_started";

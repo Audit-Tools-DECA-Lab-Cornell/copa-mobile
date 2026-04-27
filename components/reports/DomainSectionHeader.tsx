@@ -4,7 +4,7 @@ import { Text, XStack, YStack } from "tamagui";
 import { ChevronDown } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { useDesignSystem } from "lib/design-system";
-import { formatPercentage, getCombinedConstructScore, getCombinedConstructMaxScore } from "lib/audit/score-helpers";
+import { formatPercentage } from "lib/audit/score-helpers";
 import type { AuditScoreTotals } from "lib/audit/types";
 
 interface DomainSectionHeaderProps {
@@ -29,10 +29,15 @@ export const DomainSectionHeader = memo(function DomainSectionHeader({
     const ds = useDesignSystem();
     const { t } = useTranslation("reports");
 
-    const combinedScore = getCombinedConstructScore(scoreTotals ?? null);
-    const combinedMax = getCombinedConstructMaxScore(scoreTotals ?? null);
-    const hasScore = combinedScore !== null && combinedMax !== null && combinedMax > 0;
-    const pctText = hasScore ? formatPercentage(combinedScore!, combinedMax!) : null;
+    const st = scoreTotals ?? null;
+    const pvPct =
+        st !== null && st.play_value_total_max > 0
+            ? formatPercentage(st.play_value_total, st.play_value_total_max)
+            : null;
+    const uPct =
+        st !== null && st.usability_total_max > 0 ? formatPercentage(st.usability_total, st.usability_total_max) : null;
+    const dualPctText =
+        pvPct !== null && uPct !== null && pvPct !== "--" && uPct !== "--" ? `PV ${pvPct} · U ${uPct}` : null;
 
     return (
         <Pressable
@@ -58,7 +63,7 @@ export const DomainSectionHeader = memo(function DomainSectionHeader({
 
                 <XStack items="center" gap="$2">
                     {/* Score badge — visible only when collapsed and score available */}
-                    {!isExpanded && pctText !== null ? (
+                    {!isExpanded && dualPctText !== null ? (
                         <YStack
                             px="$2"
                             py="$0.5"
@@ -70,7 +75,7 @@ export const DomainSectionHeader = memo(function DomainSectionHeader({
                                 fontFamily={ds.fonts.bodyBold}
                                 fontSize={ds.typography.bodyXs.fontSize}
                             >
-                                {pctText}
+                                {dualPctText}
                             </Text>
                         </YStack>
                     ) : null}

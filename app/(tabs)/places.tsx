@@ -6,12 +6,12 @@ import { useRouter } from "expo-router";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     deriveLocality,
-    derivePlaceStatus,
+    derivePlaceRequirementStatus,
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
-import { formatConstructSummary, formatScoreValue, type ScoreSummaryLabels } from "lib/audit/score-helpers";
+import { formatScorePair } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem, type DesignTone } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel, type LocalizedPlaceStatus } from "lib/i18n/format";
@@ -59,7 +59,7 @@ export default function PlacesScreen() {
     const placeStatusCounts = useMemo(() => {
         return places.reduce(
             (accumulator, place) => {
-                const status = derivePlaceStatus(place.audit_status);
+                const status = derivePlaceRequirementStatus(place);
                 accumulator[status] += 1;
                 return accumulator;
             },
@@ -71,17 +71,6 @@ export default function PlacesScreen() {
         );
     }, [places]);
 
-    const scoreSummaryLabels = useMemo<ScoreSummaryLabels>(() => {
-        return {
-            playValueShort: t("playValueShort"),
-            usabilityShort: t("usabilityShort"),
-            sociabilityShort: t("sociabilityShort"),
-            provisionShort: t("provisionShort"),
-            diversityShort: t("diversityShort"),
-            challengeShort: t("challengeShort"),
-        };
-    }, [t]);
-
     const filteredPlaces = useMemo(() => {
         const visiblePlaces = places.filter((place) => {
             if (!matchesPlaceSearch(place, searchQuery)) {
@@ -92,7 +81,7 @@ export default function PlacesScreen() {
                 return true;
             }
 
-            return derivePlaceStatus(place.audit_status) === statusFilter;
+            return derivePlaceRequirementStatus(place) === statusFilter;
         });
 
         return visiblePlaces.sort((leftPlace, rightPlace) => {
@@ -155,14 +144,13 @@ export default function PlacesScreen() {
             return (
                 <PlaceQueueCard
                     place={place}
-                    scoreSummaryLabels={scoreSummaryLabels}
                     onPress={() => {
                         router.push(`/place/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
                 />
             );
         },
-        [router, scoreSummaryLabels],
+        [router],
     );
     const renderTabletRow = useCallback(
         ({ item }: ListRenderItemInfo<PairGridRow<AuditorPlace>>) => {
@@ -172,7 +160,6 @@ export default function PlacesScreen() {
                 return (
                     <PlaceQueueCard
                         place={item.left}
-                        scoreSummaryLabels={scoreSummaryLabels}
                         onPress={() => {
                             router.push(
                                 `/place/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
@@ -186,7 +173,6 @@ export default function PlacesScreen() {
                 <XStack gap="$3" items="stretch">
                     <PlaceQueueCard
                         place={item.left}
-                        scoreSummaryLabels={scoreSummaryLabels}
                         onPress={() => {
                             router.push(
                                 `/place/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
@@ -195,7 +181,6 @@ export default function PlacesScreen() {
                     />
                     <PlaceQueueCard
                         place={rightPlace}
-                        scoreSummaryLabels={scoreSummaryLabels}
                         onPress={() => {
                             router.push(
                                 `/place/${rightPlace.place_id}?projectId=${encodeURIComponent(rightPlace.project_id)}`,
@@ -205,7 +190,7 @@ export default function PlacesScreen() {
                 </XStack>
             );
         },
-        [router, scoreSummaryLabels],
+        [router],
     );
 
     if (isLoading && places.length === 0) {
@@ -499,24 +484,18 @@ export default function PlacesScreen() {
 
 interface PlaceQueueCardProps {
     readonly place: AuditorPlace;
-    readonly scoreSummaryLabels: ScoreSummaryLabels;
     readonly onPress: () => void;
 }
 
-function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQueueCardProps>) {
+function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
     const ds = useDesignSystem();
     const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const { t, i18n } = useTranslation(["places", "common"]);
-    const status = derivePlaceStatus(place.audit_status);
+    const status = derivePlaceRequirementStatus(place);
     const placeTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-    const auditScoreLabel =
-        place.score_totals === null
-            ? place.summary_score === null
-                ? "Pending score"
-                : formatScoreValue(place.summary_score)
-            : formatConstructSummary(place.score_totals, scoreSummaryLabels);
+    const auditScoreLabel = formatScorePair(place.overall_scores) ?? "Pending score";
     const progressPercent = place.progress_percent ?? 0;
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
 

@@ -13,16 +13,15 @@ import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     deriveLocality,
-    derivePlaceStatus,
+    derivePlaceRequirementStatus,
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import {
     formatColumnSummary,
-    formatConstructSummary,
+    formatScorePair,
     formatScoreValue,
-    getCombinedConstructScore,
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
@@ -79,7 +78,7 @@ export default function ReportsScreen() {
     }, [places]);
 
     const placesWithScores = useMemo(() => {
-        return reportPlaces.filter((place) => place.score_totals !== null);
+        return reportPlaces.filter((place) => place.overall_scores !== null);
     }, [reportPlaces]);
 
     const exportablePlaces = useMemo(() => {
@@ -88,12 +87,16 @@ export default function ReportsScreen() {
 
     const averageCombinedConstructScore = useMemo(() => {
         if (placesWithScores.length === 0) {
-            return 0;
+            return null;
         }
-        const sum = placesWithScores.reduce((total, place) => {
-            return total + (getCombinedConstructScore(place.score_totals) ?? 0);
-        }, 0);
-        return sum / placesWithScores.length;
+        return {
+            pv:
+                placesWithScores.reduce((total, place) => total + (place.overall_scores?.pv ?? 0), 0) /
+                placesWithScores.length,
+            u:
+                placesWithScores.reduce((total, place) => total + (place.overall_scores?.u ?? 0), 0) /
+                placesWithScores.length,
+        };
     }, [placesWithScores]);
 
     const averageSociabilityScore = useMemo(() => {
@@ -111,8 +114,8 @@ export default function ReportsScreen() {
             return null;
         }
         return exportablePlaces.reduce((best, current) => {
-            return (getCombinedConstructScore(current.score_totals) ?? 0) >
-                (getCombinedConstructScore(best.score_totals) ?? 0)
+            return (current.overall_scores?.pv ?? 0) + (current.overall_scores?.u ?? 0) >
+                (best.overall_scores?.pv ?? 0) + (best.overall_scores?.u ?? 0)
                 ? current
                 : best;
         });
@@ -120,7 +123,7 @@ export default function ReportsScreen() {
 
     const maxCombinedConstructScore = useMemo(() => {
         return placesWithScores.reduce((currentMax, place) => {
-            return Math.max(currentMax, getCombinedConstructScore(place.score_totals) ?? 0);
+            return Math.max(currentMax, (place.overall_scores?.pv ?? 0) + (place.overall_scores?.u ?? 0));
         }, 0);
     }, [placesWithScores]);
 
@@ -131,13 +134,13 @@ export default function ReportsScreen() {
             }
 
             if (reportFilter === "submitted") {
-                return place.audit_status === "SUBMITTED";
+                return place.status === "SUBMITTED";
             }
             if (reportFilter === "scored") {
-                return place.score_totals !== null;
+                return place.overall_scores !== null;
             }
             if (reportFilter === "not_scored") {
-                return place.score_totals === null;
+                return place.overall_scores === null;
             }
             return true;
         });
@@ -149,8 +152,9 @@ export default function ReportsScreen() {
 
             if (sortOption === "score") {
                 const scoreDifference =
-                    (getCombinedConstructScore(rightPlace.score_totals) ?? -1) -
-                    (getCombinedConstructScore(leftPlace.score_totals) ?? -1);
+                    (rightPlace.overall_scores?.pv ?? -1) +
+                    (rightPlace.overall_scores?.u ?? -1) -
+                    ((leftPlace.overall_scores?.pv ?? -1) + (leftPlace.overall_scores?.u ?? -1));
                 if (scoreDifference !== 0) {
                     return scoreDifference;
                 }
@@ -183,7 +187,7 @@ export default function ReportsScreen() {
     });
 
     const previewPlace = useMemo(() => {
-        const filteredScoredPlace = filteredReportPlaces.find((place) => place.score_totals !== null);
+        const filteredScoredPlace = filteredReportPlaces.find((place) => place.overall_scores !== null);
         if (filteredScoredPlace !== undefined) {
             return filteredScoredPlace;
         }
@@ -377,7 +381,9 @@ export default function ReportsScreen() {
                             <StatCard
                                 label={t("averageConstructScore")}
                                 value={
-                                    placesWithScores.length > 0 ? formatScoreValue(averageCombinedConstructScore) : "--"
+                                    averageCombinedConstructScore
+                                        ? (formatScorePair(averageCombinedConstructScore) ?? "--")
+                                        : "--"
                                 }
                                 accentColor={ds.colors.primary}
                                 helperText={t("scoredPlacesHelper", {
@@ -398,7 +404,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : formatScoreValue(getCombinedConstructScore(topScoringPlace.score_totals) ?? 0)
+                                        : (formatScorePair(topScoringPlace.overall_scores) ?? "Pending")
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -411,8 +417,8 @@ export default function ReportsScreen() {
                                 <StatCard
                                     label={t("averageConstructScore")}
                                     value={
-                                        placesWithScores.length > 0
-                                            ? formatScoreValue(averageCombinedConstructScore)
+                                        averageCombinedConstructScore
+                                            ? (formatScorePair(averageCombinedConstructScore) ?? "--")
                                             : "--"
                                     }
                                     accentColor={ds.colors.primary}
@@ -435,7 +441,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : formatScoreValue(getCombinedConstructScore(topScoringPlace.score_totals) ?? 0)
+                                        : (formatScorePair(topScoringPlace.overall_scores) ?? "Pending")
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -774,11 +780,12 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
             challengeShort: t("challengeShort"),
         };
     }, [t]);
-    const status = derivePlaceStatus(place.audit_status);
+    const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-    const hasScore = place.score_totals !== null;
-    const combinedConstructScore = getCombinedConstructScore(place.score_totals);
+    const hasScore = place.overall_scores !== null;
+    const combinedConstructScore =
+        place.overall_scores === null ? null : place.overall_scores.pv + place.overall_scores.u;
     const barWidth =
         hasScore && combinedConstructScore !== null && maxCombinedConstructScore > 0
             ? `${Math.max((combinedConstructScore / maxCombinedConstructScore) * 100, 6)}%`
@@ -865,7 +872,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                 }
                                 numberOfLines={getCardTextLineLimit("meta")}
                             >
-                                {hasScore && formatScoreValue(combinedConstructScore ?? 0)}
+                                {hasScore ? formatScorePair(place.overall_scores) : null}
                             </Paragraph>
                         </YStack>
                     </XStack>
@@ -904,7 +911,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                     fontSize={ds.typography.bodyXs.fontSize}
                                     numberOfLines={getCardTextLineLimit("meta")}
                                 >
-                                    {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
+                                    {formatScorePair(place.overall_scores)}
                                 </Paragraph>
                                 <Dot size={14} color={ds.colors.primary} />
                                 <Paragraph

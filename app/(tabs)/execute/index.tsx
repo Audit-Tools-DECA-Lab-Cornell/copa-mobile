@@ -56,7 +56,7 @@ export default function ExecuteIndexScreen() {
 
     const filteredPlaces = useMemo(() => {
         const visiblePlaces = places.filter((place) => {
-            if (executeFilter === "active" && place.audit_status === "SUBMITTED") {
+            if (executeFilter === "active" && place.status === "SUBMITTED") {
                 return false;
             }
             return matchesPlaceSearch(place, searchQuery);

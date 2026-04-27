@@ -1,12 +1,38 @@
 import { getProjectPlaceKey } from "lib/audit/pair-key";
-import { getCombinedConstructScore } from "lib/audit/score-helpers";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import { useMemo } from "react";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
 
 import type { AuditorPlace } from "lib/audit/places-api";
-import type { AuditSession, PlayspaceInstrument } from "lib/audit/types";
+import type { AuditScoreTotals, AuditSession, PlayspaceInstrument } from "lib/audit/types";
+
+interface ScorePair {
+    readonly pv: number;
+    readonly u: number;
+}
+
+/**
+ * Map one construct score bucket to a PV/U pair for place rollups.
+ */
+function scorePairFromTotals(totals: AuditScoreTotals | null | undefined): ScorePair | null {
+    if (totals === null || totals === undefined) {
+        return null;
+    }
+
+    return { pv: totals.play_value_total, u: totals.usability_total };
+}
+
+/**
+ * Overall PV/U is the sum of audit- and survey-partition means for one submission, when both exist.
+ */
+function overallPairFromPartitions(audit: ScorePair | null, survey: ScorePair | null): ScorePair | null {
+    if (audit === null || survey === null) {
+        return null;
+    }
+
+    return { pv: audit.pv + survey.pv, u: audit.u + survey.u };
+}
 /**
  * Compute a local-first progress percent from the in-memory aggregate.
  *
@@ -62,16 +88,23 @@ export function overlayLocalSessionOntoPlace(
         return place;
     }
 
+    const auditPart = scorePairFromTotals(auditSession.scores.audit);
+    const surveyPart = scorePairFromTotals(auditSession.scores.survey);
+    const overallFromSession = overallPairFromPartitions(auditPart, surveyPart);
+
     return {
         ...place,
-        audit_status: auditSession.status,
+        status: auditSession.status,
         audit_id: auditSession.audit_id,
         started_at: auditSession.started_at,
         submitted_at: auditSession.submitted_at,
         progress_percent: getLocalProgressPercent(auditSession, instrument),
         score_totals: auditSession.scores.overall,
-        summary_score: getCombinedConstructScore(auditSession.scores.overall) ?? place.summary_score,
+        summary_score: place.summary_score,
         selected_execution_mode: auditSession.selected_execution_mode ?? auditSession.meta.execution_mode,
+        audit_scores: auditPart ?? place.audit_scores,
+        survey_scores: surveyPart ?? place.survey_scores,
+        overall_scores: overallFromSession ?? place.overall_scores,
     };
 }
 
