@@ -70,7 +70,7 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
                         />
                         {visibleScaleKeys.map((scaleKey, columnIndex) => (
                             <HeaderCell
-                                key={scaleKey}
+                                key={`${scaleKey}-header`}
                                 width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                 label={t(`section.table.scaleColumns.${scaleKey}`)}
                                 showTrailingBorder={columnIndex < visibleScaleKeys.length - 1}
@@ -85,18 +85,15 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
                         bg={ds.colors.surfaceMuted}
                         items="stretch"
                     >
-                        {visibleScaleKeys.map((scaleKey) => (
-                            <YStack
-                                key={scaleKey}
+                        <HeaderCell width={columnMetrics.promptColumnWidth} showTrailingBorder />
+                        {visibleScaleKeys.map((scaleKey, columnIndex) => (
+                            <HeaderCell
+                                key={`${scaleKey}-prompt`}
                                 width={readScaleColumnWidth(columnMetrics, scaleKey)}
-                                px="$3"
-                                py="$2.5"
-                                borderRightWidth={1}
-                                borderColor={ds.colors.border}
-                                justify="center"
-                            >
-                                {t(`section.table.scaleDescriptions.${scaleKey}`)}
-                            </YStack>
+                                label={scaleContentByKey[scaleKey]?.scalePrompt!}
+                                showTrailingBorder={columnIndex < visibleScaleKeys.length - 1}
+                                isPrompt
+                            />
                         ))}
                     </XStack>
 
@@ -168,15 +165,16 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
 
 interface HeaderCellProps {
     readonly width: number;
-    readonly label: string;
+    readonly label?: string;
     readonly showTrailingBorder: boolean;
     readonly accentColor?: string;
+    readonly isPrompt?: boolean;
 }
 
 /**
  * Shared table header cell.
  */
-function HeaderCell({ width, label, showTrailingBorder, accentColor }: Readonly<HeaderCellProps>) {
+function HeaderCell({ width, label, showTrailingBorder, accentColor, isPrompt }: Readonly<HeaderCellProps>) {
     const ds = useDesignSystem();
 
     return (
@@ -188,16 +186,27 @@ function HeaderCell({ width, label, showTrailingBorder, accentColor }: Readonly<
             borderColor={ds.colors.border}
             justify="center"
         >
-            <Text
-                color={accentColor ? (accentColor as ColorTokens) : (ds.colors.mutedForeground as ColorTokens)}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.bodySm.fontSize}
-                textTransform="uppercase"
-                letterSpacing={1.1}
-                style={{ textAlign: "center" }}
-            >
-                {label}
-            </Text>
+            {isPrompt ? (
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyXs.fontSize}
+                    lineHeight={ds.typography.bodySm.lineHeight}
+                >
+                    {label}
+                </Text>
+            ) : (
+                <Text
+                    color={accentColor ? (accentColor as ColorTokens) : (ds.colors.mutedForeground as ColorTokens)}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.1}
+                    style={{ textAlign: "center" }}
+                >
+                    {label}
+                </Text>
+            )}
         </YStack>
     );
 }
@@ -417,11 +426,13 @@ function getScaleContentByKey(
 
     for (const scaleKey of scaleKeys) {
         let maxOptionLabelLength = 0;
+        let scalePrompt = "";
         for (const row of rows) {
             const matchingScale = row.question.scales.find((scale) => scale.key === scaleKey);
             if (matchingScale === undefined) {
                 continue;
             }
+            scalePrompt = matchingScale.prompt;
 
             for (const option of matchingScale.options) {
                 maxOptionLabelLength = Math.max(maxOptionLabelLength, option.label.trim().length);
@@ -431,6 +442,7 @@ function getScaleContentByKey(
         scaleContentByKey[scaleKey] = {
             headerLabel: getScaleHeaderLabel(scaleKey),
             maxOptionLabelLength,
+            scalePrompt,
         };
     }
 

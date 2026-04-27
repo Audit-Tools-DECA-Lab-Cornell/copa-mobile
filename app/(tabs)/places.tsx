@@ -1,6 +1,7 @@
 import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
 import { ArrowRight, Clock3 } from "@tamagui/lucide-icons-2";
 import { FilterChip } from "components/ui/filter-chip";
+import { ProjectFilterSelect } from "components/ui/project-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { useRouter } from "expo-router";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -73,7 +74,7 @@ export default function PlacesScreen() {
         );
     }, [places]);
 
-    /** Unique projects derived from the loaded places for the project filter chips. */
+    /** Unique projects derived from the loaded places for the project filter. */
     const uniqueProjects = useMemo(() => {
         const projectMap = new Map<string, string>();
         for (const place of places) {
@@ -85,6 +86,12 @@ export default function PlacesScreen() {
             .map(([id, name]) => ({ id, name }))
             .sort((a, b) => a.name.localeCompare(b.name));
     }, [places]);
+
+    useEffect(() => {
+        if (projectFilter !== "all" && !uniqueProjects.some((project) => project.id === projectFilter)) {
+            setProjectFilter("all");
+        }
+    }, [projectFilter, uniqueProjects]);
 
     const filteredPlaces = useMemo(() => {
         const visiblePlaces = places.filter((place) => {
@@ -177,14 +184,17 @@ export default function PlacesScreen() {
 
             if (rightPlace === null) {
                 return (
-                    <PlaceQueueCard
-                        place={item.left}
-                        onPress={() => {
-                            router.push(
-                                `/place/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
-                            );
-                        }}
-                    />
+                    <XStack gap="$3" items="stretch">
+                        <PlaceQueueCard
+                            place={item.left}
+                            onPress={() => {
+                                router.push(
+                                    `/place/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
+                                );
+                            }}
+                        />
+                        <YStack width="48.5%"></YStack>
+                    </XStack>
                 );
             }
 
@@ -273,40 +283,15 @@ export default function PlacesScreen() {
                 placeholder={t("searchPlaceholder", { ns: "places" })}
             />
 
-            {uniqueProjects.length > 1 && (
-                <YStack gap="$2">
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelSm.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        {t("projectFilter", { ns: "places", defaultValue: "Project" })}
-                    </Paragraph>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <XStack gap="$2">
-                            <FilterChip
-                                label={t("filters.all", { ns: "common" })}
-                                isSelected={projectFilter === "all"}
-                                onPress={() => {
-                                    setProjectFilter("all");
-                                }}
-                            />
-                            {uniqueProjects.map((project) => (
-                                <FilterChip
-                                    key={project.id}
-                                    label={project.name}
-                                    isSelected={projectFilter === project.id}
-                                    onPress={() => {
-                                        setProjectFilter(project.id);
-                                    }}
-                                />
-                            ))}
-                        </XStack>
-                    </ScrollView>
-                </YStack>
-            )}
+            {uniqueProjects.length > 1 ? (
+                <ProjectFilterSelect
+                    uniqueProjects={uniqueProjects}
+                    value={projectFilter}
+                    onChange={setProjectFilter}
+                    sectionLabel={t("projectFilter", { ns: "places", defaultValue: "Project" })}
+                    allProjectsLabel={t("filters.all", { ns: "common" })}
+                />
+            ) : null}
 
             {layout.isTablet ? (
                 <XStack gap="$4" items="flex-start">
@@ -354,7 +339,7 @@ export default function PlacesScreen() {
                         </ScrollView>
                     </YStack>
 
-                    <YStack flex={1} gap="$2">
+                    <YStack gap="$2" items="flex-end">
                         <Paragraph
                             color={ds.colors.mutedForeground}
                             fontFamily={ds.fonts.bodyBold}

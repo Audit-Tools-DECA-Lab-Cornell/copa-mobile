@@ -5,7 +5,25 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
 
 import type { AuditorPlace } from "lib/audit/places-api";
-import type { AuditScoreTotals, AuditSession, PlayspaceInstrument } from "lib/audit/types";
+import type { AuditScoreTotals, AuditSession, AuditStatus, PlayspaceInstrument } from "lib/audit/types";
+
+type PlaceAxisStatus = AuditorPlace["place_audit_status"];
+
+/**
+ * When a local draft session exists, bump per-axis status so list UIs reflect in-progress / submitted work.
+ */
+function mergePlaceAxisWithSession(axisValue: PlaceAxisStatus, sessionStatus: AuditStatus): PlaceAxisStatus {
+    if (sessionStatus === "SUBMITTED") {
+        return "submitted";
+    }
+    if (sessionStatus === "IN_PROGRESS" || sessionStatus === "PAUSED") {
+        if (axisValue === "submitted" || axisValue === "complete") {
+            return axisValue;
+        }
+        return "in_progress";
+    }
+    return axisValue;
+}
 
 interface ScorePair {
     readonly pv: number;
@@ -94,7 +112,8 @@ export function overlayLocalSessionOntoPlace(
 
     return {
         ...place,
-        status: auditSession.status,
+        place_audit_status: mergePlaceAxisWithSession(place.place_audit_status, auditSession.status),
+        place_survey_status: mergePlaceAxisWithSession(place.place_survey_status, auditSession.status),
         audit_id: auditSession.audit_id,
         started_at: auditSession.started_at,
         submitted_at: auditSession.submitted_at,

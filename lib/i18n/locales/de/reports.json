@@ -97,7 +97,9 @@
         "expandAll": "Alle ausklappen",
         "collapseAll": "Alle einklappen",
         "expandSection": "Abschnitt ausklappen",
-        "collapseSection": "Abschnitt einklappen"
+        "collapseSection": "Abschnitt einklappen",
+        "showItems": "Elemente anzeigen ({{count}})",
+        "hideItems": "Elemente ausblenden"
     },
     "extendedTable": {
         "columnQuestionId": "Element-ID",

@@ -6,9 +6,7 @@ import { ChevronUp, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { type ColorTokens, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { ActionButton } from "components/ui/action-button";
-import { ExtendedReportContent } from "components/reports/ExtendedReportContent";
-import { ReportToggle } from "components/reports/ReportToggle";
-import { ShortReportContent } from "components/reports/ShortReportContent";
+import { SubmittedReportContent } from "components/reports/SubmittedReportContent";
 import { StatCard } from "components/ui/stat-card";
 import { buildDomainReportRows, countUniqueScaledQuestionsWithDomains } from "lib/audit/report-helpers";
 import { fetchAuditSession } from "lib/audit/api";
@@ -21,7 +19,6 @@ import {
     formatScorePair,
     formatScoreValue,
     formatScoreWithPercentage,
-    getCombinedConstructMaxScore,
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import type { AuditScoreTotals, AuditSession } from "lib/audit/types";
@@ -538,7 +535,6 @@ export default function AuditReportDetailScreen() {
     const [isLoadingAudit, setIsLoadingAudit] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [activeExportKey, setActiveExportKey] = useState<string | null>(null);
-    const [reportMode, setReportMode] = useState<"short" | "extended">("short");
     const [reportScrollY, setReportScrollY] = useState(0);
     const auditId = readSingleParam(params.auditId);
     const scrollViewRef = useRef<ScrollView | null>(null);
@@ -938,22 +934,11 @@ export default function AuditReportDetailScreen() {
 
                             <AuditMetrics auditSession={auditSession} />
                             {isSubmitted ? (
-                                <YStack gap="$2">
-                                    <ReportToggle value={reportMode} onChange={setReportMode} />
-                                    {reportMode === "short" ? (
-                                        <ShortReportContent
-                                            domainRows={domainRows}
-                                            overallScores={auditSession.scores.overall}
-                                            overallItemCount={overallItemCount}
-                                        />
-                                    ) : (
-                                        <ExtendedReportContent
-                                            domainRows={domainRows}
-                                            overallScores={auditSession.scores.overall}
-                                            overallItemCount={overallItemCount}
-                                        />
-                                    )}
-                                </YStack>
+                                <SubmittedReportContent
+                                    domainRows={domainRows}
+                                    overallScores={auditSession.scores.overall}
+                                    overallItemCount={overallItemCount}
+                                />
                             ) : (
                                 <YStack gap="$2">
                                     <SectionNavigatorCard sectionRows={sectionRows} onSectionPress={scrollToSection} />
@@ -1113,7 +1098,8 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
     const overall = auditSession.scores.overall;
-    const overallMaximum = overall === null ? null : getCombinedConstructMaxScore(overall);
+    const overallMaximum =
+        overall === null ? null : { pv: overall.play_value_total_max, u: overall.usability_total_max };
     const pendingMetricText = t("detail.pendingMetric", { ns: "reports" });
     const overallMetricValue =
         overall === null || overallMaximum === null
@@ -1136,9 +1122,9 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
             : formatScoreWithPercentage(overall.sociability_total, overall.sociability_total_max);
 
     const overallHelperText =
-        overall === null || overallMaximum === null || overallMaximum <= 0
+        overall === null || overallMaximum === null
             ? undefined
-            : `${t("detail.overallScoreHint", { ns: "reports" })} \nMax score = ${formatScoreValue(overallMaximum)}`;
+            : `${t("detail.overallScoreHint", { ns: "reports" })}\n${formatScorePair(overallMaximum)}`;
     const summaryCardMinHeight = layout.isTablet
         ? Math.max(140, layout.summaryCardMinHeight - 18)
         : layout.summaryCardMinHeight;

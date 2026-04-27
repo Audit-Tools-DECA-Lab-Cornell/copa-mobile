@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 /**
- * Expand/collapse state for domain sections in short/extended reports.
+ * Expand/collapse state for domain sections in submitted audit reports.
  * Keys include each `domainKey` plus `__overall__` when the overall card is listed.
  */
 export function useDomainExpansion(domainKeys: readonly string[]): {

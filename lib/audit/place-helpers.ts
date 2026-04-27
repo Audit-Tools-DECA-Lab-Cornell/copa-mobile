@@ -1,22 +1,6 @@
 import type { AuditorPlace } from "lib/audit/places-api";
 import type { LocalizedPlaceStatus } from "lib/i18n/format";
 
-/**
- * Map a backend audit lifecycle value into the local place-status model.
- *
- * @param auditStatus Raw backend submission status.
- * @returns UI-friendly place status used for filters and status pills.
- */
-export function derivePlaceStatus(auditStatus: AuditorPlace["status"]): LocalizedPlaceStatus {
-    if (auditStatus === "SUBMITTED") {
-        return "submitted";
-    }
-    if (auditStatus === "IN_PROGRESS" || auditStatus === "PAUSED") {
-        return "in_progress";
-    }
-    return "not_started";
-}
-
 const axisTerminal = (value: string): boolean => value === "submitted" || value === "complete";
 
 /**

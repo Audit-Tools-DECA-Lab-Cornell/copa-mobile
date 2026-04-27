@@ -2,8 +2,8 @@ import { memo, useMemo } from "react";
 import { Text, XStack, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
 import type { AuditScoreTotals } from "lib/audit/types";
-import { formatPercentage } from "lib/audit/score-helpers";
-import { type DesignSystemTheme, getScaleAccentColor, useDesignSystem } from "lib/design-system";
+import { formatPercentage, reportBarScoreTier, roundedPercentOfMax } from "lib/audit/score-helpers";
+import { type DesignSystemTheme, useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useReportScoreTableLayout } from "lib/report-table-layout";
 
@@ -75,14 +75,19 @@ interface LegendItem {
 }
 
 /**
- * Map a metric key to its semantic accent color from the design system.
- * Scale metrics use their dedicated construct colors; construct metrics use
- * warning (play value) and primary (usability).
+ * Map performance tier to design system bar color (same rules as report bar charts on web).
  */
-function getMetricAccentColor(key: MetricKey, ds: DesignSystemTheme): string {
-    if (key === "play_value") return ds.colors.warning;
-    if (key === "usability") return ds.colors.primary;
-    return getScaleAccentColor(key as Parameters<typeof getScaleAccentColor>[0], ds.colors);
+function getTierBarColor(tier: ReturnType<typeof reportBarScoreTier>, ds: DesignSystemTheme): string {
+    if (tier === "na") {
+        return ds.colors.mutedForeground;
+    }
+    if (tier === "high") {
+        return ds.colors.success;
+    }
+    if (tier === "mid") {
+        return ds.colors.warning;
+    }
+    return ds.colors.danger;
 }
 
 /**
@@ -108,10 +113,17 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
                 return {
                     shortLabel: t(metric.shortLabelKey ?? metric.labelKey, { ns: "reports" }),
                     fullLabel: t(metric.labelKey, { ns: "reports" }),
-                    color: getMetricAccentColor(key, ds),
+                    color: getTierBarColor(
+                        reportBarScoreTier(
+                            scoreTotals === null
+                                ? null
+                                : roundedPercentOfMax(metric.value(scoreTotals), metric.max(scoreTotals)),
+                        ),
+                        ds,
+                    ),
                 };
             }),
-        [ds, t],
+        [ds, scoreTotals, t],
     );
 
     const rightLegendItems = useMemo<readonly LegendItem[]>(
@@ -121,21 +133,29 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
                 return {
                     shortLabel: t(metric.labelKey, { ns: "reports" }),
                     fullLabel: t(metric.labelKey, { ns: "reports" }),
-                    color: getMetricAccentColor(key, ds),
+                    color: getTierBarColor(
+                        reportBarScoreTier(
+                            scoreTotals === null
+                                ? null
+                                : roundedPercentOfMax(metric.value(scoreTotals), metric.max(scoreTotals)),
+                        ),
+                        ds,
+                    ),
                 };
             }),
-        [ds, t],
+        [ds, scoreTotals, t],
     );
 
     const renderBar = (metric: MetricConfig, cellWidth?: number) => {
         const value = scoreTotals === null ? 0 : metric.value(scoreTotals);
         const maximum = scoreTotals === null ? 0 : metric.max(scoreTotals);
         const isNa = scoreTotals === null || maximum <= 0;
-        const pct = isNa ? null : (value / maximum) * 100;
+        const pctRounded = roundedPercentOfMax(value, maximum);
+        const tier = reportBarScoreTier(pctRounded);
         const fillRatio = isNa ? 0 : Math.min(1, value / maximum);
         const fillHeight = Math.round(fillRatio * trackHeight * 100) / 100;
-        const barColor = getMetricAccentColor(metric.key, ds);
-        const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${Math.round(pct ?? 0)}%`;
+        const barColor = getTierBarColor(tier, ds);
+        const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${pctRounded}%`;
         const shortLabel =
             metric.shortLabelKey !== undefined
                 ? t(metric.shortLabelKey, { ns: "reports" })

@@ -7,11 +7,36 @@ import {
 } from "lib/notifications/api";
 import { loadNotificationsCache, saveNotificationsCache } from "lib/storage/notification-cache";
 import { create } from "zustand";
+import type { AuthSession } from "lib/auth/types";
 
+import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
+import { usePlacesStore } from "stores/places-store";
 import { createModuleLogger } from "lib/logger";
 
 const log = createModuleLogger("notifications-store");
+
+/**
+ * Re-fetches assigned places and locally cached audit sessions when the server
+ * reports more unread notifications (assignments / audits likely changed).
+ */
+async function refreshAssignmentsAfterNotificationSignal(session: AuthSession): Promise<void> {
+    try {
+        await usePlacesStore.getState().loadPlaces(session);
+    } catch (error) {
+        log.error(`loadPlaces after notification signal failed: ${String(error)}`);
+    }
+    try {
+        await usePlacesStore.getState().loadDashboardSummary(session);
+    } catch (error) {
+        log.error(`loadDashboardSummary after notification signal failed: ${String(error)}`);
+    }
+    try {
+        await usePlayspaceAuditStore.getState().refreshCachedAuditSessions(session);
+    } catch (error) {
+        log.error(`refreshCachedAuditSessions after notification signal failed: ${String(error)}`);
+    }
+}
 
 /**
  * In-app notification list and badge state, with optimistic read updates.
@@ -21,7 +46,7 @@ interface NotificationsState {
     readonly unreadCount: number;
     readonly isLoading: boolean;
     readonly error: string | null;
-    /** Whether the notifications sheet is presented (TASK-011). */
+    /** Whether the notifications sheet is presented. */
     readonly panelOpen: boolean;
 
     fetchNotifications: () => Promise<void>;
@@ -74,6 +99,7 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
                 });
             }
 
+            const beforeNetworkUnread = get().unreadCount;
             const notifications = await getNotifications(session, 50, 0, false);
             const unreadCount = notifications.filter((n) => !n.is_read).length;
             await saveNotificationsCache(notifications);
@@ -82,6 +108,9 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
                 unreadCount,
                 isLoading: false,
             });
+            if (unreadCount > beforeNetworkUnread) {
+                await refreshAssignmentsAfterNotificationSignal(session);
+            }
         } catch (error: unknown) {
             log.error(`Failed to fetch notifications: ${error}`);
             const { notifications } = get();
@@ -102,9 +131,14 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
             return;
         }
 
+        const previousCount = get().unreadCount;
+
         try {
             const count = await getUnreadCount(session);
             set({ unreadCount: count });
+            if (count > previousCount) {
+                await refreshAssignmentsAfterNotificationSignal(session);
+            }
         } catch (error: unknown) {
             log.error(`Failed to refresh unread count: ${error}`);
         }

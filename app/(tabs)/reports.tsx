@@ -4,6 +4,7 @@ import { useToastController } from "@tamagui/toast";
 import { ActionButton } from "components/ui/action-button";
 import { CollapsibleCard } from "components/ui/collapsible-card";
 import { FilterChip } from "components/ui/filter-chip";
+import { ProjectFilterSelect } from "components/ui/project-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
 import { useRouter, type Href } from "expo-router";
@@ -153,7 +154,7 @@ export default function ReportsScreen() {
             }
 
             if (reportFilter === "submitted") {
-                return place.status === "SUBMITTED";
+                return place.submitted_at !== null;
             }
             if (reportFilter === "scored") {
                 return place.overall_scores !== null;
@@ -337,7 +338,6 @@ export default function ReportsScreen() {
                     return (
                         <XStack gap="$3" items="stretch">
                             <ReportQueueCard place={item.left} maxCombinedConstructScore={maxCombinedConstructScore} />
-
                             <YStack width="48.5%"></YStack>
                         </XStack>
                     );
@@ -474,7 +474,99 @@ export default function ReportsScreen() {
                         placeholder={t("searchPlaceholder", { ns: "reports" })}
                     />
 
-                    {uniqueProjects.length > 1 && (
+                    {uniqueProjects.length > 1 ? (
+                        <ProjectFilterSelect
+                            uniqueProjects={uniqueProjects}
+                            value={projectFilter}
+                            onChange={setProjectFilter}
+                            sectionLabel={t("projectFilter", { ns: "reports", defaultValue: "Project" })}
+                            allProjectsLabel={t("filters.all", { ns: "common" })}
+                        />
+                    ) : null}
+
+                    {layout.isTablet ? (
+                        <XStack gap="$4" items="flex-start">
+                            <YStack flex={1} gap="$2">
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelSm.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.2}
+                                >
+                                    Filters
+                                </Paragraph>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    <XStack gap="$2">
+                                        <FilterChip
+                                            label={t("filters.all", { ns: "common" })}
+                                            isSelected={reportFilter === "all"}
+                                            onPress={() => {
+                                                setReportFilter("all");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("filters.submitted", { ns: "common" })}
+                                            isSelected={reportFilter === "submitted"}
+                                            onPress={() => {
+                                                setReportFilter("submitted");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("filters.scored", { ns: "common" })}
+                                            isSelected={reportFilter === "scored"}
+                                            onPress={() => {
+                                                setReportFilter("scored");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("filters.notScored", { ns: "common" })}
+                                            isSelected={reportFilter === "not_scored"}
+                                            onPress={() => {
+                                                setReportFilter("not_scored");
+                                            }}
+                                        />
+                                    </XStack>
+                                </ScrollView>
+                            </YStack>
+                            <YStack gap="$2" items="flex-end">
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelSm.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.2}
+                                >
+                                    Sort By
+                                </Paragraph>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    <XStack gap="$2">
+                                        <FilterChip
+                                            label={t("sort.score", { ns: "common" })}
+                                            isSelected={sortOption === "score"}
+                                            onPress={() => {
+                                                setSortOption("score");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("sort.recent", { ns: "common" })}
+                                            isSelected={sortOption === "recent"}
+                                            onPress={() => {
+                                                setSortOption("recent");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("sort.name", { ns: "common" })}
+                                            isSelected={sortOption === "name"}
+                                            onPress={() => {
+                                                setSortOption("name");
+                                            }}
+                                        />
+                                    </XStack>
+                                </ScrollView>
+                            </YStack>
+                        </XStack>
+                    ) : (
                         <YStack gap="$2">
                             <Paragraph
                                 color={ds.colors.mutedForeground}
@@ -483,110 +575,77 @@ export default function ReportsScreen() {
                                 textTransform="uppercase"
                                 letterSpacing={1.2}
                             >
-                                {t("projectFilter", { ns: "reports", defaultValue: "Project" })}
+                                Filters
                             </Paragraph>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                 <XStack gap="$2">
                                     <FilterChip
                                         label={t("filters.all", { ns: "common" })}
-                                        isSelected={projectFilter === "all"}
+                                        isSelected={reportFilter === "all"}
                                         onPress={() => {
-                                            setProjectFilter("all");
+                                            setReportFilter("all");
                                         }}
                                     />
-                                    {uniqueProjects.map((project) => (
-                                        <FilterChip
-                                            key={project.id}
-                                            label={project.name}
-                                            isSelected={projectFilter === project.id}
-                                            onPress={() => {
-                                                setProjectFilter(project.id);
-                                            }}
-                                        />
-                                    ))}
+                                    <FilterChip
+                                        label={t("filters.submitted", { ns: "common" })}
+                                        isSelected={reportFilter === "submitted"}
+                                        onPress={() => {
+                                            setReportFilter("submitted");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("filters.scored", { ns: "common" })}
+                                        isSelected={reportFilter === "scored"}
+                                        onPress={() => {
+                                            setReportFilter("scored");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("filters.notScored", { ns: "common" })}
+                                        isSelected={reportFilter === "not_scored"}
+                                        onPress={() => {
+                                            setReportFilter("not_scored");
+                                        }}
+                                    />
+                                </XStack>
+                            </ScrollView>
+
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelSm.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.2}
+                            >
+                                Sort By
+                            </Paragraph>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <XStack gap="$2">
+                                    <FilterChip
+                                        label={t("sort.score", { ns: "common" })}
+                                        isSelected={sortOption === "score"}
+                                        onPress={() => {
+                                            setSortOption("score");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("sort.recent", { ns: "common" })}
+                                        isSelected={sortOption === "recent"}
+                                        onPress={() => {
+                                            setSortOption("recent");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("sort.name", { ns: "common" })}
+                                        isSelected={sortOption === "name"}
+                                        onPress={() => {
+                                            setSortOption("name");
+                                        }}
+                                    />
                                 </XStack>
                             </ScrollView>
                         </YStack>
                     )}
-
-                    <YStack gap="$2">
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            Filters
-                        </Paragraph>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <XStack gap="$2">
-                                <FilterChip
-                                    label={t("filters.all", { ns: "common" })}
-                                    isSelected={reportFilter === "all"}
-                                    onPress={() => {
-                                        setReportFilter("all");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("filters.submitted", { ns: "common" })}
-                                    isSelected={reportFilter === "submitted"}
-                                    onPress={() => {
-                                        setReportFilter("submitted");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("filters.scored", { ns: "common" })}
-                                    isSelected={reportFilter === "scored"}
-                                    onPress={() => {
-                                        setReportFilter("scored");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("filters.notScored", { ns: "common" })}
-                                    isSelected={reportFilter === "not_scored"}
-                                    onPress={() => {
-                                        setReportFilter("not_scored");
-                                    }}
-                                />
-                            </XStack>
-                        </ScrollView>
-
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            Sort By
-                        </Paragraph>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <XStack gap="$2">
-                                <FilterChip
-                                    label={t("sort.score", { ns: "common" })}
-                                    isSelected={sortOption === "score"}
-                                    onPress={() => {
-                                        setSortOption("score");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("sort.recent", { ns: "common" })}
-                                    isSelected={sortOption === "recent"}
-                                    onPress={() => {
-                                        setSortOption("recent");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("sort.name", { ns: "common" })}
-                                    isSelected={sortOption === "name"}
-                                    onPress={() => {
-                                        setSortOption("name");
-                                    }}
-                                />
-                            </XStack>
-                        </ScrollView>
-                    </YStack>
                 </YStack>
             }
             ListHeaderComponentStyle={{ marginBottom: layout.isTablet ? 28 : 24 }}

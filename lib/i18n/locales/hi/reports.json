@@ -97,7 +97,9 @@
         "expandAll": "सभी विस्तृत करें",
         "collapseAll": "सभी संकुचित करें",
         "expandSection": "खंड विस्तृत करें",
-        "collapseSection": "खंड संकुचित करें"
+        "collapseSection": "खंड संकुचित करें",
+        "showItems": "आइटम दिखाएँ ({{count}})",
+        "hideItems": "आइटम छिपाएँ"
     },
     "extendedTable": {
         "columnQuestionId": "आइटम ID",

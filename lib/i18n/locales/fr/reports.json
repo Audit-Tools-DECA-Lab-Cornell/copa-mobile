@@ -98,7 +98,9 @@
         "expandAll": "Tout développer",
         "collapseAll": "Tout réduire",
         "expandSection": "Développer la section",
-        "collapseSection": "Réduire la section"
+        "collapseSection": "Réduire la section",
+        "showItems": "Afficher les éléments ({{count}})",
+        "hideItems": "Masquer les éléments"
     },
     "extendedTable": {
         "columnQuestionId": "ID élément",

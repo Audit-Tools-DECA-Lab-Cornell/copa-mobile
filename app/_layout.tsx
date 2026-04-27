@@ -257,7 +257,7 @@ function RootLayoutNav() {
     return (
         <ThemeProvider value={navigationTheme}>
             <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
-            <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background } }}>
+            <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background, paddingTop: 20 } }}>
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen

@@ -1,12 +1,7 @@
 import type { AuthSession } from "lib/auth/types";
 import { t } from "i18next";
 import { parsePayload, requestJson } from "lib/audit/api";
-import {
-    auditScoreTotalsSchema,
-    auditStatusSchema,
-    createPaginatedResponseSchema,
-    executionModeSchema,
-} from "lib/audit/types";
+import { auditScoreTotalsSchema, createPaginatedResponseSchema, executionModeSchema } from "lib/audit/types";
 import { z } from "zod";
 
 import { type PaginatedResponse, playspaceTypeSchema } from "lib/audit/types";
@@ -44,7 +39,6 @@ const auditorPlaceSchema = z.object({
     country: z.string().nullable(),
     lat: nullableCoordinateSchema,
     lng: nullableCoordinateSchema,
-    status: auditStatusSchema.nullable(),
     audit_id: z.uuid().nullable(),
     started_at: z.string().nullable(),
     submitted_at: z.string().nullable(),

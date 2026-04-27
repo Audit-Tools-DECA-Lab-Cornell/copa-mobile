@@ -9,7 +9,7 @@ import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
-import { deriveLocality, matchesPlaceSearch } from "lib/audit/place-helpers";
+import { deriveLocality, derivePlaceRequirementStatus, matchesPlaceSearch } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem } from "lib/design-system";
@@ -56,7 +56,7 @@ export default function ExecuteIndexScreen() {
 
     const filteredPlaces = useMemo(() => {
         const visiblePlaces = places.filter((place) => {
-            if (executeFilter === "active" && place.status === "SUBMITTED") {
+            if (executeFilter === "active" && derivePlaceRequirementStatus(place) === "submitted") {
                 return false;
             }
             return matchesPlaceSearch(place, searchQuery);
@@ -142,16 +142,19 @@ export default function ExecuteIndexScreen() {
 
             if (rightPlace === null) {
                 return (
-                    <ExecuteQueueCard
-                        place={item.left}
-                        hasHydratedCurrentUser={hasHydratedCurrentUser}
-                        sessionsByPairKey={sessionsByPairKey}
-                        onPress={() => {
-                            router.push(
-                                `/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
-                            );
-                        }}
-                    />
+                    <XStack gap="$3" items="stretch">
+                        <ExecuteQueueCard
+                            place={item.left}
+                            hasHydratedCurrentUser={hasHydratedCurrentUser}
+                            sessionsByPairKey={sessionsByPairKey}
+                            onPress={() => {
+                                router.push(
+                                    `/execute/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
+                                );
+                            }}
+                        />
+                        <YStack width="48.5%"></YStack>
+                    </XStack>
                 );
             }
 

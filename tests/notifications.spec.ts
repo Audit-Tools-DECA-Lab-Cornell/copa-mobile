@@ -30,14 +30,36 @@ const mocks = vi.hoisted(() => {
         resetCacheData: (): void => {
             cacheData.length = 0;
         },
+        loadPlaces: vi.fn().mockResolvedValue(undefined),
+        loadDashboardSummary: vi.fn().mockResolvedValue(undefined),
+        refreshCachedAuditSessions: vi.fn().mockResolvedValue(undefined),
     };
 });
 
-vi.mock("lib/services/api", () => ({
+vi.mock("lib/notifications/api", () => ({
     getNotifications: mocks.getNotifications,
     getUnreadCount: mocks.getUnreadCount,
     markNotificationAsRead: mocks.markNotificationAsRead,
     markAllNotificationsAsRead: mocks.markAllNotificationsAsRead,
+}));
+
+vi.mock("stores/places-store", () => ({
+    usePlacesStore: Object.assign(vi.fn(), {
+        getState: () => ({
+            loadPlaces: mocks.loadPlaces,
+            loadDashboardSummary: mocks.loadDashboardSummary,
+            clearError: vi.fn(),
+            places: [],
+        }),
+    }),
+}));
+
+vi.mock("stores/audit-store", () => ({
+    usePlayspaceAuditStore: Object.assign(vi.fn(), {
+        getState: () => ({
+            refreshCachedAuditSessions: mocks.refreshCachedAuditSessions,
+        }),
+    }),
 }));
 
 vi.mock("lib/storage/notification-cache", () => ({
@@ -104,7 +126,7 @@ function createUnauthenticatedAuthState(): AuthStoreState {
 }
 
 /**
- * Builds a notification row matching `notificationSchema` in `lib/services/api`.
+ * Builds a notification row matching `notificationSchema` in `lib/notifications/api`.
  */
 function createMockNotification(id: string, isRead: boolean): Notification {
     return {
@@ -161,7 +183,7 @@ describe("notifications store", () => {
 
     it("fetchNotifications loads rows from the API and persists cache", async () => {
         const rows = [
-            createMockNotification("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", false),
+            createMockNotification("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", true),
             createMockNotification("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", true),
         ];
         mocks.getNotifications.mockResolvedValue(rows);
@@ -170,10 +192,11 @@ describe("notifications store", () => {
 
         const state = useNotificationsStore.getState();
         expect(state.notifications).toHaveLength(2);
-        expect(state.unreadCount).toBe(1);
+        expect(state.unreadCount).toBe(0);
         expect(state.isLoading).toBe(false);
         expect(state.error).toBeNull();
         expect(mocks.saveNotificationsCache).toHaveBeenCalledWith(rows);
+        expect(mocks.loadPlaces).not.toHaveBeenCalled();
     });
 
     it("fetchNotifications sets an error when signed out", async () => {
@@ -254,12 +277,44 @@ describe("notifications store", () => {
         expect(state.error).toBe("Failed to mark all notifications as read");
     });
 
-    it("refreshUnreadCount updates only the count", async () => {
+    it("fetchNotifications reloads places and cached audits when unread count increases from network", async () => {
+        useNotificationsStore.setState({ notifications: [], unreadCount: 0 });
+        const rows = [createMockNotification("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", false)];
+        mocks.getNotifications.mockResolvedValue(rows);
+
+        await useNotificationsStore.getState().fetchNotifications();
+
+        expect(useNotificationsStore.getState().unreadCount).toBe(1);
+        expect(mocks.loadPlaces).toHaveBeenCalledTimes(1);
+        const sessionForRefresh = mocks.loadPlaces.mock.calls[0]?.[0];
+        expect(mocks.loadDashboardSummary).toHaveBeenCalledTimes(1);
+        expect(mocks.loadDashboardSummary.mock.calls[0]?.[0]).toBe(sessionForRefresh);
+        expect(mocks.refreshCachedAuditSessions).toHaveBeenCalledWith(sessionForRefresh);
+    });
+
+    it("refreshUnreadCount updates the count and skips assignment refresh when it does not increase", async () => {
+        useNotificationsStore.setState({ unreadCount: 7 });
         mocks.getUnreadCount.mockResolvedValue(7);
 
         await useNotificationsStore.getState().refreshUnreadCount();
 
         expect(useNotificationsStore.getState().unreadCount).toBe(7);
+        expect(mocks.loadPlaces).not.toHaveBeenCalled();
+        expect(mocks.loadDashboardSummary).not.toHaveBeenCalled();
+        expect(mocks.refreshCachedAuditSessions).not.toHaveBeenCalled();
+    });
+
+    it("refreshUnreadCount reloads places and cached audits when unread count increases", async () => {
+        mocks.getUnreadCount.mockResolvedValue(3);
+
+        await useNotificationsStore.getState().refreshUnreadCount();
+
+        expect(useNotificationsStore.getState().unreadCount).toBe(3);
+        expect(mocks.loadPlaces).toHaveBeenCalledTimes(1);
+        const sessionForRefresh = mocks.loadPlaces.mock.calls[0]?.[0];
+        expect(mocks.loadDashboardSummary).toHaveBeenCalledTimes(1);
+        expect(mocks.loadDashboardSummary.mock.calls[0]?.[0]).toBe(sessionForRefresh);
+        expect(mocks.refreshCachedAuditSessions).toHaveBeenCalledWith(sessionForRefresh);
     });
 
     it("refreshUnreadCount is a no-op when signed out", async () => {

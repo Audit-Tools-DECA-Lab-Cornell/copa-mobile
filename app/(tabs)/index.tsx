@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -18,7 +18,6 @@ import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { formatScorePair } from "lib/audit/score-helpers";
-import { fetchAuditorDashboardSummary, type AuditorDashboardSummary } from "lib/audit/dashboard-api";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { formatPriorityProgressLabel, getVisibleProgressBarWidth } from "lib/dashboard-progress";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
@@ -33,7 +32,7 @@ import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 
 /**
- * UI status derived from the backend `status` value.
+ * UI status derived from `place_audit_status` and `place_survey_status`.
  */
 type DerivedPlaceStatus = "not_started" | "in_progress" | "submitted";
 type PriorityDueLabelKey = "dueToday" | "dueSoon";
@@ -93,40 +92,25 @@ export default function DashboardScreen() {
     const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
+    const loadDashboardSummary = usePlacesStore((state) => state.loadDashboardSummary);
+    const clearDashboardSummary = usePlacesStore((state) => state.clearDashboardSummary);
+    const dashboardSummary = usePlacesStore((state) => state.dashboardSummary);
     const scrollViewRef = useRef<ScrollView | null>(null);
-    const [dashboardSummary, setDashboardSummary] = useState<AuditorDashboardSummary | null>(null);
 
     useEffect(() => {
-        if (session !== null) {
-            loadPlaces(session, { fetchAll: false, page: 1, pageSize: 8 }).catch(() => undefined);
-        }
-    }, [session, loadPlaces]);
-
-    useEffect(() => {
-        let isMounted = true;
         if (session === null) {
-            setDashboardSummary(null);
-            return () => {
-                isMounted = false;
-            };
+            clearDashboardSummary();
+            return;
         }
+        void loadDashboardSummary(session);
+    }, [session, loadDashboardSummary, clearDashboardSummary]);
 
-        fetchAuditorDashboardSummary(session)
-            .then((summary) => {
-                if (isMounted) {
-                    setDashboardSummary(summary);
-                }
-            })
-            .catch(() => {
-                if (isMounted) {
-                    setDashboardSummary(null);
-                }
-            });
-
-        return () => {
-            isMounted = false;
-        };
-    }, [session]);
+    useEffect(() => {
+        if (session === null) {
+            return;
+        }
+        void loadPlaces(session, { fetchAll: false, page: 1, pageSize: 8 }).catch(() => undefined);
+    }, [session, loadPlaces]);
 
     const scrollDashboardToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
@@ -144,27 +128,27 @@ export default function DashboardScreen() {
         if (dashboardSummary !== null) {
             return dashboardSummary.submitted_audits;
         }
-        return places.filter((p) => p.status === "SUBMITTED").length;
+        return places.filter((p) => derivePlaceRequirementStatus(p) === "submitted").length;
     }, [dashboardSummary, places]);
 
     const inProgressCount = useMemo(() => {
         if (dashboardSummary !== null) {
             return dashboardSummary.in_progress_audits;
         }
-        return places.filter((p) => p.status === "IN_PROGRESS").length;
+        return places.filter((p) => derivePlaceRequirementStatus(p) === "in_progress").length;
     }, [dashboardSummary, places]);
 
     const notStartedCount = useMemo(() => {
         if (dashboardSummary !== null) {
             return dashboardSummary.pending_places;
         }
-        return places.filter((p) => p.status === null).length;
+        return places.filter((p) => derivePlaceRequirementStatus(p) === "not_started").length;
     }, [dashboardSummary, places]);
 
     const submittedCount = completedCount;
 
     const highlightedPlaces = useMemo(() => {
-        return places.filter((p) => p.status !== "SUBMITTED").slice(0, 3);
+        return places.filter((p) => derivePlaceRequirementStatus(p) !== "submitted").slice(0, 3);
     }, [places]);
     const highlightedPlaceRows = useMemo(() => {
         return buildPairGridRows(highlightedPlaces, (place) => {
@@ -173,11 +157,11 @@ export default function DashboardScreen() {
     }, [highlightedPlaces]);
 
     const priorityPlace = useMemo<AuditorPlace | undefined>(() => {
-        const inProgress = places.find((p) => p.status === "IN_PROGRESS" || p.status === "PAUSED");
+        const inProgress = places.find((p) => derivePlaceRequirementStatus(p) === "in_progress");
         if (inProgress !== undefined) {
             return inProgress;
         }
-        const notStarted = places.find((p) => p.status === null);
+        const notStarted = places.find((p) => derivePlaceRequirementStatus(p) === "not_started");
         return notStarted;
     }, [places]);
 

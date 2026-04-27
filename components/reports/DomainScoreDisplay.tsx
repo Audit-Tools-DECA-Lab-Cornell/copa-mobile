@@ -1,10 +1,10 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { ScrollView } from "react-native";
 import { Text, XStack, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
 import type { AuditScoreTotals } from "lib/audit/types";
-import { formatPercentage, formatScoreValue } from "lib/audit/score-helpers";
-import { getScaleAccentColor, useDesignSystem } from "lib/design-system";
+import { formatPercentage, formatScoreValue, reportBarScoreTier, roundedPercentOfMax } from "lib/audit/score-helpers";
+import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
 import { useReportScoreTableLayout } from "lib/report-table-layout";
@@ -63,21 +63,32 @@ const CONSTRUCT_METRICS: readonly MetricConfig[] = [
     {
         key: "play_value",
         labelKey: "domain.barPlayValue",
+        shortLabelKey: "playValueShort",
         value: (t) => t.play_value_total,
         max: (t) => t.play_value_total_max,
     },
     {
         key: "usability",
         labelKey: "domain.barUsability",
+        shortLabelKey: "usabilityShort",
         value: (t) => t.usability_total,
         max: (t) => t.usability_total_max,
     },
 ];
 
-function getMetricColor(key: MetricKey, ds: ReturnType<typeof useDesignSystem>): string {
-    if (key === "play_value") return ds.colors.warning;
-    if (key === "usability") return ds.colors.primary;
-    return getScaleAccentColor(key as Parameters<typeof getScaleAccentColor>[0], ds.colors);
+const ALL_BAR_METRICS: readonly MetricConfig[] = [...SCALE_METRICS, ...CONSTRUCT_METRICS];
+
+function barColorForTier(tier: ReturnType<typeof reportBarScoreTier>, ds: ReturnType<typeof useDesignSystem>): string {
+    if (tier === "na") {
+        return ds.colors.mutedForeground;
+    }
+    if (tier === "high") {
+        return ds.colors.success;
+    }
+    if (tier === "mid") {
+        return ds.colors.warning;
+    }
+    return ds.colors.danger;
 }
 
 // ── Bar rendering ─────────────────────────────────────────────────────────────
@@ -110,12 +121,13 @@ function AlignedBarCell({
     const value = scoreTotals === null ? 0 : metric.value(scoreTotals);
     const maximum = scoreTotals === null ? 0 : metric.max(scoreTotals);
     const isNa = scoreTotals === null || maximum <= 0;
-    const pct = isNa ? null : (value / maximum) * 100;
+    const pctRounded = roundedPercentOfMax(value, maximum);
+    const tier = reportBarScoreTier(pctRounded);
     const fillRatio = isNa ? 0 : Math.min(1, value / maximum);
     const fillHeight = Math.round(fillRatio * trackHeight * 100) / 100;
-    const barColor = getMetricColor(metric.key, ds);
+    const barColor = barColorForTier(tier, ds);
 
-    const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${Math.round(pct ?? 0)}%`;
+    const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${pctRounded}%`;
     const shortLabel =
         useShortLabel && metric.shortLabelKey !== undefined
             ? t(metric.shortLabelKey, { ns: "reports" })
@@ -184,46 +196,6 @@ function AlignedBarCell({
     );
 }
 
-// ── Tablet legend ─────────────────────────────────────────────────────────────
-
-interface LegendItem {
-    readonly shortLabel: string;
-    readonly fullLabel: string;
-    readonly color: string;
-}
-
-interface TabletLegendProps {
-    readonly items: readonly LegendItem[];
-    readonly width: number;
-    readonly ds: ReturnType<typeof useDesignSystem>;
-}
-
-function TabletLegend({ items, width, ds }: TabletLegendProps) {
-    return (
-        <YStack width={width} justify="flex-end" pb="$1" gap="$1.5">
-            {items.map((item) => (
-                <XStack key={item.shortLabel} items="center" gap="$1.5">
-                    <YStack
-                        width={8}
-                        height={8}
-                        rounded={9999}
-                        style={{ backgroundColor: item.color, flexShrink: 0 }}
-                    />
-                    <Text
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyXs.fontSize}
-                        numberOfLines={1}
-                        style={{ flexShrink: 1 }}
-                    >
-                        {`${item.shortLabel} = ${item.fullLabel}`}
-                    </Text>
-                </XStack>
-            ))}
-        </YStack>
-    );
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 /**
@@ -248,9 +220,8 @@ function TabletLegend({ items, width, ds }: TabletLegendProps) {
  *
  * Tablet
  * ──────
- * Classic two-column layout (unchanged):
- *   [Scale bars+legend | PVU bars+legend]   (bars row)
- *   [Scale table       | PVU table      ]   (tables row)
+ * One row of six bars (label-column spacer + scale + construct columns) with tier-colored fills,
+ * then one joined score table (matches web `AlignedScoreDisplay`).
  */
 export const DomainScoreDisplay = memo(function DomainScoreDisplay({
     scoreTotals,
@@ -265,74 +236,33 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
     const trackHeight = layout.isTablet ? 180 : 144;
     const barWidth = layout.isTablet ? 50 : 38;
 
-    const scaleLeftLegendItems = useMemo<readonly LegendItem[]>(
-        () =>
-            SCALE_METRICS.map((m) => ({
-                shortLabel: t(m.shortLabelKey ?? m.labelKey, { ns: "reports" }),
-                fullLabel: t(m.labelKey, { ns: "reports" }),
-                color: getMetricColor(m.key, ds),
-            })),
-        [ds, t],
-    );
-
-    const constructRightLegendItems = useMemo<readonly LegendItem[]>(
-        () =>
-            CONSTRUCT_METRICS.map((m) => ({
-                shortLabel: t(m.labelKey, { ns: "reports" }),
-                fullLabel: t(m.labelKey, { ns: "reports" }),
-                color: getMetricColor(m.key, ds),
-            })),
-        [ds, t],
-    );
-
-    // ── Tablet layout ──────────────────────────────────────────────────────
+    // ── Tablet layout — single bar row + joined table (web parity) ─────────────────
     if (layout.isTablet) {
-        const minRowWidth = tableLayout.leftTableWidth + tableLayout.rightTableWidth;
-
         return (
             <YStack gap="$3" width="100%">
-                {/* Bars row */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <XStack gap="$2" items="flex-end" style={{ minWidth: minRowWidth }}>
-                        {/* Scale bars */}
-                        <XStack width={tableLayout.leftTableWidth} items="flex-end">
-                            <TabletLegend items={scaleLeftLegendItems} width={tableLayout.labelColWidth} ds={ds} />
-                            {SCALE_METRICS.map((m) => (
+                    <XStack items="flex-end" style={{ minWidth: tableLayout.joinedTableWidth }}>
+                        <YStack width={tableLayout.labelColWidth} />
+                        {ALL_BAR_METRICS.map((m) => {
+                            const isScale = SCALE_METRICS.some((s) => s.key === m.key);
+                            const colW = isScale ? tableLayout.leftDataColWidth : tableLayout.rightDataColWidth;
+                            return (
                                 <AlignedBarCell
                                     key={m.key}
                                     metric={m}
                                     scoreTotals={scoreTotals}
-                                    colWidth={tableLayout.leftDataColWidth}
+                                    colWidth={colW}
                                     barWidth={barWidth}
                                     trackHeight={trackHeight}
                                     ds={ds}
-                                    useShortLabel
+                                    useShortLabel={m.shortLabelKey !== undefined}
                                     t={t}
                                 />
-                            ))}
-                        </XStack>
-
-                        {/* PVU bars */}
-                        <XStack width={tableLayout.rightTableWidth} items="flex-end">
-                            <TabletLegend items={constructRightLegendItems} width={tableLayout.labelColWidth} ds={ds} />
-                            {CONSTRUCT_METRICS.map((m) => (
-                                <AlignedBarCell
-                                    key={m.key}
-                                    metric={m}
-                                    scoreTotals={scoreTotals}
-                                    colWidth={tableLayout.rightDataColWidth}
-                                    barWidth={barWidth}
-                                    trackHeight={trackHeight}
-                                    ds={ds}
-                                    useShortLabel={false}
-                                    t={t}
-                                />
-                            ))}
-                        </XStack>
+                            );
+                        })}
                     </XStack>
                 </ScrollView>
 
-                {/* Tables row — DomainScoreTable handles its own tablet layout */}
                 <DomainScoreTable scoreTotals={scoreTotals} itemCount={itemCount} />
             </YStack>
         );
@@ -386,7 +316,7 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
                                 barWidth={phoneBarWidth}
                                 trackHeight={trackHeight}
                                 ds={ds}
-                                useShortLabel
+                                useShortLabel={m.shortLabelKey !== undefined}
                                 t={t}
                             />
                         ))}
