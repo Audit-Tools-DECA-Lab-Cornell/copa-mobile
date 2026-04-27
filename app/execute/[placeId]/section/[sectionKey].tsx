@@ -395,6 +395,27 @@ export default function ExecuteSectionScreen() {
             return;
         }
 
+        if (isSubmit) {
+            Alert.alert(
+                t("section.submitConfirmTitle", { ns: "audit" }),
+                t("section.submitConfirmMessage", { ns: "audit" }),
+                [
+                    {
+                        text: t("section.submitConfirmCancel", { ns: "audit" }),
+                        style: "cancel",
+                    },
+                    {
+                        text: t("section.submitConfirmSubmit", { ns: "audit" }),
+                        style: "destructive",
+                        onPress: () => {
+                            void proceedToNextOrSubmit();
+                        },
+                    },
+                ],
+            );
+            return;
+        }
+
         await proceedToNextOrSubmit();
     };
 

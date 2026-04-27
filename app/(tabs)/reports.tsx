@@ -40,6 +40,7 @@ import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 
+type ReportProjectFilter = "all" | string;
 type ReportFilter = "all" | "submitted" | "scored" | "not_scored";
 type ReportSortOption = "score" | "recent" | "name";
 type ReportsListItem = AuditorPlace | PairGridRow<AuditorPlace>;
@@ -63,6 +64,7 @@ export default function ReportsScreen() {
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
     const [activeExportKey, setActiveExportKey] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [projectFilter, setProjectFilter] = useState<ReportProjectFilter>("all");
     const [reportFilter, setReportFilter] = useState<ReportFilter>("all");
     const [sortOption, setSortOption] = useState<ReportSortOption>("score");
     const listRef = useRef<FlashListRef<ReportsListItem> | null>(null);
@@ -127,9 +129,26 @@ export default function ReportsScreen() {
         }, 0);
     }, [placesWithScores]);
 
+    /** Unique projects derived from report places for the project filter chips. */
+    const uniqueProjects = useMemo(() => {
+        const projectMap = new Map<string, string>();
+        for (const place of reportPlaces) {
+            if (!projectMap.has(place.project_id)) {
+                projectMap.set(place.project_id, place.project_name);
+            }
+        }
+        return Array.from(projectMap.entries())
+            .map(([id, name]) => ({ id, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [reportPlaces]);
+
     const filteredReportPlaces = useMemo(() => {
         const visiblePlaces = reportPlaces.filter((place) => {
             if (!matchesPlaceSearch(place, searchQuery)) {
+                return false;
+            }
+
+            if (projectFilter !== "all" && place.project_id !== projectFilter) {
                 return false;
             }
 
@@ -168,7 +187,7 @@ export default function ReportsScreen() {
 
             return leftPlace.place_name.localeCompare(rightPlace.place_name);
         });
-    }, [reportFilter, reportPlaces, searchQuery, sortOption]);
+    }, [projectFilter, reportFilter, reportPlaces, searchQuery, sortOption]);
     const tabletRows = useMemo(() => {
         return buildPairGridRows(filteredReportPlaces, (place) => {
             return getProjectPlaceKey(place.project_id, place.place_id);
@@ -302,7 +321,7 @@ export default function ReportsScreen() {
         [buildExportableAudit, exportablePlaces, instrument, session, showExportError, showExportSuccess, ds.colors],
     );
 
-    const hasActiveFilters = searchQuery.trim().length > 0 || reportFilter !== "all";
+    const hasActiveFilters = searchQuery.trim().length > 0 || projectFilter !== "all" || reportFilter !== "all";
     const keyExtractor = useCallback((item: ReportsListItem) => {
         return isPairGridRow(item) ? item.id : getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
@@ -454,6 +473,41 @@ export default function ReportsScreen() {
                         onChangeText={setSearchQuery}
                         placeholder={t("searchPlaceholder", { ns: "reports" })}
                     />
+
+                    {uniqueProjects.length > 1 && (
+                        <YStack gap="$2">
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelSm.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.2}
+                            >
+                                {t("projectFilter", { ns: "reports", defaultValue: "Project" })}
+                            </Paragraph>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <XStack gap="$2">
+                                    <FilterChip
+                                        label={t("filters.all", { ns: "common" })}
+                                        isSelected={projectFilter === "all"}
+                                        onPress={() => {
+                                            setProjectFilter("all");
+                                        }}
+                                    />
+                                    {uniqueProjects.map((project) => (
+                                        <FilterChip
+                                            key={project.id}
+                                            label={project.name}
+                                            isSelected={projectFilter === project.id}
+                                            onPress={() => {
+                                                setProjectFilter(project.id);
+                                            }}
+                                        />
+                                    ))}
+                                </XStack>
+                            </ScrollView>
+                        </YStack>
+                    )}
 
                     <YStack gap="$2">
                         <Paragraph

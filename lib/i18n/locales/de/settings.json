@@ -47,7 +47,7 @@
         "email": "E-Mail",
         "label": "Profil",
         "name": "Name",
-        "role": "Rolle"
+        "role": "Rolle/Beruf"
     },
     "subtitle": "Profil, Erscheinungsbild, Barrierefreiheit und App-Informationen.",
     "title": "Einstellungen"

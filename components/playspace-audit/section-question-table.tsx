@@ -78,6 +78,27 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
                             />
                         ))}
                     </XStack>
+                    {/* Before showing the questions, display a row with description for each scale key, making sure to display the description for each scale key in the correct order and under the header cell for the scale key */}
+                    <XStack
+                        borderTopWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surfaceMuted}
+                        items="stretch"
+                    >
+                        {visibleScaleKeys.map((scaleKey) => (
+                            <YStack
+                                key={scaleKey}
+                                width={readScaleColumnWidth(columnMetrics, scaleKey)}
+                                px="$3"
+                                py="$2.5"
+                                borderRightWidth={1}
+                                borderColor={ds.colors.border}
+                                justify="center"
+                            >
+                                {t(`section.table.scaleDescriptions.${scaleKey}`)}
+                            </YStack>
+                        ))}
+                    </XStack>
 
                     {rows.map((row, rowIndex) => {
                         const activeScaleKeys = getActiveScaleKeysForQuestion(row.question, row.selectedAnswers);

@@ -26,6 +26,7 @@ import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 
+type PlaceProjectFilter = "all" | string;
 type PlaceStatusFilter = "all" | LocalizedPlaceStatus;
 type PlaceSortOption = "recent" | "progress" | "name";
 
@@ -45,6 +46,7 @@ export default function PlacesScreen() {
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const [searchQuery, setSearchQuery] = useState("");
+    const [projectFilter, setProjectFilter] = useState<PlaceProjectFilter>("all");
     const [statusFilter, setStatusFilter] = useState<PlaceStatusFilter>("all");
     const [sortOption, setSortOption] = useState<PlaceSortOption>("recent");
     const phoneListRef = useRef<FlashListRef<AuditorPlace> | null>(null);
@@ -71,9 +73,26 @@ export default function PlacesScreen() {
         );
     }, [places]);
 
+    /** Unique projects derived from the loaded places for the project filter chips. */
+    const uniqueProjects = useMemo(() => {
+        const projectMap = new Map<string, string>();
+        for (const place of places) {
+            if (!projectMap.has(place.project_id)) {
+                projectMap.set(place.project_id, place.project_name);
+            }
+        }
+        return Array.from(projectMap.entries())
+            .map(([id, name]) => ({ id, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [places]);
+
     const filteredPlaces = useMemo(() => {
         const visiblePlaces = places.filter((place) => {
             if (!matchesPlaceSearch(place, searchQuery)) {
+                return false;
+            }
+
+            if (projectFilter !== "all" && place.project_id !== projectFilter) {
                 return false;
             }
 
@@ -104,7 +123,7 @@ export default function PlacesScreen() {
 
             return leftPlace.place_name.localeCompare(rightPlace.place_name);
         });
-    }, [places, searchQuery, sortOption, statusFilter]);
+    }, [places, projectFilter, searchQuery, sortOption, statusFilter]);
     const tabletRows = useMemo(() => {
         return buildPairGridRows(filteredPlaces, (place) => {
             return getProjectPlaceKey(place.project_id, place.place_id);
@@ -129,7 +148,7 @@ export default function PlacesScreen() {
         scrollToOffset: scrollPlacesToOffset,
     });
 
-    const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== "all";
+    const hasActiveFilters = searchQuery.trim().length > 0 || projectFilter !== "all" || statusFilter !== "all";
     const keyExtractor = useCallback((item: AuditorPlace) => {
         return getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
@@ -253,6 +272,41 @@ export default function PlacesScreen() {
                 onChangeText={setSearchQuery}
                 placeholder={t("searchPlaceholder", { ns: "places" })}
             />
+
+            {uniqueProjects.length > 1 && (
+                <YStack gap="$2">
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        {t("projectFilter", { ns: "places", defaultValue: "Project" })}
+                    </Paragraph>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            <FilterChip
+                                label={t("filters.all", { ns: "common" })}
+                                isSelected={projectFilter === "all"}
+                                onPress={() => {
+                                    setProjectFilter("all");
+                                }}
+                            />
+                            {uniqueProjects.map((project) => (
+                                <FilterChip
+                                    key={project.id}
+                                    label={project.name}
+                                    isSelected={projectFilter === project.id}
+                                    onPress={() => {
+                                        setProjectFilter(project.id);
+                                    }}
+                                />
+                            ))}
+                        </XStack>
+                    </ScrollView>
+                </YStack>
+            )}
 
             {layout.isTablet ? (
                 <XStack gap="$4" items="flex-start">
