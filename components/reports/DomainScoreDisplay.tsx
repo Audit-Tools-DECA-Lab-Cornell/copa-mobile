@@ -276,7 +276,7 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
     //
     const phoneBarWidth = barWidth; // 38px
     const phoneLeftDataColWidth = tableLayout.leftDataColWidth; // 72px
-    const phoneRightDataColWidth = tableLayout.rightDataColWidth; // 180px
+    const phoneRightDataColWidth = tableLayout.rightDataColWidth; // 144px
     const phoneLabelColWidth = tableLayout.labelColWidth; // 120px
 
     const scaleGroupWidth = phoneLabelColWidth + phoneLeftDataColWidth * SCALE_METRICS.length;

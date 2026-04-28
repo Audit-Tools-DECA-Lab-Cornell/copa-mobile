@@ -689,13 +689,15 @@ async function syncAuditSessionFromServer(session: AuthSession, auditId: string)
 
 async function refreshCachedAuditSessions(session: AuthSession): Promise<void> {
     const auditIds = Object.keys(auditData$.peek().sessions_by_audit_id);
-    for (const auditId of auditIds) {
-        try {
-            await syncAuditSessionFromServer(session, auditId);
-        } catch (error) {
-            log.withError(error).error(`background audit sync failed for ${auditId}`);
-        }
-    }
+    await Promise.allSettled(
+        auditIds.map(async (auditId) => {
+            try {
+                await syncAuditSessionFromServer(session, auditId);
+            } catch (error) {
+                log.withError(error).error(`background audit sync failed for ${auditId}`);
+            }
+        }),
+    );
 }
 
 async function refreshAudit(session: AuthSession, auditId: string): Promise<AuditSession> {

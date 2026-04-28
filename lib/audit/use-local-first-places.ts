@@ -110,17 +110,25 @@ export function overlayLocalSessionOntoPlace(
     const surveyPart = scorePairFromTotals(auditSession.scores.survey);
     const overallFromSession = overallPairFromPartitions(auditPart, surveyPart);
 
+    const executionMode = auditSession.selected_execution_mode ?? auditSession.meta.execution_mode;
+
     return {
         ...place,
-        place_audit_status: mergePlaceAxisWithSession(place.place_audit_status, auditSession.status),
-        place_survey_status: mergePlaceAxisWithSession(place.place_survey_status, auditSession.status),
+        place_audit_status:
+            executionMode === "survey"
+                ? place.place_audit_status
+                : mergePlaceAxisWithSession(place.place_audit_status, auditSession.status),
+        place_survey_status:
+            executionMode === "audit"
+                ? place.place_survey_status
+                : mergePlaceAxisWithSession(place.place_survey_status, auditSession.status),
         audit_id: auditSession.audit_id,
         started_at: auditSession.started_at,
         submitted_at: auditSession.submitted_at,
         progress_percent: getLocalProgressPercent(auditSession, instrument),
         score_totals: auditSession.scores.overall,
         summary_score: place.summary_score,
-        selected_execution_mode: auditSession.selected_execution_mode ?? auditSession.meta.execution_mode,
+        selected_execution_mode: executionMode,
         audit_scores: auditPart ?? place.audit_scores,
         survey_scores: surveyPart ?? place.survey_scores,
         overall_scores: overallFromSession ?? place.overall_scores,

@@ -16,25 +16,36 @@ import { createModuleLogger } from "lib/logger";
 
 const log = createModuleLogger("notifications-store");
 
+let assignmentRefreshInFlight = false;
+
 /**
  * Re-fetches assigned places and locally cached audit sessions when the server
  * reports more unread notifications (assignments / audits likely changed).
  */
 async function refreshAssignmentsAfterNotificationSignal(session: AuthSession): Promise<void> {
-    try {
-        await usePlacesStore.getState().loadPlaces(session);
-    } catch (error) {
-        log.error(`loadPlaces after notification signal failed: ${String(error)}`);
+    if (assignmentRefreshInFlight) {
+        return;
     }
+
+    assignmentRefreshInFlight = true;
     try {
-        await usePlacesStore.getState().loadDashboardSummary(session);
-    } catch (error) {
-        log.error(`loadDashboardSummary after notification signal failed: ${String(error)}`);
-    }
-    try {
-        await usePlayspaceAuditStore.getState().refreshCachedAuditSessions(session);
-    } catch (error) {
-        log.error(`refreshCachedAuditSessions after notification signal failed: ${String(error)}`);
+        try {
+            await usePlacesStore.getState().loadPlaces(session);
+        } catch (error) {
+            log.error(`loadPlaces after notification signal failed: ${String(error)}`);
+        }
+        try {
+            await usePlacesStore.getState().loadDashboardSummary(session);
+        } catch (error) {
+            log.error(`loadDashboardSummary after notification signal failed: ${String(error)}`);
+        }
+        try {
+            await usePlayspaceAuditStore.getState().refreshCachedAuditSessions(session);
+        } catch (error) {
+            log.error(`refreshCachedAuditSessions after notification signal failed: ${String(error)}`);
+        }
+    } finally {
+        assignmentRefreshInFlight = false;
     }
 }
 
