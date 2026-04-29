@@ -1,17 +1,19 @@
 import type { AuditorPlace } from "lib/audit/places-api";
 import type { LocalizedPlaceStatus } from "lib/i18n/format";
 
+const axisTerminal = (value: string): boolean => value === "submitted" || value === "complete";
+
 /**
- * Map a backend audit lifecycle value into the local place-status model.
- *
- * @param auditStatus Raw backend audit status.
- * @returns UI-friendly place status used for filters and status pills.
+ * Combine audit-axis and survey-axis place status into one UI status
+ * (both axes must be terminal for "submitted").
  */
-export function derivePlaceStatus(auditStatus: AuditorPlace["audit_status"]): LocalizedPlaceStatus {
-    if (auditStatus === "SUBMITTED") {
+export function derivePlaceRequirementStatus(
+    place: Pick<AuditorPlace, "place_audit_status" | "place_survey_status">,
+): LocalizedPlaceStatus {
+    if (axisTerminal(place.place_audit_status) && axisTerminal(place.place_survey_status)) {
         return "submitted";
     }
-    if (auditStatus === "IN_PROGRESS" || auditStatus === "PAUSED") {
+    if (place.place_audit_status === "in_progress" || place.place_survey_status === "in_progress") {
         return "in_progress";
     }
     return "not_started";
@@ -67,6 +69,8 @@ export function matchesPlaceSearch(place: AuditorPlace, query: string): boolean 
         place.place_name,
         place.project_name,
         place.place_type,
+        place.postal_code,
+        place.address,
         place.city,
         place.province,
         place.country,

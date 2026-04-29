@@ -110,6 +110,11 @@ interface PlayspaceAuditStoreState {
         executionMode?: "audit" | "survey" | "both",
     ) => Promise<AuditSession>;
     refreshAudit: (session: AuthSession, auditId: string) => Promise<AuditSession>;
+    /**
+     * Fetches the latest server state for every audit id stored locally, without
+     * toggling global loading flags (for background invalidation, e.g. new notifications).
+     */
+    refreshCachedAuditSessions: (session: AuthSession) => Promise<void>;
     applyLocalExecutionMode: (pairKey: string, executionMode: ExecutionMode) => void;
     applyLocalQuestionAnswer: (
         pairKey: string,
@@ -632,6 +637,69 @@ async function ensurePlaceAudit(
     }
 }
 
+/**
+ * Merges the latest `fetchAuditSession` payload into local state without changing
+ * global loading UI (used for explicit screen refresh and background sync).
+ */
+async function syncAuditSessionFromServer(session: AuthSession, auditId: string): Promise<AuditSession> {
+    const nextSession = await fetchAuditSession(session, auditId);
+    const data = auditData$.peek();
+    const currentSession =
+        data.sessions_by_audit_id[nextSession.audit_id] ??
+        data.sessions_by_pair_key[getProjectPlaceKey(nextSession.project_id, nextSession.place_id)] ??
+        null;
+    const merged = applyFetchedSessionSnapshot({
+        currentSession,
+        fetchedSession: nextSession,
+        dirtyMeta: data.dirty_meta,
+        dirtyPreAudit: data.dirty_pre_audit,
+        dirtySections: data.dirty_sections,
+    }).session;
+    const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
+        session: merged,
+        dirtyMeta: data.dirty_meta,
+        dirtyPreAudit: data.dirty_pre_audit,
+        dirtySections: data.dirty_sections,
+        syncStateByAuditId: data.sync_state_by_audit_id,
+    });
+    const nextSessionMaps = upsertAuditSessionMaps({
+        sessionsByAuditId: data.sessions_by_audit_id,
+        sessionsByPairKey: data.sessions_by_pair_key,
+        nextSession: merged,
+    });
+    const nextPrunedAuditState = pruneAuditStateForAudit({
+        auditId: nextSessionMaps.displacedAuditId,
+        dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
+        dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
+        dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+        syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
+    });
+    batch(() => {
+        auditData$.instrument.set(merged.instrument);
+        auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
+        auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
+        auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
+        auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
+        auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+        auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+    });
+    saveNow();
+    return merged;
+}
+
+async function refreshCachedAuditSessions(session: AuthSession): Promise<void> {
+    const auditIds = Object.keys(auditData$.peek().sessions_by_audit_id);
+    await Promise.allSettled(
+        auditIds.map(async (auditId) => {
+            try {
+                await syncAuditSessionFromServer(session, auditId);
+            } catch (error) {
+                log.withError(error).error(`background audit sync failed for ${auditId}`);
+            }
+        }),
+    );
+}
+
 async function refreshAudit(session: AuthSession, auditId: string): Promise<AuditSession> {
     batch(() => {
         auditUI$.isLoadingAudit.set(true);
@@ -639,50 +707,11 @@ async function refreshAudit(session: AuthSession, auditId: string): Promise<Audi
     });
 
     try {
-        const nextSession = await fetchAuditSession(session, auditId);
-        const data = auditData$.peek();
-        const currentSession =
-            data.sessions_by_audit_id[nextSession.audit_id] ??
-            data.sessions_by_pair_key[getProjectPlaceKey(nextSession.project_id, nextSession.place_id)] ??
-            null;
-        const merged = applyFetchedSessionSnapshot({
-            currentSession,
-            fetchedSession: nextSession,
-            dirtyMeta: data.dirty_meta,
-            dirtyPreAudit: data.dirty_pre_audit,
-            dirtySections: data.dirty_sections,
-        }).session;
-        const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
-            session: merged,
-            dirtyMeta: data.dirty_meta,
-            dirtyPreAudit: data.dirty_pre_audit,
-            dirtySections: data.dirty_sections,
-            syncStateByAuditId: data.sync_state_by_audit_id,
-        });
-        const nextSessionMaps = upsertAuditSessionMaps({
-            sessionsByAuditId: data.sessions_by_audit_id,
-            sessionsByPairKey: data.sessions_by_pair_key,
-            nextSession: merged,
-        });
-        const nextPrunedAuditState = pruneAuditStateForAudit({
-            auditId: nextSessionMaps.displacedAuditId,
-            dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
-            dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
-            dirtySections: nextPrunedSubmittedAuditState.dirtySections,
-            syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
-        });
+        const merged = await syncAuditSessionFromServer(session, auditId);
         batch(() => {
-            auditData$.instrument.set(merged.instrument);
-            auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
-            auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
-            auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
-            auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
-            auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
-            auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
             auditUI$.isLoadingAudit.set(false);
             auditUI$.errorMessage.set(null);
         });
-        saveNow();
         return merged;
     } catch (error) {
         const message = formatAuditErrorMessage(error, t("audit:errors.refreshFallback"));
@@ -1702,6 +1731,7 @@ const actions = {
     clearStoredState,
     ensurePlaceAudit,
     refreshAudit,
+    refreshCachedAuditSessions,
     applyLocalExecutionMode,
     applyLocalQuestionAnswer,
     applyLocalSectionNote,

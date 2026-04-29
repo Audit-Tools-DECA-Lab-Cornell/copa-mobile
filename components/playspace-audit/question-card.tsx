@@ -6,41 +6,7 @@ import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/des
 import { getOptionGridItemWidth } from "lib/option-grid";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import type { InstrumentQuestion, QuestionResponsePayload, QuestionScale } from "lib/audit/types";
-
-/**
- * One parsed segment of a prompt string with optional bold styling.
- */
-interface PromptSegment {
-    readonly text: string;
-    readonly bold: boolean;
-}
-
-/**
- * Parse `**bold**` markers in a prompt string into renderable segments.
- *
- * @param raw Prompt string with optional `**bold**` markers.
- * @returns Ordered list of text segments with bold flags.
- */
-function parsePromptSegments(raw: string): PromptSegment[] {
-    const segments: PromptSegment[] = [];
-    const parts = raw.split("**");
-    for (let index = 0; index < parts.length; index++) {
-        const part = parts[index] ?? "";
-        if (part.length === 0) {
-            continue;
-        }
-        segments.push({ text: part, bold: index % 2 === 1 });
-    }
-    return segments;
-}
-
-/**
- * Convert raw instrument question keys into a human-readable audit label.
- */
-function formatQuestionKey(questionKey: string): string {
-    const sections = questionKey.slice(2).split("_"); // Remove "q_" prefix
-    return `Q ${sections.map((section) => section.toUpperCase()).join(".")}`;
-}
+import { formatQuestionKeyForDisplay, parsePromptSegments } from "lib/audit/prompt-segments";
 
 interface QuestionCardProps {
     readonly question: InstrumentQuestion;
@@ -103,7 +69,7 @@ export function QuestionCard({
                     textTransform="uppercase"
                     letterSpacing={1.1}
                 >
-                    {formatQuestionKey(question.question_key)}
+                    {formatQuestionKeyForDisplay(question.question_key)}
                 </Text>
             </XStack>
             <Text

@@ -4,25 +4,25 @@ import { useToastController } from "@tamagui/toast";
 import { ActionButton } from "components/ui/action-button";
 import { CollapsibleCard } from "components/ui/collapsible-card";
 import { FilterChip } from "components/ui/filter-chip";
+import { ProjectFilterSelect } from "components/ui/project-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/audit/export";
 import { buildAuditExportPreview, shareBulkAuditExport } from "lib/audit/export";
 import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     deriveLocality,
-    derivePlaceStatus,
+    derivePlaceRequirementStatus,
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import {
     formatColumnSummary,
-    formatConstructSummary,
+    formatScorePair,
     formatScoreValue,
-    getCombinedConstructScore,
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
@@ -41,6 +41,7 @@ import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 
+type ReportProjectFilter = "all" | string;
 type ReportFilter = "all" | "submitted" | "scored" | "not_scored";
 type ReportSortOption = "score" | "recent" | "name";
 type ReportsListItem = AuditorPlace | PairGridRow<AuditorPlace>;
@@ -64,6 +65,7 @@ export default function ReportsScreen() {
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
     const [activeExportKey, setActiveExportKey] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [projectFilter, setProjectFilter] = useState<ReportProjectFilter>("all");
     const [reportFilter, setReportFilter] = useState<ReportFilter>("all");
     const [sortOption, setSortOption] = useState<ReportSortOption>("score");
     const listRef = useRef<FlashListRef<ReportsListItem> | null>(null);
@@ -79,7 +81,7 @@ export default function ReportsScreen() {
     }, [places]);
 
     const placesWithScores = useMemo(() => {
-        return reportPlaces.filter((place) => place.score_totals !== null);
+        return reportPlaces.filter((place) => place.overall_scores !== null);
     }, [reportPlaces]);
 
     const exportablePlaces = useMemo(() => {
@@ -88,12 +90,16 @@ export default function ReportsScreen() {
 
     const averageCombinedConstructScore = useMemo(() => {
         if (placesWithScores.length === 0) {
-            return 0;
+            return null;
         }
-        const sum = placesWithScores.reduce((total, place) => {
-            return total + (getCombinedConstructScore(place.score_totals) ?? 0);
-        }, 0);
-        return sum / placesWithScores.length;
+        return {
+            pv:
+                placesWithScores.reduce((total, place) => total + (place.overall_scores?.pv ?? 0), 0) /
+                placesWithScores.length,
+            u:
+                placesWithScores.reduce((total, place) => total + (place.overall_scores?.u ?? 0), 0) /
+                placesWithScores.length,
+        };
     }, [placesWithScores]);
 
     const averageSociabilityScore = useMemo(() => {
@@ -111,8 +117,8 @@ export default function ReportsScreen() {
             return null;
         }
         return exportablePlaces.reduce((best, current) => {
-            return (getCombinedConstructScore(current.score_totals) ?? 0) >
-                (getCombinedConstructScore(best.score_totals) ?? 0)
+            return (current.overall_scores?.pv ?? 0) + (current.overall_scores?.u ?? 0) >
+                (best.overall_scores?.pv ?? 0) + (best.overall_scores?.u ?? 0)
                 ? current
                 : best;
         });
@@ -120,9 +126,22 @@ export default function ReportsScreen() {
 
     const maxCombinedConstructScore = useMemo(() => {
         return placesWithScores.reduce((currentMax, place) => {
-            return Math.max(currentMax, getCombinedConstructScore(place.score_totals) ?? 0);
+            return Math.max(currentMax, (place.overall_scores?.pv ?? 0) + (place.overall_scores?.u ?? 0));
         }, 0);
     }, [placesWithScores]);
+
+    /** Unique projects derived from report places for the project filter chips. */
+    const uniqueProjects = useMemo(() => {
+        const projectMap = new Map<string, string>();
+        for (const place of reportPlaces) {
+            if (!projectMap.has(place.project_id)) {
+                projectMap.set(place.project_id, place.project_name);
+            }
+        }
+        return Array.from(projectMap.entries())
+            .map(([id, name]) => ({ id, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [reportPlaces]);
 
     const filteredReportPlaces = useMemo(() => {
         const visiblePlaces = reportPlaces.filter((place) => {
@@ -130,14 +149,18 @@ export default function ReportsScreen() {
                 return false;
             }
 
+            if (projectFilter !== "all" && place.project_id !== projectFilter) {
+                return false;
+            }
+
             if (reportFilter === "submitted") {
-                return place.audit_status === "SUBMITTED";
+                return place.submitted_at !== null;
             }
             if (reportFilter === "scored") {
-                return place.score_totals !== null;
+                return place.overall_scores !== null;
             }
             if (reportFilter === "not_scored") {
-                return place.score_totals === null;
+                return place.overall_scores === null;
             }
             return true;
         });
@@ -149,8 +172,9 @@ export default function ReportsScreen() {
 
             if (sortOption === "score") {
                 const scoreDifference =
-                    (getCombinedConstructScore(rightPlace.score_totals) ?? -1) -
-                    (getCombinedConstructScore(leftPlace.score_totals) ?? -1);
+                    (rightPlace.overall_scores?.pv ?? -1) +
+                    (rightPlace.overall_scores?.u ?? -1) -
+                    ((leftPlace.overall_scores?.pv ?? -1) + (leftPlace.overall_scores?.u ?? -1));
                 if (scoreDifference !== 0) {
                     return scoreDifference;
                 }
@@ -164,7 +188,7 @@ export default function ReportsScreen() {
 
             return leftPlace.place_name.localeCompare(rightPlace.place_name);
         });
-    }, [reportFilter, reportPlaces, searchQuery, sortOption]);
+    }, [projectFilter, reportFilter, reportPlaces, searchQuery, sortOption]);
     const tabletRows = useMemo(() => {
         return buildPairGridRows(filteredReportPlaces, (place) => {
             return getProjectPlaceKey(place.project_id, place.place_id);
@@ -183,7 +207,7 @@ export default function ReportsScreen() {
     });
 
     const previewPlace = useMemo(() => {
-        const filteredScoredPlace = filteredReportPlaces.find((place) => place.score_totals !== null);
+        const filteredScoredPlace = filteredReportPlaces.find((place) => place.overall_scores !== null);
         if (filteredScoredPlace !== undefined) {
             return filteredScoredPlace;
         }
@@ -298,7 +322,7 @@ export default function ReportsScreen() {
         [buildExportableAudit, exportablePlaces, instrument, session, showExportError, showExportSuccess, ds.colors],
     );
 
-    const hasActiveFilters = searchQuery.trim().length > 0 || reportFilter !== "all";
+    const hasActiveFilters = searchQuery.trim().length > 0 || projectFilter !== "all" || reportFilter !== "all";
     const keyExtractor = useCallback((item: ReportsListItem) => {
         return isPairGridRow(item) ? item.id : getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
@@ -314,7 +338,6 @@ export default function ReportsScreen() {
                     return (
                         <XStack gap="$3" items="stretch">
                             <ReportQueueCard place={item.left} maxCombinedConstructScore={maxCombinedConstructScore} />
-
                             <YStack width="48.5%"></YStack>
                         </XStack>
                     );
@@ -377,7 +400,9 @@ export default function ReportsScreen() {
                             <StatCard
                                 label={t("averageConstructScore")}
                                 value={
-                                    placesWithScores.length > 0 ? formatScoreValue(averageCombinedConstructScore) : "--"
+                                    averageCombinedConstructScore
+                                        ? (formatScorePair(averageCombinedConstructScore) ?? "--")
+                                        : "--"
                                 }
                                 accentColor={ds.colors.primary}
                                 helperText={t("scoredPlacesHelper", {
@@ -398,7 +423,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : formatScoreValue(getCombinedConstructScore(topScoringPlace.score_totals) ?? 0)
+                                        : (formatScorePair(topScoringPlace.overall_scores) ?? "Pending")
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -411,8 +436,8 @@ export default function ReportsScreen() {
                                 <StatCard
                                     label={t("averageConstructScore")}
                                     value={
-                                        placesWithScores.length > 0
-                                            ? formatScoreValue(averageCombinedConstructScore)
+                                        averageCombinedConstructScore
+                                            ? (formatScorePair(averageCombinedConstructScore) ?? "--")
                                             : "--"
                                     }
                                     accentColor={ds.colors.primary}
@@ -435,7 +460,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : formatScoreValue(getCombinedConstructScore(topScoringPlace.score_totals) ?? 0)
+                                        : (formatScorePair(topScoringPlace.overall_scores) ?? "Pending")
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -449,84 +474,178 @@ export default function ReportsScreen() {
                         placeholder={t("searchPlaceholder", { ns: "reports" })}
                     />
 
-                    <YStack gap="$2">
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            Filters
-                        </Paragraph>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <XStack gap="$2">
-                                <FilterChip
-                                    label={t("filters.all", { ns: "common" })}
-                                    isSelected={reportFilter === "all"}
-                                    onPress={() => {
-                                        setReportFilter("all");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("filters.submitted", { ns: "common" })}
-                                    isSelected={reportFilter === "submitted"}
-                                    onPress={() => {
-                                        setReportFilter("submitted");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("filters.scored", { ns: "common" })}
-                                    isSelected={reportFilter === "scored"}
-                                    onPress={() => {
-                                        setReportFilter("scored");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("filters.notScored", { ns: "common" })}
-                                    isSelected={reportFilter === "not_scored"}
-                                    onPress={() => {
-                                        setReportFilter("not_scored");
-                                    }}
-                                />
-                            </XStack>
-                        </ScrollView>
+                    {uniqueProjects.length > 1 ? (
+                        <ProjectFilterSelect
+                            uniqueProjects={uniqueProjects}
+                            value={projectFilter}
+                            onChange={setProjectFilter}
+                            sectionLabel={t("projectFilter", { ns: "reports", defaultValue: "Project" })}
+                            allProjectsLabel={t("filters.all", { ns: "common" })}
+                        />
+                    ) : null}
 
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            Sort By
-                        </Paragraph>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <XStack gap="$2">
-                                <FilterChip
-                                    label={t("sort.score", { ns: "common" })}
-                                    isSelected={sortOption === "score"}
-                                    onPress={() => {
-                                        setSortOption("score");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("sort.recent", { ns: "common" })}
-                                    isSelected={sortOption === "recent"}
-                                    onPress={() => {
-                                        setSortOption("recent");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("sort.name", { ns: "common" })}
-                                    isSelected={sortOption === "name"}
-                                    onPress={() => {
-                                        setSortOption("name");
-                                    }}
-                                />
-                            </XStack>
-                        </ScrollView>
-                    </YStack>
+                    {layout.isTablet ? (
+                        <XStack gap="$4" items="flex-start">
+                            <YStack flex={1} gap="$2">
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelSm.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.2}
+                                >
+                                    Filters
+                                </Paragraph>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    <XStack gap="$2">
+                                        <FilterChip
+                                            label={t("filters.all", { ns: "common" })}
+                                            isSelected={reportFilter === "all"}
+                                            onPress={() => {
+                                                setReportFilter("all");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("filters.submitted", { ns: "common" })}
+                                            isSelected={reportFilter === "submitted"}
+                                            onPress={() => {
+                                                setReportFilter("submitted");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("filters.scored", { ns: "common" })}
+                                            isSelected={reportFilter === "scored"}
+                                            onPress={() => {
+                                                setReportFilter("scored");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("filters.notScored", { ns: "common" })}
+                                            isSelected={reportFilter === "not_scored"}
+                                            onPress={() => {
+                                                setReportFilter("not_scored");
+                                            }}
+                                        />
+                                    </XStack>
+                                </ScrollView>
+                            </YStack>
+                            <YStack gap="$2" items="flex-end">
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelSm.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={1.2}
+                                >
+                                    Sort By
+                                </Paragraph>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                    <XStack gap="$2">
+                                        <FilterChip
+                                            label={t("sort.score", { ns: "common" })}
+                                            isSelected={sortOption === "score"}
+                                            onPress={() => {
+                                                setSortOption("score");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("sort.recent", { ns: "common" })}
+                                            isSelected={sortOption === "recent"}
+                                            onPress={() => {
+                                                setSortOption("recent");
+                                            }}
+                                        />
+                                        <FilterChip
+                                            label={t("sort.name", { ns: "common" })}
+                                            isSelected={sortOption === "name"}
+                                            onPress={() => {
+                                                setSortOption("name");
+                                            }}
+                                        />
+                                    </XStack>
+                                </ScrollView>
+                            </YStack>
+                        </XStack>
+                    ) : (
+                        <YStack gap="$2">
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelSm.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.2}
+                            >
+                                Filters
+                            </Paragraph>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <XStack gap="$2">
+                                    <FilterChip
+                                        label={t("filters.all", { ns: "common" })}
+                                        isSelected={reportFilter === "all"}
+                                        onPress={() => {
+                                            setReportFilter("all");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("filters.submitted", { ns: "common" })}
+                                        isSelected={reportFilter === "submitted"}
+                                        onPress={() => {
+                                            setReportFilter("submitted");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("filters.scored", { ns: "common" })}
+                                        isSelected={reportFilter === "scored"}
+                                        onPress={() => {
+                                            setReportFilter("scored");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("filters.notScored", { ns: "common" })}
+                                        isSelected={reportFilter === "not_scored"}
+                                        onPress={() => {
+                                            setReportFilter("not_scored");
+                                        }}
+                                    />
+                                </XStack>
+                            </ScrollView>
+
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelSm.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.2}
+                            >
+                                Sort By
+                            </Paragraph>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <XStack gap="$2">
+                                    <FilterChip
+                                        label={t("sort.score", { ns: "common" })}
+                                        isSelected={sortOption === "score"}
+                                        onPress={() => {
+                                            setSortOption("score");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("sort.recent", { ns: "common" })}
+                                        isSelected={sortOption === "recent"}
+                                        onPress={() => {
+                                            setSortOption("recent");
+                                        }}
+                                    />
+                                    <FilterChip
+                                        label={t("sort.name", { ns: "common" })}
+                                        isSelected={sortOption === "name"}
+                                        onPress={() => {
+                                            setSortOption("name");
+                                        }}
+                                    />
+                                </XStack>
+                            </ScrollView>
+                        </YStack>
+                    )}
                 </YStack>
             }
             ListHeaderComponentStyle={{ marginBottom: layout.isTablet ? 28 : 24 }}
@@ -774,11 +893,12 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
             challengeShort: t("challengeShort"),
         };
     }, [t]);
-    const status = derivePlaceStatus(place.audit_status);
+    const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-    const hasScore = place.score_totals !== null;
-    const combinedConstructScore = getCombinedConstructScore(place.score_totals);
+    const hasScore = place.overall_scores !== null;
+    const combinedConstructScore =
+        place.overall_scores === null ? null : place.overall_scores.pv + place.overall_scores.u;
     const barWidth =
         hasScore && combinedConstructScore !== null && maxCombinedConstructScore > 0
             ? `${Math.max((combinedConstructScore / maxCombinedConstructScore) * 100, 6)}%`
@@ -790,7 +910,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
             accessibilityRole="button"
             onPress={() => {
                 if (place.audit_id !== null) {
-                    router.push(`/report/${place.audit_id}`);
+                    router.push(`/report/${place.audit_id}` as Href);
                 }
             }}
             style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1, flex: 1 })}
@@ -865,7 +985,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                 }
                                 numberOfLines={getCardTextLineLimit("meta")}
                             >
-                                {hasScore && formatScoreValue(combinedConstructScore ?? 0)}
+                                {hasScore ? formatScorePair(place.overall_scores) : null}
                             </Paragraph>
                         </YStack>
                     </XStack>
@@ -904,7 +1024,7 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                                     fontSize={ds.typography.bodyXs.fontSize}
                                     numberOfLines={getCardTextLineLimit("meta")}
                                 >
-                                    {formatConstructSummary(place.score_totals, scoreSummaryLabels)}
+                                    {formatScorePair(place.overall_scores)}
                                 </Paragraph>
                                 <Dot size={14} color={ds.colors.primary} />
                                 <Paragraph

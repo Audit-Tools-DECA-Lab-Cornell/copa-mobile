@@ -1,12 +1,56 @@
 import { getProjectPlaceKey } from "lib/audit/pair-key";
-import { getCombinedConstructScore } from "lib/audit/score-helpers";
 import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import { useMemo } from "react";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
 
 import type { AuditorPlace } from "lib/audit/places-api";
-import type { AuditSession, PlayspaceInstrument } from "lib/audit/types";
+import type { AuditScoreTotals, AuditSession, AuditStatus, PlayspaceInstrument } from "lib/audit/types";
+
+type PlaceAxisStatus = AuditorPlace["place_audit_status"];
+
+/**
+ * When a local draft session exists, bump per-axis status so list UIs reflect in-progress / submitted work.
+ */
+function mergePlaceAxisWithSession(axisValue: PlaceAxisStatus, sessionStatus: AuditStatus): PlaceAxisStatus {
+    if (sessionStatus === "SUBMITTED") {
+        return "submitted";
+    }
+    if (sessionStatus === "IN_PROGRESS" || sessionStatus === "PAUSED") {
+        if (axisValue === "submitted" || axisValue === "complete") {
+            return axisValue;
+        }
+        return "in_progress";
+    }
+    return axisValue;
+}
+
+interface ScorePair {
+    readonly pv: number;
+    readonly u: number;
+}
+
+/**
+ * Map one construct score bucket to a PV/U pair for place rollups.
+ */
+function scorePairFromTotals(totals: AuditScoreTotals | null | undefined): ScorePair | null {
+    if (totals === null || totals === undefined) {
+        return null;
+    }
+
+    return { pv: totals.play_value_total, u: totals.usability_total };
+}
+
+/**
+ * Overall PV/U is the sum of audit- and survey-partition means for one submission, when both exist.
+ */
+function overallPairFromPartitions(audit: ScorePair | null, survey: ScorePair | null): ScorePair | null {
+    if (audit === null || survey === null) {
+        return null;
+    }
+
+    return { pv: audit.pv + survey.pv, u: audit.u + survey.u };
+}
 /**
  * Compute a local-first progress percent from the in-memory aggregate.
  *
@@ -62,16 +106,32 @@ export function overlayLocalSessionOntoPlace(
         return place;
     }
 
+    const auditPart = scorePairFromTotals(auditSession.scores.audit);
+    const surveyPart = scorePairFromTotals(auditSession.scores.survey);
+    const overallFromSession = overallPairFromPartitions(auditPart, surveyPart);
+
+    const executionMode = auditSession.selected_execution_mode ?? auditSession.meta.execution_mode;
+
     return {
         ...place,
-        audit_status: auditSession.status,
+        place_audit_status:
+            executionMode === "survey"
+                ? place.place_audit_status
+                : mergePlaceAxisWithSession(place.place_audit_status, auditSession.status),
+        place_survey_status:
+            executionMode === "audit"
+                ? place.place_survey_status
+                : mergePlaceAxisWithSession(place.place_survey_status, auditSession.status),
         audit_id: auditSession.audit_id,
         started_at: auditSession.started_at,
         submitted_at: auditSession.submitted_at,
         progress_percent: getLocalProgressPercent(auditSession, instrument),
         score_totals: auditSession.scores.overall,
-        summary_score: getCombinedConstructScore(auditSession.scores.overall) ?? place.summary_score,
-        selected_execution_mode: auditSession.selected_execution_mode ?? auditSession.meta.execution_mode,
+        summary_score: place.summary_score,
+        selected_execution_mode: executionMode,
+        audit_scores: auditPart ?? place.audit_scores,
+        survey_scores: surveyPart ?? place.survey_scores,
+        overall_scores: overallFromSession ?? place.overall_scores,
     };
 }
 

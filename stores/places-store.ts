@@ -1,4 +1,5 @@
 import { t } from "i18next";
+import { fetchAuditorDashboardSummary, type AuditorDashboardSummary } from "lib/audit/dashboard-api";
 import { fetchAllAssignedPlaces, fetchAssignedPlacesPage } from "lib/audit/places-api";
 import { create } from "zustand";
 
@@ -10,6 +11,10 @@ import type { AuditorPlace } from "lib/audit/places-api";
 interface PlacesStoreState {
     /** Flat list of places assigned to the current auditor. */
     readonly places: AuditorPlace[];
+    /**
+     * Server dashboard metrics (home / tab “assigned” card counts). null before first load or after a failed fetch.
+     */
+    readonly dashboardSummary: AuditorDashboardSummary | null;
     /** Whether a network request is in flight. */
     readonly isLoading: boolean;
     /** Human-readable error from the last failed request, if any. */
@@ -20,6 +25,16 @@ interface PlacesStoreState {
      * @param session Authenticated mobile session.
      */
     loadPlaces: (session: AuthSession, options?: Readonly<LoadPlacesOptions>) => Promise<void>;
+    /**
+     * Load auditor home dashboard summary metrics.
+     *
+     * @param session Authenticated mobile session.
+     */
+    loadDashboardSummary: (session: AuthSession) => Promise<void>;
+    /**
+     * Clear dashboard metrics (e.g. when the session ends so UI does not show stale counts).
+     */
+    clearDashboardSummary: () => void;
     /** Clear the current error message. */
     clearError: () => void;
 }
@@ -38,8 +53,28 @@ interface LoadPlacesOptions {
  */
 export const usePlacesStore = create<PlacesStoreState>((set) => ({
     places: [],
+    dashboardSummary: null,
     isLoading: false,
     errorMessage: null,
+
+    loadDashboardSummary: async (session: AuthSession) => {
+        try {
+            const summary = await fetchAuditorDashboardSummary(session);
+            set(() => ({
+                dashboardSummary: summary,
+            }));
+        } catch {
+            set(() => ({
+                dashboardSummary: null,
+            }));
+        }
+    },
+
+    clearDashboardSummary: () => {
+        set(() => ({
+            dashboardSummary: null,
+        }));
+    },
 
     loadPlaces: async (session: AuthSession, options: Readonly<LoadPlacesOptions> = {}) => {
         set(() => ({

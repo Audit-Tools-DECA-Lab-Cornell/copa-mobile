@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { StatCard } from "components/ui/stat-card";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
-import { deriveLocality, derivePlaceStatus } from "lib/audit/place-helpers";
+import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     getPreAuditValues,
@@ -18,19 +18,13 @@ import {
     isInstrumentQuestionComplete,
     isPreAuditQuestionComplete,
 } from "lib/audit/selectors";
-import {
-    formatConstructSummary,
-    formatScoreValue,
-    getCombinedConstructScore,
-    type ScoreSummaryLabels,
-} from "lib/audit/score-helpers";
+import { formatScorePair } from "lib/audit/score-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import type { AuditSession, ExecutionMode } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { createMetricDisplayState } from "lib/metric-display";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { createModuleLogger } from "lib/logger";
@@ -77,15 +71,6 @@ export default function PlaceDetailScreen() {
             loadPlaces(session).catch(() => undefined);
         }
     }, [loadPlaces, place, placeId, places.length, session]);
-
-    const scoreSummaryLabels: ScoreSummaryLabels = {
-        playValueShort: t("playValueShort", { ns: "places" }),
-        usabilityShort: t("usabilityShort", { ns: "places" }),
-        sociabilityShort: t("sociabilityShort", { ns: "places" }),
-        provisionShort: t("provisionShort", { ns: "places" }),
-        diversityShort: t("diversityShort", { ns: "places" }),
-        challengeShort: t("challengeShort", { ns: "places" }),
-    };
 
     return (
         <>
@@ -135,7 +120,6 @@ export default function PlaceDetailScreen() {
             ) : (
                 <PlaceDetailContent
                     place={place}
-                    scoreSummaryLabels={scoreSummaryLabels}
                     onOpenAudit={() => {
                         router.push(`/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
@@ -158,7 +142,6 @@ export default function PlaceDetailScreen() {
 
 interface PlaceDetailContentProps {
     readonly place: AuditorPlace;
-    readonly scoreSummaryLabels: ScoreSummaryLabels;
     readonly onOpenAudit: () => void;
     readonly onOpenReport: (() => void) | undefined;
     readonly language: string;
@@ -173,7 +156,6 @@ interface PlaceDetailContentProps {
  */
 function PlaceDetailContent({
     place,
-    scoreSummaryLabels,
     onOpenAudit,
     onOpenReport,
     language,
@@ -183,11 +165,9 @@ function PlaceDetailContent({
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["places", "common", "reports"]);
     const instrument = useLocalizedInstrument();
-    const status = derivePlaceStatus(place.audit_status);
+    const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-    const combinedConstructScore = getCombinedConstructScore(place.score_totals);
-    const summaryScore = combinedConstructScore ?? (place.summary_score === null ? null : place.summary_score);
     const pendingScoreMessage = useMemo(() => {
         return resolvePendingScoreMessage({
             auditSession,
@@ -196,6 +176,7 @@ function PlaceDetailContent({
             t,
         });
     }, [auditSession, instrument, place, t]);
+    const summaryMetricValue = formatScorePair(place.overall_scores) ?? "Pending";
     const openAuditLabel =
         place.selected_execution_mode === null
             ? t("actions.openAudit", { ns: "common" })
@@ -205,11 +186,6 @@ function PlaceDetailContent({
                       ns: "audit",
                   }),
               });
-    const summaryMetric = createMetricDisplayState({
-        pendingText: pendingScoreMessage,
-        value: summaryScore,
-        formatValue: formatScoreValue,
-    });
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, language, t);
     const mapsQuery = encodeURIComponent(`${place.place_name}, ${locality}`);
     const placeCoordinate = useMemo(() => getPlaceCoordinate(place.lat, place.lng), [place.lat, place.lng]);
@@ -265,9 +241,9 @@ function PlaceDetailContent({
                 />
                 <StatCard
                     label={t("scoreSummary", { ns: "places" })}
-                    value={summaryMetric.value}
+                    value={summaryMetricValue}
                     accentColor={ds.colors.primary}
-                    helperText={summaryMetric.helperText}
+                    helperText={place.overall_scores === null ? pendingScoreMessage : undefined}
                     minHeight={layout.summaryCardMinHeight}
                 />
             </XStack>
@@ -305,7 +281,7 @@ function PlaceDetailContent({
                 >
                     {t("detail.auditUnavailable", { ns: "places" })}
                 </Paragraph>
-            ) : summaryScore === null ? (
+            ) : place.overall_scores === null ? (
                 <Paragraph
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -320,16 +296,7 @@ function PlaceDetailContent({
                         fontFamily={ds.fonts.bodyBold}
                         fontSize={ds.typography.titleLg.fontSize}
                     >
-                        {formatScoreValue(summaryScore ?? 0)}
-                    </Paragraph>
-                    <Paragraph
-                        color={ds.colors.secondaryForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                    >
-                        {place.score_totals === null
-                            ? t("detail.compactScoreSummary", { ns: "places" })
-                            : formatConstructSummary(place.score_totals, scoreSummaryLabels)}
+                        {formatScorePair(place.overall_scores) ?? pendingScoreMessage}
                     </Paragraph>
                 </YStack>
             )}
@@ -496,6 +463,33 @@ function PlaceDetailContent({
                         >
                             {place.project_name}
                         </Paragraph>
+                        {place.address !== null && place.address !== undefined && (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {place.address}
+                            </Paragraph>
+                        )}
+                        {place.postal_code !== null && place.postal_code !== undefined && (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {place.postal_code}
+                            </Paragraph>
+                        )}
+                        {place.city !== null && place.city !== undefined && (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                            >
+                                {place.city}
+                            </Paragraph>
+                        )}
                     </YStack>
                     <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusTone.surface }}>
                         <Text
@@ -750,7 +744,7 @@ function resolvePendingScoreMessage({
     if (place.audit_id === null) {
         return t("detail.auditUnavailable", { ns: "places" });
     }
-    if ((auditSession?.status ?? place.audit_status) === "SUBMITTED") {
+    if (derivePlaceRequirementStatus(place) !== "submitted") {
         return t("detail.reportUnavailable", { ns: "places" });
     }
 

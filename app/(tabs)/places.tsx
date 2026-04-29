@@ -1,17 +1,18 @@
 import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
 import { ArrowRight, Clock3 } from "@tamagui/lucide-icons-2";
 import { FilterChip } from "components/ui/filter-chip";
+import { ProjectFilterSelect } from "components/ui/project-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { useRouter } from "expo-router";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     deriveLocality,
-    derivePlaceStatus,
+    derivePlaceRequirementStatus,
     getPlaceLastActivityTimestamp,
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
-import { formatConstructSummary, formatScoreValue, type ScoreSummaryLabels } from "lib/audit/score-helpers";
+import { formatScorePair } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem, type DesignTone } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel, type LocalizedPlaceStatus } from "lib/i18n/format";
@@ -26,6 +27,7 @@ import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 
+type PlaceProjectFilter = "all" | string;
 type PlaceStatusFilter = "all" | LocalizedPlaceStatus;
 type PlaceSortOption = "recent" | "progress" | "name";
 
@@ -45,6 +47,7 @@ export default function PlacesScreen() {
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
     const [searchQuery, setSearchQuery] = useState("");
+    const [projectFilter, setProjectFilter] = useState<PlaceProjectFilter>("all");
     const [statusFilter, setStatusFilter] = useState<PlaceStatusFilter>("all");
     const [sortOption, setSortOption] = useState<PlaceSortOption>("recent");
     const phoneListRef = useRef<FlashListRef<AuditorPlace> | null>(null);
@@ -59,7 +62,7 @@ export default function PlacesScreen() {
     const placeStatusCounts = useMemo(() => {
         return places.reduce(
             (accumulator, place) => {
-                const status = derivePlaceStatus(place.audit_status);
+                const status = derivePlaceRequirementStatus(place);
                 accumulator[status] += 1;
                 return accumulator;
             },
@@ -71,16 +74,24 @@ export default function PlacesScreen() {
         );
     }, [places]);
 
-    const scoreSummaryLabels = useMemo<ScoreSummaryLabels>(() => {
-        return {
-            playValueShort: t("playValueShort"),
-            usabilityShort: t("usabilityShort"),
-            sociabilityShort: t("sociabilityShort"),
-            provisionShort: t("provisionShort"),
-            diversityShort: t("diversityShort"),
-            challengeShort: t("challengeShort"),
-        };
-    }, [t]);
+    /** Unique projects derived from the loaded places for the project filter. */
+    const uniqueProjects = useMemo(() => {
+        const projectMap = new Map<string, string>();
+        for (const place of places) {
+            if (!projectMap.has(place.project_id)) {
+                projectMap.set(place.project_id, place.project_name);
+            }
+        }
+        return Array.from(projectMap.entries())
+            .map(([id, name]) => ({ id, name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [places]);
+
+    useEffect(() => {
+        if (projectFilter !== "all" && !uniqueProjects.some((project) => project.id === projectFilter)) {
+            setProjectFilter("all");
+        }
+    }, [projectFilter, uniqueProjects]);
 
     const filteredPlaces = useMemo(() => {
         const visiblePlaces = places.filter((place) => {
@@ -88,11 +99,15 @@ export default function PlacesScreen() {
                 return false;
             }
 
+            if (projectFilter !== "all" && place.project_id !== projectFilter) {
+                return false;
+            }
+
             if (statusFilter === "all") {
                 return true;
             }
 
-            return derivePlaceStatus(place.audit_status) === statusFilter;
+            return derivePlaceRequirementStatus(place) === statusFilter;
         });
 
         return visiblePlaces.sort((leftPlace, rightPlace) => {
@@ -115,7 +130,7 @@ export default function PlacesScreen() {
 
             return leftPlace.place_name.localeCompare(rightPlace.place_name);
         });
-    }, [places, searchQuery, sortOption, statusFilter]);
+    }, [places, projectFilter, searchQuery, sortOption, statusFilter]);
     const tabletRows = useMemo(() => {
         return buildPairGridRows(filteredPlaces, (place) => {
             return getProjectPlaceKey(place.project_id, place.place_id);
@@ -140,7 +155,7 @@ export default function PlacesScreen() {
         scrollToOffset: scrollPlacesToOffset,
     });
 
-    const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== "all";
+    const hasActiveFilters = searchQuery.trim().length > 0 || projectFilter !== "all" || statusFilter !== "all";
     const keyExtractor = useCallback((item: AuditorPlace) => {
         return getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
@@ -155,14 +170,13 @@ export default function PlacesScreen() {
             return (
                 <PlaceQueueCard
                     place={place}
-                    scoreSummaryLabels={scoreSummaryLabels}
                     onPress={() => {
                         router.push(`/place/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
                 />
             );
         },
-        [router, scoreSummaryLabels],
+        [router],
     );
     const renderTabletRow = useCallback(
         ({ item }: ListRenderItemInfo<PairGridRow<AuditorPlace>>) => {
@@ -170,15 +184,17 @@ export default function PlacesScreen() {
 
             if (rightPlace === null) {
                 return (
-                    <PlaceQueueCard
-                        place={item.left}
-                        scoreSummaryLabels={scoreSummaryLabels}
-                        onPress={() => {
-                            router.push(
-                                `/place/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
-                            );
-                        }}
-                    />
+                    <XStack gap="$3" items="stretch">
+                        <PlaceQueueCard
+                            place={item.left}
+                            onPress={() => {
+                                router.push(
+                                    `/place/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
+                                );
+                            }}
+                        />
+                        <YStack width="48.5%"></YStack>
+                    </XStack>
                 );
             }
 
@@ -186,7 +202,6 @@ export default function PlacesScreen() {
                 <XStack gap="$3" items="stretch">
                     <PlaceQueueCard
                         place={item.left}
-                        scoreSummaryLabels={scoreSummaryLabels}
                         onPress={() => {
                             router.push(
                                 `/place/${item.left.place_id}?projectId=${encodeURIComponent(item.left.project_id)}`,
@@ -195,7 +210,6 @@ export default function PlacesScreen() {
                     />
                     <PlaceQueueCard
                         place={rightPlace}
-                        scoreSummaryLabels={scoreSummaryLabels}
                         onPress={() => {
                             router.push(
                                 `/place/${rightPlace.place_id}?projectId=${encodeURIComponent(rightPlace.project_id)}`,
@@ -205,7 +219,7 @@ export default function PlacesScreen() {
                 </XStack>
             );
         },
-        [router, scoreSummaryLabels],
+        [router],
     );
 
     if (isLoading && places.length === 0) {
@@ -269,84 +283,179 @@ export default function PlacesScreen() {
                 placeholder={t("searchPlaceholder", { ns: "places" })}
             />
 
-            <YStack gap="$2">
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelSm.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    Filters
-                </Paragraph>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <XStack gap="$2">
-                        <FilterChip
-                            label={t("filters.all", { ns: "common" })}
-                            isSelected={statusFilter === "all"}
-                            onPress={() => {
-                                setStatusFilter("all");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("status.inProgress", { ns: "common" })}
-                            isSelected={statusFilter === "in_progress"}
-                            onPress={() => {
-                                setStatusFilter("in_progress");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("status.notStarted", { ns: "common" })}
-                            isSelected={statusFilter === "not_started"}
-                            onPress={() => {
-                                setStatusFilter("not_started");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("status.submitted", { ns: "common" })}
-                            isSelected={statusFilter === "submitted"}
-                            onPress={() => {
-                                setStatusFilter("submitted");
-                            }}
-                        />
-                    </XStack>
-                </ScrollView>
+            {uniqueProjects.length > 1 ? (
+                <ProjectFilterSelect
+                    uniqueProjects={uniqueProjects}
+                    value={projectFilter}
+                    onChange={setProjectFilter}
+                    sectionLabel={t("projectFilter", { ns: "places", defaultValue: "Project" })}
+                    allProjectsLabel={t("filters.all", { ns: "common" })}
+                />
+            ) : null}
 
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelSm.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    Sort By
-                </Paragraph>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <XStack gap="$2">
-                        <FilterChip
-                            label={t("sort.recent", { ns: "common" })}
-                            isSelected={sortOption === "recent"}
-                            onPress={() => {
-                                setSortOption("recent");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("sort.progress", { ns: "common" })}
-                            isSelected={sortOption === "progress"}
-                            onPress={() => {
-                                setSortOption("progress");
-                            }}
-                        />
-                        <FilterChip
-                            label={t("sort.name", { ns: "common" })}
-                            isSelected={sortOption === "name"}
-                            onPress={() => {
-                                setSortOption("name");
-                            }}
-                        />
-                    </XStack>
-                </ScrollView>
-            </YStack>
+            {layout.isTablet ? (
+                <XStack gap="$4" items="flex-start">
+                    <YStack flex={1} gap="$2">
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelSm.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            Filters
+                        </Paragraph>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <XStack gap="$2">
+                                <FilterChip
+                                    label={t("filters.all", { ns: "common" })}
+                                    isSelected={statusFilter === "all"}
+                                    onPress={() => {
+                                        setStatusFilter("all");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("status.inProgress", { ns: "common" })}
+                                    isSelected={statusFilter === "in_progress"}
+                                    onPress={() => {
+                                        setStatusFilter("in_progress");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("status.notStarted", { ns: "common" })}
+                                    isSelected={statusFilter === "not_started"}
+                                    onPress={() => {
+                                        setStatusFilter("not_started");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("status.submitted", { ns: "common" })}
+                                    isSelected={statusFilter === "submitted"}
+                                    onPress={() => {
+                                        setStatusFilter("submitted");
+                                    }}
+                                />
+                            </XStack>
+                        </ScrollView>
+                    </YStack>
+
+                    <YStack gap="$2" items="flex-end">
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelSm.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            Sort By
+                        </Paragraph>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <XStack gap="$2">
+                                <FilterChip
+                                    label={t("sort.recent", { ns: "common" })}
+                                    isSelected={sortOption === "recent"}
+                                    onPress={() => {
+                                        setSortOption("recent");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("sort.progress", { ns: "common" })}
+                                    isSelected={sortOption === "progress"}
+                                    onPress={() => {
+                                        setSortOption("progress");
+                                    }}
+                                />
+                                <FilterChip
+                                    label={t("sort.name", { ns: "common" })}
+                                    isSelected={sortOption === "name"}
+                                    onPress={() => {
+                                        setSortOption("name");
+                                    }}
+                                />
+                            </XStack>
+                        </ScrollView>
+                    </YStack>
+                </XStack>
+            ) : (
+                <YStack gap="$2">
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        Filters
+                    </Paragraph>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            <FilterChip
+                                label={t("filters.all", { ns: "common" })}
+                                isSelected={statusFilter === "all"}
+                                onPress={() => {
+                                    setStatusFilter("all");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("status.inProgress", { ns: "common" })}
+                                isSelected={statusFilter === "in_progress"}
+                                onPress={() => {
+                                    setStatusFilter("in_progress");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("status.notStarted", { ns: "common" })}
+                                isSelected={statusFilter === "not_started"}
+                                onPress={() => {
+                                    setStatusFilter("not_started");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("status.submitted", { ns: "common" })}
+                                isSelected={statusFilter === "submitted"}
+                                onPress={() => {
+                                    setStatusFilter("submitted");
+                                }}
+                            />
+                        </XStack>
+                    </ScrollView>
+
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1.2}
+                    >
+                        Sort By
+                    </Paragraph>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <XStack gap="$2">
+                            <FilterChip
+                                label={t("sort.recent", { ns: "common" })}
+                                isSelected={sortOption === "recent"}
+                                onPress={() => {
+                                    setSortOption("recent");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("sort.progress", { ns: "common" })}
+                                isSelected={sortOption === "progress"}
+                                onPress={() => {
+                                    setSortOption("progress");
+                                }}
+                            />
+                            <FilterChip
+                                label={t("sort.name", { ns: "common" })}
+                                isSelected={sortOption === "name"}
+                                onPress={() => {
+                                    setSortOption("name");
+                                }}
+                            />
+                        </XStack>
+                    </ScrollView>
+                </YStack>
+            )}
         </YStack>
     );
 
@@ -414,24 +523,18 @@ export default function PlacesScreen() {
 
 interface PlaceQueueCardProps {
     readonly place: AuditorPlace;
-    readonly scoreSummaryLabels: ScoreSummaryLabels;
     readonly onPress: () => void;
 }
 
-function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQueueCardProps>) {
+function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
     const ds = useDesignSystem();
     const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const { t, i18n } = useTranslation(["places", "common"]);
-    const status = derivePlaceStatus(place.audit_status);
+    const status = derivePlaceRequirementStatus(place);
     const placeTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-    const auditScoreLabel =
-        place.score_totals === null
-            ? place.summary_score === null
-                ? "Pending score"
-                : formatScoreValue(place.summary_score)
-            : formatConstructSummary(place.score_totals, scoreSummaryLabels);
+    const auditScoreLabel = formatScorePair(place.overall_scores) ?? "Pending score";
     const progressPercent = place.progress_percent ?? 0;
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
 
@@ -483,6 +586,16 @@ function PlaceQueueCard({ place, scoreSummaryLabels, onPress }: Readonly<PlaceQu
                                     >
                                         {place.project_name}
                                     </Paragraph>
+                                    {place.address !== null && place.address !== undefined && (
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                            numberOfLines={getCardTextLineLimit("supporting")}
+                                        >
+                                            {place.address}
+                                        </Paragraph>
+                                    )}
                                 </YStack>
                                 <YStack
                                     rounded={ds.radii.full}

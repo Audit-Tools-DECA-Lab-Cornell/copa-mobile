@@ -34,6 +34,7 @@
         "startedAt": "Gestartet",
         "status": "Status",
         "submittedAt": "Abgeschlossen",
+        "scrollToTop": "Nach oben",
         "unavailableMessage": "Dieser Audit-Bericht ist derzeit nicht verfügbar.",
         "unavailableTitle": "Audit nicht gefunden",
         "usabilityCardLabel": "Benutzerfreundlichkeit"
@@ -67,5 +68,61 @@
     "subtitle": "Pruefen Sie die Audit-Ergebnisse Ihrer zugewiesenen Orte.",
     "title": "Playspace-Bewertung",
     "topScoringPlace": "Ort mit bester Bewertung",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "toggle": {
+        "short": "Kurz",
+        "extended": "Erweitert"
+    },
+    "domain": {
+        "overallScoresTitle": "Gesamtbewertungen",
+        "bestWorstTitle": "Beste und schlechteste Bewertungen",
+        "auditorNotesLabel": "Kommentare / Notizen des Auditors",
+        "noNotesPlaceholder": "Für diese Domäne wurden keine Notizen erfasst.",
+        "scoreAchievedLabel": "Erreichte Punktzahl",
+        "maxScoreLabel": "Maximalpunktzahl",
+        "itemsContributingLabel": "Anzahl beitragender Elemente",
+        "barProvision": "Ausstattung",
+        "barProvisionShort": "Ausst.",
+        "barDiversity": "Diversität",
+        "barDiversityShort": "Div",
+        "barChallenge": "Herausforderung",
+        "barChallengeShort": "Herausf.",
+        "barSociability": "Soziale Unterstützung",
+        "barSociabilityShort": "Soz.",
+        "barPlayValue": "Spielwert",
+        "barUsability": "Nutzerfreundlichkeit",
+        "scaleLegend": "Legende: Herausf. = Herausforderung, Soz. = Soziale Unterstuetzung",
+        "barRowScaleScores": "Skalenwerte",
+        "barRowPlayValueUsability": "Spielwert & Nutzerfreundlichkeit",
+        "expandAll": "Alle ausklappen",
+        "collapseAll": "Alle einklappen",
+        "expandSection": "Abschnitt ausklappen",
+        "collapseSection": "Abschnitt einklappen",
+        "showItems": "Elemente anzeigen ({{count}})",
+        "hideItems": "Elemente ausblenden"
+    },
+    "extendedTable": {
+        "columnQuestionId": "Element-ID",
+        "columnItems": "Elemente",
+        "columnProvision": "Ausstattung",
+        "columnDiversity": "Diversität",
+        "columnChallenge": "Herausforderung",
+        "columnSociability": "Soziale Unterstützung",
+        "columnPlayValue": "Spielwert",
+        "columnUsability": "Nutzerfreundlichkeit",
+        "scoreAchieved": "Erreichte Punktzahl: {{score}}",
+        "maxScore": "Maximalpunktzahl: {{max}}",
+        "notApplicable": "k. A."
+    },
+    "bestWorst": {
+        "bestScored": "Beste Bewertung",
+        "worstScored": "Schlechteste Bewertung",
+        "insufficientData": "Unzureichende Daten (für den Vergleich von best und schlecht sind mindestens zwei Domänen erforderlich).",
+        "constructProvision": "Ausstattung",
+        "constructDiversity": "Diversität",
+        "constructChallenge": "Herausforderungsmöglichkeiten",
+        "constructSociability": "Soziale Unterstützung",
+        "constructPlayValue": "Spielwert",
+        "constructUsability": "Nutzerfreundlichkeit"
+    }
 }

@@ -35,6 +35,7 @@
         "startedAt": "Commencé",
         "status": "Statut",
         "submittedAt": "Terminé",
+        "scrollToTop": "Haut de page",
         "unavailableMessage": "Ce rapport d’audit n’est pas disponible pour le moment.",
         "unavailableTitle": "Audit introuvable",
         "usabilityCardLabel": "Utilisabilité"
@@ -68,5 +69,61 @@
     "subtitle": "Consultez les performances d’audit de vos lieux attribués.",
     "title": "Playspace Scoring",
     "topScoringPlace": "Lieu le mieux noté",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "toggle": {
+        "short": "Court",
+        "extended": "Détaillé"
+    },
+    "domain": {
+        "overallScoresTitle": "Scores globaux",
+        "bestWorstTitle": "Meilleurs et pires scores",
+        "auditorNotesLabel": "Commentaires / notes de l'auditeur",
+        "noNotesPlaceholder": "Aucune note enregistrée pour ce domaine.",
+        "scoreAchievedLabel": "Score obtenu",
+        "maxScoreLabel": "Score maximal",
+        "itemsContributingLabel": "Nombre d'éléments contributifs",
+        "barProvision": "Équipement",
+        "barProvisionShort": "Equip.",
+        "barDiversity": "Diversité",
+        "barDiversityShort": "Div.",
+        "barChallenge": "Défis",
+        "barChallengeShort": "Defis",
+        "barSociability": "Soutien à la sociabilité",
+        "barSociabilityShort": "Soc.",
+        "barPlayValue": "Valeur ludique",
+        "barUsability": "Utilisabilité",
+        "scaleLegend": "Legende: Defis = Opportunites de defi, Soc. = Soutien social",
+        "barRowScaleScores": "Scores des échelles",
+        "barRowPlayValueUsability": "Valeur ludique et utilisabilité",
+        "expandAll": "Tout développer",
+        "collapseAll": "Tout réduire",
+        "expandSection": "Développer la section",
+        "collapseSection": "Réduire la section",
+        "showItems": "Afficher les éléments ({{count}})",
+        "hideItems": "Masquer les éléments"
+    },
+    "extendedTable": {
+        "columnQuestionId": "ID élément",
+        "columnItems": "Éléments",
+        "columnProvision": "Équipement",
+        "columnDiversity": "Diversité",
+        "columnChallenge": "Défis",
+        "columnSociability": "Soutien social",
+        "columnPlayValue": "Valeur ludique",
+        "columnUsability": "Utilisabilité",
+        "scoreAchieved": "Score obtenu : {{score}}",
+        "maxScore": "Score maximal : {{max}}",
+        "notApplicable": "N/D"
+    },
+    "bestWorst": {
+        "bestScored": "Meilleur score",
+        "worstScored": "Pire score",
+        "insufficientData": "Données insuffisantes (au moins deux domaines sont nécessaires pour comparer les meilleurs et les pires scores).",
+        "constructProvision": "Équipement",
+        "constructDiversity": "Diversité",
+        "constructChallenge": "Opportunités de défi",
+        "constructSociability": "Soutien social",
+        "constructPlayValue": "Valeur ludique",
+        "constructUsability": "Utilisabilité"
+    }
 }

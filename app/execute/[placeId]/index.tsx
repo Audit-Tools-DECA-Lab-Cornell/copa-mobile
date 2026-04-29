@@ -338,7 +338,7 @@ export default function ExecutePlaceScreen() {
             bg={ds.colors.input}
             pressStyle={{ opacity: 0.92, scale: 0.985 }}
             onPress={() => {
-                router.push(`/place/${placeId}?projectId=${encodeURIComponent(projectId)}`);
+                router.push(`/place/${placeId}?projectId=${encodeURIComponent(projectId)}` as Href);
             }}
         >
             <XStack items="center" gap="$2">

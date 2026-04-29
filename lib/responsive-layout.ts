@@ -55,6 +55,21 @@ function getAdaptiveHorizontalPadding(layout: Readonly<ResponsiveLayout>, resolv
 }
 
 /**
+ * Inner width of the centered content column (matches {@link getResponsiveContentContainerStyle}).
+ * Use for report tables, charts, and other full-bleed components inside the standard content track.
+ *
+ * @param layout Active responsive layout tokens.
+ * @param maxWidthOverride Optional `maxWidth` from container options (defaults to `contentMaxWidth`).
+ * @returns Positive pixel width; zero only on pathological inputs.
+ */
+export function getContentTrackInnerWidth(layout: Readonly<ResponsiveLayout>, maxWidthOverride?: number): number {
+    const resolvedMaxWidth = resolveMaxWidth(maxWidthOverride, layout.contentMaxWidth);
+    const horizontalPadding = getAdaptiveHorizontalPadding(layout, resolvedMaxWidth);
+    const inner = layout.windowWidth - horizontalPadding * 2;
+    return Math.max(0, Math.min(inner, resolvedMaxWidth));
+}
+
+/**
  * Build responsive presentation tokens for a given viewport width.
  *
  * @param width Raw window width from React Native or tests.

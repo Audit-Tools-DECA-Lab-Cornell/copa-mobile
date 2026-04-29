@@ -12,11 +12,7 @@ import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/des
 import { getActiveScaleKeysForQuestion } from "lib/audit/selectors";
 import type { InstrumentQuestion, QuestionResponsePayload, QuestionScale, ScaleKey } from "lib/audit/types";
 import { useResponsiveLayout } from "lib/responsive-layout";
-
-interface PromptSegment {
-    readonly text: string;
-    readonly bold: boolean;
-}
+import { formatQuestionKeyForDisplay, parsePromptSegments } from "lib/audit/prompt-segments";
 
 interface QuestionTableRow {
     readonly question: InstrumentQuestion;
@@ -74,11 +70,29 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
                         />
                         {visibleScaleKeys.map((scaleKey, columnIndex) => (
                             <HeaderCell
-                                key={scaleKey}
+                                key={`${scaleKey}-header`}
                                 width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                 label={t(`section.table.scaleColumns.${scaleKey}`)}
                                 showTrailingBorder={columnIndex < visibleScaleKeys.length - 1}
                                 accentColor={getScaleAccentColor(scaleKey, ds.colors)}
+                            />
+                        ))}
+                    </XStack>
+                    {/* Before showing the questions, display a row with description for each scale key, making sure to display the description for each scale key in the correct order and under the header cell for the scale key */}
+                    <XStack
+                        borderTopWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surfaceMuted}
+                        items="stretch"
+                    >
+                        <HeaderCell width={columnMetrics.promptColumnWidth} showTrailingBorder />
+                        {visibleScaleKeys.map((scaleKey, columnIndex) => (
+                            <HeaderCell
+                                key={`${scaleKey}-prompt`}
+                                width={readScaleColumnWidth(columnMetrics, scaleKey)}
+                                label={scaleContentByKey[scaleKey]?.scalePrompt as string}
+                                showTrailingBorder={columnIndex < visibleScaleKeys.length - 1}
+                                isPrompt
                             />
                         ))}
                     </XStack>
@@ -151,15 +165,16 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
 
 interface HeaderCellProps {
     readonly width: number;
-    readonly label: string;
+    readonly label?: string;
     readonly showTrailingBorder: boolean;
     readonly accentColor?: string;
+    readonly isPrompt?: boolean;
 }
 
 /**
  * Shared table header cell.
  */
-function HeaderCell({ width, label, showTrailingBorder, accentColor }: Readonly<HeaderCellProps>) {
+function HeaderCell({ width, label, showTrailingBorder, accentColor, isPrompt }: Readonly<HeaderCellProps>) {
     const ds = useDesignSystem();
 
     return (
@@ -171,16 +186,27 @@ function HeaderCell({ width, label, showTrailingBorder, accentColor }: Readonly<
             borderColor={ds.colors.border}
             justify="center"
         >
-            <Text
-                color={accentColor ? (accentColor as ColorTokens) : (ds.colors.mutedForeground as ColorTokens)}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.bodySm.fontSize}
-                textTransform="uppercase"
-                letterSpacing={1.1}
-                style={{ textAlign: "center" }}
-            >
-                {label}
-            </Text>
+            {isPrompt ? (
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyXs.fontSize}
+                    lineHeight={ds.typography.bodySm.lineHeight}
+                >
+                    {label}
+                </Text>
+            ) : (
+                <Text
+                    color={accentColor ? (accentColor as ColorTokens) : (ds.colors.mutedForeground as ColorTokens)}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.1}
+                    style={{ textAlign: "center" }}
+                >
+                    {label}
+                </Text>
+            )}
         </YStack>
     );
 }
@@ -215,7 +241,7 @@ function QuestionPromptCell({ question, width }: Readonly<QuestionPromptCellProp
                 textTransform="uppercase"
                 letterSpacing={1.1}
             >
-                {formatQuestionKey(question.question_key)}
+                {formatQuestionKeyForDisplay(question.question_key)}
             </Text>
             <Text
                 color={ds.colors.foreground}
@@ -379,39 +405,12 @@ function EmptyScaleCell({ width, text, showTrailingBorder }: Readonly<EmptyScale
 }
 
 /**
- * Parse `**bold**` markers into prompt segments.
- */
-function parsePromptSegments(raw: string): PromptSegment[] {
-    const segments: PromptSegment[] = [];
-    const parts = raw.split("**");
-
-    for (let index = 0; index < parts.length; index += 1) {
-        const part = parts[index] ?? "";
-        if (part.length === 0) {
-            continue;
-        }
-
-        segments.push({ text: part, bold: index % 2 === 1 });
-    }
-
-    return segments;
-}
-
-/**
  * Resolve the ordered scale columns that should appear for this section.
  */
 function getVisibleScaleKeys(rows: readonly QuestionTableRow[]): ScaleKey[] {
     return SCALE_COLUMN_ORDER.filter((scaleKey) => {
         return rows.some((row) => row.question.scales.some((scale) => scale.key === scaleKey));
     });
-}
-
-/**
- * Convert raw instrument question keys into a human-readable audit label.
- */
-function formatQuestionKey(questionKey: string): string {
-    const sections = questionKey.slice(2).split("_"); // Remove "q_" prefix
-    return `Q ${sections.map((section) => section.toUpperCase()).join(".")}`;
 }
 
 /**
@@ -427,11 +426,13 @@ function getScaleContentByKey(
 
     for (const scaleKey of scaleKeys) {
         let maxOptionLabelLength = 0;
+        let scalePrompt = "";
         for (const row of rows) {
             const matchingScale = row.question.scales.find((scale) => scale.key === scaleKey);
             if (matchingScale === undefined) {
                 continue;
             }
+            scalePrompt = matchingScale.prompt;
 
             for (const option of matchingScale.options) {
                 maxOptionLabelLength = Math.max(maxOptionLabelLength, option.label.trim().length);
@@ -441,6 +442,7 @@ function getScaleContentByKey(
         scaleContentByKey[scaleKey] = {
             headerLabel: getScaleHeaderLabel(scaleKey),
             maxOptionLabelLength,
+            scalePrompt,
         };
     }
 

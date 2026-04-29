@@ -18,6 +18,11 @@ export interface ScoreSummaryLabels {
     readonly challengeShort: string;
 }
 
+export interface ScorePair {
+    readonly pv: number;
+    readonly u: number;
+}
+
 interface MultiplierScaleScore {
     readonly columnTotal: number;
     readonly boostValue: number;
@@ -46,6 +51,20 @@ const EMPTY_SCORE_TOTALS: AuditScoreTotals = {
  */
 export function formatScoreValue(value: number): string {
     return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
+
+/**
+ * Format a compact PV/U score pair for mobile summary surfaces.
+ *
+ * @param value Score pair or null.
+ * @returns `PV x | U y` or `null` when unavailable.
+ */
+export function formatScorePair(value: ScorePair | null | undefined): string | null {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    return `PV ${formatScoreValue(value.pv)} | U ${formatScoreValue(value.u)}`;
 }
 
 /**
@@ -155,6 +174,36 @@ export function formatPercentage(value: number, maximum: number): string {
 }
 
 /**
+ * Rounded percent of max (0–100), used for report bar fill tiering. Mirrors web `report-helpers`.
+ * @returns `null` when `max <= 0`.
+ */
+export function roundedPercentOfMax(value: number, max: number): number | null {
+    if (max <= 0) {
+        return null;
+    }
+    return Math.round((value / max) * 100);
+}
+
+/**
+ * Bar color band from percentage: 70+ high, 40+ mid, below low, null for not assessed.
+ * Matches `reportBarScoreTier` in `audit-tools-playspace-frontend/src/lib/audit/report-helpers.ts`.
+ */
+export type ReportBarScoreTier = "na" | "high" | "mid" | "low";
+
+export function reportBarScoreTier(percent: number | null): ReportBarScoreTier {
+    if (percent === null) {
+        return "na";
+    }
+    if (percent >= 70) {
+        return "high";
+    }
+    if (percent >= 40) {
+        return "mid";
+    }
+    return "low";
+}
+
+/**
  * Format a raw score followed by its percentage of the max score.
  *
  * @param value Raw score.
@@ -195,19 +244,6 @@ export function getCombinedConstructScore(scoreTotals: AuditScoreTotals | null |
         return null;
     }
     return scoreTotals.play_value_total + scoreTotals.usability_total;
-}
-
-/**
- * Collapse the two construct maximum totals into one compact ceiling value.
- *
- * @param scoreTotals Optional overall score totals.
- * @returns Combined maximum play value plus usability score or `null`.
- */
-export function getCombinedConstructMaxScore(scoreTotals: AuditScoreTotals | null | undefined): number | null {
-    if (scoreTotals === null || scoreTotals === undefined) {
-        return null;
-    }
-    return scoreTotals.play_value_total_max + scoreTotals.usability_total_max;
 }
 
 /**

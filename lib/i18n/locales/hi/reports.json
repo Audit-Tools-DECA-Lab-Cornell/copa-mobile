@@ -34,6 +34,7 @@
         "startedAt": "शुरू किया गया",
         "status": "स्थिति",
         "submittedAt": "पूर्ण",
+        "scrollToTop": "ऊपर जाएँ",
         "unavailableMessage": "यह ऑडिट रिपोर्ट अभी उपलब्ध नहीं है।",
         "unavailableTitle": "ऑडिट नहीं मिला",
         "usabilityCardLabel": "उपयोगिता"
@@ -67,5 +68,61 @@
     "subtitle": "अपने असाइन किए गए स्थानों में ऑडिट प्रदर्शन की समीक्षा करें।",
     "title": "Playspace Scoring",
     "topScoringPlace": "सबसे अधिक स्कोर वाला स्थान",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "toggle": {
+        "short": "संक्षिप्त",
+        "extended": "विस्तृत"
+    },
+    "domain": {
+        "overallScoresTitle": "समग्र स्कोर",
+        "bestWorstTitle": "सर्वोत्तम और निम्नतम स्कोर",
+        "auditorNotesLabel": "ऑडिटर की टिप्पणियाँ / नोट्स",
+        "noNotesPlaceholder": "इस डोमेन के लिए कोई नोट दर्ज नहीं है।",
+        "scoreAchievedLabel": "प्राप्त स्कोर",
+        "maxScoreLabel": "अधिकतम स्कोर",
+        "itemsContributingLabel": "योगदान देने वाले आइटमों की संख्या",
+        "barProvision": "प्रावधान",
+        "barProvisionShort": "Prov",
+        "barDiversity": "विविधता",
+        "barDiversityShort": "Div",
+        "barChallenge": "चुनौती अवसर",
+        "barChallengeShort": "Chal",
+        "barSociability": "सामाजिकता सहायता",
+        "barSociabilityShort": "Soc",
+        "barPlayValue": "खेल मूल्य",
+        "barUsability": "उपयोगिता",
+        "scaleLegend": "Legend: Chal = Challenge Opportunities, Soc = Social Support",
+        "barRowScaleScores": "स्केल स्कोर",
+        "barRowPlayValueUsability": "खेल मूल्य और उपयोगिता",
+        "expandAll": "सभी विस्तृत करें",
+        "collapseAll": "सभी संकुचित करें",
+        "expandSection": "खंड विस्तृत करें",
+        "collapseSection": "खंड संकुचित करें",
+        "showItems": "आइटम दिखाएँ ({{count}})",
+        "hideItems": "आइटम छिपाएँ"
+    },
+    "extendedTable": {
+        "columnQuestionId": "आइटम ID",
+        "columnItems": "आइटम",
+        "columnProvision": "प्रावधान",
+        "columnDiversity": "विविधता",
+        "columnChallenge": "चुनौती अवसर",
+        "columnSociability": "सामाजिक सहायता",
+        "columnPlayValue": "खेल मूल्य",
+        "columnUsability": "उपयोगिता",
+        "scoreAchieved": "प्राप्त स्कोर: {{score}}",
+        "maxScore": "अधिकतम स्कोर: {{max}}",
+        "notApplicable": "लागू नहीं"
+    },
+    "bestWorst": {
+        "bestScored": "सर्वोत्तम स्कोर",
+        "worstScored": "निम्नतम स्कोर",
+        "insufficientData": "अपर्याप्त डेटा (सर्वोत्तम और निम्नतम की तुलना के लिए कम से कम दो डोमेन चाहिए)।",
+        "constructProvision": "प्रावधान",
+        "constructDiversity": "विविधता",
+        "constructChallenge": "चुनौतीपूर्ण अवसर",
+        "constructSociability": "सामाजिक सहायता",
+        "constructPlayValue": "खेल मूल्य",
+        "constructUsability": "उपयोगिता"
+    }
 }

@@ -42,10 +42,6 @@ Built with **Expo + Expo Router + Tamagui** for native iOS and Android field use
 The following remain **separate web/backend planning tracks** and are not part of this app:
 
 - Manager web dashboards
-- Manager survey entry
-- Combined manager survey + audit scoring
-- Weighted scoring
-- Heavy historical analytics or cross-audit comparison dashboards
 
 ---
 
@@ -94,7 +90,7 @@ This replaces the older custom audit persistence path and gives the app a clear 
 - Start or resume an audit for an assigned place
 - Select or inherit execution mode: `audit`, `survey`, or `both`
 - Complete pre-audit questions
-- Answer section questions with quantity-gated follow-up scales
+- Answer section questions with provision-gated follow-up scales
 - Add section notes
 - Auto-save locally and resume later
 - Submit only when visible questions and pre-audit are complete
@@ -184,7 +180,7 @@ The app consumes the following typed fields:
 
 **Session payloads:** `meta`, `pre_audit`, `sections`, `scores`, `progress`
 
-**Assigned-place summaries:** `audit_status`, `audit_id`, `summary_score`, `score_totals`, `progress_percent`
+**Assigned-place summaries:** `audit_id`, `summary_score`, `score_totals`, `progress_percent`, `place_audit_status`, `place_survey_status`, `audit_scores`, `survey_scores`, `overall_scores`
 
 ### Score Displays
 
@@ -193,10 +189,10 @@ Score displays use **raw total buckets**, not percent summaries:
 | Type             | Fields                                                       |
 | ---------------- | ------------------------------------------------------------ |
 | Construct totals | `play_value_total` · `usability_total` · `sociability_total` |
-| Column totals    | `quantity_total` · `diversity_total` · `challenge_total`     |
+| Column totals    | `provision_total` · `diversity_total` · `challenge_total`    |
 | Compact labels   | `PV` · `U` · `S` · `Q` · `D` · `C`                           |
 
-> **Fallback:** when `score_totals` is not present, the app falls back to the legacy `summary_score` field for compatibility with older backend payloads.
+Place-level summary surfaces now render explicit `PV` / `U` pairs from `audit_scores`, `survey_scores`, and `overall_scores` instead of collapsing the score into `PV + U`.
 
 ---
 
@@ -315,7 +311,7 @@ Dependabot is configured in `.github/dependabot.yml` for:
 ## Current Limitations
 
 - Newest locale additions still need translation coverage in some non-English locales
-- Manager survey and combined scoring are not present in the mobile product yet
+- Mobile does not create separate manager-authored survey submissions; auditors submit `audit`, `survey`, or `both`
 - Mobile analytics are intentionally lightweight: the backend surface is centered on assigned-place summaries plus per-audit detail
 
 ---

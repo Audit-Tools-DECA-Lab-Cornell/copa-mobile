@@ -13,6 +13,7 @@ import {
 import type {
     AuditScoreTotals,
     AuditSession,
+    AuditStatus,
     ExecutionMode,
     InstrumentQuestion,
     PlayspaceInstrument,
@@ -1061,7 +1062,7 @@ function formatScaleScoreText(option: QuestionScale["options"][number]): string 
  * @param status Submitted audit status value.
  * @returns Human-readable audit status.
  */
-function formatAuditStatusLabel(status: AuditSession["status"]): string {
+function formatAuditStatusLabel(status: AuditStatus): string {
     switch (status) {
         case "IN_PROGRESS":
             return "In progress";

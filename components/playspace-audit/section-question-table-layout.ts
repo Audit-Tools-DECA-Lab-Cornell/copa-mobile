@@ -4,6 +4,7 @@ import type { ResponsiveLayout } from "lib/responsive-layout";
 export interface SectionQuestionTableScaleContent {
     readonly headerLabel: string;
     readonly maxOptionLabelLength: number;
+    readonly scalePrompt: string;
 }
 
 export interface SectionQuestionTableColumnMetrics {

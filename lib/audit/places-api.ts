@@ -4,11 +4,13 @@ import { parsePayload, requestJson } from "lib/audit/api";
 import { auditScoreTotalsSchema, createPaginatedResponseSchema, executionModeSchema } from "lib/audit/types";
 import { z } from "zod";
 
-import type { PaginatedResponse } from "lib/audit/types";
-/**
- * Audit lifecycle statuses returned by the backend.
- */
-const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
+import { type PaginatedResponse, playspaceTypeSchema } from "lib/audit/types";
+
+const placeAxisStatusSchema = z.enum(["not_started", "in_progress", "submitted", "complete"]);
+const scorePairSchema = z.object({
+    pv: z.number(),
+    u: z.number(),
+});
 
 /**
  * Accept coordinates when present while remaining backward compatible with
@@ -27,15 +29,16 @@ const nullableCoordinateSchema = z
 const auditorPlaceSchema = z.object({
     place_id: z.uuid(),
     place_name: z.string(),
-    place_type: z.string().nullable(),
+    place_type: playspaceTypeSchema.nullable(),
     project_id: z.uuid(),
     project_name: z.string(),
+    address: z.string().nullable(),
+    postal_code: z.string().nullable(),
     city: z.string().nullable(),
     province: z.string().nullable(),
     country: z.string().nullable(),
     lat: nullableCoordinateSchema,
     lng: nullableCoordinateSchema,
-    audit_status: auditStatusSchema.nullable(),
     audit_id: z.uuid().nullable(),
     started_at: z.string().nullable(),
     submitted_at: z.string().nullable(),
@@ -44,6 +47,11 @@ const auditorPlaceSchema = z.object({
     score_totals: auditScoreTotalsSchema.nullable(),
     progress_percent: z.number().nullable(),
     selected_execution_mode: executionModeSchema.nullable().default(null),
+    place_audit_status: placeAxisStatusSchema.optional().default("not_started"),
+    place_survey_status: placeAxisStatusSchema.optional().default("not_started"),
+    audit_scores: scorePairSchema.nullable().optional().default(null),
+    survey_scores: scorePairSchema.nullable().optional().default(null),
+    overall_scores: scorePairSchema.nullable().optional().default(null),
 });
 
 /**

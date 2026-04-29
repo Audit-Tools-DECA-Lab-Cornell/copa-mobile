@@ -54,6 +54,14 @@ interface ColorPalette {
     readonly placeholderColor: string;
     readonly amber: string;
     readonly amberSoft: string;
+    readonly provision: string;
+    readonly provisionSoft: string;
+    readonly diversity: string;
+    readonly diversitySoft: string;
+    readonly challenge: string;
+    readonly challengeSoft: string;
+    readonly sociability: string;
+    readonly sociabilitySoft: string;
 }
 
 interface ShadowPalette {
@@ -96,6 +104,14 @@ const DARK_COLORS = {
     amber: "rgba(255, 180, 0, 0.1)",
     amberSoft: "rgba(255, 180, 0, 0.1)",
     placeholderColor: "#B8AEA3",
+    provision: "#566E3D",
+    provisionSoft: "#AEC596",
+    diversity: "#BD4926",
+    diversitySoft: "#EBAC99",
+    challenge: "#0C4767",
+    challengeSoft: "#B1D4E0",
+    sociability: "#754170",
+    sociabilitySoft: "#C596C0",
 } as const satisfies ColorPalette;
 
 const DARK_SHADOWS = {
@@ -138,6 +154,14 @@ const LIGHT_COLORS = {
     violetSoft: "rgba(107, 90, 138, 0.12)",
     amberSoft: "rgba(204, 136, 0, 0.1)",
     placeholderColor: "#645A52",
+    provision: "#566E3D",
+    provisionSoft: "#AEC596",
+    diversity: "#BD4926",
+    diversitySoft: "#EBAC99",
+    challenge: "#0C4767",
+    challengeSoft: "#B1D4E0",
+    sociability: "#754170",
+    sociabilitySoft: "#C596C0",
 } as const satisfies ColorPalette;
 
 const LIGHT_FIELD_COLORS = {
@@ -167,6 +191,14 @@ const LIGHT_FIELD_COLORS = {
     amber: "rgba(255, 180, 0, 0.1)",
     amberSoft: "rgba(204, 136, 0, 0.1)",
     placeholderColor: "#413A34",
+    provision: "#566E3D",
+    provisionSoft: "#AEC596",
+    diversity: "#BD4926",
+    diversitySoft: "#EBAC99",
+    challenge: "#0C4767",
+    challengeSoft: "#B1D4E0",
+    sociability: "#754170",
+    sociabilitySoft: "#C596C0",
 } as const satisfies ColorPalette;
 
 const LIGHT_SHADOWS = {
@@ -209,6 +241,14 @@ const DARK_HIGH_CONTRAST_COLORS = {
     amber: "rgba(255, 180, 0, 0.1)",
     amberSoft: "rgba(255, 180, 0, 0.1)",
     placeholderColor: "#8E8E8E",
+    provision: "#566E3D",
+    provisionSoft: "#AEC596",
+    diversity: "#BD4926",
+    diversitySoft: "#EBAC99",
+    challenge: "#0C4767",
+    challengeSoft: "#B1D4E0",
+    sociability: "#754170",
+    sociabilitySoft: "#C596C0",
 } as const satisfies ColorPalette;
 
 const LIGHT_HIGH_CONTRAST_COLORS = {
@@ -238,6 +278,14 @@ const LIGHT_HIGH_CONTRAST_COLORS = {
     amber: "rgba(255, 180, 0, 0.1)",
     amberSoft: "rgba(255, 180, 0, 0.1)",
     placeholderColor: "#D1C4B6",
+    provision: "#566E3D",
+    provisionSoft: "#AEC596",
+    diversity: "#BD4926",
+    diversitySoft: "#EBAC99",
+    challenge: "#0C4767",
+    challengeSoft: "#B1D4E0",
+    sociability: "#754170",
+    sociabilitySoft: "#C596C0",
 } as const satisfies ColorPalette;
 
 interface FontTokenScale {
@@ -505,13 +553,13 @@ type PaletteColorValue = ActiveColorPalette[keyof ColorPalette];
 export function getScaleAccentColor(scaleKey: string, colors: ActiveColorPalette): PaletteColorValue {
     switch (scaleKey) {
         case "provision":
-            return colors.violet;
+            return colors.provision;
         case "diversity":
-            return colors.success;
+            return colors.diversity;
         case "challenge":
-            return colors.danger;
+            return colors.challenge;
         case "sociability":
-            return colors.info;
+            return colors.sociability;
         default:
             return colors.primary;
     }
@@ -527,13 +575,13 @@ export function getScaleAccentColor(scaleKey: string, colors: ActiveColorPalette
 export function getScaleSoftColor(scaleKey: string, colors: ActiveColorPalette): PaletteColorValue {
     switch (scaleKey) {
         case "provision":
-            return colors.violetSoft;
+            return colors.provisionSoft;
         case "diversity":
-            return colors.successSoft;
+            return colors.diversitySoft;
         case "challenge":
-            return colors.dangerSoft;
+            return colors.challengeSoft;
         case "sociability":
-            return colors.infoSoft;
+            return colors.sociabilitySoft;
         default:
             return colors.primarySoft;
     }

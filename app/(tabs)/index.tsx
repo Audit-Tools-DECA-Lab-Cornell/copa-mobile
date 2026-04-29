@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -17,47 +17,27 @@ import {
 import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
-import { formatScoreValue, getCombinedConstructScore } from "lib/audit/score-helpers";
-import { fetchAuditorDashboardSummary, type AuditorDashboardSummary } from "lib/audit/dashboard-api";
+import { formatScorePair } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
-import {
-    createActiveAuditMetricState,
-    formatPriorityProgressLabel,
-    getVisibleProgressBarWidth,
-} from "lib/dashboard-progress";
+import { formatPriorityProgressLabel, getVisibleProgressBarWidth } from "lib/dashboard-progress";
 import { useDesignSystem, getPlaceStatusTone } from "lib/design-system";
 import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { getCardTextLineLimit } from "lib/responsive";
 import { buildPairGridRows } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
+import { derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 
 /**
- * UI status derived from the backend `audit_status` value.
+ * UI status derived from `place_audit_status` and `place_survey_status`.
  */
 type DerivedPlaceStatus = "not_started" | "in_progress" | "submitted";
 type PriorityDueLabelKey = "dueToday" | "dueSoon";
 
 const DUE_SOON_WINDOW_DAYS = 3;
-
-/**
- * Map the backend `audit_status` to a local UI status string.
- *
- * @param auditStatus Raw audit status from the API (nullable).
- * @returns Normalised UI status used for pills and tone lookups.
- */
-function derivePlaceStatus(auditStatus: AuditorPlace["audit_status"]): DerivedPlaceStatus {
-    if (auditStatus === "SUBMITTED") {
-        return "submitted";
-    }
-    if (auditStatus === "IN_PROGRESS" || auditStatus === "PAUSED") {
-        return "in_progress";
-    }
-    return "not_started";
-}
 
 /**
  * Build a locality string from city and country fields.
@@ -112,40 +92,25 @@ export default function DashboardScreen() {
     const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
+    const loadDashboardSummary = usePlacesStore((state) => state.loadDashboardSummary);
+    const clearDashboardSummary = usePlacesStore((state) => state.clearDashboardSummary);
+    const dashboardSummary = usePlacesStore((state) => state.dashboardSummary);
     const scrollViewRef = useRef<ScrollView | null>(null);
-    const [dashboardSummary, setDashboardSummary] = useState<AuditorDashboardSummary | null>(null);
 
     useEffect(() => {
-        if (session !== null) {
-            loadPlaces(session, { fetchAll: false, page: 1, pageSize: 8 }).catch(() => undefined);
-        }
-    }, [session, loadPlaces]);
-
-    useEffect(() => {
-        let isMounted = true;
         if (session === null) {
-            setDashboardSummary(null);
-            return () => {
-                isMounted = false;
-            };
+            clearDashboardSummary();
+            return;
         }
+        void loadDashboardSummary(session);
+    }, [session, loadDashboardSummary, clearDashboardSummary]);
 
-        fetchAuditorDashboardSummary(session)
-            .then((summary) => {
-                if (isMounted) {
-                    setDashboardSummary(summary);
-                }
-            })
-            .catch(() => {
-                if (isMounted) {
-                    setDashboardSummary(null);
-                }
-            });
-
-        return () => {
-            isMounted = false;
-        };
-    }, [session]);
+    useEffect(() => {
+        if (session === null) {
+            return;
+        }
+        void loadPlaces(session, { fetchAll: false, page: 1, pageSize: 8 }).catch(() => undefined);
+    }, [session, loadPlaces]);
 
     const scrollDashboardToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
@@ -163,27 +128,27 @@ export default function DashboardScreen() {
         if (dashboardSummary !== null) {
             return dashboardSummary.submitted_audits;
         }
-        return places.filter((p) => p.audit_status === "SUBMITTED").length;
+        return places.filter((p) => derivePlaceRequirementStatus(p) === "submitted").length;
     }, [dashboardSummary, places]);
 
     const inProgressCount = useMemo(() => {
         if (dashboardSummary !== null) {
             return dashboardSummary.in_progress_audits;
         }
-        return places.filter((p) => p.audit_status === "IN_PROGRESS").length;
+        return places.filter((p) => derivePlaceRequirementStatus(p) === "in_progress").length;
     }, [dashboardSummary, places]);
 
     const notStartedCount = useMemo(() => {
         if (dashboardSummary !== null) {
             return dashboardSummary.pending_places;
         }
-        return places.filter((p) => p.audit_status === null).length;
+        return places.filter((p) => derivePlaceRequirementStatus(p) === "not_started").length;
     }, [dashboardSummary, places]);
 
     const submittedCount = completedCount;
 
     const highlightedPlaces = useMemo(() => {
-        return places.filter((p) => p.audit_status !== "SUBMITTED").slice(0, 3);
+        return places.filter((p) => derivePlaceRequirementStatus(p) !== "submitted").slice(0, 3);
     }, [places]);
     const highlightedPlaceRows = useMemo(() => {
         return buildPairGridRows(highlightedPlaces, (place) => {
@@ -192,11 +157,11 @@ export default function DashboardScreen() {
     }, [highlightedPlaces]);
 
     const priorityPlace = useMemo<AuditorPlace | undefined>(() => {
-        const inProgress = places.find((p) => p.audit_status === "IN_PROGRESS" || p.audit_status === "PAUSED");
+        const inProgress = places.find((p) => derivePlaceRequirementStatus(p) === "in_progress");
         if (inProgress !== undefined) {
             return inProgress;
         }
-        const notStarted = places.find((p) => p.audit_status === null);
+        const notStarted = places.find((p) => derivePlaceRequirementStatus(p) === "not_started");
         return notStarted;
     }, [places]);
 
@@ -248,7 +213,7 @@ export default function DashboardScreen() {
             return null;
         }
 
-        return derivePlaceStatus(priorityPlace.audit_status);
+        return derivePlaceRequirementStatus(priorityPlace);
     }, [priorityPlace]);
     const priorityProgressLabel = useMemo(() => {
         if (priorityPlace === undefined || priorityPlaceStatus === null) {
@@ -1500,18 +1465,15 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["dashboard", "common"]);
-    const status = derivePlaceStatus(place.audit_status);
+    const status = derivePlaceRequirementStatus(place);
     const placeTone = getPlaceStatusTone(status, ds.colors);
     const progressPercent = place.progress_percent ?? 0;
-    const combinedConstructScore = getCombinedConstructScore(place.score_totals) ?? place.summary_score;
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
     const progressBarWidth = getVisibleProgressBarWidth(progressPercent);
-    const activeAuditMetricState = createActiveAuditMetricState({
-        combinedConstructScore,
-        progressPercent,
-        formatScoreValue,
-        translateConstructLabel: () => t("constructScore", { ns: "dashboard" }),
-    });
+    const activeAuditMetricState = {
+        completionValue: `${progressPercent}%`,
+        constructSummary: formatScorePair(place.overall_scores) ?? undefined,
+    };
 
     return (
         <YStack

@@ -1,1 +1,1 @@
-bunx lint-staged
+~/.bun/bin/bun x lint-staged
