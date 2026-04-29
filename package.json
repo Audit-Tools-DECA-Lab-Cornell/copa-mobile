@@ -69,7 +69,7 @@
         "expo-task-manager": "~55.0.15",
         "expo-updates": "~55.0.21",
         "expo-web-browser": "~55.0.14",
-        "i18next": "^25.8.20",
+        "i18next": "^26.0.8",
         "loglayer": "^9.1.0",
         "patch-package": "^8.0.1",
         "react": "19.2.0",
