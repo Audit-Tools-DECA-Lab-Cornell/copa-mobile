@@ -90,7 +90,7 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
                             <HeaderCell
                                 key={`${scaleKey}-prompt`}
                                 width={readScaleColumnWidth(columnMetrics, scaleKey)}
-                                label={scaleContentByKey[scaleKey]?.scalePrompt!}
+                                label={scaleContentByKey[scaleKey]?.scalePrompt as string}
                                 showTrailingBorder={columnIndex < visibleScaleKeys.length - 1}
                                 isPrompt
                             />
