@@ -1,0 +1,86 @@
+{
+    "resetPassword": {
+        "title": "Définir votre mot de passe",
+        "subtitle": "Choisissez un mot de passe sécurisé pour protéger votre compte.",
+        "newPasswordLabel": "Nouveau mot de passe",
+        "newPasswordPlaceholder": "Entrez un nouveau mot de passe",
+        "confirmPasswordLabel": "Confirmer le mot de passe",
+        "confirmPasswordPlaceholder": "Ressaisissez le mot de passe",
+        "submit": "Définir le mot de passe",
+        "submitting": "Définition du mot de passe...",
+        "requirements": {
+            "minLength": "Au moins 8 caractères",
+            "uppercase": "Une lettre majuscule",
+            "lowercase": "Une lettre minuscule",
+            "number": "Un chiffre"
+        },
+        "validation": {
+            "tooShort": "Le mot de passe doit comporter au moins 8 caractères.",
+            "missingUppercase": "Le mot de passe doit contenir une lettre majuscule.",
+            "missingLowercase": "Le mot de passe doit contenir une lettre minuscule.",
+            "missingNumber": "Le mot de passe doit contenir un chiffre.",
+            "noMatch": "Les mots de passe ne correspondent pas."
+        }
+    },
+    "completeProfile": {
+        "title": "Compléter votre profil",
+        "subtitle": "Parlez-nous un peu de vous.",
+        "fullNameLabel": "Nom complet",
+        "fullNamePlaceholder": "Votre nom complet",
+        "phoneLabel": "Numéro de téléphone",
+        "phonePlaceholder": "+33 0 00 00 00 00",
+        "emailLabel": "Adresse e-mail",
+        "emailPlaceholder": "vous@exemple.com",
+        "genderLabel": "Genre",
+        "genderPlaceholder": "Sélectionner le genre",
+        "ageRangeLabel": "Tranche d'âge",
+        "ageRangePlaceholder": "Sélectionner la tranche d'âge",
+        "cityLabel": "Ville",
+        "cityPlaceholder": "Votre ville",
+        "provinceLabel": "Province / Région",
+        "provincePlaceholder": "Province ou région",
+        "countryLabel": "Pays",
+        "countryPlaceholder": "Votre pays",
+        "roleLabel": "Rôle / Profession",
+        "rolePlaceholder": "ex. Enseignant, Chercheur",
+        "submit": "Enregistrer et continuer",
+        "submitting": "Enregistrement...",
+        "validation": {
+            "fullNameRequired": "Le nom complet est requis."
+        },
+        "genderOptions": {
+            "male": "Masculin",
+            "female": "Féminin",
+            "nonBinary": "Non-binaire",
+            "preferNotToSay": "Préfère ne pas répondre",
+            "other": "Autre"
+        },
+        "ageRangeOptions": {
+            "under18": "Moins de 18 ans",
+            "18to24": "18 – 24",
+            "25to34": "25 – 34",
+            "35to44": "35 – 44",
+            "45to54": "45 – 54",
+            "55to64": "55 – 64",
+            "65plus": "65 ans et plus"
+        }
+    },
+    "acceptTerms": {
+        "title": "Conditions et confidentialité",
+        "subtitle": "Veuillez lire et accepter avant de continuer.",
+        "scrollHint": "Faites défiler jusqu'en bas pour accepter.",
+        "submit": "J'ai lu et j'accepte",
+        "submitting": "Acceptation...",
+        "termsHeading": "Conditions d'utilisation",
+        "termsBody": "En utilisant Playspace, vous acceptez d'effectuer des audits honnêtement et conformément aux instructions de votre chef de projet. Vous ne partagerez pas vos identifiants d'accès. Toutes les données que vous soumettez font partie du dossier d'audit.",
+        "privacyHeading": "Avis de confidentialité",
+        "privacyBody": "Vos données personnelles sont stockées en toute sécurité et utilisées uniquement pour identifier vos soumissions au sein de la plateforme. Votre code d'auditeur — pas votre nom personnel — est associé aux enregistrements d'audit visibles par les autres."
+    },
+    "auditorCode": {
+        "title": "Votre code d'auditeur",
+        "subtitle": "C'est ainsi que vous êtes identifié dans tous les dossiers d'audit.",
+        "codeLabel": "Code d'auditeur",
+        "explanation": "Seul votre code d'auditeur — pas votre nom ni vos coordonnées — est stocké avec chaque audit que vous soumettez.",
+        "submit": "Entrer dans Playspace"
+    }
+}

@@ -1,10 +1,10 @@
 import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
-import { ArrowRight, Clock3, Dot, FileBarChart, MapPin, TriangleAlert } from "@tamagui/lucide-icons-2";
+import { ArrowRight, Clock3, FileBarChart, MapPin, TriangleAlert } from "@tamagui/lucide-icons-2";
 import { useToastController } from "@tamagui/toast";
 import { ActionButton } from "components/ui/action-button";
 import { CollapsibleCard } from "components/ui/collapsible-card";
-import { FilterChip } from "components/ui/filter-chip";
 import { ProjectFilterSelect } from "components/ui/project-filter-select";
+import { TypeFilterSelect } from "components/ui/type-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
 import { useRouter, type Href } from "expo-router";
@@ -23,6 +23,7 @@ import {
     formatColumnSummary,
     formatScorePair,
     formatScoreValue,
+    getEffectivePlaceScores,
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
@@ -43,6 +44,7 @@ import { Paragraph, Text, XStack, YStack } from "tamagui";
 
 type ReportProjectFilter = "all" | string;
 type ReportFilter = "all" | "submitted" | "scored" | "not_scored";
+type ReportModeFilter = "all" | "audit" | "survey" | "both";
 type ReportSortOption = "score" | "recent" | "name";
 type ReportsListItem = AuditorPlace | PairGridRow<AuditorPlace>;
 
@@ -67,6 +69,7 @@ export default function ReportsScreen() {
     const [searchQuery, setSearchQuery] = useState("");
     const [projectFilter, setProjectFilter] = useState<ReportProjectFilter>("all");
     const [reportFilter, setReportFilter] = useState<ReportFilter>("all");
+    const [modeFilter, setModeFilter] = useState<ReportModeFilter>("all");
     const [sortOption, setSortOption] = useState<ReportSortOption>("score");
     const listRef = useRef<FlashListRef<ReportsListItem> | null>(null);
 
@@ -124,12 +127,6 @@ export default function ReportsScreen() {
         });
     }, [exportablePlaces]);
 
-    const maxCombinedConstructScore = useMemo(() => {
-        return placesWithScores.reduce((currentMax, place) => {
-            return Math.max(currentMax, (place.overall_scores?.pv ?? 0) + (place.overall_scores?.u ?? 0));
-        }, 0);
-    }, [placesWithScores]);
-
     /** Unique projects derived from report places for the project filter chips. */
     const uniqueProjects = useMemo(() => {
         const projectMap = new Map<string, string>();
@@ -150,6 +147,10 @@ export default function ReportsScreen() {
             }
 
             if (projectFilter !== "all" && place.project_id !== projectFilter) {
+                return false;
+            }
+
+            if (modeFilter !== "all" && place.selected_execution_mode !== modeFilter) {
                 return false;
             }
 
@@ -188,7 +189,7 @@ export default function ReportsScreen() {
 
             return leftPlace.place_name.localeCompare(rightPlace.place_name);
         });
-    }, [projectFilter, reportFilter, reportPlaces, searchQuery, sortOption]);
+    }, [modeFilter, projectFilter, reportFilter, reportPlaces, searchQuery, sortOption]);
     const tabletRows = useMemo(() => {
         return buildPairGridRows(filteredReportPlaces, (place) => {
             return getProjectPlaceKey(place.project_id, place.place_id);
@@ -322,39 +323,37 @@ export default function ReportsScreen() {
         [buildExportableAudit, exportablePlaces, instrument, session, showExportError, showExportSuccess, ds.colors],
     );
 
-    const hasActiveFilters = searchQuery.trim().length > 0 || projectFilter !== "all" || reportFilter !== "all";
+    const hasActiveFilters =
+        searchQuery.trim().length > 0 || projectFilter !== "all" || reportFilter !== "all" || modeFilter !== "all";
     const keyExtractor = useCallback((item: ReportsListItem) => {
         return isPairGridRow(item) ? item.id : getProjectPlaceKey(item.project_id, item.place_id);
     }, []);
     const renderSeparator = useCallback(() => {
         return <YStack height={layout.isTablet ? 16 : 12} />;
     }, [layout.isTablet]);
-    const renderItem = useCallback(
-        ({ item }: ListRenderItemInfo<ReportsListItem>) => {
-            if (isPairGridRow(item)) {
-                const rightPlace = item.right;
+    const renderItem = useCallback(({ item }: ListRenderItemInfo<ReportsListItem>) => {
+        if (isPairGridRow(item)) {
+            const rightPlace = item.right;
 
-                if (rightPlace === null) {
-                    return (
-                        <XStack gap="$3" items="stretch">
-                            <ReportQueueCard place={item.left} maxCombinedConstructScore={maxCombinedConstructScore} />
-                            <YStack width="48.5%"></YStack>
-                        </XStack>
-                    );
-                }
-
+            if (rightPlace === null) {
                 return (
                     <XStack gap="$3" items="stretch">
-                        <ReportQueueCard place={item.left} maxCombinedConstructScore={maxCombinedConstructScore} />
-                        <ReportQueueCard place={rightPlace} maxCombinedConstructScore={maxCombinedConstructScore} />
+                        <ReportQueueCard place={item.left} />
+                        <YStack width="48.5%"></YStack>
                     </XStack>
                 );
             }
 
-            return <ReportQueueCard place={item} maxCombinedConstructScore={maxCombinedConstructScore} />;
-        },
-        [maxCombinedConstructScore],
-    );
+            return (
+                <XStack gap="$3" items="stretch">
+                    <ReportQueueCard place={item.left} />
+                    <ReportQueueCard place={rightPlace} />
+                </XStack>
+            );
+        }
+
+        return <ReportQueueCard place={item} />;
+    }, []);
 
     return (
         <FlashList<ReportsListItem>
@@ -370,30 +369,47 @@ export default function ReportsScreen() {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <YStack gap="$4">
-                    <YStack gap="$3">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={
-                                layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize
-                            }
-                            lineHeight={
-                                layout.isTablet
-                                    ? ds.typography.displayLg.lineHeight
-                                    : ds.typography.displayMd.lineHeight
-                            }
-                            letterSpacing={-0.7}
-                        >
-                            {t("title")}
-                        </Text>
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyLg.fontSize}
-                        >
-                            {t("subtitle")}
-                        </Paragraph>
-                    </YStack>
+                    {layout.isTablet ? (
+                        <XStack justify="space-between" items="flex-end" gap="$4">
+                            <YStack gap="$1" flex={1}>
+                                <Text
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.headingBold}
+                                    fontSize={ds.typography.displayLg.fontSize}
+                                    lineHeight={ds.typography.displayLg.lineHeight}
+                                    letterSpacing={-0.7}
+                                >
+                                    {t("title")}
+                                </Text>
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodyLg.fontSize}
+                                >
+                                    {t("subtitle")}
+                                </Paragraph>
+                            </YStack>
+                        </XStack>
+                    ) : (
+                        <YStack gap="$3">
+                            <Text
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.headingBold}
+                                fontSize={ds.typography.displayMd.fontSize}
+                                lineHeight={ds.typography.displayMd.lineHeight}
+                                letterSpacing={-0.7}
+                            >
+                                {t("title")}
+                            </Text>
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyLg.fontSize}
+                            >
+                                {t("subtitle")}
+                            </Paragraph>
+                        </YStack>
+                    )}
 
                     {layout.isTablet ? (
                         <XStack gap="$3">
@@ -468,6 +484,39 @@ export default function ReportsScreen() {
                         </YStack>
                     )}
 
+                    <YStack
+                        rounded={ds.radii.lg}
+                        borderWidth={1}
+                        borderColor={ds.colors.warning}
+                        bg={ds.colors.warningSoft}
+                        p={layout.cardPadding}
+                        gap="$2"
+                    >
+                        <XStack items="center" gap="$2" width="100%">
+                            <TriangleAlert size={16} color={ds.colors.warning} />
+                            <Text
+                                flex={1}
+                                color={ds.colors.warning}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.bodySm.fontSize}
+                                lineHeight={ds.typography.bodySm.lineHeight}
+                                textTransform="uppercase"
+                                letterSpacing={0.7}
+                                style={{ flexShrink: 1 }}
+                            >
+                                {t("combinedScoringComingSoon", { ns: "reports" })}
+                            </Text>
+                        </XStack>
+                        <Paragraph
+                            color={ds.colors.secondaryForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                            lineHeight={ds.typography.bodySm.lineHeight}
+                        >
+                            {t("combinedScoringDescription", { ns: "reports" })}
+                        </Paragraph>
+                    </YStack>
+
                     <SearchInput
                         value={searchQuery}
                         onChangeText={setSearchQuery}
@@ -484,168 +533,46 @@ export default function ReportsScreen() {
                         />
                     ) : null}
 
-                    {layout.isTablet ? (
-                        <XStack gap="$4" items="flex-start">
-                            <YStack flex={1} gap="$2">
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelSm.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.2}
-                                >
-                                    Filters
-                                </Paragraph>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                    <XStack gap="$2">
-                                        <FilterChip
-                                            label={t("filters.all", { ns: "common" })}
-                                            isSelected={reportFilter === "all"}
-                                            onPress={() => {
-                                                setReportFilter("all");
-                                            }}
-                                        />
-                                        <FilterChip
-                                            label={t("filters.submitted", { ns: "common" })}
-                                            isSelected={reportFilter === "submitted"}
-                                            onPress={() => {
-                                                setReportFilter("submitted");
-                                            }}
-                                        />
-                                        <FilterChip
-                                            label={t("filters.scored", { ns: "common" })}
-                                            isSelected={reportFilter === "scored"}
-                                            onPress={() => {
-                                                setReportFilter("scored");
-                                            }}
-                                        />
-                                        <FilterChip
-                                            label={t("filters.notScored", { ns: "common" })}
-                                            isSelected={reportFilter === "not_scored"}
-                                            onPress={() => {
-                                                setReportFilter("not_scored");
-                                            }}
-                                        />
-                                    </XStack>
-                                </ScrollView>
-                            </YStack>
-                            <YStack gap="$2" items="flex-end">
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelSm.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.2}
-                                >
-                                    Sort By
-                                </Paragraph>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                    <XStack gap="$2">
-                                        <FilterChip
-                                            label={t("sort.score", { ns: "common" })}
-                                            isSelected={sortOption === "score"}
-                                            onPress={() => {
-                                                setSortOption("score");
-                                            }}
-                                        />
-                                        <FilterChip
-                                            label={t("sort.recent", { ns: "common" })}
-                                            isSelected={sortOption === "recent"}
-                                            onPress={() => {
-                                                setSortOption("recent");
-                                            }}
-                                        />
-                                        <FilterChip
-                                            label={t("sort.name", { ns: "common" })}
-                                            isSelected={sortOption === "name"}
-                                            onPress={() => {
-                                                setSortOption("name");
-                                            }}
-                                        />
-                                    </XStack>
-                                </ScrollView>
-                            </YStack>
-                        </XStack>
-                    ) : (
-                        <YStack gap="$2">
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.2}
-                            >
-                                Filters
-                            </Paragraph>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                <XStack gap="$2">
-                                    <FilterChip
-                                        label={t("filters.all", { ns: "common" })}
-                                        isSelected={reportFilter === "all"}
-                                        onPress={() => {
-                                            setReportFilter("all");
-                                        }}
-                                    />
-                                    <FilterChip
-                                        label={t("filters.submitted", { ns: "common" })}
-                                        isSelected={reportFilter === "submitted"}
-                                        onPress={() => {
-                                            setReportFilter("submitted");
-                                        }}
-                                    />
-                                    <FilterChip
-                                        label={t("filters.scored", { ns: "common" })}
-                                        isSelected={reportFilter === "scored"}
-                                        onPress={() => {
-                                            setReportFilter("scored");
-                                        }}
-                                    />
-                                    <FilterChip
-                                        label={t("filters.notScored", { ns: "common" })}
-                                        isSelected={reportFilter === "not_scored"}
-                                        onPress={() => {
-                                            setReportFilter("not_scored");
-                                        }}
-                                    />
-                                </XStack>
-                            </ScrollView>
-
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.2}
-                            >
-                                Sort By
-                            </Paragraph>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                <XStack gap="$2">
-                                    <FilterChip
-                                        label={t("sort.score", { ns: "common" })}
-                                        isSelected={sortOption === "score"}
-                                        onPress={() => {
-                                            setSortOption("score");
-                                        }}
-                                    />
-                                    <FilterChip
-                                        label={t("sort.recent", { ns: "common" })}
-                                        isSelected={sortOption === "recent"}
-                                        onPress={() => {
-                                            setSortOption("recent");
-                                        }}
-                                    />
-                                    <FilterChip
-                                        label={t("sort.name", { ns: "common" })}
-                                        isSelected={sortOption === "name"}
-                                        onPress={() => {
-                                            setSortOption("name");
-                                        }}
-                                    />
-                                </XStack>
-                            </ScrollView>
-                        </YStack>
-                    )}
+                    <XStack gap="$2">
+                        <TypeFilterSelect
+                            label={t("filtersLabel", { ns: "reports" })}
+                            options={[
+                                { id: "all", label: t("filters.all", { ns: "common" }) },
+                                { id: "submitted", label: t("filters.submitted", { ns: "common" }) },
+                                { id: "scored", label: t("filters.scored", { ns: "common" }) },
+                                { id: "not_scored", label: t("filters.notScored", { ns: "common" }) },
+                            ]}
+                            value={reportFilter}
+                            onChange={(next) => {
+                                setReportFilter(next as ReportFilter);
+                            }}
+                        />
+                        <TypeFilterSelect
+                            label={t("modeFilterLabel", { ns: "reports" })}
+                            options={[
+                                { id: "all", label: t("filters.all", { ns: "common" }) },
+                                { id: "audit", label: t("detail.auditTypePlaceAudit", { ns: "reports" }) },
+                                { id: "survey", label: t("detail.auditTypePlaceSurvey", { ns: "reports" }) },
+                                { id: "both", label: t("detail.auditTypeFullAssessment", { ns: "reports" }) },
+                            ]}
+                            value={modeFilter}
+                            onChange={(next) => {
+                                setModeFilter(next as ReportModeFilter);
+                            }}
+                        />
+                        <TypeFilterSelect
+                            label={t("sortByLabel", { ns: "reports" })}
+                            options={[
+                                { id: "score", label: t("sort.score", { ns: "common" }) },
+                                { id: "recent", label: t("sort.recent", { ns: "common" }) },
+                                { id: "name", label: t("sort.name", { ns: "common" }) },
+                            ]}
+                            value={sortOption}
+                            onChange={(next) => {
+                                setSortOption(next as ReportSortOption);
+                            }}
+                        />
+                    </XStack>
                 </YStack>
             }
             ListHeaderComponentStyle={{ marginBottom: layout.isTablet ? 28 : 24 }}
@@ -676,144 +603,121 @@ export default function ReportsScreen() {
             }
             ListFooterComponent={
                 <YStack gap="$4">
-                    <YStack
-                        rounded={ds.radii.lg}
-                        borderWidth={1}
-                        borderColor={ds.colors.warning}
-                        bg={ds.colors.warningSoft}
-                        p={layout.cardPadding}
-                        gap="$3"
-                    >
-                        <XStack items="center" gap="$2" width="100%">
-                            <TriangleAlert size={16} color={ds.colors.warning} />
-                            <Text
-                                flex={1}
-                                color={ds.colors.warning}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.bodySm.fontSize}
-                                lineHeight={ds.typography.bodySm.lineHeight}
-                                textTransform="uppercase"
-                                letterSpacing={0.7}
-                                style={{ flexShrink: 1 }}
+                    {exportablePlaces.length > 0 ? (
+                        <CollapsibleCard
+                            title={t("exportPreview", { ns: "reports" })}
+                            subtitle={t("exportDescription", { ns: "reports" })}
+                            icon={<FileBarChart size={32} color={ds.colors.primary} />}
+                        >
+                            <YStack
+                                rounded={ds.radii.md}
+                                borderWidth={1}
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.mutedSurface}
+                                p="$3"
+                                gap="$2"
                             >
-                                {t("combinedScoringComingSoon", { ns: "reports" })}
-                            </Text>
-                        </XStack>
-                        <Paragraph
-                            color={ds.colors.secondaryForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                            lineHeight={ds.typography.bodySm.lineHeight}
-                        >
-                            {t("combinedScoringDescription", { ns: "reports" })}
-                        </Paragraph>
-                    </YStack>
+                                <XStack justify="space-between" items="center" gap="$3">
+                                    <YStack flex={1}>
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.bodyMd.fontSize}
+                                        >
+                                            {t("previewRowsLabel")}
+                                        </Text>
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodyXs.fontSize}
+                                        >
+                                            {previewPlace !== null
+                                                ? t("previewingPlace", {
+                                                      ns: "reports",
+                                                      placeName: previewPlace.place_name,
+                                                  })
+                                                : previewData === null
+                                                  ? t("previewUnavailable")
+                                                  : t("previewSource", {
+                                                        auditCode: previewData.auditCode,
+                                                    })}
+                                        </Paragraph>
+                                    </YStack>
+                                    {isLoadingPreview ? <ActivityIndicator color={ds.colors.primary} /> : null}
+                                </XStack>
 
-                    <CollapsibleCard
-                        title={t("exportPreview", { ns: "reports" })}
-                        subtitle={t("exportDescription", { ns: "reports" })}
-                        icon={<FileBarChart size={32} color={ds.colors.primary} />}
-                    >
-                        <YStack
-                            rounded={ds.radii.md}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.input}
-                            p="$3"
-                            gap="$2"
-                        >
-                            <XStack justify="space-between" items="center" gap="$3">
-                                <YStack flex={1}>
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.bodyMd.fontSize}
-                                    >
-                                        {t("previewRowsLabel")}
-                                    </Text>
+                                {previewData === null ? (
                                     <Paragraph
                                         color={ds.colors.mutedForeground}
                                         fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodyXs.fontSize}
+                                        fontSize={ds.typography.bodySm.fontSize}
                                     >
-                                        {previewData === null
-                                            ? t("previewUnavailable")
-                                            : t("previewSource", {
-                                                  auditCode: previewData.auditCode,
-                                              })}
+                                        {t("previewUnavailable")}
                                     </Paragraph>
-                                </YStack>
-                                {isLoadingPreview ? <ActivityIndicator color={ds.colors.primary} /> : null}
-                            </XStack>
-
-                            {previewData === null ? (
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                >
-                                    {t("previewUnavailable")}
-                                </Paragraph>
-                            ) : (
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                    <YStack style={{ minWidth: 980 }}>
-                                        <XStack
-                                            bg={ds.colors.surfaceMuted}
+                                ) : (
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                        <YStack
+                                            style={{ minWidth: 980 }}
+                                            rounded={ds.radii.md}
+                                            overflow="hidden"
                                             borderWidth={1}
                                             borderColor={ds.colors.border}
                                         >
-                                            {previewData.headers.map((header, index) => (
-                                                <YStack
-                                                    key={`${header}-${index.toString()}`}
-                                                    width={150}
-                                                    px="$2"
-                                                    py="$2"
-                                                    borderRightWidth={index === previewData.headers.length - 1 ? 0 : 1}
-                                                    borderColor={ds.colors.border}
-                                                >
-                                                    <Text
-                                                        color={ds.colors.foreground}
-                                                        fontFamily={ds.fonts.bodyBold}
-                                                        fontSize={ds.typography.labelXs.fontSize}
-                                                    >
-                                                        {header}
-                                                    </Text>
-                                                </YStack>
-                                            ))}
-                                        </XStack>
-                                        {previewData.rows.map((row, rowIndex) => (
-                                            <XStack
-                                                key={`preview-row-${rowIndex.toString()}`}
-                                                borderWidth={1}
-                                                borderTopWidth={0}
-                                                borderColor={ds.colors.border}
-                                                bg={rowIndex % 2 === 0 ? ds.colors.surface : ds.colors.input}
-                                            >
-                                                {row.map((value, valueIndex) => (
+                                            <XStack bg={ds.colors.mutedSurface}>
+                                                {previewData.headers.map((header, index) => (
                                                     <YStack
-                                                        key={`${rowIndex.toString()}-${valueIndex.toString()}`}
+                                                        key={`${header}-${index.toString()}`}
                                                         width={150}
                                                         px="$2"
                                                         py="$2"
-                                                        borderRightWidth={valueIndex === row.length - 1 ? 0 : 1}
+                                                        borderRightWidth={
+                                                            index === previewData.headers.length - 1 ? 0 : 1
+                                                        }
                                                         borderColor={ds.colors.border}
                                                     >
                                                         <Text
-                                                            color={ds.colors.mutedForeground}
-                                                            fontFamily={ds.fonts.bodyMedium}
-                                                            fontSize={ds.typography.bodyXs.fontSize}
+                                                            color={ds.colors.foreground}
+                                                            fontFamily={ds.fonts.bodyBold}
+                                                            fontSize={ds.typography.labelXs.fontSize}
                                                         >
-                                                            {value}
+                                                            {header}
                                                         </Text>
                                                     </YStack>
                                                 ))}
                                             </XStack>
-                                        ))}
-                                    </YStack>
-                                </ScrollView>
-                            )}
-                        </YStack>
-                    </CollapsibleCard>
+                                            {previewData.rows.map((row, rowIndex) => (
+                                                <XStack
+                                                    key={`preview-row-${rowIndex.toString()}`}
+                                                    borderTopWidth={1}
+                                                    borderColor={ds.colors.border}
+                                                    bg={rowIndex % 2 === 0 ? ds.colors.surface : ds.colors.mutedSurface}
+                                                >
+                                                    {row.map((value, valueIndex) => (
+                                                        <YStack
+                                                            key={`${rowIndex.toString()}-${valueIndex.toString()}`}
+                                                            width={150}
+                                                            px="$2"
+                                                            py="$2"
+                                                            borderRightWidth={valueIndex === row.length - 1 ? 0 : 1}
+                                                            borderColor={ds.colors.border}
+                                                        >
+                                                            <Text
+                                                                color={ds.colors.mutedForeground}
+                                                                fontFamily={ds.fonts.bodyMedium}
+                                                                fontSize={ds.typography.bodyXs.fontSize}
+                                                            >
+                                                                {value}
+                                                            </Text>
+                                                        </YStack>
+                                                    ))}
+                                                </XStack>
+                                            ))}
+                                        </YStack>
+                                    </ScrollView>
+                                )}
+                            </YStack>
+                        </CollapsibleCard>
+                    ) : null}
 
                     <YStack
                         rounded={ds.radii.lg}
@@ -846,21 +750,22 @@ export default function ReportsScreen() {
                                 isLoading={activeExportKey === "bulk:csv"}
                             />
                             <ActionButton
-                                label={t("exportPdf", { ns: "reports" })}
-                                variant="primary"
-                                onPress={() => {
-                                    handleBulkExport("pdf").catch(() => undefined);
-                                }}
-                                disabled={exportablePlaces.length === 0 || activeExportKey !== null}
-                                isLoading={activeExportKey === "bulk:pdf"}
-                            />
-                            <ActionButton
+                                variant="default"
                                 label={t("exportExcel", { ns: "reports" })}
                                 onPress={() => {
                                     handleBulkExport("xlsx").catch(() => undefined);
                                 }}
                                 disabled={exportablePlaces.length === 0 || activeExportKey !== null}
                                 isLoading={activeExportKey === "bulk:xlsx"}
+                            />
+                            <ActionButton
+                                variant="default"
+                                label={t("exportPdf", { ns: "reports" })}
+                                onPress={() => {
+                                    handleBulkExport("pdf").catch(() => undefined);
+                                }}
+                                disabled={exportablePlaces.length === 0 || activeExportKey !== null}
+                                isLoading={activeExportKey === "bulk:pdf"}
                             />
                         </XStack>
                     </YStack>
@@ -874,35 +779,52 @@ export default function ReportsScreen() {
 
 interface ReportQueueCardProps {
     readonly place: AuditorPlace;
-    readonly maxCombinedConstructScore: number;
 }
 
-function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQueueCardProps>) {
+function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
     const ds = useDesignSystem();
     const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["reports", "common"]);
-    const scoreSummaryLabels = useMemo<ScoreSummaryLabels>(() => {
-        return {
+
+    const scoreSummaryLabels = useMemo<ScoreSummaryLabels>(
+        () => ({
             playValueShort: t("playValueShort"),
             usabilityShort: t("usabilityShort"),
             sociabilityShort: t("sociabilityShort"),
             provisionShort: t("provisionShort"),
             diversityShort: t("diversityShort"),
             challengeShort: t("challengeShort"),
-        };
-    }, [t]);
+        }),
+        [t],
+    );
+
     const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-    const hasScore = place.overall_scores !== null;
-    const combinedConstructScore =
-        place.overall_scores === null ? null : place.overall_scores.pv + place.overall_scores.u;
-    const barWidth =
-        hasScore && combinedConstructScore !== null && maxCombinedConstructScore > 0
-            ? `${Math.max((combinedConstructScore / maxCombinedConstructScore) * 100, 6)}%`
-            : "0%";
+    const effectiveScores = getEffectivePlaceScores(place);
+    const hasScore = effectiveScores !== null;
+    const combinedConstructScore = effectiveScores === null ? null : effectiveScores.pv + effectiveScores.u;
+
+    /** Max PV+U achievable for this submission based on its own score totals. */
+    const maxPossibleScore =
+        (place.score_totals?.play_value_total_max ?? 0) + (place.score_totals?.usability_total_max ?? 0);
+    const barPercent =
+        hasScore && combinedConstructScore !== null && maxPossibleScore > 0
+            ? Math.round((combinedConstructScore / maxPossibleScore) * 100)
+            : null;
+    const barWidth = barPercent !== null ? `${Math.max(barPercent, 6)}%` : "0%";
+
+    const executionModeLabel =
+        place.selected_execution_mode === "audit"
+            ? t("detail.auditTypePlaceAudit", { ns: "reports" })
+            : place.selected_execution_mode === "survey"
+              ? t("detail.auditTypePlaceSurvey", { ns: "reports" })
+              : place.selected_execution_mode === "both"
+                ? t("detail.auditTypeFullAssessment", { ns: "reports" })
+                : null;
+
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
 
     return (
@@ -913,170 +835,211 @@ function ReportQueueCard({ place, maxCombinedConstructScore }: Readonly<ReportQu
                     router.push(`/report/${place.audit_id}` as Href);
                 }
             }}
-            style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1, flex: 1 })}
+            style={({ pressed }) => ({
+                opacity: pressed ? 0.96 : 1,
+                transform: [{ scale: pressed ? 0.99 : 1 }],
+                flex: 1,
+                height: "100%",
+            })}
         >
             <YStack
+                flex={1}
                 rounded={ds.radii.lg}
                 borderWidth={1}
                 borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
                 bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
-                p={layout.cardPadding}
-                gap="$3.5"
-                justify="space-between"
+                overflow="hidden"
                 style={{
                     minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
                     boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
                 }}
             >
-                <YStack gap="$3">
-                    <XStack justify="space-between" items="flex-start" gap="$3">
-                        <YStack flex={1} gap="$1.5" style={{ minWidth: 0 }}>
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.headingBold}
-                                fontSize={
-                                    layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize
-                                }
-                                lineHeight={
-                                    layout.isTablet
-                                        ? ds.typography.titleLg.lineHeight
-                                        : ds.typography.titleMd.lineHeight
-                                }
-                                numberOfLines={getCardTextLineLimit("title")}
-                            >
-                                {place.place_name}
-                            </Text>
-                            <Paragraph
-                                color={ds.colors.secondaryForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
-                                numberOfLines={getCardTextLineLimit("supporting")}
-                            >
-                                {place.project_name}
-                            </Paragraph>
-                        </YStack>
-                        <YStack items="flex-end" gap="$2">
-                            <YStack
-                                rounded={ds.radii.full}
-                                px="$3"
-                                py="$1"
-                                style={{ backgroundColor: statusTone.surface }}
-                            >
+                <XStack flex={1}>
+                    {/* Left Status Accent Bar */}
+                    <YStack width={4} style={{ backgroundColor: statusTone.accent }} />
+
+                    <YStack flex={1} p={layout.cardPadding} gap="$4">
+                        {/* --- TOP SECTION: Header & Primary Status --- */}
+                        <XStack justify="space-between" items="flex-start" gap="$3">
+                            <YStack flex={1} gap="$1" style={{ minWidth: 0 }}>
                                 <Text
-                                    style={{ color: statusTone.text }}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelMd.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1}
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.headingBold}
+                                    fontSize={
+                                        layout.isTablet
+                                            ? ds.typography.titleLg.fontSize
+                                            : ds.typography.titleMd.fontSize
+                                    }
+                                    lineHeight={
+                                        layout.isTablet
+                                            ? ds.typography.titleLg.lineHeight
+                                            : ds.typography.titleMd.lineHeight
+                                    }
+                                    numberOfLines={getCardTextLineLimit("title")}
                                 >
-                                    {getPlaceStatusLabel(status, t)}
+                                    {place.place_name}
                                 </Text>
-                            </YStack>
-                            <Paragraph
-                                color={hasScore ? ds.colors.primary : ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.headingBold}
-                                fontSize={
-                                    layout.isTablet ? ds.typography.metricSm.fontSize : ds.typography.metricXs.fontSize
-                                }
-                                lineHeight={
-                                    layout.isTablet
-                                        ? ds.typography.metricSm.lineHeight
-                                        : ds.typography.metricXs.lineHeight
-                                }
-                                numberOfLines={getCardTextLineLimit("meta")}
-                            >
-                                {hasScore ? formatScorePair(place.overall_scores) : null}
-                            </Paragraph>
-                        </YStack>
-                    </XStack>
-
-                    <XStack items="center" gap="$2" bg="$background" p="$2" rounded={ds.radii.sm}>
-                        <MapPin size={14} color={ds.colors.mutedForeground} />
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                            lineHeight={ds.typography.bodySm.lineHeight}
-                            numberOfLines={getCardTextLineLimit("supporting")}
-                        >
-                            {locality}
-                        </Paragraph>
-                    </XStack>
-
-                    <XStack items="center" gap="$2" px="$2">
-                        <Clock3 size={14} color={ds.colors.mutedForeground} />
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                            numberOfLines={getCardTextLineLimit("meta")}
-                        >
-                            {updatedLabel}
-                        </Paragraph>
-                    </XStack>
-
-                    {hasScore ? (
-                        <YStack gap="$1.5" height={52}>
-                            <XStack items="center" gap="$2" justify="flex-start">
                                 <Paragraph
-                                    color={ds.colors.primary}
+                                    color={ds.colors.secondaryForeground}
                                     fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodyXs.fontSize}
-                                    numberOfLines={getCardTextLineLimit("meta")}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    lineHeight={ds.typography.bodySm.lineHeight}
+                                    numberOfLines={getCardTextLineLimit("supporting")}
                                 >
-                                    {formatScorePair(place.overall_scores)}
+                                    {place.project_name}
                                 </Paragraph>
-                                <Dot size={14} color={ds.colors.primary} />
-                                <Paragraph
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodyXs.fontSize}
-                                    numberOfLines={getCardTextLineLimit("meta")}
+                            </YStack>
+
+                            <YStack items="flex-end" gap="$1.5">
+                                <YStack
+                                    accessible={true}
+                                    accessibilityLabel={getPlaceStatusLabel(status, t)}
+                                    rounded={ds.radii.full}
+                                    px="$2.5"
+                                    py="$1"
+                                    style={{ backgroundColor: statusTone.surface }}
                                 >
-                                    {formatColumnSummary(place.score_totals, scoreSummaryLabels)}
+                                    <Text
+                                        accessibilityElementsHidden={true}
+                                        importantForAccessibility="no"
+                                        style={{ color: statusTone.text }}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelSm.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={0.5}
+                                    >
+                                        {getPlaceStatusLabel(status, t)}
+                                    </Text>
+                                </YStack>
+                                {/* Adjusted Score Size to prevent competing with Title */}
+                                {hasScore && (
+                                    <Text
+                                        color={ds.colors.primary}
+                                        fontFamily={ds.fonts.headingBold}
+                                        fontSize={
+                                            layout.isTablet
+                                                ? ds.typography.titleMd.fontSize
+                                                : ds.typography.titleSm.fontSize
+                                        }
+                                        numberOfLines={1}
+                                    >
+                                        {formatScorePair(effectiveScores)}
+                                    </Text>
+                                )}
+                            </YStack>
+                        </XStack>
+
+                        {/* --- MIDDLE SECTION: Meta details --- */}
+                        <YStack gap="$1.5" mb="$4">
+                            <XStack items="center" gap="$2">
+                                <MapPin size={14} color={ds.colors.mutedForeground} opacity={0.8} />
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    numberOfLines={1}
+                                >
+                                    {locality}
                                 </Paragraph>
                             </XStack>
-                            <YStack
-                                height={6}
-                                mt="$3"
-                                rounded={ds.radii.full}
-                                bg={ds.colors.mutedSurface}
-                                overflow="hidden"
-                            >
-                                <YStack
-                                    height={6}
-                                    rounded={ds.radii.full}
-                                    bg={ds.colors.primary}
-                                    style={{ width: barWidth }}
-                                />
-                            </YStack>
+                            <XStack items="center" gap="$2">
+                                <Clock3 size={14} color={ds.colors.mutedForeground} opacity={0.8} />
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    numberOfLines={1}
+                                >
+                                    {updatedLabel}
+                                </Paragraph>
+                            </XStack>
+                            {executionModeLabel !== null && (
+                                <XStack items="center" gap="$2">
+                                    <YStack
+                                        rounded={ds.radii.sm}
+                                        px="$1.5"
+                                        py="$0.5"
+                                        style={{ backgroundColor: ds.colors.mutedSurface }}
+                                    >
+                                        <Text
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelXs.fontSize}
+                                            textTransform="uppercase"
+                                            letterSpacing={0.4}
+                                        >
+                                            {executionModeLabel}
+                                        </Text>
+                                    </YStack>
+                                </XStack>
+                            )}
                         </YStack>
-                    ) : (
-                        <YStack height={52}>
-                            <Paragraph
-                                mt="$3"
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
-                                numberOfLines={getCardTextLineLimit("meta")}
-                            >
-                                {t("detail.scorePending", { ns: "reports" })}
-                            </Paragraph>
-                        </YStack>
-                    )}
-                </YStack>
 
-                <XStack justify="flex-end" items="center" gap="$1.5">
-                    <Text
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.1}
-                    >
-                        {t("actions.viewDetails", { ns: "common" })}
-                    </Text>
-                    <ArrowRight size={14} color={ds.colors.primary} />
+                        {/* --- BOTTOM SECTION: Progress & Call to Action --- */}
+                        <YStack flex={1} gap="$2" pt="$2" justify="flex-end">
+                            {hasScore ? (
+                                <YStack gap="$2" pt="$2" borderTopWidth={1} borderColor={ds.colors.border}>
+                                    <XStack items="center" justify="space-between">
+                                        <Paragraph
+                                            color={ds.colors.primary}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.bodyXs.fontSize}
+                                            numberOfLines={1}
+                                        >
+                                            {formatColumnSummary(place.score_totals, scoreSummaryLabels)}
+                                        </Paragraph>
+                                        {barPercent !== null && (
+                                            <Text
+                                                color={ds.colors.mutedForeground}
+                                                fontFamily={ds.fonts.monoMedium}
+                                                fontSize={ds.typography.labelXs.fontSize}
+                                            >
+                                                {`${barPercent.toString()}%`}
+                                            </Text>
+                                        )}
+                                    </XStack>
+                                    <YStack
+                                        height={layout.isTablet ? 6 : 4} // Slimmer progress bar for elegance
+                                        rounded={ds.radii.full}
+                                        bg={ds.colors.mutedSurface}
+                                        overflow="hidden"
+                                    >
+                                        <YStack
+                                            height="100%"
+                                            rounded={ds.radii.full}
+                                            bg={ds.colors.primary}
+                                            style={{ width: barWidth }}
+                                        />
+                                    </YStack>
+                                </YStack>
+                            ) : (
+                                <Paragraph
+                                    pt="$2"
+                                    borderTopWidth={1}
+                                    borderColor={ds.colors.border}
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                >
+                                    {t("detail.scorePending", { ns: "reports" })}
+                                </Paragraph>
+                            )}
+
+                            {/* Decluttered, sleek View Details CTA */}
+                            <XStack justify="flex-end" items="center" gap="$1.5" mt="$1">
+                                <Text
+                                    color={ds.colors.primary}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelSm.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={0.5}
+                                >
+                                    {t("actions.viewDetails", { ns: "common" })}
+                                </Text>
+                                <ArrowRight size={14} color={ds.colors.primary} />
+                            </XStack>
+                        </YStack>
+                    </YStack>
                 </XStack>
             </YStack>
         </Pressable>

@@ -30,5 +30,7 @@
     "sociabilityShort": "S",
     "subtitle": "Consultez votre file de terrain, suivez la progression et reprenez les audits en cours.",
     "title": "Sites attribués",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "filterStatus": "Statut",
+    "filterSort": "Tri"
 }

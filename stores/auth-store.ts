@@ -1,12 +1,12 @@
 import { unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
-import { AuthApiError, loginWithPassword, signupWithPassword } from "lib/auth/api";
+import { AuthApiError, changePassword, loginWithPassword, requestAccess, signupWithPassword } from "lib/auth/api";
 import { clearAuthSession, readAuthSession, saveAuthSession } from "lib/auth/storage";
 import { t } from "lib/i18n";
 import { clearNotificationsCache } from "lib/storage/notification-cache";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { create } from "zustand";
 
-import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
+import type { AccessRequestPayload, AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
 /**
  * Auth loading states used by route guards.
  */
@@ -23,6 +23,10 @@ export interface AuthStoreState {
     initialize: () => Promise<void>;
     login: (payload: LoginPayload) => Promise<void>;
     signup: (payload: SignupPayload) => Promise<void>;
+    requestAccess: (payload: AccessRequestPayload) => Promise<void>;
+    changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+    /** Patch the stored session's nextStep without requiring a full re-login. */
+    updateNextStep: (nextStep: string) => Promise<void>;
     logout: () => Promise<void>;
     clearError: () => void;
 }
@@ -110,7 +114,6 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
         try {
             const session = await signupWithPassword(payload);
-            // const session = ensureAuditorSession(await signupWithPassword(payload));
             await saveAuthSession(session);
 
             set(() => ({
@@ -131,6 +134,76 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
             throw error;
         }
+    },
+
+    requestAccess: async (payload: AccessRequestPayload) => {
+        set(() => ({
+            isSubmitting: true,
+            errorMessage: null,
+        }));
+
+        try {
+            await requestAccess(payload);
+
+            set(() => ({
+                isSubmitting: false,
+                errorMessage: null,
+            }));
+        } catch (error) {
+            const message = toAuthErrorMessage(error);
+
+            set(() => ({
+                isSubmitting: false,
+                errorMessage: message,
+            }));
+
+            throw error;
+        }
+    },
+
+    changePassword: async (currentPassword: string, newPassword: string) => {
+        const session = useAuthStore.getState().session;
+
+        set(() => ({
+            isSubmitting: true,
+            errorMessage: null,
+        }));
+
+        try {
+            if (session === null) {
+                throw new Error("Not authenticated.");
+            }
+            await changePassword(session, currentPassword, newPassword);
+
+            set(() => ({
+                isSubmitting: false,
+                errorMessage: null,
+            }));
+        } catch (error) {
+            const message = toAuthErrorMessage(error);
+
+            set(() => ({
+                isSubmitting: false,
+                errorMessage: message,
+            }));
+
+            throw error;
+        }
+    },
+
+    updateNextStep: async (nextStep: string) => {
+        const currentSession = get().session;
+        if (currentSession === null) {
+            return;
+        }
+
+        const updatedSession: AuthSession = {
+            ...currentSession,
+            user: { ...currentSession.user, nextStep },
+        };
+
+        await saveAuthSession(updatedSession);
+        set(() => ({ session: updatedSession }));
     },
 
     logout: async () => {

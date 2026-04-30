@@ -8,6 +8,7 @@ import deCommon from "./locales/de/common.json";
 import deDashboard from "./locales/de/dashboard.json";
 import { deInstrumentTranslations } from "./locales/de/instrument";
 import deNotFound from "./locales/de/not-found.json";
+import deOnboarding from "./locales/de/onboarding.json";
 import dePlaces from "./locales/de/places.json";
 import deReports from "./locales/de/reports.json";
 import deSettings from "./locales/de/settings.json";
@@ -17,6 +18,7 @@ import enCommon from "./locales/en/common.json";
 import enDashboard from "./locales/en/dashboard.json";
 import { enInstrumentTranslations } from "./locales/en/instrument";
 import enNotFound from "./locales/en/not-found.json";
+import enOnboarding from "./locales/en/onboarding.json";
 import enPlaces from "./locales/en/places.json";
 import enReports from "./locales/en/reports.json";
 import enSettings from "./locales/en/settings.json";
@@ -26,6 +28,7 @@ import frCommon from "./locales/fr/common.json";
 import frDashboard from "./locales/fr/dashboard.json";
 import { frInstrumentTranslations } from "./locales/fr/instrument";
 import frNotFound from "./locales/fr/not-found.json";
+import frOnboarding from "./locales/fr/onboarding.json";
 import frPlaces from "./locales/fr/places.json";
 import frReports from "./locales/fr/reports.json";
 import frSettings from "./locales/fr/settings.json";
@@ -35,6 +38,7 @@ import hiCommon from "./locales/hi/common.json";
 import hiDashboard from "./locales/hi/dashboard.json";
 import { hiInstrumentTranslations } from "./locales/hi/instrument";
 import hiNotFound from "./locales/hi/not-found.json";
+import hiOnboarding from "./locales/hi/onboarding.json";
 import hiPlaces from "./locales/hi/places.json";
 import hiReports from "./locales/hi/reports.json";
 import hiSettings from "./locales/hi/settings.json";
@@ -44,6 +48,7 @@ import jaCommon from "./locales/ja/common.json";
 import jaDashboard from "./locales/ja/dashboard.json";
 import { jaInstrumentTranslations } from "./locales/ja/instrument";
 import jaNotFound from "./locales/ja/not-found.json";
+import jaOnboarding from "./locales/ja/onboarding.json";
 import jaPlaces from "./locales/ja/places.json";
 import jaReports from "./locales/ja/reports.json";
 import jaSettings from "./locales/ja/settings.json";
@@ -87,12 +92,24 @@ const i18nInstance = i18n;
 void i18nInstance.use(initReactI18next).init({
     lng: resolveLanguagePreference("system"),
     fallbackLng: FALLBACK_LANGUAGE,
-    ns: ["common", "auth", "settings", "audit", "dashboard", "instrument", "places", "reports", "not-found"],
+    ns: [
+        "common",
+        "auth",
+        "onboarding",
+        "settings",
+        "audit",
+        "dashboard",
+        "instrument",
+        "places",
+        "reports",
+        "not-found",
+    ],
     defaultNS: "common",
     resources: {
         en: {
             common: enCommon,
             auth: enAuth,
+            onboarding: enOnboarding,
             settings: enSettings,
             audit: enAudit,
             dashboard: enDashboard,
@@ -104,6 +121,7 @@ void i18nInstance.use(initReactI18next).init({
         de: {
             common: deCommon,
             auth: deAuth,
+            onboarding: deOnboarding,
             settings: deSettings,
             audit: deAudit,
             dashboard: deDashboard,
@@ -115,6 +133,7 @@ void i18nInstance.use(initReactI18next).init({
         fr: {
             common: frCommon,
             auth: frAuth,
+            onboarding: frOnboarding,
             settings: frSettings,
             audit: frAudit,
             dashboard: frDashboard,
@@ -126,6 +145,7 @@ void i18nInstance.use(initReactI18next).init({
         hi: {
             common: hiCommon,
             auth: hiAuth,
+            onboarding: hiOnboarding,
             settings: hiSettings,
             audit: hiAudit,
             dashboard: hiDashboard,
@@ -137,6 +157,7 @@ void i18nInstance.use(initReactI18next).init({
         ja: {
             common: jaCommon,
             auth: jaAuth,
+            onboarding: jaOnboarding,
             settings: jaSettings,
             audit: jaAudit,
             dashboard: jaDashboard,

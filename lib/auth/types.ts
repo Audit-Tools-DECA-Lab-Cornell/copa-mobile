@@ -11,6 +11,12 @@ export interface AuthUser {
     readonly email: string;
     readonly name: string | null;
     readonly accountType: AccountType;
+    readonly approved: boolean;
+    readonly profileCompleted: boolean;
+    /** Routing signal returned by the backend: WAITING_APPROVAL | COMPLETE_PROFILE | DASHBOARD */
+    readonly nextStep: string;
+    /** The manager organisation name this auditor belongs to. Null when not set. */
+    readonly organization: string | null;
 }
 
 /**
@@ -39,4 +45,14 @@ export interface SignupPayload {
     readonly password: string;
     readonly name: string;
     readonly accountType: AccountType;
+}
+
+/**
+ * Self-signup access request payload (Scenario A).
+ */
+export interface AccessRequestPayload {
+    readonly name: string;
+    readonly email: string;
+    readonly password: string;
+    readonly managerEmail: string;
 }

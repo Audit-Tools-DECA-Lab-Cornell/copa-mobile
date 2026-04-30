@@ -30,5 +30,7 @@
     "sociabilityShort": "S",
     "subtitle": "Review your field queue, monitor progress, and jump back into active audits.",
     "title": "Assigned Places",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "filterStatus": "Status",
+    "filterSort": "Sort"
 }

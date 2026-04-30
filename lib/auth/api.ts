@@ -2,17 +2,24 @@ import { t } from "i18next";
 import { getApiBaseUrl } from "lib/api-base-url";
 import { z } from "zod";
 
-import type { AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
+import type { AccessRequestPayload, AuthSession, LoginPayload, SignupPayload } from "lib/auth/types";
+
+const authUserSchema = z.object({
+    id: z.string().min(1),
+    email: z.string().min(1),
+    name: z.string().nullable(),
+    account_type: z.enum(["ADMIN", "MANAGER", "AUDITOR"]),
+    approved: z.boolean(),
+    profile_completed: z.boolean(),
+    next_step: z.string(),
+    organization: z.string().nullable().optional(),
+});
+
 const authResponseSchema = z.object({
     access_token: z.string().min(1),
     token_type: z.literal("bearer"),
     expires_at: z.string().min(1),
-    user: z.object({
-        id: z.string().min(1),
-        email: z.string().min(1),
-        name: z.string().nullable(),
-        account_type: z.enum(["ADMIN", "MANAGER", "AUDITOR"]),
-    }),
+    user: authUserSchema,
 });
 
 /**
@@ -60,6 +67,71 @@ export async function signupWithPassword(payload: SignupPayload): Promise<AuthSe
     });
 
     return parseAuthResponse(responsePayload);
+}
+
+/**
+ * Submit a self-signup access request (Scenario A).
+ *
+ * No auth token is returned — the auditor waits until their manager
+ * creates their account and shares credentials.
+ *
+ * @param payload Access request payload.
+ */
+export async function requestAccess(payload: AccessRequestPayload): Promise<void> {
+    await postJson("/playspace/auth/request-access", {
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        manager_email: payload.managerEmail,
+    });
+}
+
+/**
+ * Change the authenticated user's password.
+ *
+ * @param session Active auth session.
+ * @param currentPassword The user's existing password.
+ * @param newPassword The desired new password.
+ */
+export async function changePassword(
+    session: AuthSession,
+    currentPassword: string,
+    newPassword: string,
+): Promise<void> {
+    const baseUrl = getApiBaseUrl();
+
+    let response: Response;
+
+    try {
+        response = await fetch(`${baseUrl}/playspace/me/change-password`, {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.accessToken}`,
+            },
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword,
+            }),
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : t("networkRequestFailed", "Network request failed.");
+        throw new AuthApiError(
+            t("unableToReachAuthenticationService", "Unable to reach authentication service."),
+            0,
+            message,
+        );
+    }
+
+    if (!response.ok) {
+        const details = await readErrorDetails(response);
+        throw new AuthApiError(
+            t("passwordChangeRequestFailed", "Password change request failed."),
+            response.status,
+            details,
+        );
+    }
 }
 
 /**
@@ -173,6 +245,10 @@ function parseAuthResponse(payload: unknown): AuthSession {
             email: sessionPayload.user.email,
             name: sessionPayload.user.name,
             accountType: sessionPayload.user.account_type,
+            approved: sessionPayload.user.approved,
+            profileCompleted: sessionPayload.user.profile_completed,
+            nextStep: sessionPayload.user.next_step,
+            organization: sessionPayload.user.organization ?? null,
         },
     };
 }

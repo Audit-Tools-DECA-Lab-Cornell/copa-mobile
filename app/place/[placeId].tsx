@@ -6,6 +6,7 @@ import type { TFunction } from "i18next";
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { StatCard } from "components/ui/stat-card";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
@@ -78,21 +79,10 @@ export default function PlaceDetailScreen() {
                 options={{
                     contentStyle: { paddingTop: 20 },
                     headerTitle: () => (
-                        <YStack justify="center" my="$2.5" overflowX="scroll">
-                            <ScrollView horizontal>
-                                <YStack justify="center">
-                                    <Text
-                                        color={ds.colors.primary}
-                                        fontFamily={ds.fonts.bodySemiBold}
-                                        fontSize={ds.typography.titleLg.fontSize}
-                                        lineHeight={ds.typography.titleLg.lineHeight}
-                                        className="no-scrollbar overflow-x-scroll whitespace-nowrap"
-                                    >
-                                        {place?.place_name ?? t("detail.screenTitle", { ns: "places" })}
-                                    </Text>
-                                </YStack>
-                            </ScrollView>
-                        </YStack>
+                        <AuditHeaderTitle
+                            primary={place?.place_name ?? t("detail.screenTitle", { ns: "places" })}
+                            size="lg"
+                        />
                     ),
                     headerShown: true,
                     headerStyle: {

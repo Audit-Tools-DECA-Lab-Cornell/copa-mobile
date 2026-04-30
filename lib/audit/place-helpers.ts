@@ -1,19 +1,84 @@
 import type { AuditorPlace } from "lib/audit/places-api";
 import type { LocalizedPlaceStatus } from "lib/i18n/format";
 
+/** Axis statuses that represent terminal (completed) work on a place. */
 const axisTerminal = (value: string): boolean => value === "submitted" || value === "complete";
 
 /**
- * Combine audit-axis and survey-axis place status into one UI status
- * (both axes must be terminal for "submitted").
+ * Resolve a single axis status into a display-ready LocalizedPlaceStatus.
+ *
+ * Place-wide axis statuses aggregate contributions from all auditors, so the
+ * resolved value is capped against the current auditor's own session timestamps.
+ * This prevents another auditor's terminal submission from being surfaced as
+ * the current auditor's personal completion.
+ *
+ * @param axisStatus Raw axis status from the place summary payload.
+ * @param hasStarted Whether the current auditor has an active session (started_at ≠ null).
+ * @param hasSubmitted Whether the current auditor has submitted their session.
+ * @returns Display-ready status bounded by the current auditor's session state.
+ */
+function resolveAxisStatus(
+    axisStatus: "not_started" | "in_progress" | "submitted" | "complete",
+    hasStarted: boolean,
+    hasSubmitted: boolean,
+): LocalizedPlaceStatus {
+    if (axisTerminal(axisStatus)) {
+        if (hasSubmitted) {
+            return "submitted";
+        }
+        // Terminal place-wide status but this auditor has not submitted —
+        // likely driven by a different auditor's submission.
+        return hasStarted ? "in_progress" : "not_started";
+    }
+    if (axisStatus === "in_progress") {
+        // Only surface in_progress if this auditor has at least started a session.
+        return hasStarted ? "in_progress" : "not_started";
+    }
+    return "not_started";
+}
+
+/**
+ * Derive the UI status for a place card scoped to the current auditor's
+ * selected execution mode and their own session state.
+ *
+ * - `"audit"` mode  → only the audit axis is considered.
+ * - `"survey"` mode → only the survey axis is considered.
+ * - `"both"` or `null` → both axes must reach terminal status.
+ *
+ * Each axis result is capped by the current auditor's session timestamps
+ * (`started_at` / `submitted_at`) so that a place-wide axis status advanced
+ * by any other auditor cannot appear as this auditor's own completion.
+ *
+ * @param place Place summary from the auditor API including session timestamps.
+ * @returns Localized status for the place card UI.
  */
 export function derivePlaceRequirementStatus(
-    place: Pick<AuditorPlace, "place_audit_status" | "place_survey_status">,
+    place: Pick<
+        AuditorPlace,
+        "place_audit_status" | "place_survey_status" | "selected_execution_mode" | "started_at" | "submitted_at"
+    >,
 ): LocalizedPlaceStatus {
-    if (axisTerminal(place.place_audit_status) && axisTerminal(place.place_survey_status)) {
+    const mode = place.selected_execution_mode;
+    const hasStarted = place.started_at !== null;
+    const hasSubmitted = place.submitted_at !== null;
+
+    if (mode === "audit") {
+        return resolveAxisStatus(place.place_audit_status, hasStarted, hasSubmitted);
+    }
+
+    if (mode === "survey") {
+        return resolveAxisStatus(place.place_survey_status, hasStarted, hasSubmitted);
+    }
+
+    // "both" mode or no mode selected: both axes must reach "submitted" for the
+    // place to be considered complete for this auditor.
+    const resolvedAuditStatus = resolveAxisStatus(place.place_audit_status, hasStarted, hasSubmitted);
+    const resolvedSurveyStatus = resolveAxisStatus(place.place_survey_status, hasStarted, hasSubmitted);
+
+    if (resolvedAuditStatus === "submitted" && resolvedSurveyStatus === "submitted") {
         return "submitted";
     }
-    if (place.place_audit_status === "in_progress" || place.place_survey_status === "in_progress") {
+    if (resolvedAuditStatus === "in_progress" || resolvedSurveyStatus === "in_progress") {
         return "in_progress";
     }
     return "not_started";

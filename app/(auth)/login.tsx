@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { Image, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowRight, Check, Eye, EyeOff, KeyRound, ShieldCheck, UserRound } from "@tamagui/lucide-icons-2";
+import { ArrowRight, Check, Eye, EyeOff, KeyRound, UserRound } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, type ColorTokens, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
@@ -76,7 +76,7 @@ export default function LoginScreen() {
             return;
         }
 
-        router.replace("/(tabs)");
+        router.replace("/accept-terms");
     };
 
     const visibleErrorMessage = validationMessage ?? errorMessage;
@@ -98,21 +98,11 @@ export default function LoginScreen() {
             >
                 <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                     <YStack items="center" gap="$4">
-                        <YStack
-                            width={88}
-                            height={88}
-                            items="center"
-                            justify="center"
-                            rounded={ds.radii.xl}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surfaceMuted}
-                            style={{
-                                boxShadow: ds.shadows.card,
-                            }}
-                        >
-                            <ShieldCheck size={34} color={ds.colors.primary} />
-                        </YStack>
+                        <Image
+                            source={require("../../assets/images/icon.png")}
+                            style={{ width: 88, height: 88 }}
+                            resizeMode="contain"
+                        />
 
                         <YStack items="center" gap="$2">
                             <Text

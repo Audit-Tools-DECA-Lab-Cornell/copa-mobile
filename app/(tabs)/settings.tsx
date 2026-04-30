@@ -384,6 +384,16 @@ export default function SettingsScreen() {
                 <ProfileRow ds={ds} label={t("profile.name", { ns: "settings" })} value={userName} />
                 <Separator borderColor={ds.colors.border} />
                 <ProfileRow ds={ds} label={t("profile.email", { ns: "settings" })} value={userEmail} />
+                {account?.organization != null ? (
+                    <>
+                        <Separator borderColor={ds.colors.border} />
+                        <ProfileRow
+                            ds={ds}
+                            label={t("profile.organization", { ns: "settings" })}
+                            value={account.organization}
+                        />
+                    </>
+                ) : null}
                 <Separator borderColor={ds.colors.border} />
                 <ProfileRow ds={ds} label={t("profile.accountType", { ns: "settings" })} value={accountType} />
 
@@ -420,13 +430,52 @@ export default function SettingsScreen() {
                     </>
                 )}
 
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
-                >
-                    {t("profile.editingComingSoon", { ns: "settings" })}
-                </Paragraph>
+                <XStack gap="$2">
+                    <Button
+                        flex={1}
+                        height={layout.isTablet ? 50 : 46}
+                        rounded={ds.radii.md}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surface}
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={() => {
+                            router.push("/settings/edit-profile");
+                        }}
+                    >
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.1}
+                        >
+                            {t("profile.editProfile", { ns: "settings" })}
+                        </Text>
+                    </Button>
+                    <Button
+                        flex={1}
+                        height={layout.isTablet ? 50 : 46}
+                        rounded={ds.radii.md}
+                        borderWidth={1}
+                        borderColor={ds.colors.border}
+                        bg={ds.colors.surface}
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={() => {
+                            router.push("/settings/change-password");
+                        }}
+                    >
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.1}
+                        >
+                            {t("profile.changePassword", { ns: "settings" })}
+                        </Text>
+                    </Button>
+                </XStack>
 
                 <Button
                     height={layout.isTablet ? 50 : 46}

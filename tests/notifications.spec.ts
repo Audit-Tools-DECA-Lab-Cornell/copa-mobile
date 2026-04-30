@@ -87,6 +87,10 @@ function createMockSession(): AuthSession {
             email: "auditor@example.com",
             name: "Test Auditor",
             accountType: "AUDITOR",
+            approved: true,
+            profileCompleted: true,
+            nextStep: "DASHBOARD",
+            organization: null,
         },
     };
 }
@@ -103,6 +107,9 @@ function createAuthenticatedAuthState(): AuthStoreState {
         initialize: vi.fn(),
         login: vi.fn(),
         signup: vi.fn(),
+        requestAccess: vi.fn(),
+        changePassword: vi.fn(),
+        updateNextStep: vi.fn(),
         logout: vi.fn(),
         clearError: vi.fn(),
     };
@@ -120,6 +127,9 @@ function createUnauthenticatedAuthState(): AuthStoreState {
         initialize: vi.fn(),
         login: vi.fn(),
         signup: vi.fn(),
+        requestAccess: vi.fn(),
+        changePassword: vi.fn(),
+        updateNextStep: vi.fn(),
         logout: vi.fn(),
         clearError: vi.fn(),
     };

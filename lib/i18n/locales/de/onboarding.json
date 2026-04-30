@@ -1,0 +1,86 @@
+{
+    "resetPassword": {
+        "title": "Passwort festlegen",
+        "subtitle": "Wählen Sie ein sicheres Passwort zum Schutz Ihres Kontos.",
+        "newPasswordLabel": "Neues Passwort",
+        "newPasswordPlaceholder": "Neues Passwort eingeben",
+        "confirmPasswordLabel": "Passwort bestätigen",
+        "confirmPasswordPlaceholder": "Passwort wiederholen",
+        "submit": "Passwort festlegen",
+        "submitting": "Passwort wird gesetzt...",
+        "requirements": {
+            "minLength": "Mindestens 8 Zeichen",
+            "uppercase": "Ein Großbuchstabe",
+            "lowercase": "Ein Kleinbuchstabe",
+            "number": "Eine Zahl"
+        },
+        "validation": {
+            "tooShort": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+            "missingUppercase": "Das Passwort muss einen Großbuchstaben enthalten.",
+            "missingLowercase": "Das Passwort muss einen Kleinbuchstaben enthalten.",
+            "missingNumber": "Das Passwort muss eine Zahl enthalten.",
+            "noMatch": "Die Passwörter stimmen nicht überein."
+        }
+    },
+    "completeProfile": {
+        "title": "Profil vervollständigen",
+        "subtitle": "Erzählen Sie uns etwas über sich.",
+        "fullNameLabel": "Vollständiger Name",
+        "fullNamePlaceholder": "Ihr vollständiger Name",
+        "phoneLabel": "Telefonnummer",
+        "phonePlaceholder": "+49 000 000 0000",
+        "emailLabel": "E-Mail-Adresse",
+        "emailPlaceholder": "sie@beispiel.com",
+        "genderLabel": "Geschlecht",
+        "genderPlaceholder": "Geschlecht auswählen",
+        "ageRangeLabel": "Altersgruppe",
+        "ageRangePlaceholder": "Altersgruppe auswählen",
+        "cityLabel": "Stadt",
+        "cityPlaceholder": "Ihre Stadt",
+        "provinceLabel": "Bundesland / Provinz",
+        "provincePlaceholder": "Bundesland oder Provinz",
+        "countryLabel": "Land",
+        "countryPlaceholder": "Ihr Land",
+        "roleLabel": "Beruf / Rolle",
+        "rolePlaceholder": "z.B. Lehrer, Forscher",
+        "submit": "Speichern und weiter",
+        "submitting": "Speichert...",
+        "validation": {
+            "fullNameRequired": "Vollständiger Name ist erforderlich."
+        },
+        "genderOptions": {
+            "male": "Männlich",
+            "female": "Weiblich",
+            "nonBinary": "Nicht-binär",
+            "preferNotToSay": "Keine Angabe",
+            "other": "Sonstiges"
+        },
+        "ageRangeOptions": {
+            "under18": "Unter 18",
+            "18to24": "18 – 24",
+            "25to34": "25 – 34",
+            "35to44": "35 – 44",
+            "45to54": "45 – 54",
+            "55to64": "55 – 64",
+            "65plus": "65+"
+        }
+    },
+    "acceptTerms": {
+        "title": "AGB & Datenschutz",
+        "subtitle": "Bitte lesen und akzeptieren Sie, bevor Sie fortfahren.",
+        "scrollHint": "Scrollen Sie nach unten, um zu akzeptieren.",
+        "submit": "Ich habe gelesen und akzeptiere",
+        "submitting": "Wird akzeptiert...",
+        "termsHeading": "Nutzungsbedingungen",
+        "termsBody": "Durch die Nutzung von Playspace stimmen Sie zu, Audits ehrlich und gemäß den Anweisungen Ihres Projektmanagers durchzuführen. Sie werden Ihre Zugangsdaten nicht weitergeben. Alle von Ihnen eingereichten Daten werden Teil des Audit-Protokolls und können von Ihrem Manager und Plattformadministratoren eingesehen werden.",
+        "privacyHeading": "Datenschutzhinweis",
+        "privacyBody": "Ihre persönlichen Daten werden sicher gespeichert und nur zur Identifizierung Ihrer Einreichungen innerhalb der Plattform verwendet. Ihr Prüfer-Code — nicht Ihr persönlicher Name — wird mit den Audit-Datensätzen verknüpft, die für andere sichtbar sind."
+    },
+    "auditorCode": {
+        "title": "Ihr Prüfer-Code",
+        "subtitle": "So werden Sie in allen Audit-Aufzeichnungen identifiziert.",
+        "codeLabel": "Prüfer-Code",
+        "explanation": "Nur Ihr Prüfer-Code — nicht Ihr Name oder Ihre Kontaktdaten — wird mit jedem von Ihnen eingereichten Audit gespeichert.",
+        "submit": "Playspace betreten"
+    }
+}

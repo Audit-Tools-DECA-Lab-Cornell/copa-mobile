@@ -38,7 +38,11 @@
         "scrollToTop": "先頭へ",
         "unavailableMessage": "この監査レポートは現在利用できません。",
         "unavailableTitle": "監査が見つかりません",
-        "usabilityCardLabel": "ユーザビリティ"
+        "usabilityCardLabel": "ユーザビリティ",
+        "auditType": "監査タイプ",
+        "auditTypePlaceAudit": "場所監査",
+        "auditTypePlaceSurvey": "場所調査",
+        "auditTypeFullAssessment": "総合評価"
     },
     "diversityShort": "D",
     "emptyMessage": "別の検索条件またはフィルターの組み合わせをお試しください。",
@@ -125,5 +129,8 @@
         "constructSociability": "社会的支援",
         "constructPlayValue": "プレイ価値",
         "constructUsability": "使いやすさ"
-    }
+    },
+    "filtersLabel": "フィルター",
+    "modeFilterLabel": "監査タイプ",
+    "sortByLabel": "並び替え"
 }

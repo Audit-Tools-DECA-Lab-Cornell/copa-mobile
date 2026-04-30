@@ -8,11 +8,11 @@ import { ArrowRight, ClipboardList } from "@tamagui/lucide-icons-2";
 import { doesExecutionModeRequireSpaceAudit, getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
-import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
 import { fetchMyAuditorProfile, type MyAuditorProfile } from "lib/audit/profile-api";
 import { formatLocalizedDate, formatLocalizedDateTime, formatLocalizedDurationFromMinutes } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
@@ -20,7 +20,7 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
 
 /**
  * Step-two setup screen that shows generated audit metadata and routes into
- * either the space-audit setup or directly into the section flow.
+ * either the space-audit setup or the standalone section overview.
  */
 export default function PreAuditScreen() {
     const ds = useDesignSystem();
@@ -116,24 +116,9 @@ export default function PreAuditScreen() {
 
         navigation.setOptions({
             ...themedHeaderOptions,
-            headerTitle: () => (
-                <YStack justify="center" my="$2.5" overflowX="scroll">
-                    <ScrollView horizontal>
-                        <YStack justify="center">
-                            <Text
-                                color={ds.colors.primary}
-                                fontFamily={ds.fonts.bodySemiBold}
-                                fontSize={ds.typography.titleLg.fontSize}
-                                lineHeight={ds.typography.titleLg.lineHeight}
-                            >
-                                {auditSession.place_name}
-                            </Text>
-                        </YStack>
-                    </ScrollView>
-                </YStack>
-            ),
+            headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
         });
-    }, [themedHeaderOptions, navigation, auditSession, ds]);
+    }, [themedHeaderOptions, navigation, auditSession]);
 
     if (
         placeId === null ||
@@ -180,24 +165,13 @@ export default function PreAuditScreen() {
         );
     }
 
-    const visibleSections = getVisibleSections(
-        instrument!,
-        auditSession.selected_execution_mode,
-        Object.fromEntries(
-            Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
-                sectionKey,
-                sectionState.responses,
-            ]),
-        ),
-    );
-    const firstSection = getNextSectionTarget(visibleSections, auditSession);
     const auditInfoQuestions = instrument!.pre_audit_questions.filter((question) => question.page_key === "audit_info");
     const flowSubject = t(`subjects.${getExecuteFlowSubject(auditSession.selected_execution_mode)}`, {
         ns: "audit",
     });
     const nextRoute = doesExecutionModeRequireSpaceAudit(auditSession.selected_execution_mode)
         ? `/execute/${placeId}/space-audit?projectId=${encodeURIComponent(projectId)}`
-        : `/execute/${placeId}/section/${firstSection?.section_key}?projectId=${encodeURIComponent(projectId)}`;
+        : `/execute/${placeId}/overview?projectId=${encodeURIComponent(projectId)}`;
 
     const auditInfoCards = auditInfoQuestions.map((question) => (
         <AutoFieldCard
@@ -550,21 +524,6 @@ function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly
             </YStack>
         </YStack>
     );
-}
-
-/**
- * Resolve the next section the user should open after the setup flow.
- */
-function getNextSectionTarget(
-    sections: ReturnType<typeof getVisibleSections>,
-    auditSession: AuditSession,
-): ReturnType<typeof getVisibleSections>[number] | undefined {
-    const firstIncomplete = sections.find((section) => {
-        const progress = getInstrumentSectionLocalProgress(auditSession, section);
-        return !progress.isComplete;
-    });
-
-    return firstIncomplete ?? sections[0];
 }
 
 /**

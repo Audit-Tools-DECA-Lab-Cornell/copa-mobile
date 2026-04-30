@@ -1,5 +1,6 @@
 {
     "activeAuditor": "Active auditor",
+    "auditorOrganization": "Organisation",
     "activeWork": "Active audits",
     "connectivityStatus": "Connectivity status",
     "constructScore": "Construct",

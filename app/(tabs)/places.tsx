@@ -1,7 +1,7 @@
 import { FlashList, FlashListRef, type ListRenderItemInfo } from "@shopify/flash-list";
 import { ArrowRight, Clock3 } from "@tamagui/lucide-icons-2";
-import { FilterChip } from "components/ui/filter-chip";
 import { ProjectFilterSelect } from "components/ui/project-filter-select";
+import { TypeFilterSelect } from "components/ui/type-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { useRouter } from "expo-router";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -12,7 +12,7 @@ import {
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
-import { formatScorePair } from "lib/audit/score-helpers";
+import { formatScorePair, getEffectivePlaceScores } from "lib/audit/score-helpers";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem, type DesignTone } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel, type LocalizedPlaceStatus } from "lib/i18n/format";
@@ -22,10 +22,10 @@ import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, ScrollView } from "react-native";
+import { ActivityIndicator, Pressable } from "react-native";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
-import { Paragraph, Text, XStack, YStack } from "tamagui";
+import { Paragraph, Text, XStack, YStack, type ColorTokens } from "tamagui";
 
 type PlaceProjectFilter = "all" | string;
 type PlaceStatusFilter = "all" | LocalizedPlaceStatus;
@@ -193,7 +193,7 @@ export default function PlacesScreen() {
                                 );
                             }}
                         />
-                        <YStack width="48.5%"></YStack>
+                        <YStack width="48.5%" style={{ minHeight: layout.queueCardMinHeight }}></YStack>
                     </XStack>
                 );
             }
@@ -219,7 +219,7 @@ export default function PlacesScreen() {
                 </XStack>
             );
         },
-        [router],
+        [layout.queueCardMinHeight, router],
     );
 
     if (isLoading && places.length === 0) {
@@ -235,46 +235,90 @@ export default function PlacesScreen() {
 
     const headerComponent = (
         <YStack gap="$4">
-            <YStack gap="$3">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                    lineHeight={
-                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
-                    }
-                >
-                    {t("title", { ns: "places" })}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                >
-                    {t("subtitle", { ns: "places" })}
-                </Paragraph>
-            </YStack>
+            {layout.isTablet ? (
+                <XStack justify="space-between" items="flex-end" gap="$4">
+                    <YStack gap="$3" flex={1}>
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.headingBold}
+                            fontSize={ds.typography.displayLg.fontSize}
+                            lineHeight={ds.typography.displayLg.lineHeight}
+                        >
+                            {t("title", { ns: "places" })}
+                        </Text>
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyLg.fontSize}
+                        >
+                            {t("subtitle", { ns: "places" })}
+                        </Paragraph>
+                    </YStack>
+                </XStack>
+            ) : (
+                <YStack gap="$3">
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={ds.typography.displayMd.fontSize}
+                        lineHeight={ds.typography.displayMd.lineHeight}
+                    >
+                        {t("title", { ns: "places" })}
+                    </Text>
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyLg.fontSize}
+                    >
+                        {t("subtitle", { ns: "places" })}
+                    </Paragraph>
+                </YStack>
+            )}
 
             <XStack gap="$3">
-                <SummaryTile label={t("status.inProgress", { ns: "common" })} value={placeStatusCounts.in_progress} />
-                <SummaryTile
-                    label={t("status.notStarted", { ns: "common" })}
-                    value={placeStatusCounts.not_started}
-                    tone={{
-                        accent: ds.colors.warning,
-                        surface: ds.colors.warningSoft,
-                        text: ds.colors.warning,
-                    }}
-                />
-                <SummaryTile
-                    label={t("status.submitted", { ns: "common" })}
-                    value={placeStatusCounts.submitted}
-                    tone={{
-                        accent: ds.colors.success,
-                        surface: ds.colors.successSoft,
-                        text: ds.colors.success,
-                    }}
-                />
+                <Pressable
+                    onPress={() => setStatusFilter(statusFilter === "in_progress" ? "all" : "in_progress")}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1, flex: 1 })}
+                    accessibilityRole="button"
+                >
+                    <SummaryTile
+                        label={t("status.inProgress", { ns: "common" })}
+                        value={placeStatusCounts.in_progress}
+                        isActive={statusFilter === "in_progress"}
+                    />
+                </Pressable>
+                <Pressable
+                    onPress={() => setStatusFilter(statusFilter === "not_started" ? "all" : "not_started")}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1, flex: 1 })}
+                    accessibilityRole="button"
+                >
+                    <SummaryTile
+                        label={t("status.notStarted", { ns: "common" })}
+                        value={placeStatusCounts.not_started}
+                        isActive={statusFilter === "not_started"}
+                        tone={{
+                            accent: ds.colors.warning,
+                            surface: ds.colors.warningSoft,
+                            text: ds.colors.warning,
+                        }}
+                    />
+                </Pressable>
+                <Pressable
+                    onPress={() => setStatusFilter(statusFilter === "submitted" ? "all" : "submitted")}
+                    style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1, flex: 1 })}
+                    accessibilityRole="button"
+                >
+                    <SummaryTile
+                        label={t("status.submitted", { ns: "common" })}
+                        value={placeStatusCounts.submitted}
+                        isActive={statusFilter === "submitted"}
+                        tone={{
+                            accent: ds.colors.success,
+                            surface: ds.colors.successSoft,
+                            text: ds.colors.success,
+                        }}
+                    />
+                </Pressable>
             </XStack>
 
             <SearchInput
@@ -293,169 +337,33 @@ export default function PlacesScreen() {
                 />
             ) : null}
 
-            {layout.isTablet ? (
-                <XStack gap="$4" items="flex-start">
-                    <YStack flex={1} gap="$2">
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            Filters
-                        </Paragraph>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <XStack gap="$2">
-                                <FilterChip
-                                    label={t("filters.all", { ns: "common" })}
-                                    isSelected={statusFilter === "all"}
-                                    onPress={() => {
-                                        setStatusFilter("all");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("status.inProgress", { ns: "common" })}
-                                    isSelected={statusFilter === "in_progress"}
-                                    onPress={() => {
-                                        setStatusFilter("in_progress");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("status.notStarted", { ns: "common" })}
-                                    isSelected={statusFilter === "not_started"}
-                                    onPress={() => {
-                                        setStatusFilter("not_started");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("status.submitted", { ns: "common" })}
-                                    isSelected={statusFilter === "submitted"}
-                                    onPress={() => {
-                                        setStatusFilter("submitted");
-                                    }}
-                                />
-                            </XStack>
-                        </ScrollView>
-                    </YStack>
-
-                    <YStack gap="$2" items="flex-end">
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.2}
-                        >
-                            Sort By
-                        </Paragraph>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <XStack gap="$2">
-                                <FilterChip
-                                    label={t("sort.recent", { ns: "common" })}
-                                    isSelected={sortOption === "recent"}
-                                    onPress={() => {
-                                        setSortOption("recent");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("sort.progress", { ns: "common" })}
-                                    isSelected={sortOption === "progress"}
-                                    onPress={() => {
-                                        setSortOption("progress");
-                                    }}
-                                />
-                                <FilterChip
-                                    label={t("sort.name", { ns: "common" })}
-                                    isSelected={sortOption === "name"}
-                                    onPress={() => {
-                                        setSortOption("name");
-                                    }}
-                                />
-                            </XStack>
-                        </ScrollView>
-                    </YStack>
-                </XStack>
-            ) : (
-                <YStack gap="$2">
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelSm.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        Filters
-                    </Paragraph>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <XStack gap="$2">
-                            <FilterChip
-                                label={t("filters.all", { ns: "common" })}
-                                isSelected={statusFilter === "all"}
-                                onPress={() => {
-                                    setStatusFilter("all");
-                                }}
-                            />
-                            <FilterChip
-                                label={t("status.inProgress", { ns: "common" })}
-                                isSelected={statusFilter === "in_progress"}
-                                onPress={() => {
-                                    setStatusFilter("in_progress");
-                                }}
-                            />
-                            <FilterChip
-                                label={t("status.notStarted", { ns: "common" })}
-                                isSelected={statusFilter === "not_started"}
-                                onPress={() => {
-                                    setStatusFilter("not_started");
-                                }}
-                            />
-                            <FilterChip
-                                label={t("status.submitted", { ns: "common" })}
-                                isSelected={statusFilter === "submitted"}
-                                onPress={() => {
-                                    setStatusFilter("submitted");
-                                }}
-                            />
-                        </XStack>
-                    </ScrollView>
-
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelSm.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        Sort By
-                    </Paragraph>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                        <XStack gap="$2">
-                            <FilterChip
-                                label={t("sort.recent", { ns: "common" })}
-                                isSelected={sortOption === "recent"}
-                                onPress={() => {
-                                    setSortOption("recent");
-                                }}
-                            />
-                            <FilterChip
-                                label={t("sort.progress", { ns: "common" })}
-                                isSelected={sortOption === "progress"}
-                                onPress={() => {
-                                    setSortOption("progress");
-                                }}
-                            />
-                            <FilterChip
-                                label={t("sort.name", { ns: "common" })}
-                                isSelected={sortOption === "name"}
-                                onPress={() => {
-                                    setSortOption("name");
-                                }}
-                            />
-                        </XStack>
-                    </ScrollView>
-                </YStack>
-            )}
+            <XStack gap="$2">
+                <TypeFilterSelect
+                    label={t("filterStatus", { ns: "places" })}
+                    options={[
+                        { id: "all", label: t("filters.all", { ns: "common" }) },
+                        { id: "in_progress", label: t("status.inProgress", { ns: "common" }) },
+                        { id: "not_started", label: t("status.notStarted", { ns: "common" }) },
+                        { id: "submitted", label: t("status.submitted", { ns: "common" }) },
+                    ]}
+                    value={statusFilter}
+                    onChange={(next) => {
+                        setStatusFilter(next as PlaceStatusFilter);
+                    }}
+                />
+                <TypeFilterSelect
+                    label={t("filterSort", { ns: "places" })}
+                    options={[
+                        { id: "recent", label: t("sort.recent", { ns: "common" }) },
+                        { id: "progress", label: t("sort.progress", { ns: "common" }) },
+                        { id: "name", label: t("sort.name", { ns: "common" }) },
+                    ]}
+                    value={sortOption}
+                    onChange={(next) => {
+                        setSortOption(next as PlaceSortOption);
+                    }}
+                />
+            </XStack>
         </YStack>
     );
 
@@ -531,10 +439,11 @@ function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
     const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const { t, i18n } = useTranslation(["places", "common"]);
+
     const status = derivePlaceRequirementStatus(place);
     const placeTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
-    const auditScoreLabel = formatScorePair(place.overall_scores) ?? "Pending score";
+    const auditScoreLabel = formatScorePair(getEffectivePlaceScores(place)) ?? "Pending score";
     const progressPercent = place.progress_percent ?? 0;
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
 
@@ -542,9 +451,15 @@ function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
         <Pressable
             accessibilityRole="button"
             onPress={onPress}
-            style={({ pressed }) => ({ opacity: pressed ? 0.94 : 1, flex: 1 })}
+            style={({ pressed }) => ({
+                opacity: pressed ? 0.96 : 1,
+                transform: [{ scale: pressed ? 0.99 : 1 }], // Fancy press scale effect
+                flex: 1,
+                height: "100%", // Enforces stretching to match row height
+            })}
         >
             <YStack
+                flex={1} // Ensures internal wrapper fills the Pressable
                 rounded={ds.radii.lg}
                 borderWidth={1}
                 borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
@@ -556,65 +471,73 @@ function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
                 }}
             >
                 <XStack flex={1}>
+                    {/* Left Status Accent Bar */}
                     <YStack width={4} style={{ backgroundColor: placeTone.accent }} />
-                    <YStack flex={1} justify="space-between" p={layout.cardPadding} gap="$3.5">
-                        <YStack gap="$3">
-                            <XStack justify="space-between" items="flex-start" gap="$3">
-                                <YStack flex={1} gap="$1.5" style={{ minWidth: 0 }}>
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.headingBold}
-                                        fontSize={
-                                            layout.isTablet
-                                                ? ds.typography.titleLg.fontSize
-                                                : ds.typography.titleMd.fontSize
-                                        }
-                                        lineHeight={
-                                            layout.isTablet
-                                                ? ds.typography.titleLg.lineHeight
-                                                : ds.typography.titleMd.lineHeight
-                                        }
-                                        numberOfLines={getCardTextLineLimit("title")}
-                                    >
-                                        {place.place_name}
-                                    </Text>
-                                    <Paragraph
-                                        color={ds.colors.secondaryForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                        numberOfLines={getCardTextLineLimit("supporting")}
-                                    >
-                                        {place.project_name}
-                                    </Paragraph>
-                                    {place.address !== null && place.address !== undefined && (
-                                        <Paragraph
-                                            color={ds.colors.mutedForeground}
-                                            fontFamily={ds.fonts.bodyMedium}
-                                            fontSize={ds.typography.bodySm.fontSize}
-                                            numberOfLines={getCardTextLineLimit("supporting")}
-                                        >
-                                            {place.address}
-                                        </Paragraph>
-                                    )}
-                                </YStack>
-                                <YStack
-                                    rounded={ds.radii.full}
-                                    px="$3"
-                                    py="$1"
-                                    style={{ backgroundColor: placeTone.surface }}
-                                >
-                                    <Text
-                                        style={{ color: placeTone.text }}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.labelXs.fontSize}
-                                        textTransform="uppercase"
-                                        letterSpacing={1}
-                                    >
-                                        {getPlaceStatusLabel(status, t)}
-                                    </Text>
-                                </YStack>
-                            </XStack>
 
+                    <YStack flex={1} p={layout.cardPadding} gap="$4">
+                        {/* --- TOP SECTION: Header & Primary Status --- */}
+                        <XStack justify="space-between" items="flex-start" gap="$3">
+                            <YStack flex={1} gap="$1" style={{ minWidth: 0 }}>
+                                <Text
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.headingBold}
+                                    fontSize={
+                                        layout.isTablet
+                                            ? ds.typography.titleLg.fontSize
+                                            : ds.typography.titleMd.fontSize
+                                    }
+                                    lineHeight={
+                                        layout.isTablet
+                                            ? ds.typography.titleLg.lineHeight
+                                            : ds.typography.titleMd.lineHeight
+                                    }
+                                    numberOfLines={getCardTextLineLimit("title")}
+                                >
+                                    {place.place_name}
+                                </Text>
+                                <Paragraph
+                                    color={ds.colors.secondaryForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    numberOfLines={getCardTextLineLimit("supporting")}
+                                >
+                                    {place.project_name}
+                                </Paragraph>
+                            </YStack>
+                            <YStack
+                                accessible={true}
+                                accessibilityLabel={getPlaceStatusLabel(status, t)}
+                                rounded={ds.radii.full}
+                                px="$2.5"
+                                py="$1"
+                                style={{ backgroundColor: placeTone.surface }}
+                            >
+                                <Text
+                                    accessibilityElementsHidden={true}
+                                    importantForAccessibility="no"
+                                    style={{ color: placeTone.text }}
+                                    fontFamily={ds.fonts.bodyBold}
+                                    fontSize={ds.typography.labelSm.fontSize}
+                                    textTransform="uppercase"
+                                    letterSpacing={0.5}
+                                >
+                                    {getPlaceStatusLabel(status, t)}
+                                </Text>
+                            </YStack>
+                        </XStack>
+
+                        {/* --- MIDDLE SECTION: Meta details --- */}
+                        <YStack gap="$2" mt="$-2">
+                            {place.address !== null && place.address !== undefined && (
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    numberOfLines={getCardTextLineLimit("supporting")}
+                                >
+                                    {place.address}
+                                </Paragraph>
+                            )}
                             <Paragraph
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
@@ -623,40 +546,40 @@ function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
                             >
                                 {locality}
                             </Paragraph>
-
-                            <ScoreTile
-                                label={t("scoreSummary", { ns: "places" })}
-                                value={auditScoreLabel}
-                                valueColor={ds.colors.primary}
-                            />
                         </YStack>
 
-                        <YStack gap="$3">
+                        {/* --- BOTTOM SECTION: Progress & Call to Action --- */}
+                        <YStack flex={1} justify="flex-end" gap="$3" pt="$3">
                             <YStack gap="$2">
+                                <ScoreTile
+                                    label={t("scoreSummary", { ns: "places" })}
+                                    value={auditScoreLabel}
+                                    valueColor={ds.colors.primary}
+                                />
                                 <XStack justify="space-between" items="center">
                                     <Paragraph
-                                        color={ds.colors.mutedForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodySm.fontSize}
+                                        color={ds.colors.primary}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.bodyXs.fontSize}
                                     >
                                         {t("mandatoryCompletion", { ns: "places" })}
                                     </Paragraph>
                                     <Text
-                                        color={ds.colors.primary}
+                                        color={ds.colors.mutedForeground}
                                         fontFamily={ds.fonts.monoBold}
-                                        fontSize={ds.typography.labelLg.fontSize}
+                                        fontSize={ds.typography.labelXs.fontSize}
                                     >
                                         {progressPercent}%
                                     </Text>
                                 </XStack>
                                 <YStack
-                                    height={6}
+                                    height={layout.isTablet ? 6 : 4} // Slimmer progress bar for elegance
                                     rounded={ds.radii.full}
                                     bg={ds.colors.mutedSurface}
                                     overflow="hidden"
                                 >
                                     <YStack
-                                        height={6}
+                                        height="100%"
                                         rounded={ds.radii.full}
                                         bg={ds.colors.primary}
                                         width={`${progressPercent}%`}
@@ -665,24 +588,26 @@ function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
                             </YStack>
 
                             <XStack justify="space-between" items="center" gap="$3">
-                                <XStack items="center" gap="$1.5" flex={1} style={{ minWidth: 0 }}>
-                                    <Clock3 size={14} color={ds.colors.mutedForeground} />
+                                <XStack items="center" gap="$2" flex={1} style={{ minWidth: 0 }}>
+                                    <Clock3 size={14} color={ds.colors.mutedForeground} opacity={0.8} />
                                     <Paragraph
                                         color={ds.colors.mutedForeground}
                                         fontFamily={ds.fonts.bodyMedium}
                                         fontSize={ds.typography.bodySm.fontSize}
-                                        numberOfLines={getCardTextLineLimit("meta")}
+                                        numberOfLines={1}
                                     >
                                         {updatedLabel}
                                     </Paragraph>
                                 </XStack>
-                                <XStack items="center" gap="$1.5">
+
+                                {/* Decluttered View Details */}
+                                <XStack justify="flex-end" items="center" gap="$1.5">
                                     <Text
                                         color={ds.colors.primary}
                                         fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.labelMd.fontSize}
+                                        fontSize={ds.typography.labelSm.fontSize}
                                         textTransform="uppercase"
-                                        letterSpacing={1.1}
+                                        letterSpacing={0.5}
                                     >
                                         {t("actions.viewDetails", { ns: "common" })}
                                     </Text>
@@ -701,6 +626,7 @@ interface SummaryTileProps {
     readonly label: string;
     readonly value: number;
     readonly tone?: DesignTone;
+    readonly isActive?: boolean;
 }
 
 /**
@@ -709,22 +635,26 @@ interface SummaryTileProps {
  * @param props Summary tile props.
  * @returns Small metric card.
  */
-function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
+function SummaryTile({ label, value, tone, isActive = false }: Readonly<SummaryTileProps>) {
     const ds = useDesignSystem();
     const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const tileTone = tone ?? {
-        accent: ds.colors.primary,
-        surface: ds.colors.primarySoft,
-        text: ds.colors.primary,
+        accent: ds.colors.primary as ColorTokens,
+        surface: ds.colors.primarySoft as ColorTokens,
+        text: ds.colors.primary as ColorTokens,
     };
 
     return (
         <YStack
             flex={1}
             rounded={ds.radii.lg}
-            borderWidth={1}
-            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            borderWidth={isActive ? 2 : 1}
+            borderColor={
+                isActive
+                    ? tileTone.accent
+                    : ((isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border) as ColorTokens)
+            }
             bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
             justify="space-between"
             p={layout.isTablet ? 16 : 12}
@@ -733,7 +663,7 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyBold}
-                fontSize={layout.isTablet ? ds.typography.labelSm.fontSize : ds.typography.labelXs.fontSize}
+                fontSize={layout.isTablet ? ds.typography.labelMd.fontSize : ds.typography.labelXs.fontSize}
                 textTransform="uppercase"
                 letterSpacing={1.2}
             >
@@ -741,8 +671,8 @@ function SummaryTile({ label, value, tone }: Readonly<SummaryTileProps>) {
             </Paragraph>
             <Text
                 fontFamily={ds.fonts.headingBold}
-                fontSize={layout.isTablet ? ds.typography.metricMd.fontSize : ds.typography.metricSm.fontSize}
-                lineHeight={layout.isTablet ? ds.typography.metricMd.lineHeight : ds.typography.metricSm.lineHeight}
+                fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displaySm.fontSize}
+                lineHeight={layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displaySm.lineHeight}
                 mt="$2"
                 style={{ color: tileTone.text }}
             >
@@ -773,7 +703,8 @@ function ScoreTile({ label, value, valueColor }: Readonly<ScoreTileProps>) {
             rounded={ds.radii.md}
             borderWidth={1}
             borderColor={ds.colors.border}
-            bg={ds.colors.input}
+            bg={ds.colors.mutedSurface}
+            mb="$3"
             p={layout.isTablet ? 16 : 12}
         >
             <Paragraph

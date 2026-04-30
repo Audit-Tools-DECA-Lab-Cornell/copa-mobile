@@ -47,8 +47,71 @@
         "email": "E-Mail",
         "label": "Profil",
         "name": "Name",
-        "role": "Rolle/Beruf"
+        "organization": "Organisation",
+        "role": "Rolle/Beruf",
+        "editProfile": "Edit Profile",
+        "changePassword": "Change Password"
     },
     "subtitle": "Profil, Erscheinungsbild, Barrierefreiheit und App-Informationen.",
-    "title": "Einstellungen"
+    "title": "Einstellungen",
+    "editProfile": {
+        "title": "Edit Profile",
+        "fullNameLabel": "Full name",
+        "fullNamePlaceholder": "Your full name",
+        "phoneLabel": "Phone number",
+        "phonePlaceholder": "+1 555 000 0000",
+        "emailLabel": "Email address",
+        "emailPlaceholder": "you@example.com",
+        "genderLabel": "Gender",
+        "genderPlaceholder": "Select gender",
+        "ageRangeLabel": "Age range",
+        "ageRangePlaceholder": "Select age range",
+        "cityLabel": "City",
+        "cityPlaceholder": "Your city",
+        "provinceLabel": "Province / State",
+        "provincePlaceholder": "Province or state",
+        "countryLabel": "Country",
+        "countryPlaceholder": "Your country",
+        "roleLabel": "Role / Profession",
+        "rolePlaceholder": "e.g. Teacher, Researcher",
+        "submit": "Save changes",
+        "submitting": "Saving...",
+        "success": "Profile updated.",
+        "genderOptions": {
+            "male": "Male",
+            "female": "Female",
+            "nonBinary": "Non-binary",
+            "preferNotToSay": "Prefer not to say",
+            "other": "Other"
+        },
+        "ageRangeOptions": {
+            "under18": "Under 18",
+            "18to24": "18 – 24",
+            "25to34": "25 – 34",
+            "35to44": "35 – 44",
+            "45to54": "45 – 54",
+            "55to64": "55 – 64",
+            "65plus": "65+"
+        }
+    },
+    "changePassword": {
+        "title": "Change Password",
+        "currentPasswordLabel": "Current password",
+        "currentPasswordPlaceholder": "Enter current password",
+        "newPasswordLabel": "New password",
+        "newPasswordPlaceholder": "Enter new password",
+        "confirmPasswordLabel": "Confirm new password",
+        "confirmPasswordPlaceholder": "Re-enter new password",
+        "submit": "Change password",
+        "submitting": "Changing password...",
+        "success": "Password changed successfully.",
+        "validation": {
+            "currentPasswordRequired": "Current password is required.",
+            "tooShort": "New password must be at least 8 characters.",
+            "missingUppercase": "Must include an uppercase letter.",
+            "missingLowercase": "Must include a lowercase letter.",
+            "missingNumber": "Must include a number.",
+            "noMatch": "Passwords do not match."
+        }
+    }
 }

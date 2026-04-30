@@ -24,7 +24,7 @@ import { logger } from "lib/logger";
 import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { AppState, type AppStateStatus } from "react-native";
+import { AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
@@ -230,8 +230,10 @@ function RootLayoutNav() {
             return;
         }
 
-        const inAuthGroup = segments[0] === "(auth)";
-        const isScreenshotAutomationRoute = String(segments[0] ?? "") === "__screenshot-bootstrap";
+        const segment0 = String(segments[0] ?? "");
+        const inAuthGroup = segment0 === "(auth)";
+        const inOnboardingGroup = segment0 === "(onboarding)";
+        const isScreenshotAutomationRoute = segment0 === "__screenshot-bootstrap";
         const canBypassAuthForScreenshotAutomation = SCREENSHOT_AUTOMATION_ENABLED && isScreenshotAutomationRoute;
 
         // Allow the screenshot bootstrap route to manage auth state and
@@ -240,15 +242,38 @@ function RootLayoutNav() {
             return;
         }
 
-        if (authStatus === "authenticated" && inAuthGroup) {
-            router.replace("/(tabs)");
+        if (authStatus === "unauthenticated") {
+            if (!inAuthGroup) {
+                router.replace("/(auth)/login");
+            }
             return;
         }
 
-        if (authStatus === "unauthenticated" && !inAuthGroup) {
-            router.replace("/(auth)/login");
+        // Authenticated — route based on the backend's next_step signal.
+        const nextStep = authSession?.user.nextStep ?? "DASHBOARD";
+
+        if (nextStep === "WAITING_APPROVAL") {
+            if (!inAuthGroup) {
+                router.replace("/(auth)/pending");
+            }
+            return;
         }
-    }, [authStatus, router, segments]);
+
+        if (nextStep !== "DASHBOARD") {
+            // Any in-progress onboarding step belongs in the (onboarding) group.
+            if (!inOnboardingGroup) {
+                router.replace("/(onboarding)/reset-password");
+            }
+            return;
+        }
+
+        // nextStep === "DASHBOARD" — the main app. Valid authenticated destinations include
+        // the (tabs) group and all root-level stack screens (execute, place, report, settings/*).
+        // Only redirect if the user is stranded in an auth or onboarding screen.
+        if (inAuthGroup || inOnboardingGroup) {
+            router.replace("/(tabs)");
+        }
+    }, [authSession, authStatus, router, segments]);
 
     if (authStatus === "loading") {
         return null;
@@ -257,16 +282,21 @@ function RootLayoutNav() {
     return (
         <ThemeProvider value={navigationTheme}>
             <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
-            <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background, paddingTop: 20 } }}>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                    name="execute/[placeId]/index"
-                    options={{ headerShown: true, title: t("stack.execute") }}
-                />
-                <Stack.Screen name="place/[placeId]" options={{ headerShown: true }} />
-                <Stack.Screen name="report/[auditId]" options={{ headerShown: true }} />
-            </Stack>
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+                <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background, paddingTop: 20 } }}>
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen
+                        name="execute/[placeId]/index"
+                        options={{ headerShown: true, title: t("stack.execute") }}
+                    />
+                    <Stack.Screen name="place/[placeId]" options={{ headerShown: true }} />
+                    <Stack.Screen name="report/[auditId]" options={{ headerShown: true }} />
+                    <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
+                    <Stack.Screen name="settings/edit-profile" options={{ headerShown: true }} />
+                </Stack>
+            </KeyboardAvoidingView>
         </ThemeProvider>
     );
 }

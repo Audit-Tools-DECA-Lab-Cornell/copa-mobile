@@ -38,7 +38,11 @@
         "scrollToTop": "Haut de page",
         "unavailableMessage": "Ce rapport d’audit n’est pas disponible pour le moment.",
         "unavailableTitle": "Audit introuvable",
-        "usabilityCardLabel": "Utilisabilité"
+        "usabilityCardLabel": "Utilisabilité",
+        "auditType": "Type d'audit",
+        "auditTypePlaceAudit": "Audit de site",
+        "auditTypePlaceSurvey": "Enquête de site",
+        "auditTypeFullAssessment": "Évaluation complète"
     },
     "diversityShort": "D",
     "provisionShort": "Q",
@@ -125,5 +129,8 @@
         "constructSociability": "Soutien social",
         "constructPlayValue": "Valeur ludique",
         "constructUsability": "Utilisabilité"
-    }
+    },
+    "filtersLabel": "Filtres",
+    "modeFilterLabel": "Type d'audit",
+    "sortByLabel": "Trier par"
 }

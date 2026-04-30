@@ -15,7 +15,7 @@ interface SettingsPageMaxWidthOptions {
 export function getCardTextLineLimit(role: CardTextRole): number {
     switch (role) {
         case "title":
-            return 1;
+            return 2;
         case "supporting":
             return 2;
         case "meta":

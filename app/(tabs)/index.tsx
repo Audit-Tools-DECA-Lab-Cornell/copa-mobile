@@ -202,7 +202,9 @@ export default function DashboardScreen() {
     }, [inProgressCount, notStartedCount, submittedCount, t]);
 
     const activeAuditorName = session?.user.name ?? session?.user.email ?? t("activeAuditor", { ns: "dashboard" });
+    const auditorOrganization = session?.user.organization ?? null;
     const blockHeaderMinHeight = ds.typography.labelSm.lineHeight;
+    const useTwoColumnActiveWorkGrid = layout.isWideTablet;
 
     const dateLabel = useMemo(() => {
         return formatLongDateLabel(i18n.language);
@@ -654,14 +656,14 @@ export default function DashboardScreen() {
                 </Button>
             </XStack>
 
-            {layout.isTablet ? (
+            {useTwoColumnActiveWorkGrid ? (
                 <YStack gap="$3">
                     {highlightedPlaceRows.map((row) => {
                         return (
                             <XStack key={row.id} gap="$3">
                                 <DashboardActiveWorkCard place={row.left} />
                                 {row.right === null ? (
-                                    <YStack width="48.5%"></YStack>
+                                    <YStack width="48.5%" style={{ minHeight: layout.queueCardMinHeight }} />
                                 ) : (
                                     <DashboardActiveWorkCard place={row.right} />
                                 )}
@@ -734,6 +736,16 @@ export default function DashboardScreen() {
                                 >
                                     {activeAuditorName}
                                 </Text>
+                                {auditorOrganization !== null ? (
+                                    <Paragraph
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodySm.fontSize}
+                                        numberOfLines={1}
+                                    >
+                                        {auditorOrganization}
+                                    </Paragraph>
+                                ) : null}
                             </YStack>
                         </XStack>
 
@@ -938,6 +950,16 @@ export default function DashboardScreen() {
                             >
                                 {activeAuditorName}
                             </Text>
+                            {auditorOrganization !== null ? (
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodySm.fontSize}
+                                    numberOfLines={1}
+                                >
+                                    {auditorOrganization}
+                                </Paragraph>
+                            ) : null}
                         </YStack>
                     </XStack>
 

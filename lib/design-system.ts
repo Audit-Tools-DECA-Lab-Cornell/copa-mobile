@@ -1,6 +1,9 @@
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
+import { TABLET_BREAKPOINT, TABLET_TYPOGRAPHY_BASE_SCALE } from "lib/responsive-layout-tokens";
 import { useMemo } from "react";
+import { useWindowDimensions } from "react-native";
 import { usePreferencesStore, type ResolvedTheme } from "stores/preferences-store";
+import { ColorTokens } from "tamagui";
 
 /**
  * Place workflow status used for status pill rendering.
@@ -26,266 +29,274 @@ function createTypographyToken(fontSize: number, lineHeight: number): Typography
     return { fontSize, lineHeight };
 }
 
+/**
+ * @param value Color value to convert to a Tamagui color token.
+ * @returns Immutable color token.
+ */
+function createColorToken(value: string): ColorTokens {
+    return value as ColorTokens;
+}
+
 /** Color palette shape shared across light and dark themes. */
 interface ColorPalette {
-    readonly background: string;
-    readonly foreground: string;
-    readonly primary: string;
-    readonly primaryForeground: string;
-    readonly surface: string;
-    readonly surfaceMuted: string;
-    readonly mutedSurface: string;
-    readonly input: string;
-    readonly border: string;
-    readonly mutedForeground: string;
-    readonly secondaryForeground: string;
-    readonly success: string;
-    readonly warning: string;
-    readonly danger: string;
-    readonly info: string;
-    readonly violet: string;
-    readonly overlay: string;
-    readonly primarySoft: string;
-    readonly successSoft: string;
-    readonly warningSoft: string;
-    readonly dangerSoft: string;
-    readonly infoSoft: string;
-    readonly violetSoft: string;
-    readonly placeholderColor: string;
-    readonly amber: string;
-    readonly amberSoft: string;
-    readonly provision: string;
-    readonly provisionSoft: string;
-    readonly diversity: string;
-    readonly diversitySoft: string;
-    readonly challenge: string;
-    readonly challengeSoft: string;
-    readonly sociability: string;
-    readonly sociabilitySoft: string;
+    readonly background: ColorTokens;
+    readonly foreground: ColorTokens;
+    readonly primary: ColorTokens;
+    readonly primaryForeground: ColorTokens;
+    readonly surface: ColorTokens;
+    readonly surfaceMuted: ColorTokens;
+    readonly mutedSurface: ColorTokens;
+    readonly input: ColorTokens;
+    readonly border: ColorTokens;
+    readonly mutedForeground: ColorTokens;
+    readonly secondaryForeground: ColorTokens;
+    readonly success: ColorTokens;
+    readonly warning: ColorTokens;
+    readonly danger: ColorTokens;
+    readonly info: ColorTokens;
+    readonly violet: ColorTokens;
+    readonly overlay: ColorTokens;
+    readonly primarySoft: ColorTokens;
+    readonly successSoft: ColorTokens;
+    readonly warningSoft: ColorTokens;
+    readonly dangerSoft: ColorTokens;
+    readonly infoSoft: ColorTokens;
+    readonly violetSoft: ColorTokens;
+    readonly placeholderColor: ColorTokens;
+    readonly amber: ColorTokens;
+    readonly amberSoft: ColorTokens;
+    readonly provision: ColorTokens;
+    readonly provisionSoft: ColorTokens;
+    readonly diversity: ColorTokens;
+    readonly diversitySoft: ColorTokens;
+    readonly challenge: ColorTokens;
+    readonly challengeSoft: ColorTokens;
+    readonly sociability: ColorTokens;
+    readonly sociabilitySoft: ColorTokens;
 }
 
 interface ShadowPalette {
-    readonly card: string;
-    readonly accent: string;
+    readonly card: ColorTokens;
+    readonly accent: ColorTokens;
 }
 
 interface GlassPalette {
-    readonly elevatedSurface: string;
-    readonly elevatedBorder: string;
-    readonly elevatedShadow: string;
-    readonly tabBarSurface: string;
-    readonly tabBarBorder: string;
+    readonly elevatedSurface: ColorTokens;
+    readonly elevatedBorder: ColorTokens;
+    readonly elevatedShadow: ColorTokens;
+    readonly tabBarSurface: ColorTokens;
+    readonly tabBarBorder: ColorTokens;
 }
 
 const DARK_COLORS = {
-    background: "#161311",
-    foreground: "#E7DED3",
-    primary: "#C58A5C",
-    primaryForeground: "#FFFFFF",
-    surface: "#24201D",
-    surfaceMuted: "#2E2824",
-    mutedSurface: "#352E2A",
-    input: "#201C19",
-    border: "#5A514A",
-    mutedForeground: "#B8AEA3",
-    secondaryForeground: "#DED3C6",
-    success: "#6F9A7F",
-    warning: "#B99A5A",
-    danger: "#C98472",
-    info: "#7B90B8",
-    violet: "#9B86B2",
-    overlay: "rgba(22, 19, 17, 0.92)",
-    primarySoft: "rgba(197, 138, 92, 0.14)",
-    successSoft: "rgba(111, 154, 127, 0.16)",
-    warningSoft: "rgba(185, 154, 90, 0.16)",
-    dangerSoft: "rgba(201, 132, 114, 0.18)",
-    infoSoft: "rgba(123, 144, 184, 0.16)",
-    violetSoft: "rgba(155, 134, 178, 0.16)",
-    amber: "rgba(255, 180, 0, 0.1)",
-    amberSoft: "rgba(255, 180, 0, 0.1)",
-    placeholderColor: "#B8AEA3",
-    provision: "#566E3D",
-    provisionSoft: "#AEC596",
-    diversity: "#BD4926",
-    diversitySoft: "#EBAC99",
-    challenge: "#0C4767",
-    challengeSoft: "#B1D4E0",
-    sociability: "#754170",
-    sociabilitySoft: "#C596C0",
+    background: createColorToken("#161311"),
+    foreground: createColorToken("#E7DED3"),
+    primary: createColorToken("#C58A5C"),
+    primaryForeground: createColorToken("#FFFFFF"),
+    surface: createColorToken("#24201D"),
+    surfaceMuted: createColorToken("#2E2824"),
+    mutedSurface: createColorToken("#352E2A"),
+    input: createColorToken("#201C19"),
+    border: createColorToken("#5A514A"),
+    mutedForeground: createColorToken("#B8AEA3"),
+    secondaryForeground: createColorToken("#DED3C6"),
+    success: createColorToken("#6F9A7F"),
+    warning: createColorToken("#B99A5A"),
+    danger: createColorToken("#C98472"),
+    info: createColorToken("#7B90B8"),
+    violet: createColorToken("#9B86B2"),
+    overlay: createColorToken("rgba(22, 19, 17, 0.92)"),
+    primarySoft: createColorToken("rgba(197, 138, 92, 0.14)"),
+    successSoft: createColorToken("rgba(111, 154, 127, 0.16)"),
+    warningSoft: createColorToken("rgba(185, 154, 90, 0.16)"),
+    dangerSoft: createColorToken("rgba(201, 132, 114, 0.18)"),
+    infoSoft: createColorToken("rgba(123, 144, 184, 0.16)"),
+    violetSoft: createColorToken("rgba(155, 134, 178, 0.16)"),
+    amber: createColorToken("rgba(255, 180, 0, 0.1)"),
+    amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
+    placeholderColor: createColorToken("#B8AEA3"),
+    provision: createColorToken("#566E3D"),
+    provisionSoft: createColorToken("#AEC596"),
+    diversity: createColorToken("#BD4926"),
+    diversitySoft: createColorToken("#EBAC99"),
+    challenge: createColorToken("#0C4767"),
+    challengeSoft: createColorToken("#B1D4E0"),
+    sociability: createColorToken("#754170"),
+    sociabilitySoft: createColorToken("#C596C0"),
 } as const satisfies ColorPalette;
 
 const DARK_SHADOWS = {
-    card: "0 10px 24px rgba(0, 0, 0, 0.14)",
-    accent: "0 0 14px rgba(197, 138, 92, 0.12)",
+    card: `0 10px 24px ${createColorToken("rgba(0, 0, 0, 0.14)")}` as ColorTokens,
+    accent: `0 0 14px ${createColorToken("rgba(197, 138, 92, 0.12)")}` as ColorTokens,
 } as const satisfies ShadowPalette;
 
 const DARK_GLASS = {
-    elevatedSurface: "rgba(36, 32, 29, 0.74)",
-    elevatedBorder: "rgba(231, 222, 211, 0.2)",
-    elevatedShadow: "0 14px 28px rgba(0, 0, 0, 0.24)",
-    tabBarSurface: "rgba(22, 19, 17, 0.84)",
-    tabBarBorder: "rgba(231, 222, 211, 0.14)",
+    elevatedSurface: createColorToken("rgba(36, 32, 29, 0.74)"),
+    elevatedBorder: createColorToken("rgba(231, 222, 211, 0.2)"),
+    elevatedShadow: `0 14px 28px ${createColorToken("rgba(0, 0, 0, 0.24)")}` as ColorTokens,
+    tabBarSurface: createColorToken("rgba(22, 19, 17, 0.84)"),
+    tabBarBorder: createColorToken("rgba(231, 222, 211, 0.14)"),
 } as const satisfies GlassPalette;
 
 const LIGHT_COLORS = {
-    background: "#FDFAF7",
-    foreground: "#2A231E",
-    primary: "#A66334",
-    primaryForeground: "#FFFFFF",
-    surface: "#FFFCF8",
-    surfaceMuted: "#F4EEE7",
-    mutedSurface: "#E9E2DB",
-    input: "#FFFFFF",
-    border: "#C8BCB0",
-    mutedForeground: "#645A52",
-    secondaryForeground: "#423831",
-    success: "#3D6B4F",
-    warning: "#9A7A3F",
-    danger: "#B54A38",
-    info: "#4A619A",
-    violet: "#6B5A8A",
-    amber: "FFB400",
-    overlay: "rgba(255, 255, 255, 0.56)",
-    primarySoft: "rgba(166, 99, 52, 0.12)",
-    successSoft: "rgba(61, 107, 79, 0.12)",
-    warningSoft: "rgba(154, 122, 63, 0.12)",
-    dangerSoft: "rgba(181, 74, 56, 0.12)",
-    infoSoft: "rgba(74, 97, 154, 0.12)",
-    violetSoft: "rgba(107, 90, 138, 0.12)",
-    amberSoft: "rgba(204, 136, 0, 0.1)",
-    placeholderColor: "#645A52",
-    provision: "#566E3D",
-    provisionSoft: "#AEC596",
-    diversity: "#BD4926",
-    diversitySoft: "#EBAC99",
-    challenge: "#0C4767",
-    challengeSoft: "#B1D4E0",
-    sociability: "#754170",
-    sociabilitySoft: "#C596C0",
+    background: createColorToken("#FDFAF7"),
+    foreground: createColorToken("#2A231E"),
+    primary: createColorToken("#A66334"),
+    primaryForeground: createColorToken("#FFFFFF"),
+    surface: createColorToken("#FFFCF8"),
+    surfaceMuted: createColorToken("#F4EEE7"),
+    mutedSurface: createColorToken("#E9E2DB"),
+    input: createColorToken("#FFFFFF"),
+    border: createColorToken("#C8BCB0"),
+    mutedForeground: createColorToken("#645A52"),
+    secondaryForeground: createColorToken("#423831"),
+    success: createColorToken("#3D6B4F"),
+    warning: createColorToken("#9A7A3F"),
+    danger: createColorToken("#B54A38"),
+    info: createColorToken("#4A619A"),
+    violet: createColorToken("#6B5A8A"),
+    amber: createColorToken("#FFB400"),
+    overlay: createColorToken("rgba(255, 255, 255, 0.56)"),
+    primarySoft: createColorToken("rgba(166, 99, 52, 0.12)"),
+    successSoft: createColorToken("rgba(61, 107, 79, 0.12)"),
+    warningSoft: createColorToken("rgba(154, 122, 63, 0.12)"),
+    dangerSoft: createColorToken("rgba(181, 74, 56, 0.12)"),
+    infoSoft: createColorToken("rgba(74, 97, 154, 0.12)"),
+    violetSoft: createColorToken("rgba(107, 90, 138, 0.12)"),
+    amberSoft: createColorToken("rgba(204, 136, 0, 0.1)"),
+    placeholderColor: createColorToken("#645A52"),
+    provision: createColorToken("#566E3D"),
+    provisionSoft: createColorToken("#AEC596"),
+    diversity: createColorToken("#BD4926"),
+    diversitySoft: createColorToken("#EBAC99"),
+    challenge: createColorToken("#0C4767"),
+    challengeSoft: createColorToken("#B1D4E0"),
+    sociability: createColorToken("#754170"),
+    sociabilitySoft: createColorToken("#C596C0"),
 } as const satisfies ColorPalette;
 
 const LIGHT_FIELD_COLORS = {
-    background: "#FAFAF8",
-    foreground: "#1F1A16",
-    primary: "#965424",
-    primaryForeground: "#FFFFFF",
-    surface: "#FFFFFF",
-    surfaceMuted: "#F2F3EF",
-    mutedSurface: "#EAEBE6",
-    input: "#FFFFFF",
-    border: "#91857A",
-    mutedForeground: "#413A34",
-    secondaryForeground: "#241E19",
-    success: "#28573A",
-    warning: "#705700",
-    danger: "#96392B",
-    info: "#234A83",
-    violet: "#5A467D",
-    overlay: "rgba(255, 255, 255, 0.62)",
-    primarySoft: "rgba(150, 84, 36, 0.16)",
-    successSoft: "rgba(40, 87, 58, 0.16)",
-    warningSoft: "rgba(112, 87, 0, 0.16)",
-    dangerSoft: "rgba(150, 57, 43, 0.16)",
-    infoSoft: "rgba(35, 74, 131, 0.16)",
-    violetSoft: "rgba(90, 70, 125, 0.16)",
-    amber: "rgba(255, 180, 0, 0.1)",
-    amberSoft: "rgba(204, 136, 0, 0.1)",
-    placeholderColor: "#413A34",
-    provision: "#566E3D",
-    provisionSoft: "#AEC596",
-    diversity: "#BD4926",
-    diversitySoft: "#EBAC99",
-    challenge: "#0C4767",
-    challengeSoft: "#B1D4E0",
-    sociability: "#754170",
-    sociabilitySoft: "#C596C0",
+    background: createColorToken("#FAFAF8"),
+    foreground: createColorToken("#1F1A16"),
+    primary: createColorToken("#965424"),
+    primaryForeground: createColorToken("#FFFFFF"),
+    surface: createColorToken("#FFFFFF"),
+    surfaceMuted: createColorToken("#F2F3EF"),
+    mutedSurface: createColorToken("#EAEBE6"),
+    input: createColorToken("#FFFFFF"),
+    border: createColorToken("#91857A"),
+    mutedForeground: createColorToken("#413A34"),
+    secondaryForeground: createColorToken("#241E19"),
+    success: createColorToken("#28573A"),
+    warning: createColorToken("#705700"),
+    danger: createColorToken("#96392B"),
+    info: createColorToken("#234A83"),
+    violet: createColorToken("#5A467D"),
+    overlay: createColorToken("rgba(255, 255, 255, 0.62)"),
+    primarySoft: createColorToken("rgba(150, 84, 36, 0.16)"),
+    successSoft: createColorToken("rgba(40, 87, 58, 0.16)"),
+    warningSoft: createColorToken("rgba(112, 87, 0, 0.16)"),
+    dangerSoft: createColorToken("rgba(150, 57, 43, 0.16)"),
+    infoSoft: createColorToken("rgba(35, 74, 131, 0.16)"),
+    violetSoft: createColorToken("rgba(90, 70, 125, 0.16)"),
+    amber: createColorToken("rgba(255, 180, 0, 0.1)"),
+    amberSoft: createColorToken("rgba(204, 136, 0, 0.1)"),
+    placeholderColor: createColorToken("#413A34"),
+    provision: createColorToken("#566E3D"),
+    provisionSoft: createColorToken("#AEC596"),
+    diversity: createColorToken("#BD4926"),
+    diversitySoft: createColorToken("#EBAC99"),
+    challenge: createColorToken("#0C4767"),
+    challengeSoft: createColorToken("#B1D4E0"),
+    sociability: createColorToken("#754170"),
+    sociabilitySoft: createColorToken("#C596C0"),
 } as const satisfies ColorPalette;
 
 const LIGHT_SHADOWS = {
-    card: "0 10px 24px rgba(60, 48, 42, 0.08)",
-    accent: "0 0 14px rgba(176, 106, 56, 0.2)",
+    card: `0 10px 24px ${createColorToken("rgba(60, 48, 42, 0.08)")}` as ColorTokens,
+    accent: `0 0 14px ${createColorToken("rgba(176, 106, 56, 0.2)")}` as ColorTokens,
 } as const satisfies ShadowPalette;
 
 const LIGHT_GLASS = {
-    elevatedSurface: "rgba(255, 255, 255, 0.76)",
-    elevatedBorder: "rgba(42, 35, 30, 0.12)",
-    elevatedShadow: "0 14px 28px rgba(60, 48, 42, 0.12)",
-    tabBarSurface: "rgba(255, 255, 255, 0.72)",
-    tabBarBorder: "rgba(42, 35, 30, 0.1)",
+    elevatedSurface: createColorToken("rgba(255, 255, 255, 0.76)"),
+    elevatedBorder: createColorToken("rgba(42, 35, 30, 0.12)"),
+    elevatedShadow: `0 14px 28px ${createColorToken("rgba(60, 48, 42, 0.12)")}` as ColorTokens,
+    tabBarSurface: createColorToken("rgba(255, 255, 255, 0.72)"),
+    tabBarBorder: createColorToken("rgba(42, 35, 30, 0.1)"),
 } as const satisfies GlassPalette;
 
 const DARK_HIGH_CONTRAST_COLORS = {
-    background: "#000000",
-    foreground: "#FFFFFF",
-    primary: "#FFD0A8",
-    primaryForeground: "#000000",
-    surface: "#0F0F0F",
-    surfaceMuted: "#141414",
-    mutedSurface: "#1A1A1A",
-    input: "#050505",
-    border: "#8E8E8E",
-    mutedForeground: "#E7E7E7",
-    secondaryForeground: "#F7F7F7",
-    success: "#91D4A7",
-    warning: "#F1CF6A",
-    danger: "#F2A392",
-    info: "#A8C2F5",
-    violet: "#D0B8F4",
-    overlay: "rgba(0, 0, 0, 0.94)",
-    primarySoft: "rgba(255, 208, 168, 0.2)",
-    successSoft: "rgba(145, 212, 167, 0.2)",
-    warningSoft: "rgba(241, 207, 106, 0.2)",
-    dangerSoft: "rgba(242, 163, 146, 0.2)",
-    infoSoft: "rgba(168, 194, 245, 0.2)",
-    violetSoft: "rgba(208, 184, 244, 0.2)",
-    amber: "rgba(255, 180, 0, 0.1)",
-    amberSoft: "rgba(255, 180, 0, 0.1)",
-    placeholderColor: "#8E8E8E",
-    provision: "#566E3D",
-    provisionSoft: "#AEC596",
-    diversity: "#BD4926",
-    diversitySoft: "#EBAC99",
-    challenge: "#0C4767",
-    challengeSoft: "#B1D4E0",
-    sociability: "#754170",
-    sociabilitySoft: "#C596C0",
+    background: createColorToken("#000000"),
+    foreground: createColorToken("#FFFFFF"),
+    primary: createColorToken("#FFD0A8"),
+    primaryForeground: createColorToken("#000000"),
+    surface: createColorToken("#0F0F0F"),
+    surfaceMuted: createColorToken("#141414"),
+    mutedSurface: createColorToken("#1A1A1A"),
+    input: createColorToken("#050505"),
+    border: createColorToken("#8E8E8E"),
+    mutedForeground: createColorToken("#E7E7E7"),
+    secondaryForeground: createColorToken("#F7F7F7"),
+    success: createColorToken("#91D4A7"),
+    warning: createColorToken("#F1CF6A"),
+    danger: createColorToken("#F2A392"),
+    info: createColorToken("#A8C2F5"),
+    violet: createColorToken("#D0B8F4"),
+    overlay: createColorToken("rgba(0, 0, 0, 0.94)"),
+    primarySoft: createColorToken("rgba(255, 208, 168, 0.2)"),
+    successSoft: createColorToken("rgba(145, 212, 167, 0.2)"),
+    warningSoft: createColorToken("rgba(241, 207, 106, 0.2)"),
+    dangerSoft: createColorToken("rgba(242, 163, 146, 0.2)"),
+    infoSoft: createColorToken("rgba(168, 194, 245, 0.2)"),
+    violetSoft: createColorToken("rgba(208, 184, 244, 0.2)"),
+    amber: createColorToken("rgba(255, 180, 0, 0.1)"),
+    amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
+    placeholderColor: createColorToken("#8E8E8E"),
+    provision: createColorToken("#566E3D"),
+    provisionSoft: createColorToken("#AEC596"),
+    diversity: createColorToken("#BD4926"),
+    diversitySoft: createColorToken("#EBAC99"),
+    challenge: createColorToken("#0C4767"),
+    challengeSoft: createColorToken("#B1D4E0"),
+    sociability: createColorToken("#754170"),
+    sociabilitySoft: createColorToken("#C596C0"),
 } as const satisfies ColorPalette;
 
 const LIGHT_HIGH_CONTRAST_COLORS = {
-    background: "#FFFFFF",
-    foreground: "#111111",
-    primary: "#8A4A1B",
-    primaryForeground: "#FFFFFF",
-    surface: "#FFFFFF",
-    surfaceMuted: "#FAFAFA",
-    mutedSurface: "#F3F3F3",
-    input: "#FFFFFF",
-    border: "#57504A",
-    mutedForeground: "#39332E",
-    secondaryForeground: "#1D1916",
-    success: "#1F5B33",
-    warning: "#6F5600",
-    danger: "#8E231A",
-    info: "#163A70",
-    violet: "#4D3A70",
-    overlay: "rgba(17, 17, 17, 0.68)",
-    primarySoft: "rgba(138, 74, 27, 0.16)",
-    successSoft: "rgba(31, 91, 51, 0.16)",
-    warningSoft: "rgba(111, 86, 0, 0.16)",
-    dangerSoft: "rgba(142, 35, 26, 0.16)",
-    infoSoft: "rgba(22, 58, 112, 0.16)",
-    violetSoft: "rgba(77, 58, 112, 0.16)",
-    amber: "rgba(255, 180, 0, 0.1)",
-    amberSoft: "rgba(255, 180, 0, 0.1)",
-    placeholderColor: "#D1C4B6",
-    provision: "#566E3D",
-    provisionSoft: "#AEC596",
-    diversity: "#BD4926",
-    diversitySoft: "#EBAC99",
-    challenge: "#0C4767",
-    challengeSoft: "#B1D4E0",
-    sociability: "#754170",
-    sociabilitySoft: "#C596C0",
+    background: createColorToken("#FFFFFF"),
+    foreground: createColorToken("#111111"),
+    primary: createColorToken("#8A4A1B"),
+    primaryForeground: createColorToken("#FFFFFF"),
+    surface: createColorToken("#FFFFFF"),
+    surfaceMuted: createColorToken("#FAFAFA"),
+    mutedSurface: createColorToken("#F3F3F3"),
+    input: createColorToken("#FFFFFF"),
+    border: createColorToken("#57504A"),
+    mutedForeground: createColorToken("#39332E"),
+    secondaryForeground: createColorToken("#1D1916"),
+    success: createColorToken("#1F5B33"),
+    warning: createColorToken("#6F5600"),
+    danger: createColorToken("#8E231A"),
+    info: createColorToken("#163A70"),
+    violet: createColorToken("#4D3A70"),
+    overlay: createColorToken("rgba(17, 17, 17, 0.68)"),
+    primarySoft: createColorToken("rgba(138, 74, 27, 0.16)"),
+    successSoft: createColorToken("rgba(31, 91, 51, 0.16)"),
+    warningSoft: createColorToken("rgba(111, 86, 0, 0.16)"),
+    dangerSoft: createColorToken("rgba(142, 35, 26, 0.16)"),
+    infoSoft: createColorToken("rgba(22, 58, 112, 0.16)"),
+    violetSoft: createColorToken("rgba(77, 58, 112, 0.16)"),
+    amber: createColorToken("rgba(255, 180, 0, 0.1)"),
+    amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
+    placeholderColor: createColorToken("#D1C4B6"),
+    provision: createColorToken("#566E3D"),
+    provisionSoft: createColorToken("#AEC596"),
+    diversity: createColorToken("#BD4926"),
+    diversitySoft: createColorToken("#EBAC99"),
+    challenge: createColorToken("#0C4767"),
+    challengeSoft: createColorToken("#B1D4E0"),
+    sociability: createColorToken("#754170"),
+    sociabilitySoft: createColorToken("#C596C0"),
 } as const satisfies ColorPalette;
 
 interface FontTokenScale {
@@ -387,6 +398,8 @@ interface DesignSystemOptions {
     readonly highContrast: boolean;
     readonly dyslexicFont: boolean;
     readonly fieldMode: boolean;
+    /** When true the typography scale is boosted by {@link TABLET_TYPOGRAPHY_BASE_SCALE}. */
+    readonly isTablet?: boolean;
 }
 
 /** Complete theme token set for the active UI configuration. */
@@ -477,7 +490,11 @@ export function getDesignSystem(theme: ResolvedTheme, options: Partial<DesignSys
         highContrast: options.highContrast ?? false,
         theme,
     });
-    const fontScale = clampDesignFontScale(fieldModePresentation.effectiveFontScale);
+    // Clamp the user-preference scale to the supported range, then apply the
+    // tablet baseline boost on top so the stored preference operates as a
+    // relative adjustment around the boosted base rather than replacing it.
+    const clampedUserScale = clampDesignFontScale(fieldModePresentation.effectiveFontScale);
+    const fontScale = (options.isTablet ?? false) ? clampedUserScale * TABLET_TYPOGRAPHY_BASE_SCALE : clampedUserScale;
     const dyslexicFont = options.dyslexicFont ?? false;
 
     return {
@@ -508,6 +525,8 @@ export function useDesignSystem(): DesignSystemTheme {
     const highContrast = usePreferencesStore((state) => state.highContrast);
     const dyslexicFont = usePreferencesStore((state) => state.dyslexicFont);
     const fieldMode = usePreferencesStore((state) => state.fieldMode);
+    const { width } = useWindowDimensions();
+    const isTablet = width >= TABLET_BREAKPOINT;
 
     return useMemo(() => {
         return getDesignSystem(resolvedTheme, {
@@ -515,8 +534,9 @@ export function useDesignSystem(): DesignSystemTheme {
             highContrast,
             dyslexicFont,
             fieldMode,
+            isTablet,
         });
-    }, [dyslexicFont, fieldMode, fontScale, highContrast, resolvedTheme]);
+    }, [dyslexicFont, fieldMode, fontScale, highContrast, resolvedTheme, isTablet]);
 }
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
@@ -599,9 +619,9 @@ export const designSystem: DesignSystemTheme = getDesignSystem("dark");
  * Shared tone model for chips, badges, and accent surfaces.
  */
 export interface DesignTone {
-    readonly accent: string;
-    readonly surface: string;
-    readonly text: string;
+    readonly accent: ColorTokens;
+    readonly surface: ColorTokens;
+    readonly text: ColorTokens;
 }
 
 /**
@@ -613,15 +633,23 @@ export function getMetricTone(tone: MetricTone, colors: ActiveColorPalette = DAR
     const c = colors;
 
     if (tone === "green") {
-        return { accent: c.success, surface: c.successSoft, text: c.success };
+        return {
+            accent: c.success as ColorTokens,
+            surface: c.successSoft as ColorTokens,
+            text: c.success as ColorTokens,
+        };
     }
     if (tone === "purple") {
-        return { accent: c.violet, surface: c.violetSoft, text: c.violet };
+        return { accent: c.violet as ColorTokens, surface: c.violetSoft as ColorTokens, text: c.violet as ColorTokens };
     }
     if (tone === "orange") {
-        return { accent: c.warning, surface: c.warningSoft, text: c.warning };
+        return {
+            accent: c.warning as ColorTokens,
+            surface: c.warningSoft as ColorTokens,
+            text: c.warning as ColorTokens,
+        };
     }
-    return { accent: c.primary, surface: c.primarySoft, text: c.primary };
+    return { accent: c.primary as ColorTokens, surface: c.primarySoft as ColorTokens, text: c.primary as ColorTokens };
 }
 
 /**
@@ -633,10 +661,18 @@ export function getPlaceStatusTone(status: PlaceStatus, colors: ActiveColorPalet
     const c = colors;
 
     if (status === "submitted") {
-        return { accent: c.success, surface: c.successSoft, text: c.success };
+        return {
+            accent: c.success as ColorTokens,
+            surface: c.successSoft as ColorTokens,
+            text: c.success as ColorTokens,
+        };
     }
     if (status === "in_progress") {
-        return { accent: c.primary, surface: c.primarySoft, text: c.primary };
+        return {
+            accent: c.primary as ColorTokens,
+            surface: c.primarySoft as ColorTokens,
+            text: c.primary as ColorTokens,
+        };
     }
-    return { accent: c.danger, surface: c.dangerSoft, text: c.danger };
+    return { accent: c.danger as ColorTokens, surface: c.dangerSoft as ColorTokens, text: c.danger as ColorTokens };
 }

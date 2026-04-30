@@ -1,10 +1,12 @@
 import type {
     AuditScoreTotals,
+    AuditSession,
     InstrumentQuestion,
     QuestionResponsePayload,
     QuestionScale,
     ScaleOption,
 } from "lib/audit/types";
+import type { AuditorPlace } from "./places-api";
 
 /**
  * Localized short labels used when rendering compact score summaries.
@@ -65,6 +67,36 @@ export function formatScorePair(value: ScorePair | null | undefined): string | n
     }
 
     return `PV ${formatScoreValue(value.pv)} | U ${formatScoreValue(value.u)}`;
+}
+
+/**
+ * Returns the score totals that correspond to what the auditor actually completed.
+ * For audit-only sessions use the `audit` scores; for survey-only use `survey`;
+ * for combined ("both") or unknown fall back to `overall`.
+ */
+export function getEffectiveAuditScoreTotals(scores: AuditSession["scores"]): AuditScoreTotals | null {
+    if (scores.execution_mode === "audit") {
+        return scores.audit ?? null;
+    }
+    if (scores.execution_mode === "survey") {
+        return scores.survey ?? null;
+    }
+    return scores.overall ?? null;
+}
+
+/**
+ * Returns the score pair that reflects what the auditor actually submitted.
+ * For audit-only submissions use `audit_scores`; for survey-only use `survey_scores`;
+ * for combined ("both") or unknown mode fall back to `overall_scores`.
+ */
+export function getEffectivePlaceScores(place: AuditorPlace): ScorePair | null {
+    if (place.selected_execution_mode === "audit") {
+        return place.audit_scores ?? null;
+    }
+    if (place.selected_execution_mode === "survey") {
+        return place.survey_scores ?? null;
+    }
+    return place.overall_scores ?? null;
 }
 
 /**

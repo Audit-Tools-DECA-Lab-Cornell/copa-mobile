@@ -10,6 +10,15 @@ export const PHONE_FORM_MAX_WIDTH = 560;
 export const NARROW_TABLET_FORM_MAX_WIDTH = 600;
 export const WIDE_TABLET_FORM_MAX_WIDTH = 600;
 
+/**
+ * Baseline typography multiplier applied on tablet screens on top of the
+ * user's stored font-scale preference.  A value of 1.4 means the default
+ * (scale = 1.0) tablet font size equals what the phone renders at scale = 1.4,
+ * making text immediately legible without requiring the user to raise the
+ * accessibility slider.
+ */
+export const TABLET_TYPOGRAPHY_BASE_SCALE = 1.3;
+
 const PHONE_LAYOUT_TOKENS = {
     screenPaddingHorizontal: 15,
     screenPaddingVertical: Platform.OS === "android" ? 64 : 16,

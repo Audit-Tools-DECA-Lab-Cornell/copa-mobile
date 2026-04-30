@@ -1,0 +1,86 @@
+{
+    "resetPassword": {
+        "title": "पासवर्ड सेट करें",
+        "subtitle": "अपने खाते की सुरक्षा के लिए एक सुरक्षित पासवर्ड चुनें।",
+        "newPasswordLabel": "नया पासवर्ड",
+        "newPasswordPlaceholder": "नया पासवर्ड दर्ज करें",
+        "confirmPasswordLabel": "पासवर्ड की पुष्टि करें",
+        "confirmPasswordPlaceholder": "पासवर्ड फिर से दर्ज करें",
+        "submit": "पासवर्ड सेट करें",
+        "submitting": "पासवर्ड सेट हो रहा है...",
+        "requirements": {
+            "minLength": "कम से कम 8 वर्ण",
+            "uppercase": "एक बड़ा अक्षर",
+            "lowercase": "एक छोटा अक्षर",
+            "number": "एक संख्या"
+        },
+        "validation": {
+            "tooShort": "पासवर्ड कम से कम 8 वर्ण का होना चाहिए।",
+            "missingUppercase": "पासवर्ड में एक बड़ा अक्षर होना चाहिए।",
+            "missingLowercase": "पासवर्ड में एक छोटा अक्षर होना चाहिए।",
+            "missingNumber": "पासवर्ड में एक संख्या होनी चाहिए।",
+            "noMatch": "पासवर्ड मेल नहीं खाते।"
+        }
+    },
+    "completeProfile": {
+        "title": "प्रोफ़ाइल पूर्ण करें",
+        "subtitle": "अपने बारे में थोड़ा बताएं।",
+        "fullNameLabel": "पूरा नाम",
+        "fullNamePlaceholder": "आपका पूरा नाम",
+        "phoneLabel": "फ़ोन नंबर",
+        "phonePlaceholder": "+91 00000 00000",
+        "emailLabel": "ईमेल पता",
+        "emailPlaceholder": "aap@udaharan.com",
+        "genderLabel": "लिंग",
+        "genderPlaceholder": "लिंग चुनें",
+        "ageRangeLabel": "आयु सीमा",
+        "ageRangePlaceholder": "आयु सीमा चुनें",
+        "cityLabel": "शहर",
+        "cityPlaceholder": "आपका शहर",
+        "provinceLabel": "राज्य / प्रांत",
+        "provincePlaceholder": "राज्य या प्रांत",
+        "countryLabel": "देश",
+        "countryPlaceholder": "आपका देश",
+        "roleLabel": "भूमिका / पेशा",
+        "rolePlaceholder": "जैसे शिक्षक, शोधकर्ता",
+        "submit": "सहेजें और जारी रखें",
+        "submitting": "सहेज रहा है...",
+        "validation": {
+            "fullNameRequired": "पूरा नाम आवश्यक है।"
+        },
+        "genderOptions": {
+            "male": "पुरुष",
+            "female": "महिला",
+            "nonBinary": "गैर-द्विआधारी",
+            "preferNotToSay": "बताना नहीं चाहते",
+            "other": "अन्य"
+        },
+        "ageRangeOptions": {
+            "under18": "18 से कम",
+            "18to24": "18 – 24",
+            "25to34": "25 – 34",
+            "35to44": "35 – 44",
+            "45to54": "45 – 54",
+            "55to64": "55 – 64",
+            "65plus": "65+"
+        }
+    },
+    "acceptTerms": {
+        "title": "नियम और गोपनीयता",
+        "subtitle": "जारी रखने से पहले कृपया पढ़ें और स्वीकार करें।",
+        "scrollHint": "स्वीकार करने के लिए नीचे स्क्रॉल करें।",
+        "submit": "मैंने पढ़ा और स्वीकार करता/करती हूं",
+        "submitting": "स्वीकार किया जा रहा है...",
+        "termsHeading": "उपयोग की शर्तें",
+        "termsBody": "Playspace का उपयोग करके, आप ईमानदारी से और अपने परियोजना प्रबंधक के निर्देशों के अनुसार ऑडिट करने के लिए सहमत होते हैं। आप अपनी लॉगिन जानकारी साझा नहीं करेंगे।",
+        "privacyHeading": "गोपनीयता सूचना",
+        "privacyBody": "आपका व्यक्तिगत डेटा सुरक्षित रूप से संग्रहीत है। आपका ऑडिटर कोड — आपका नाम नहीं — ऑडिट रिकॉर्ड से जुड़ा होता है।"
+    },
+    "auditorCode": {
+        "title": "आपका ऑडिटर कोड",
+        "subtitle": "सभी ऑडिट रिकॉर्ड में आपकी यही पहचान है।",
+        "codeLabel": "ऑडिटर कोड",
+        "explanation": "केवल आपका ऑडिटर कोड — आपका नाम या संपर्क विवरण नहीं — आपके द्वारा सबमिट किए गए प्रत्येक ऑडिट के साथ संग्रहीत होता है।",
+        "submit": "Playspace में प्रवेश करें"
+    }
+}

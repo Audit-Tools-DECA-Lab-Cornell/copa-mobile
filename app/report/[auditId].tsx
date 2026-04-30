@@ -5,10 +5,15 @@ import { useToastController } from "@tamagui/toast";
 import { ChevronUp, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { type ColorTokens, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
+import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { ActionButton } from "components/ui/action-button";
 import { SubmittedReportContent } from "components/reports/SubmittedReportContent";
 import { StatCard } from "components/ui/stat-card";
-import { buildDomainReportRows, countUniqueScaledQuestionsWithDomains } from "lib/audit/report-helpers";
+import {
+    buildDomainReportRows,
+    countUniqueScaledQuestionsWithDomains,
+    formatExecutionModeLabel,
+} from "lib/audit/report-helpers";
 import { fetchAuditSession } from "lib/audit/api";
 import { shareSingleAuditExport, type AuditExportFormat } from "lib/audit/export";
 import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
@@ -19,6 +24,7 @@ import {
     formatScorePair,
     formatScoreValue,
     formatScoreWithPercentage,
+    getEffectiveAuditScoreTotals,
     type ScoreSummaryLabels,
 } from "lib/audit/score-helpers";
 import type { AuditScoreTotals, AuditSession } from "lib/audit/types";
@@ -761,24 +767,7 @@ export default function AuditReportDetailScreen() {
                     headerStyle: { backgroundColor: ds.colors.surfaceMuted },
                     contentStyle: { paddingTop: 20 },
                     headerTintColor: ds.colors.primary,
-                    headerTitle: () => (
-                        <YStack justify="center" my="$2.5" overflowX="scroll">
-                            <ScrollView horizontal>
-                                <YStack justify="center">
-                                    <Text
-                                        color={ds.colors.primary}
-                                        fontFamily={ds.fonts.bodySemiBold}
-                                        fontSize={ds.typography.titleLg.fontSize}
-                                        lineHeight={ds.typography.titleLg.lineHeight}
-                                        numberOfLines={1}
-                                        ellipsizeMode="tail"
-                                    >
-                                        {title}
-                                    </Text>
-                                </YStack>
-                            </ScrollView>
-                        </YStack>
-                    ),
+                    headerTitle: () => <AuditHeaderTitle primary={title} size="lg" />,
                     headerTitleStyle: {
                         color: ds.colors.foreground,
                         fontFamily: ds.fonts.bodyBold,
@@ -837,6 +826,10 @@ export default function AuditReportDetailScreen() {
                                 <MetadataRow
                                     label={t("detail.status", { ns: "reports" })}
                                     value={getPlaceStatusLabel(derivePlaceRequirementStatus(place!), t)}
+                                />
+                                <MetadataRow
+                                    label={t("detail.auditType", { ns: "reports" })}
+                                    value={formatExecutionModeLabel(auditSession.scores.execution_mode, t)}
                                 />
                                 {place === undefined ? null : (
                                     <MetadataRow
@@ -936,7 +929,7 @@ export default function AuditReportDetailScreen() {
                             {isSubmitted ? (
                                 <SubmittedReportContent
                                     domainRows={domainRows}
-                                    overallScores={auditSession.scores.overall}
+                                    overallScores={getEffectiveAuditScoreTotals(auditSession.scores)}
                                     overallItemCount={overallItemCount}
                                 />
                             ) : (
@@ -1097,7 +1090,7 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
-    const overall = auditSession.scores.overall;
+    const overall = getEffectiveAuditScoreTotals(auditSession.scores);
     const overallMaximum =
         overall === null ? null : { pv: overall.play_value_total_max, u: overall.usability_total_max };
     const pendingMetricText = t("detail.pendingMetric", { ns: "reports" });

@@ -18,5 +18,6 @@
     "priorityTask": "Tâche prioritaire",
     "readinessLabel": "{{percent}}% prêt",
     "title": "Tableau de bord terrain",
-    "urgentAudit": "Audit urgent"
+    "urgentAudit": "Audit urgent",
+    "auditorOrganization": "Organisation"
 }

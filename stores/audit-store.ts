@@ -59,6 +59,7 @@ import type {
 } from "lib/audit/types";
 import { persistedAuditStateSchema } from "lib/audit/types";
 import { t } from "lib/i18n";
+import { getBundledInstrument } from "lib/audit/bundled-instrument";
 import { syncInstrument } from "lib/services/instrument-sync";
 import { mmkvStorage } from "lib/storage/mmkv";
 
@@ -525,6 +526,14 @@ async function hydrate(accountId?: string | null): Promise<void> {
     }
 
     if (requestId !== hydrateRequestCounter) return;
+
+    if (auditData$.instrument.peek() === null) {
+        const bundled = getBundledInstrument();
+        if (bundled !== null) {
+            auditData$.instrument.set(bundled);
+        }
+    }
+
     setupAutoSave(targetUserId);
     auditUI$.isHydrated.set(true);
 
@@ -535,7 +544,7 @@ async function hydrate(accountId?: string | null): Promise<void> {
             }
         })
         .catch(() => {
-            /* instrument sync is best-effort; cached or session-provided instrument is used */
+            /* instrument sync is best-effort; bundled or cached instrument is used */
         });
 }
 

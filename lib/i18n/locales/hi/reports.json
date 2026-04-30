@@ -37,7 +37,11 @@
         "scrollToTop": "ऊपर जाएँ",
         "unavailableMessage": "यह ऑडिट रिपोर्ट अभी उपलब्ध नहीं है।",
         "unavailableTitle": "ऑडिट नहीं मिला",
-        "usabilityCardLabel": "उपयोगिता"
+        "usabilityCardLabel": "उपयोगिता",
+        "auditType": "ऑडिट प्रकार",
+        "auditTypePlaceAudit": "प्लेस ऑडिट",
+        "auditTypePlaceSurvey": "प्लेस सर्वेक्षण",
+        "auditTypeFullAssessment": "पूर्ण मूल्यांकन"
     },
     "diversityShort": "D",
     "emptyMessage": "कोई अलग खोज या फ़िल्टर संयोजन आज़माएँ।",
@@ -124,5 +128,8 @@
         "constructSociability": "सामाजिक सहायता",
         "constructPlayValue": "खेल मूल्य",
         "constructUsability": "उपयोगिता"
-    }
+    },
+    "filtersLabel": "फ़िल्टर",
+    "modeFilterLabel": "ऑडिट प्रकार",
+    "sortByLabel": "इसके अनुसार क्रमबद्ध करें"
 }

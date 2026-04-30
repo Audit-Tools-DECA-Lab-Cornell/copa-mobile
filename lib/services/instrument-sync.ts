@@ -9,6 +9,7 @@
 import * as Network from "expo-network";
 
 import { getApiBaseUrl } from "lib/api-base-url";
+import { getBundledInstrument } from "lib/audit/bundled-instrument";
 import { createModuleLogger } from "lib/logger";
 import { mmkvStorage } from "lib/storage/mmkv";
 import type { PlayspaceInstrument } from "lib/audit/types";
@@ -131,6 +132,12 @@ export async function syncInstrument(
         return cached;
     }
 
-    log.warn("no instrument available (offline, no cache)");
+    const bundled = getBundledInstrument();
+    if (bundled !== null) {
+        log.info("using bundled fallback instrument");
+        return bundled;
+    }
+
+    log.warn("no instrument available (offline, no cache, bundled validation failed)");
     return null;
 }

@@ -30,5 +30,7 @@
     "sociabilityShort": "S",
     "subtitle": "अपनी फील्ड कतार की समीक्षा करें, प्रगति पर नज़र रखें, और सक्रिय ऑडिट में वापस जाएँ।",
     "title": "असाइन किए गए स्थान",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "filterStatus": "स्थिति",
+    "filterSort": "क्रम"
 }

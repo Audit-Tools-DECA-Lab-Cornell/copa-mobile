@@ -482,3 +482,27 @@ export function buildConstructRankings(domainRows: DomainReportRow[]): Construct
 export function formatConstructDomainLine(score: number, max: number): string {
     return `${formatScoreValue(score)} / ${formatScoreValue(max)}`;
 }
+
+/**
+ * Returns a human-readable label for the audit execution mode.
+ * "audit" → Place Audit, "survey" → Place Survey, "both" → Full Assessment.
+ *
+ * @param mode Execution mode from the audit scores object.
+ * @param t Active translate function from the reports namespace.
+ * @returns Localised label string.
+ */
+export function formatExecutionModeLabel(
+    mode: AuditSession["scores"]["execution_mode"],
+    t: (key: string, options: Record<string, string>) => string,
+): string {
+    if (mode === "audit") {
+        return t("detail.auditTypePlaceAudit", { ns: "reports" });
+    }
+    if (mode === "survey") {
+        return t("detail.auditTypePlaceSurvey", { ns: "reports" });
+    }
+    if (mode === "both") {
+        return t("detail.auditTypeFullAssessment", { ns: "reports" });
+    }
+    return "—";
+}

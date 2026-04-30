@@ -30,5 +30,7 @@
     "sociabilityShort": "S",
     "subtitle": "現場の待ち行列を確認し、進捗を監視して、アクティブな監査に再開しましょう。",
     "title": "割り当て済みの場所",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "filterStatus": "ステータス",
+    "filterSort": "並び替え"
 }

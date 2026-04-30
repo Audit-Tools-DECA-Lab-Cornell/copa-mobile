@@ -93,6 +93,26 @@ export const instrumentSectionSchema = z.object({
     questions: z.array(instrumentQuestionSchema),
 });
 
+export const legalSectionSchema = z.object({
+    key: z.string().min(1),
+    title: z.string().min(1),
+    body: z.array(z.string()),
+    bullets: z.array(z.string()).default([]),
+});
+
+export const legalDocumentSchema = z.object({
+    key: z.string().min(1),
+    short_title: z.string().min(1),
+    title: z.string().min(1),
+    eyebrow: z.string().min(1),
+    last_updated: z.string().min(1),
+    summary: z.string().min(1),
+    sections: z.array(legalSectionSchema),
+});
+
+export type LegalSection = z.infer<typeof legalSectionSchema>;
+export type LegalDocument = z.infer<typeof legalDocumentSchema>;
+
 export const playspaceInstrumentSchema = z.object({
     instrument_key: z.string().min(1),
     instrument_name: z.string().min(1),
@@ -104,6 +124,7 @@ export const playspaceInstrumentSchema = z.object({
     pre_audit_questions: z.array(preAuditQuestionSchema),
     scale_guidance: z.array(scaleDefinitionSchema),
     sections: z.array(instrumentSectionSchema),
+    legal_documents: z.array(legalDocumentSchema).default([]),
 });
 
 export const auditSectionProgressSchema = z.object({

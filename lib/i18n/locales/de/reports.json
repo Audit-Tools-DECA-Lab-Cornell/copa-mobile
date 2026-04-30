@@ -9,6 +9,10 @@
     "detail": {
         "auditCode": "Auditcode",
         "auditMetadata": "Audit-Metadaten",
+        "auditType": "Audit-Typ",
+        "auditTypePlaceAudit": "Place Audit",
+        "auditTypePlaceSurvey": "Place Survey",
+        "auditTypeFullAssessment": "Vollständige Bewertung",
         "exportThisAudit": "Dieses Audit exportieren",
         "loadingMessage": "Audit-Zusammenfassung und Abschnittspunktzahlen werden geladen...",
         "loadingTitle": "Audit-Bericht wird vorbereitet",
@@ -124,5 +128,8 @@
         "constructSociability": "Soziale Unterstützung",
         "constructPlayValue": "Spielwert",
         "constructUsability": "Nutzerfreundlichkeit"
-    }
+    },
+    "filtersLabel": "Filter",
+    "modeFilterLabel": "Audit-Typ",
+    "sortByLabel": "Sortieren nach"
 }

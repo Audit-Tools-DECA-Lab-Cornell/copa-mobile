@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
@@ -31,6 +32,7 @@ import { requestImmediateAuditSync } from "lib/audit/use-audit-sync";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { usePlacesStore } from "stores/places-store";
+import { parsePromptSegments } from "lib/audit/prompt-segments";
 
 /**
  * One section page.
@@ -107,47 +109,19 @@ export default function ExecuteSectionScreen() {
         [ds],
     );
 
-    const truncate = useCallback((text: string | undefined, maxLength: number) => {
-        if (text === undefined) {
-            return "";
-        }
-        if (text.length <= maxLength) {
-            return text;
-        }
-        return text.slice(0, maxLength) + "...";
-    }, []);
-
     useLayoutEffect(() => {
         if (activeSection !== undefined) {
             navigation.setOptions({
                 ...themedHeaderOptions,
                 headerTitle: () => (
-                    <YStack justify="center" py="$1.5" overflowX="scroll">
-                        <ScrollView horizontal>
-                            <YStack justify="center">
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.titleMd.fontSize}
-                                    lineHeight={ds.typography.titleMd.lineHeight}
-                                >
-                                    {truncate(auditSession?.place_name, layout.isTablet ? 120 : 40)}
-                                </Text>
-                                <Text
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyRegular}
-                                    fontSize={ds.typography.labelLg.fontSize}
-                                    lineHeight={ds.typography.labelLg.lineHeight}
-                                >
-                                    Section: {truncate(activeSection.title, layout.isTablet ? 120 : 50)}
-                                </Text>
-                            </YStack>
-                        </ScrollView>
-                    </YStack>
+                    <AuditHeaderTitle
+                        primary={auditSession?.place_name ?? ""}
+                        secondary={`Section: ${activeSection.title}`}
+                    />
                 ),
             });
         }
-    }, [themedHeaderOptions, navigation, activeSection, layout.isTablet, t, auditSession, ds, truncate]);
+    }, [themedHeaderOptions, navigation, activeSection, auditSession]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -292,6 +266,9 @@ export default function ExecuteSectionScreen() {
     const resolvedAuthSession = authSession;
     const resolvedAuditSession = auditSession;
     const resolvedActiveSection = activeSection;
+    const sectionInstructionsPromptSegments = parsePromptSegments(
+        resolvedActiveSection.description ?? resolvedActiveSection.instruction,
+    );
     const nextSection = getNextSection(visibleSections, resolvedActiveSection.section_key);
     const activeSectionNumber =
         visibleSections.findIndex((s) => s.section_key === resolvedActiveSection.section_key) + 1;
@@ -321,7 +298,7 @@ export default function ExecuteSectionScreen() {
             const submittedSession = await submitAuditSession(resolvedAuthSession, resolvedAuditSession.audit_id);
             await loadPlaces(resolvedAuthSession).catch(() => undefined);
             router.replace(
-                `/execute/${submittedSession.place_id}?projectId=${encodeURIComponent(submittedSession.project_id)}` as Href,
+                `/execute/${submittedSession.place_id}/overview?projectId=${encodeURIComponent(submittedSession.project_id)}` as Href,
             );
         } catch {
             return;
@@ -501,7 +478,7 @@ export default function ExecuteSectionScreen() {
                 onPress={() => {
                     flushNoteToStore();
                     router.replace(
-                        `/execute/${resolvedPlaceId}?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
+                        `/execute/${resolvedPlaceId}/overview?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
                     );
                 }}
             >
@@ -573,7 +550,19 @@ export default function ExecuteSectionScreen() {
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={ds.typography.bodyLg.fontSize}
                 >
-                    {resolvedActiveSection.description ?? resolvedActiveSection.instruction}
+                    {sectionInstructionsPromptSegments.map((segment, index) => (
+                        <Fragment key={`${resolvedActiveSection.section_key}-seg-${index.toString()}`}>
+                            <Text
+                                fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
+                                fontSize={
+                                    layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize
+                                }
+                                color={segment.bold ? ds.colors.primary : ds.colors.foreground}
+                            >
+                                {segment.text}
+                            </Text>
+                        </Fragment>
+                    ))}
                 </Paragraph>
             </YStack>
 

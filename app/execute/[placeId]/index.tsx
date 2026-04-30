@@ -1,20 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowRight, ClipboardList, Shapes, TriangleAlert } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, type ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
-import {
-    buildExecuteOverviewSummary,
-    filterExecuteOverviewRows,
-    getExecuteFlowSubject,
-    type ExecuteOverviewSectionFilter,
-    type ExecuteOverviewSectionInput,
-} from "lib/audit/execute-flow";
+import { doesExecutionModeRequireSpaceAudit, getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { canEditAuditInputs } from "lib/audit/store-sync-core";
-import { getInstrumentSectionLocalProgress, getVisibleSections } from "lib/audit/selectors";
+import { getPreAuditValues, getVisiblePreAuditQuestions, isRequiredPreAuditComplete } from "lib/audit/selectors";
+import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { CollapsibleCard } from "components/ui/collapsible-card";
-import { FilterChip } from "components/ui/filter-chip";
 import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import type { ExecutionMode } from "lib/audit/types";
@@ -116,41 +110,14 @@ export default function ExecutePlaceScreen() {
         });
         if (auditSession !== undefined) {
             const mode = getExecutionModeShortLabel(auditSession.selected_execution_mode, t);
-            const suffix = mode.length > 0 ? mode : "";
+            const suffix = mode.length > 0 ? mode : undefined;
 
             navigation.setOptions({
                 ...themedHeaderOptions,
-                headerTitle: () => (
-                    <YStack justify="center">
-                        <ScrollView horizontal>
-                            <YStack justify="center">
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.titleMd.fontSize}
-                                    lineHeight={ds.typography.titleMd.lineHeight}
-                                    className="no-scrollbar overflow-x-scroll whitespace-nowrap"
-                                >
-                                    {auditSession.place_name}
-                                </Text>
-
-                                {suffix && (
-                                    <Text
-                                        color={ds.colors.mutedForeground}
-                                        fontFamily={ds.fonts.bodyRegular}
-                                        fontSize={ds.typography.labelLg.fontSize}
-                                        lineHeight={ds.typography.labelLg.lineHeight}
-                                    >
-                                        {suffix}
-                                    </Text>
-                                )}
-                            </YStack>
-                        </ScrollView>
-                    </YStack>
-                ),
+                headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} secondary={suffix} />,
             });
         }
-    }, [themedHeaderOptions, navigation, auditSession, router, t, ds]);
+    }, [themedHeaderOptions, navigation, auditSession, router, t]);
 
     const pendingSectionCount =
         auditSession === undefined ? 0 : Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
@@ -164,45 +131,24 @@ export default function ExecutePlaceScreen() {
         });
     const preambleBlocks = instrument!.preamble.map(parsePreambleBlock);
     const selectedMode = auditSession?.selected_execution_mode ?? null;
-    const visibleSections = useMemo(() => {
-        if (auditSession === undefined) {
+    const requiresSpaceAudit = selectedMode !== null && doesExecutionModeRequireSpaceAudit(selectedMode);
+    const spaceSetupQuestions = useMemo(() => {
+        if (selectedMode === null || !requiresSpaceAudit) {
             return [];
         }
 
-        return getVisibleSections(
-            instrument!,
+        return getVisiblePreAuditQuestions(
+            instrument!.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
             selectedMode,
-            Object.fromEntries(
-                Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
-                    sectionKey,
-                    sectionState.responses,
-                ]),
-            ),
         );
-    }, [auditSession, instrument, selectedMode]);
-    const sectionOverviewRows = useMemo<ExecuteOverviewSectionInput[]>(() => {
-        if (auditSession === undefined) {
-            return [];
-        }
-
-        return visibleSections.map((section, index) => {
-            const progress = getInstrumentSectionLocalProgress(auditSession, section);
-            return {
-                sectionKey: section.section_key,
-                sectionNumber: index + 1,
-                title: section.title,
-                answeredCount: progress.answeredQuestionCount,
-                totalCount: progress.visibleQuestionCount,
-                isComplete: progress.isComplete,
-            };
-        });
-    }, [auditSession, visibleSections]);
-    const sectionOverviewSummary = useMemo(() => {
-        return buildExecuteOverviewSummary(sectionOverviewRows);
-    }, [sectionOverviewRows]);
+    }, [instrument, requiresSpaceAudit, selectedMode]);
+    const isSetupFlowComplete =
+        auditSession !== undefined &&
+        selectedMode !== null &&
+        (!requiresSpaceAudit ||
+            isRequiredPreAuditComplete(spaceSetupQuestions, getPreAuditValues(auditSession), selectedMode));
     const flowSubject =
         selectedMode === null ? null : t(`subjects.${getExecuteFlowSubject(selectedMode)}`, { ns: "audit" });
-    const firstIncompleteSectionKey = sectionOverviewSummary.firstIncompleteSectionKey;
 
     const scrollExecutePlaceToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
@@ -300,34 +246,35 @@ export default function ExecutePlaceScreen() {
             </XStack>
         </Button>
     );
-    const sectionReviewCard =
-        selectedMode === null ? null : (
-            <SectionReviewCard
-                summary={sectionOverviewSummary}
-                continueLabel={
-                    flowSubject === null
-                        ? t("copy.continueToSubject", {
-                              ns: "audit",
-                              subject: t("subjects.workflow", { ns: "audit" }),
-                          })
-                        : t("copy.continueToSubject", { ns: "audit", subject: flowSubject })
-                }
-                onOpenSection={(sectionSummary) => {
-                    router.push(
-                        `/execute/${placeId}/section/${sectionSummary.sectionKey}?projectId=${encodeURIComponent(projectId)}` as Href,
-                    );
-                }}
-                onResumeFirstIncomplete={
-                    firstIncompleteSectionKey === null
-                        ? null
-                        : () => {
-                              router.push(
-                                  `/execute/${placeId}/section/${firstIncompleteSectionKey}?projectId=${encodeURIComponent(projectId)}` as Href,
-                              );
-                          }
-                }
-            />
-        );
+    const sectionOverviewButton = isSetupFlowComplete ? (
+        <Button
+            height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+            rounded={ds.radii.sm}
+            borderWidth={1}
+            borderColor={ds.colors.primary}
+            bg={ds.colors.primarySoft}
+            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            onPress={() => {
+                router.push(`/execute/${placeId}/overview?projectId=${encodeURIComponent(projectId)}` as Href);
+            }}
+        >
+            <XStack items="center" gap="$2">
+                <Text
+                    color={ds.colors.primary}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.labelLg.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.1}
+                >
+                    {t("setup.skipToSectionOverview", {
+                        ns: "audit",
+                        defaultValue: "Skip to section overview",
+                    })}
+                </Text>
+                <ArrowRight size={16} color={ds.colors.primary} />
+            </XStack>
+        </Button>
+    ) : null;
 
     const viewPlaceDetailsButton = (
         <Button
@@ -366,6 +313,7 @@ export default function ExecutePlaceScreen() {
             {viewPlaceDetailsButton}
             {roleCard}
             {continueButton}
+            {sectionOverviewButton}
             {selectedMode === null ? (
                 <Paragraph
                     color={ds.colors.warning}
@@ -427,7 +375,10 @@ export default function ExecutePlaceScreen() {
                 <XStack gap={layout.twoPaneGap} items="flex-start">
                     <YStack flex={1} gap="$3">
                         <PreamblePanel blocks={preambleBlocks} />
-                        {sectionReviewCard}
+                        <SetupFlowHintCard
+                            requiresSpaceAudit={requiresSpaceAudit}
+                            isSetupFlowComplete={isSetupFlowComplete}
+                        />
                     </YStack>
                     {supportRail}
                 </XStack>
@@ -443,6 +394,7 @@ export default function ExecutePlaceScreen() {
 
                     {roleCard}
                     {continueButton}
+                    {sectionOverviewButton}
                     {selectedMode === null ? (
                         <Paragraph
                             color={ds.colors.warning}
@@ -452,10 +404,63 @@ export default function ExecutePlaceScreen() {
                             {t("setup.modeRequired", { ns: "audit" })}
                         </Paragraph>
                     ) : null}
-                    {sectionReviewCard}
+                    <SetupFlowHintCard
+                        requiresSpaceAudit={requiresSpaceAudit}
+                        isSetupFlowComplete={isSetupFlowComplete}
+                    />
                 </YStack>
             )}
         </ScrollView>
+    );
+}
+
+interface SetupFlowHintCardProps {
+    readonly requiresSpaceAudit: boolean;
+    readonly isSetupFlowComplete: boolean;
+}
+
+/**
+ * Explain why the section list is not shown on the setup page.
+ */
+function SetupFlowHintCard({ requiresSpaceAudit, isSetupFlowComplete }: Readonly<SetupFlowHintCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation("audit");
+
+    if (isSetupFlowComplete) {
+        return null;
+    }
+
+    return (
+        <YStack
+            rounded={ds.radii.md}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+            bg={ds.colors.surfaceMuted}
+            p={layout.cardPadding}
+            gap="$2"
+        >
+            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleMd.fontSize}>
+                {t("setup.sectionsLockedTitle", {
+                    defaultValue: "Sections unlock after setup",
+                })}
+            </Text>
+            <Paragraph
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodyMd.fontSize}
+                lineHeight={ds.typography.bodyMd.lineHeight}
+            >
+                {requiresSpaceAudit
+                    ? t("setup.sectionsLockedWithSpaceAudit", {
+                          defaultValue:
+                              "Complete the audit details and required space-audit questions before opening the section overview.",
+                      })
+                    : t("setup.sectionsLockedWithoutSpaceAudit", {
+                          defaultValue: "Complete the audit details before opening the section overview.",
+                      })}
+            </Paragraph>
+        </YStack>
     );
 }
 
@@ -602,13 +607,6 @@ interface PreamblePanelProps {
     readonly blocks: readonly ParsedPreambleBlock[];
 }
 
-interface SectionReviewCardProps {
-    readonly summary: ReturnType<typeof buildExecuteOverviewSummary>;
-    readonly continueLabel: string;
-    readonly onOpenSection: (sectionSummary: ExecuteOverviewSectionInput) => void;
-    readonly onResumeFirstIncomplete: (() => void) | null;
-}
-
 /**
  * Render the large markdown-like preamble content with headings, lists, and emphasis.
  */
@@ -631,189 +629,6 @@ function PreamblePanel({ blocks }: Readonly<PreamblePanelProps>) {
             </YStack>
         </CollapsibleCard>
     );
-}
-
-/**
- * Review card that gives auditors one place to see section completion and jump
- * directly into the next or selected section.
- *
- * @param props Section review card props.
- * @returns Section review card.
- */
-function SectionReviewCard({
-    summary,
-    continueLabel,
-    onOpenSection,
-    onResumeFirstIncomplete,
-}: Readonly<SectionReviewCardProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
-    const { t } = useTranslation(["audit", "common"]);
-    const [sectionFilter, setSectionFilter] = useState<ExecuteOverviewSectionFilter>("all");
-    const visibleRows = useMemo(() => {
-        return filterExecuteOverviewRows(summary.rows, sectionFilter);
-    }, [sectionFilter, summary.rows]);
-    const allFilterLabel = `${t("filters.all", { ns: "common" })} (${summary.rows.length.toString()})`;
-
-    return (
-        <YStack
-            rounded={ds.radii.md}
-            borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
-            p={layout.cardPadding}
-            gap="$3"
-            style={{ boxShadow: ds.shadows.card }}
-        >
-            <YStack gap="$1.5">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={ds.typography.titleLg.fontSize}
-                >
-                    {t("overview.sections")}
-                </Text>
-            </YStack>
-
-            <XStack gap="$2" flexWrap="wrap">
-                <SectionReviewMetric
-                    label={allFilterLabel}
-                    isSelected={sectionFilter === "all"}
-                    onPress={() => {
-                        setSectionFilter("all");
-                    }}
-                />
-                <SectionReviewMetric
-                    label={t("overview.completedCount", {
-                        ns: "audit",
-                        count: summary.completedCount,
-                    })}
-                    isSelected={sectionFilter === "complete"}
-                    onPress={() => {
-                        setSectionFilter("complete");
-                    }}
-                />
-                <SectionReviewMetric
-                    label={t("overview.incompleteCount", {
-                        ns: "audit",
-                        count: summary.incompleteCount,
-                    })}
-                    isSelected={sectionFilter === "incomplete"}
-                    onPress={() => {
-                        setSectionFilter("incomplete");
-                    }}
-                />
-            </XStack>
-
-            {onResumeFirstIncomplete === null ? null : (
-                <Button
-                    height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                    rounded={ds.radii.sm}
-                    borderWidth={0}
-                    bg={ds.colors.primary}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={onResumeFirstIncomplete}
-                >
-                    <XStack items="center" gap="$2">
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelLg.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.1}
-                        >
-                            {continueLabel}
-                        </Text>
-                        <ArrowRight size={16} color={ds.colors.primaryForeground} />
-                    </XStack>
-                </Button>
-            )}
-
-            {visibleRows.length === 0 ? (
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                >
-                    {t("overview.sectionEmpty")}
-                </Paragraph>
-            ) : (
-                <YStack gap="$2.5">
-                    {visibleRows.map((sectionSummary) => (
-                        <YStack
-                            key={sectionSummary.sectionKey}
-                            rounded={ds.radii.sm}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.input}
-                            p="$3"
-                            gap="$2.5"
-                        >
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.bodyLg.fontSize}
-                                lineHeight={ds.typography.bodyLg.lineHeight}
-                            >
-                                {`${sectionSummary.sectionNumber}. ${sectionSummary.title}`}
-                            </Text>
-                            <XStack justify="space-between" items="center">
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                >
-                                    {t("section.answeredCount", {
-                                        answered: sectionSummary.answeredCount,
-                                        total: sectionSummary.totalCount,
-                                    })}
-                                </Paragraph>
-                                <Button
-                                    height={layout.isTablet ? 42 : 38}
-                                    rounded={ds.radii.sm}
-                                    borderWidth={1}
-                                    borderColor={ds.colors.border}
-                                    bg={ds.colors.surface}
-                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                    onPress={() => {
-                                        onOpenSection(sectionSummary);
-                                    }}
-                                >
-                                    <Text
-                                        color={ds.colors.foreground}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.labelMd.fontSize}
-                                        textTransform="uppercase"
-                                        letterSpacing={1}
-                                    >
-                                        {sectionSummary.isComplete
-                                            ? t("section.reviewSection")
-                                            : t("section.openSection")}
-                                    </Text>
-                                </Button>
-                            </XStack>
-                        </YStack>
-                    ))}
-                </YStack>
-            )}
-        </YStack>
-    );
-}
-
-interface SectionReviewMetricProps {
-    readonly label: string;
-    readonly isSelected: boolean;
-    readonly onPress: () => void;
-}
-
-/**
- * Small filter chip used by the section review card.
- *
- * @param props Filter label, selected state, and press handler.
- * @returns Styled filter chip.
- */
-function SectionReviewMetric({ label, isSelected, onPress }: Readonly<SectionReviewMetricProps>) {
-    return <FilterChip label={label} isSelected={isSelected} onPress={onPress} />;
 }
 
 interface PreambleBlockCardProps {

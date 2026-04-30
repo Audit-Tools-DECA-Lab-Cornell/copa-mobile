@@ -181,6 +181,10 @@ function toAuthUser(payload: unknown): AuthUser | null {
         email,
         name,
         accountType,
+        approved: readBoolean(payload.approved),
+        profileCompleted: readBoolean(payload.profileCompleted),
+        nextStep: readString(payload.nextStep),
+        organization: readNullableString(payload.organization) ?? null,
     };
 }
 
@@ -301,8 +305,8 @@ function toIsAvailableAsyncFunction(value: unknown): (() => Promise<boolean>) | 
  * @param value Value to validate.
  * @returns String when valid, otherwise null.
  */
-function readString(value: unknown): string | null {
-    return typeof value === "string" ? value : null;
+function readString(value: unknown): string {
+    return typeof value === "string" ? value : "";
 }
 
 /**
@@ -334,4 +338,14 @@ function readAccountType(value: unknown): AccountType | null {
     }
 
     return null;
+}
+
+/**
+ * Read a boolean value from unknown input.
+ *
+ * @param value Value to validate.
+ * @returns Boolean when valid, otherwise null.
+ */
+function readBoolean(value: unknown): boolean {
+    return typeof value === "boolean" ? value : false;
 }

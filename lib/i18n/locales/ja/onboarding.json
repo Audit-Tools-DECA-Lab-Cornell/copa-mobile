@@ -1,0 +1,86 @@
+{
+    "resetPassword": {
+        "title": "パスワードを設定する",
+        "subtitle": "アカウントを保護するために安全なパスワードを選択してください。",
+        "newPasswordLabel": "新しいパスワード",
+        "newPasswordPlaceholder": "新しいパスワードを入力",
+        "confirmPasswordLabel": "パスワードの確認",
+        "confirmPasswordPlaceholder": "パスワードを再入力",
+        "submit": "パスワードを設定する",
+        "submitting": "設定中...",
+        "requirements": {
+            "minLength": "8文字以上",
+            "uppercase": "大文字1文字以上",
+            "lowercase": "小文字1文字以上",
+            "number": "数字1文字以上"
+        },
+        "validation": {
+            "tooShort": "パスワードは8文字以上である必要があります。",
+            "missingUppercase": "パスワードには大文字を含める必要があります。",
+            "missingLowercase": "パスワードには小文字を含める必要があります。",
+            "missingNumber": "パスワードには数字を含める必要があります。",
+            "noMatch": "パスワードが一致しません。"
+        }
+    },
+    "completeProfile": {
+        "title": "プロフィールを完成させる",
+        "subtitle": "自分自身について少し教えてください。",
+        "fullNameLabel": "氏名",
+        "fullNamePlaceholder": "氏名",
+        "phoneLabel": "電話番号",
+        "phonePlaceholder": "+81 00 0000 0000",
+        "emailLabel": "メールアドレス",
+        "emailPlaceholder": "you@example.com",
+        "genderLabel": "性別",
+        "genderPlaceholder": "性別を選択",
+        "ageRangeLabel": "年齢層",
+        "ageRangePlaceholder": "年齢層を選択",
+        "cityLabel": "市区町村",
+        "cityPlaceholder": "市区町村",
+        "provinceLabel": "都道府県",
+        "provincePlaceholder": "都道府県",
+        "countryLabel": "国",
+        "countryPlaceholder": "国",
+        "roleLabel": "役割 / 職業",
+        "rolePlaceholder": "例: 教師、研究者",
+        "submit": "保存して続ける",
+        "submitting": "保存中...",
+        "validation": {
+            "fullNameRequired": "氏名は必須です。"
+        },
+        "genderOptions": {
+            "male": "男性",
+            "female": "女性",
+            "nonBinary": "ノンバイナリー",
+            "preferNotToSay": "回答しない",
+            "other": "その他"
+        },
+        "ageRangeOptions": {
+            "under18": "18歳未満",
+            "18to24": "18 – 24",
+            "25to34": "25 – 34",
+            "35to44": "35 – 44",
+            "45to54": "45 – 54",
+            "55to64": "55 – 64",
+            "65plus": "65歳以上"
+        }
+    },
+    "acceptTerms": {
+        "title": "利用規約とプライバシー",
+        "subtitle": "続行する前にお読みいただき、同意してください。",
+        "scrollHint": "同意するには一番下までスクロールしてください。",
+        "submit": "読んで同意します",
+        "submitting": "同意中...",
+        "termsHeading": "利用規約",
+        "termsBody": "Playspaceを使用することで、プロジェクトマネージャーの指示に従って誠実に監査を実施することに同意します。アクセス認証情報を共有しないでください。",
+        "privacyHeading": "プライバシー通知",
+        "privacyBody": "お客様の個人情報は安全に保管され、プラットフォーム内での提出物の識別にのみ使用されます。監査員コードのみが他の人に見える監査記録に関連付けられます。"
+    },
+    "auditorCode": {
+        "title": "監査員コード",
+        "subtitle": "これがすべての監査記録における識別子です。",
+        "codeLabel": "監査員コード",
+        "explanation": "提出する監査には、あなたの名前や連絡先ではなく、監査員コードのみが保存されます。",
+        "submit": "Playspaceに入る"
+    }
+}

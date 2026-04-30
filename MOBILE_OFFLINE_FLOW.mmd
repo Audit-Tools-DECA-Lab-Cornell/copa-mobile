@@ -11,8 +11,11 @@ flowchart TB
     H5[Read legacy Secure Store audit snapshot]
     H6{Legacy snapshot found?}
     H7[Migrate legacy snapshot into Legend State then save immediately to MMKV]
+    HB{Instrument still null after MMKV restore?}
+    HBY[Load bundled fallback instrument from app assets]
     H8[Start debounced auto-save observer]
     H9[Set auditUI$.isHydrated true]
+    HS[Best-effort syncInstrument replaces bundled with API or MMKV-cached version]
     HR[Discard stale hydrate response when a newer hydrate started]
   end
 
@@ -69,10 +72,13 @@ flowchart TB
   H2 -->|no| H5
   H5 --> H6
   H6 -->|yes| H7
-  H6 -->|no| H8
-  H4 --> H8
-  H7 --> H8
+  H6 -->|no| HB
+  H4 --> HB
+  H7 --> HB
+  HB -->|yes| HBY --> H8
+  HB -->|no| H8
   H8 --> H9
+  H9 --> HS
   H1 -.-> HR
 
   H9 --> E1

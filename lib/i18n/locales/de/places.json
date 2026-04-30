@@ -30,5 +30,7 @@
     "sociabilityShort": "S",
     "subtitle": "Pruefen Sie Ihre Feldliste, verfolgen Sie den Fortschritt und springen Sie zurueck in aktive Audits.",
     "title": "Zugewiesene Orte",
-    "usabilityShort": "U"
+    "usabilityShort": "U",
+    "filterStatus": "Status",
+    "filterSort": "Sortierung"
 }

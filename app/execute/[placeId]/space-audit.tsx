@@ -9,15 +9,10 @@ import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
-import {
-    getInstrumentSectionLocalProgress,
-    getPreAuditValues,
-    getVisiblePreAuditQuestions,
-    getVisibleSections,
-    isRequiredPreAuditComplete,
-} from "lib/audit/selectors";
+import { getPreAuditValues, getVisiblePreAuditQuestions, isRequiredPreAuditComplete } from "lib/audit/selectors";
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
+import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { getResponsiveContentContainerStyle, type ResponsiveLayout, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
@@ -176,25 +171,10 @@ export default function SpaceAuditScreen() {
         if (auditSession !== undefined) {
             navigation.setOptions({
                 ...themedHeaderOptions,
-                headerTitle: () => (
-                    <YStack justify="center" my="$2.5" overflowX="scroll">
-                        <ScrollView horizontal>
-                            <YStack justify="center">
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodySemiBold}
-                                    fontSize={ds.typography.titleLg.fontSize}
-                                    lineHeight={ds.typography.titleLg.lineHeight}
-                                >
-                                    {auditSession.place_name}
-                                </Text>
-                            </YStack>
-                        </ScrollView>
-                    </YStack>
-                ),
+                headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
             });
         }
-    }, [themedHeaderOptions, navigation, auditSession, ds]);
+    }, [themedHeaderOptions, navigation, auditSession]);
 
     const flushToStore = useCallback(() => {
         const latestAuditSession = latestAuditSessionRef.current;
@@ -302,7 +282,7 @@ export default function SpaceAuditScreen() {
                     subject: t("subjects.survey", { ns: "audit" }),
                 })}
                 onAction={() => {
-                    router.replace(getFirstSectionRoute(placeId, projectId, auditSession, instrument) as Href);
+                    router.replace(getSectionOverviewRoute(placeId, projectId) as Href);
                 }}
             />
         );
@@ -315,7 +295,7 @@ export default function SpaceAuditScreen() {
     const matrixQuestions = setupQuestions.filter((question) => question.group_key === "current_users_matrix");
     const standaloneQuestions = setupQuestions.filter((question) => question.group_key !== "current_users_matrix");
     const isSetupComplete = isRequiredPreAuditComplete(setupQuestions, formValues, selectedMode);
-    const nextRoute = getFirstSectionRoute(placeId, projectId, auditSession, instrument);
+    const nextRoute = getSectionOverviewRoute(placeId, projectId);
     const flowSubject = t(`subjects.${getExecuteFlowSubject(selectedMode)}`, { ns: "audit" });
 
     const standaloneCards = standaloneQuestions.map((question) => {
@@ -943,35 +923,10 @@ function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly
 }
 
 /**
- * Resolve a first-section route after the setup flow.
+ * Resolve the standalone section-overview route after the setup flow.
  */
-function getFirstSectionRoute(
-    placeId: string,
-    projectId: string,
-    auditSession: AuditSession,
-    instrument: ReturnType<typeof useLocalizedInstrument>,
-): string {
-    const sections = getVisibleSections(
-        instrument!,
-        auditSession.selected_execution_mode,
-        Object.fromEntries(
-            Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [
-                sectionKey,
-                sectionState.responses,
-            ]),
-        ),
-    );
-    const firstIncomplete = sections.find((section) => {
-        const progress = getInstrumentSectionLocalProgress(auditSession, section);
-        return !progress.isComplete;
-    });
-    const targetSection = firstIncomplete ?? sections[0];
-
-    if (targetSection === undefined) {
-        return `/execute/${placeId}?projectId=${encodeURIComponent(projectId)}`;
-    }
-
-    return `/execute/${placeId}/section/${targetSection.section_key}?projectId=${encodeURIComponent(projectId)}`;
+function getSectionOverviewRoute(placeId: string, projectId: string): string {
+    return `/execute/${placeId}/overview?projectId=${encodeURIComponent(projectId)}`;
 }
 
 /**

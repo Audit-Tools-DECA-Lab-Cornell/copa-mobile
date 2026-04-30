@@ -18,5 +18,6 @@
     "priorityTask": "प्राथमिकता कार्य",
     "readinessLabel": "{{percent}}% तैयार",
     "title": "फील्ड डैशबोर्ड",
-    "urgentAudit": "तत्काल ऑडिट"
+    "urgentAudit": "तत्काल ऑडिट",
+    "auditorOrganization": "संगठन"
 }

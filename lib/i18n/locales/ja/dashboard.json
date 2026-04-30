@@ -18,5 +18,6 @@
     "priorityTask": "優先タスク",
     "readinessLabel": "{{percent}}% 準備完了",
     "title": "現場ダッシュボード",
-    "urgentAudit": "緊急監査"
+    "urgentAudit": "緊急監査",
+    "auditorOrganization": "組織"
 }
