@@ -17,9 +17,7 @@ function mergePlaceAxisWithSession(axisValue: PlaceAxisStatus, sessionStatus: Au
         return "submitted";
     }
     if (sessionStatus === "IN_PROGRESS" || sessionStatus === "PAUSED") {
-        if (axisValue === "submitted" || axisValue === "complete") {
-            return axisValue;
-        }
+        if (axisValue === "submitted") return axisValue;
         return "in_progress";
     }
     return axisValue;

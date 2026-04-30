@@ -1,8 +1,8 @@
 import type { AuditorPlace } from "lib/audit/places-api";
 import type { LocalizedPlaceStatus } from "lib/i18n/format";
 
-/** Axis statuses that represent terminal (completed) work on a place. */
-const axisTerminal = (value: string): boolean => value === "submitted" || value === "complete";
+/** Axis status that represents terminal (completed) work on a place. */
+const axisTerminal = (value: string): boolean => value === "submitted";
 
 /**
  * Resolve a single axis status into a display-ready LocalizedPlaceStatus.
@@ -18,7 +18,7 @@ const axisTerminal = (value: string): boolean => value === "submitted" || value 
  * @returns Display-ready status bounded by the current auditor's session state.
  */
 function resolveAxisStatus(
-    axisStatus: "not_started" | "in_progress" | "submitted" | "complete",
+    axisStatus: "not_started" | "in_progress" | "submitted",
     hasStarted: boolean,
     hasSubmitted: boolean,
 ): LocalizedPlaceStatus {

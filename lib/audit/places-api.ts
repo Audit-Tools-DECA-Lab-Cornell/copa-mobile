@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { type PaginatedResponse, playspaceTypeSchema } from "lib/audit/types";
 
-const placeAxisStatusSchema = z.enum(["not_started", "in_progress", "submitted", "complete"]);
+const placeAxisStatusSchema = z.enum(["not_started", "in_progress", "submitted"]);
 const scorePairSchema = z.object({
     pv: z.number(),
     u: z.number(),
