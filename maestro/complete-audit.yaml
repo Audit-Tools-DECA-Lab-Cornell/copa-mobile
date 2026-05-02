@@ -1,0 +1,10 @@
+# Auditor-only native E2E flow for the Expo development build.
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+# Scaffold for the full auditor completion journey.
+# Keep this flow out of smoke CI until section-level accessibility labels are stable.
+- runFlow: create-audit.yaml
+- assertVisible:
+      text: ".*Audit.*|.*Pre-audit.*|.*Execution mode.*"

@@ -32,7 +32,10 @@
         "i18n:sync": "bun run i18n:extract && python3 scripts/translate_i18n.py",
         "check": "bun run typecheck && bun run lint && bun run format:check",
         "ci:quality": "bun run check && bun run doctor",
-        "prepare": "husky && husky install"
+        "prepare": "husky && husky install",
+        "test:e2e:maestro": "maestro test maestro",
+        "test:e2e:maestro:smoke": "maestro test maestro/login.yaml maestro/assigned-place-visible.yaml",
+        "test:contracts:shared": "node ../testing/scripts/validate-contracts.mjs"
     },
     "dependencies": {
         "@expo-google-fonts/geist": "^0.4.1",
@@ -49,11 +52,11 @@
         "@tamagui/toast": "^2.0.0-rc.41",
         "babel-preset-expo": "~55.0.8",
         "burnt": "^0.12.2",
-        "expo": "~55.0.18",
+        "expo": "~55.0.19",
         "expo-background-task": "~55.0.17",
         "expo-build-properties": "~55.0.13",
         "expo-constants": "~55.0.15",
-        "expo-dev-client": "~55.0.28",
+        "expo-dev-client": "~55.0.30",
         "expo-file-system": "~55.0.17",
         "expo-font": "~55.0.4",
         "expo-linking": "~55.0.14",

@@ -1,0 +1,19 @@
+# Auditor-only native E2E flow for the Expo development build.
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- launchApp:
+      clearState: true
+- extendedWaitUntil:
+      visible: "Login email"
+      timeout: 30000
+- tapOn: "Login email"
+- inputText: "ariana.ngata@example.org"
+- tapOn: "Login password"
+- inputText: "DemoPass123!"
+- hideKeyboard
+- tapOn: "Sign in"
+- extendedWaitUntil:
+      visible: ".*Dashboard.*|.*Assigned.*|.*Places.*"
+      timeout: 30000

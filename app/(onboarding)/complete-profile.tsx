@@ -1,11 +1,11 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowRight, ChevronDown } from "@tamagui/lucide-icons-2";
+import { ChevronDown, UserCircle2 } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, type ColorTokens, Input, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
+import { OnboardingShell } from "components/onboarding/onboarding-shell";
 import { useAuthStore } from "stores/auth-store";
 import { updateMyAuditorProfile } from "lib/audit/profile-api";
 import { createModuleLogger } from "lib/logger";
@@ -148,238 +148,229 @@ export default function CompleteProfileScreen() {
     );
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 16 : 0}
-            style={{ flex: 1, backgroundColor: ds.colors.background }}
+        <OnboardingShell
+            step={2}
+            totalSteps={4}
+            icon={UserCircle2}
+            eyebrow={t("completeProfile.stepLabel", "Step 2 of 4")}
+            title={t("completeProfile.title", "Complete your profile")}
+            subtitle={t(
+                "completeProfile.headerSubtitle",
+                "Your details help your manager find you and tailor assignments.",
+            )}
+            ctaLabel={t("completeProfile.submit", "Save and continue")}
+            ctaLoadingLabel={t("completeProfile.submitting", "Saving...")}
+            canSubmit={canSubmit}
+            isLoading={isLoading}
+            onCtaPress={() => {
+                void handleSubmit();
+            }}
+            errorMessage={errorMessage}
+            helperText={t(
+                "completeProfile.helperText",
+                "Only your full name is required — everything else is optional.",
+            )}
+            avoidKeyboard
         >
-            <ScrollView
-                contentInsetAdjustmentBehavior="automatic"
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{
-                    flexGrow: 1,
-                    paddingHorizontal: layout.screenPaddingHorizontal,
-                    paddingVertical: layout.isTablet ? 64 : 32,
-                }}
-            >
-                <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
-                    <YStack gap="$2">
-                        <Paragraph
-                            color={ds.colors.primary}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.4}
-                        >
-                            {t("completeProfile.stepLabel", "Step 2 of 4")}
-                        </Paragraph>
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={
-                                layout.isTablet ? ds.typography.displayMd.fontSize : ds.typography.displaySm.fontSize
-                            }
-                            textTransform="uppercase"
-                            fontStyle="italic"
-                            letterSpacing={-0.5}
-                        >
-                            {t("completeProfile.title")}
-                        </Text>
-                        <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                            {t("completeProfile.subtitle")}
-                        </Paragraph>
-                    </YStack>
+            <ProfileSection title={t("completeProfile.sectionContact", "Contact details")} ds={ds}>
+                <ProfileField label={t("completeProfile.fullNameLabel")} required ds={ds}>
+                    <StyledInput
+                        value={fullName}
+                        onChangeText={setFullName}
+                        autoCapitalize="words"
+                        textContentType="name"
+                        placeholder={t("completeProfile.fullNamePlaceholder")}
+                        ds={ds}
+                        onFocus={closeDropdowns}
+                    />
+                </ProfileField>
 
-                    <YStack gap="$4">
-                        <ProfileField label={t("completeProfile.fullNameLabel")} required ds={ds}>
-                            <StyledInput
-                                value={fullName}
-                                onChangeText={setFullName}
-                                autoCapitalize="words"
-                                textContentType="name"
-                                placeholder={t("completeProfile.fullNamePlaceholder")}
-                                ds={ds}
-                                onFocus={closeDropdowns}
-                            />
-                        </ProfileField>
+                <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
+                    <ProfileField label={t("completeProfile.phoneLabel")} ds={ds} style={{ flex: 1 }}>
+                        <StyledInput
+                            value={phone}
+                            onChangeText={setPhone}
+                            keyboardType="phone-pad"
+                            textContentType="telephoneNumber"
+                            placeholder={t("completeProfile.phonePlaceholder")}
+                            ds={ds}
+                            onFocus={closeDropdowns}
+                        />
+                    </ProfileField>
 
-                        <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
-                            <ProfileField label={t("completeProfile.phoneLabel")} ds={ds} style={{ flex: 1 }}>
-                                <StyledInput
-                                    value={phone}
-                                    onChangeText={setPhone}
-                                    keyboardType="phone-pad"
-                                    textContentType="telephoneNumber"
-                                    placeholder={t("completeProfile.phonePlaceholder")}
-                                    ds={ds}
-                                    onFocus={closeDropdowns}
-                                />
-                            </ProfileField>
+                    <ProfileField label={t("completeProfile.emailLabel")} ds={ds} style={{ flex: 1 }}>
+                        <StyledInput
+                            value={email}
+                            onChangeText={setEmail}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            textContentType="emailAddress"
+                            placeholder={t("completeProfile.emailPlaceholder")}
+                            ds={ds}
+                            onFocus={closeDropdowns}
+                        />
+                    </ProfileField>
+                </XStack>
 
-                            <ProfileField label={t("completeProfile.emailLabel")} ds={ds} style={{ flex: 1 }}>
-                                <StyledInput
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                    textContentType="emailAddress"
-                                    placeholder={t("completeProfile.emailPlaceholder")}
-                                    ds={ds}
-                                    onFocus={closeDropdowns}
-                                />
-                            </ProfileField>
-                        </XStack>
+                {email.trim().length > 0 && !isEmailValid ? (
+                    <Paragraph
+                        color={ds.colors.danger}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                        px="$1"
+                    >
+                        {t("completeProfile.validation.invalidEmail", "Enter a valid email address.")}
+                    </Paragraph>
+                ) : null}
+            </ProfileSection>
 
-                        {email.trim().length > 0 && !isEmailValid ? (
-                            <Paragraph
-                                color={ds.colors.danger}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
-                                px="$1"
-                            >
-                                {t("completeProfile.validation.invalidEmail", "Enter a valid email address.")}
-                            </Paragraph>
-                        ) : null}
-
-                        <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
-                            <ProfileField label={t("completeProfile.genderLabel")} ds={ds} style={{ flex: 1 }}>
-                                <SelectButton
-                                    label={genderLabel}
-                                    isOpen={isGenderOpen}
-                                    hasValue={gender !== null}
-                                    ds={ds}
-                                    onPress={() => {
-                                        setIsGenderOpen((value) => !value);
-                                        setIsAgeRangeOpen(false);
-                                    }}
-                                />
-                                {isGenderOpen ? (
-                                    <DropdownList
-                                        options={GENDER_OPTIONS}
-                                        onSelect={(value) => {
-                                            setGender(value);
-                                            setIsGenderOpen(false);
-                                        }}
-                                        selectedValue={gender}
-                                        keyPrefix="completeProfile."
-                                        ds={ds}
-                                        layout={layout}
-                                        t={t}
-                                    />
-                                ) : null}
-                            </ProfileField>
-
-                            <ProfileField label={t("completeProfile.ageRangeLabel")} ds={ds} style={{ flex: 1 }}>
-                                <SelectButton
-                                    label={ageRangeLabel}
-                                    isOpen={isAgeRangeOpen}
-                                    hasValue={ageRange !== null}
-                                    ds={ds}
-                                    onPress={() => {
-                                        setIsAgeRangeOpen((value) => !value);
-                                        setIsGenderOpen(false);
-                                    }}
-                                />
-                                {isAgeRangeOpen ? (
-                                    <DropdownList
-                                        options={AGE_RANGE_OPTIONS}
-                                        onSelect={(value) => {
-                                            setAgeRange(value);
-                                            setIsAgeRangeOpen(false);
-                                        }}
-                                        selectedValue={ageRange}
-                                        keyPrefix="completeProfile."
-                                        ds={ds}
-                                        layout={layout}
-                                        t={t}
-                                    />
-                                ) : null}
-                            </ProfileField>
-                        </XStack>
-
-                        <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
-                            <ProfileField label={t("completeProfile.cityLabel")} ds={ds} style={{ flex: 1 }}>
-                                <StyledInput
-                                    value={city}
-                                    onChangeText={setCity}
-                                    autoCapitalize="words"
-                                    placeholder={t("completeProfile.cityPlaceholder")}
-                                    ds={ds}
-                                    onFocus={closeDropdowns}
-                                />
-                            </ProfileField>
-
-                            <ProfileField label={t("completeProfile.provinceLabel")} ds={ds} style={{ flex: 1 }}>
-                                <StyledInput
-                                    value={province}
-                                    onChangeText={setProvince}
-                                    autoCapitalize="words"
-                                    placeholder={t("completeProfile.provincePlaceholder")}
-                                    ds={ds}
-                                    onFocus={closeDropdowns}
-                                />
-                            </ProfileField>
-                        </XStack>
-
-                        <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
-                            <ProfileField label={t("completeProfile.countryLabel")} ds={ds} style={{ flex: 1 }}>
-                                <StyledInput
-                                    value={country}
-                                    onChangeText={setCountry}
-                                    autoCapitalize="words"
-                                    textContentType="countryName"
-                                    placeholder={t("completeProfile.countryPlaceholder")}
-                                    ds={ds}
-                                    onFocus={closeDropdowns}
-                                />
-                            </ProfileField>
-
-                            <ProfileField label={t("completeProfile.roleLabel")} ds={ds} style={{ flex: 1 }}>
-                                <StyledInput
-                                    value={role}
-                                    onChangeText={setRole}
-                                    autoCapitalize="words"
-                                    placeholder={t("completeProfile.rolePlaceholder")}
-                                    ds={ds}
-                                    onFocus={closeDropdowns}
-                                />
-                            </ProfileField>
-                        </XStack>
-
-                        {errorMessage !== null ? <StatusMessage message={errorMessage} ds={ds} /> : null}
-
-                        <Button
-                            height={56}
-                            rounded={ds.radii.md}
-                            borderWidth={0}
-                            bg={ds.colors.primary}
-                            disabled={!canSubmit}
-                            opacity={canSubmit ? 1 : 0.65}
-                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            <ProfileSection title={t("completeProfile.sectionDemographics", "About you")} ds={ds}>
+                <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
+                    <ProfileField label={t("completeProfile.genderLabel")} ds={ds} style={{ flex: 1 }}>
+                        <SelectButton
+                            label={genderLabel}
+                            isOpen={isGenderOpen}
+                            hasValue={gender !== null}
+                            ds={ds}
                             onPress={() => {
-                                void handleSubmit();
+                                setIsGenderOpen((value) => !value);
+                                setIsAgeRangeOpen(false);
                             }}
-                            style={{ boxShadow: canSubmit ? ds.shadows.accent : "none" }}
-                            accessibilityRole="button"
-                            accessibilityState={{ disabled: !canSubmit, busy: isLoading }}
-                        >
-                            <XStack items="center" gap="$2">
-                                <Text
-                                    color={ds.colors.primaryForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelLg.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.4}
-                                >
-                                    {isLoading ? t("completeProfile.submitting") : t("completeProfile.submit")}
-                                </Text>
-                                <ArrowRight size={16} color={ds.colors.primaryForeground} />
-                            </XStack>
-                        </Button>
-                    </YStack>
-                </YStack>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                        />
+                        {isGenderOpen ? (
+                            <DropdownList
+                                options={GENDER_OPTIONS}
+                                onSelect={(value) => {
+                                    setGender(value);
+                                    setIsGenderOpen(false);
+                                }}
+                                selectedValue={gender}
+                                keyPrefix="completeProfile."
+                                ds={ds}
+                                isTablet={layout.isTablet}
+                                t={t}
+                            />
+                        ) : null}
+                    </ProfileField>
+
+                    <ProfileField label={t("completeProfile.ageRangeLabel")} ds={ds} style={{ flex: 1 }}>
+                        <SelectButton
+                            label={ageRangeLabel}
+                            isOpen={isAgeRangeOpen}
+                            hasValue={ageRange !== null}
+                            ds={ds}
+                            onPress={() => {
+                                setIsAgeRangeOpen((value) => !value);
+                                setIsGenderOpen(false);
+                            }}
+                        />
+                        {isAgeRangeOpen ? (
+                            <DropdownList
+                                options={AGE_RANGE_OPTIONS}
+                                onSelect={(value) => {
+                                    setAgeRange(value);
+                                    setIsAgeRangeOpen(false);
+                                }}
+                                selectedValue={ageRange}
+                                keyPrefix="completeProfile."
+                                ds={ds}
+                                isTablet={layout.isTablet}
+                                t={t}
+                            />
+                        ) : null}
+                    </ProfileField>
+                </XStack>
+            </ProfileSection>
+
+            <ProfileSection title={t("completeProfile.sectionLocation", "Where you work")} ds={ds}>
+                <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
+                    <ProfileField label={t("completeProfile.cityLabel")} ds={ds} style={{ flex: 1 }}>
+                        <StyledInput
+                            value={city}
+                            onChangeText={setCity}
+                            autoCapitalize="words"
+                            placeholder={t("completeProfile.cityPlaceholder")}
+                            ds={ds}
+                            onFocus={closeDropdowns}
+                        />
+                    </ProfileField>
+
+                    <ProfileField label={t("completeProfile.provinceLabel")} ds={ds} style={{ flex: 1 }}>
+                        <StyledInput
+                            value={province}
+                            onChangeText={setProvince}
+                            autoCapitalize="words"
+                            placeholder={t("completeProfile.provincePlaceholder")}
+                            ds={ds}
+                            onFocus={closeDropdowns}
+                        />
+                    </ProfileField>
+                </XStack>
+
+                <XStack gap="$3" style={{ flexDirection: layout.isTablet ? "row" : "column" }}>
+                    <ProfileField label={t("completeProfile.countryLabel")} ds={ds} style={{ flex: 1 }}>
+                        <StyledInput
+                            value={country}
+                            onChangeText={setCountry}
+                            autoCapitalize="words"
+                            textContentType="countryName"
+                            placeholder={t("completeProfile.countryPlaceholder")}
+                            ds={ds}
+                            onFocus={closeDropdowns}
+                        />
+                    </ProfileField>
+
+                    <ProfileField label={t("completeProfile.roleLabel")} ds={ds} style={{ flex: 1 }}>
+                        <StyledInput
+                            value={role}
+                            onChangeText={setRole}
+                            autoCapitalize="words"
+                            placeholder={t("completeProfile.rolePlaceholder")}
+                            ds={ds}
+                            onFocus={closeDropdowns}
+                        />
+                    </ProfileField>
+                </XStack>
+            </ProfileSection>
+        </OnboardingShell>
+    );
+}
+
+interface ProfileSectionProps {
+    readonly title: string;
+    readonly ds: ReturnType<typeof useDesignSystem>;
+    readonly children: ReactNode;
+}
+
+/**
+ * Logical grouping for related profile fields.  Renders a small uppercase
+ * eyebrow plus a card-like surface to give each section visual weight.
+ */
+function ProfileSection({ title, ds, children }: ProfileSectionProps) {
+    return (
+        <YStack gap="$3">
+            <Paragraph
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelMd.fontSize}
+                textTransform="uppercase"
+                letterSpacing={1.5}
+                px="$1"
+            >
+                {title}
+            </Paragraph>
+            <YStack
+                rounded={ds.radii.lg}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
+                p="$4"
+                gap="$4"
+                style={{ boxShadow: ds.shadows.card }}
+            >
+                {children}
+            </YStack>
+        </YStack>
     );
 }
 
@@ -423,7 +414,7 @@ interface StyledInputProps {
     readonly autoCapitalize?: "none" | "words" | "sentences" | "characters";
     readonly keyboardType?: "default" | "email-address" | "phone-pad" | "numeric";
     readonly textContentType?: "name" | "emailAddress" | "telephoneNumber" | "countryName" | "none";
-    readonly onFocus?: () => void;
+    readonly onFocus?: (() => void) | undefined;
 }
 
 function StyledInput({
@@ -508,11 +499,11 @@ interface DropdownListProps {
     readonly selectedValue: string | null;
     readonly keyPrefix: string;
     readonly ds: ReturnType<typeof useDesignSystem>;
-    readonly layout: ReturnType<typeof useResponsiveLayout>;
+    readonly isTablet: boolean;
     readonly t: (key: string) => string;
 }
 
-function DropdownList({ options, onSelect, selectedValue, keyPrefix, ds, layout, t }: DropdownListProps) {
+function DropdownList({ options, onSelect, selectedValue, keyPrefix, ds, isTablet, t }: DropdownListProps) {
     return (
         <YStack
             rounded={ds.radii.md}
@@ -528,7 +519,7 @@ function DropdownList({ options, onSelect, selectedValue, keyPrefix, ds, layout,
                 return (
                     <Button
                         key={option.value}
-                        height={layout.isTablet ? 50 : 44}
+                        height={isTablet ? 50 : 44}
                         rounded={ds.radii.sm}
                         borderWidth={1}
                         borderColor={isSelected ? ds.colors.primary : "transparent"}
@@ -552,21 +543,6 @@ function DropdownList({ options, onSelect, selectedValue, keyPrefix, ds, layout,
                     </Button>
                 );
             })}
-        </YStack>
-    );
-}
-
-interface StatusMessageProps {
-    readonly message: string;
-    readonly ds: ReturnType<typeof useDesignSystem>;
-}
-
-function StatusMessage({ message, ds }: StatusMessageProps) {
-    return (
-        <YStack borderWidth={1} borderColor={ds.colors.danger} bg={ds.colors.dangerSoft} rounded={ds.radii.md} p="$3">
-            <Paragraph color={ds.colors.danger} fontFamily={ds.fonts.bodyMedium}>
-                {message}
-            </Paragraph>
         </YStack>
     );
 }

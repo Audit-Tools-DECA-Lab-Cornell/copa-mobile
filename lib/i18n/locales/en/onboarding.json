@@ -1,11 +1,20 @@
 {
+    "common": {
+        "sessionExpired": "Session expired. Please sign in again."
+    },
     "resetPassword": {
+        "stepLabel": "Step 1 of 4",
         "title": "Set your password",
         "subtitle": "Choose a secure password to protect your account.",
+        "headerSubtitle": "Set a strong password — you will use this every time you sign in.",
+        "requirementsTitle": "Password requirements",
+        "currentPasswordLabel": "Temporary password",
+        "currentPasswordPlaceholder": "Enter your temporary password",
         "newPasswordLabel": "New password",
         "newPasswordPlaceholder": "Enter new password",
         "confirmPasswordLabel": "Confirm password",
         "confirmPasswordPlaceholder": "Re-enter new password",
+        "helperText": "Your password is encrypted on this device and never shared in plain text.",
         "submit": "Set password",
         "submitting": "Setting password...",
         "requirements": {
@@ -15,16 +24,24 @@
             "number": "One number"
         },
         "validation": {
-            "tooShort": "Password must be at least 8 characters.",
+            "currentPasswordRequired": "Enter your temporary password.",
+            "tooShort": "Your new password does not meet the requirements.",
             "missingUppercase": "Password must include an uppercase letter.",
             "missingLowercase": "Password must include a lowercase letter.",
             "missingNumber": "Password must include a number.",
-            "noMatch": "Passwords do not match."
+            "sameAsCurrent": "Choose a password different from your temporary password.",
+            "noMatch": "Passwords do not match.",
+            "failed": "We could not update your password. Please check your temporary password and try again."
         }
     },
     "completeProfile": {
+        "stepLabel": "Step 2 of 4",
         "title": "Complete your profile",
         "subtitle": "Tell us a bit about yourself so we can personalise your experience.",
+        "headerSubtitle": "Your details help your manager find you and tailor assignments.",
+        "sectionContact": "Contact details",
+        "sectionDemographics": "About you",
+        "sectionLocation": "Where you work",
         "fullNameLabel": "Full name",
         "fullNamePlaceholder": "Your full name",
         "phoneLabel": "Phone number",
@@ -43,10 +60,13 @@
         "countryPlaceholder": "Your country",
         "roleLabel": "Role / Profession",
         "rolePlaceholder": "e.g. Teacher, Researcher",
+        "helperText": "Only your full name is required — everything else is optional.",
         "submit": "Save and continue",
         "submitting": "Saving...",
         "validation": {
-            "fullNameRequired": "Full name is required."
+            "fullNameRequired": "Full name is required.",
+            "invalidEmail": "Enter a valid email address.",
+            "saveFailed": "Failed to save profile. Please try again."
         },
         "genderOptions": {
             "male": "Male",
@@ -66,21 +86,42 @@
         }
     },
     "acceptTerms": {
+        "stepLabel": "Step 3 of 4",
         "title": "Terms & Privacy",
         "subtitle": "Please read and accept before continuing.",
+        "headerSubtitle": "A quick read to confirm how Playspace handles audits and your data.",
+        "loadingDocuments": "Loading legal documents...",
+        "reviewProgressTitle": "Review progress",
+        "reviewProgressDescription": "{{reviewed}} of {{total}} documents reviewed",
+        "documentSectionTitle": "Documents",
+        "documentReviewed": "Reviewed",
+        "documentNeedsReview": "Needs review",
+        "documentScrollPrompt": "Scroll",
+        "documentLastUpdated": "Last updated {{date}}",
+        "helperPending": "Review every document to unlock acceptance.",
         "scrollHint": "Scroll to the bottom to accept.",
-        "submit": "I have read and accept",
-        "submitting": "Accepting...",
+        "submit": "Accept and continue",
+        "submitting": "Saving...",
         "termsHeading": "Terms of Use",
         "termsBody": "By using Playspace, you agree to conduct audits honestly and in accordance with the instructions provided by your project manager. You will not share your access credentials. All data you submit becomes part of the audit record and may be reviewed by your manager and platform administrators. You must not use this platform for any purpose other than conducting play value and usability audits as assigned.",
         "privacyHeading": "Privacy Notice",
-        "privacyBody": "Your personal details (name, email, demographics) are stored securely and used only to identify your submissions within the platform. Your auditor code — not your personal name — is associated with audit records visible to anyone other than your manager. You may request correction or deletion of your personal data by contacting your project manager."
+        "privacyBody": "Your personal details (name, email, demographics) are stored securely and used only to identify your submissions within the platform. Your auditor code — not your personal name — is associated with audit records visible to anyone other than your manager. You may request correction or deletion of your personal data by contacting your project manager.",
+        "validation": {
+            "noDocuments": "Legal documents are unavailable. Please try again later.",
+            "loadFailed": "Failed to load legal documents. Please try again.",
+            "failed": "Failed to accept terms. Please try again."
+        }
     },
     "auditorCode": {
+        "stepLabel": "Step 4 of 4",
         "title": "Your auditor code",
         "subtitle": "This is how you are identified in all audit records.",
+        "headerSubtitle": "Your unique identifier on every audit you submit.",
         "codeLabel": "Auditor code",
         "explanation": "Only your auditor code — not your name or contact details — is stored with any audit you submit. This protects your privacy while keeping records traceable for your manager.",
+        "helperText": "You can copy this code anytime from your profile in Settings.",
+        "loading": "Loading",
+        "loadFailed": "We could not load your auditor code. You can continue and find it later in settings.",
         "submit": "Enter Playspace"
     }
 }

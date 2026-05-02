@@ -1,0 +1,13 @@
+# Auditor-only native E2E flow for the Expo development build.
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- runFlow: create-audit.yaml
+- stopApp
+- launchApp
+- extendedWaitUntil:
+      visible: ".*Dashboard.*|.*Audit.*|.*Resume audit.*"
+      timeout: 30000
+- assertVisible:
+      text: ".*Audit.*|.*Pre-audit.*|.*Places.*"

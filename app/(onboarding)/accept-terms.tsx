@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type LayoutChangeEvent, ScrollView, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { useRouter } from "expo-router";
-import { ArrowRight, Check, Shield } from "@tamagui/lucide-icons-2";
+import { Check, Shield } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
+import { OnboardingShell } from "components/onboarding/onboarding-shell";
 import { useAuthStore } from "stores/auth-store";
 import { completeOnboarding } from "lib/audit/profile-api";
 import { createModuleLogger } from "lib/logger";
-import { type TFunction } from "i18next";
 import { type LegalDocument } from "lib/audit/types";
 import { syncInstrument, getCachedInstrument } from "lib/services/instrument-sync";
 
@@ -35,8 +35,8 @@ function createInitialMetrics(documents: readonly LegalDocument[]): Record<strin
 
 /**
  * Step 3 of onboarding: the auditor reviews Terms + Privacy before continuing.
- * Legal documents are loaded from the active instrument so admins can update them
- * from the web app without a mobile release.
+ * Legal documents are loaded from the active instrument so admins can update
+ * them from the web app without a mobile release.
  */
 export default function AcceptTermsScreen() {
     const ds = useDesignSystem();
@@ -174,30 +174,48 @@ export default function AcceptTermsScreen() {
         }
     };
 
+    const sharedShellProps = {
+        step: 3,
+        totalSteps: 4,
+        icon: Shield,
+        eyebrow: t("acceptTerms.stepLabel", "Step 3 of 4"),
+        title: t("acceptTerms.title", "Terms & Privacy"),
+        subtitle: t(
+            "acceptTerms.headerSubtitle",
+            "A quick read to confirm how Playspace handles audits and your data.",
+        ),
+    } as const;
+
     if (isLoadingDocuments) {
         return (
-            <YStack flex={1} items="center" justify="center" bg={ds.colors.background} gap="$3" p="$6">
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    style={{ textAlign: "center" }}
+            <OnboardingShell {...sharedShellProps}>
+                <YStack
+                    flex={1}
+                    items="center"
+                    justify="center"
+                    py="$6"
+                    rounded={ds.radii.md}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.surface}
                 >
-                    {t("acceptTerms.loadingDocuments", "Loading legal documents...")}
-                </Paragraph>
-            </YStack>
+                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
+                        {t("acceptTerms.loadingDocuments", "Loading legal documents...")}
+                    </Paragraph>
+                </YStack>
+            </OnboardingShell>
         );
     }
 
     if (documentsError !== null || activeDocument === null) {
         return (
-            <YStack flex={1} items="center" justify="center" bg={ds.colors.background} gap="$3" p="$6">
+            <OnboardingShell {...sharedShellProps}>
                 <YStack
                     borderWidth={1}
                     borderColor={ds.colors.danger}
                     bg={ds.colors.dangerSoft}
                     rounded={ds.radii.md}
                     p="$4"
-                    style={{ maxWidth: layout.formMaxWidth, width: "100%" }}
                 >
                     <Paragraph
                         color={ds.colors.danger}
@@ -207,156 +225,75 @@ export default function AcceptTermsScreen() {
                         {documentsError ?? t("acceptTerms.validation.noDocuments", "Legal documents are unavailable.")}
                     </Paragraph>
                 </YStack>
-            </YStack>
+            </OnboardingShell>
         );
     }
 
+    const helperText = !hasReviewedAllDocuments
+        ? t("acceptTerms.helperPending", "Review every document to unlock acceptance.")
+        : undefined;
+
     return (
-        <YStack flex={1} bg={ds.colors.background}>
-            <Header ds={ds} layout={layout} t={t} />
-
-            <ScrollView
-                style={{ flex: 1 }}
-                contentInsetAdjustmentBehavior="automatic"
-                keyboardShouldPersistTaps="handled"
-                nestedScrollEnabled
-                contentContainerStyle={{
-                    flexGrow: 1,
-                    paddingHorizontal: layout.screenPaddingHorizontal,
-                    paddingTop: layout.isTablet ? 28 : 20,
-                    paddingBottom: 28,
-                }}
-            >
-                <YStack
-                    width="100%"
-                    gap={layout.isTablet ? "$5" : "$4"}
-                    style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                >
-                    <ReviewProgressCard
-                        ds={ds}
-                        reviewedCount={reviewedCount}
-                        reviewPercent={reviewPercent}
-                        totalCount={legalDocuments.length}
-                    />
-
-                    <DocumentSwitcher
-                        activeDocumentKey={activeDocumentKey}
-                        documents={legalDocuments}
-                        ds={ds}
-                        reviewedDocuments={reviewedDocuments}
-                        onSelect={setActiveDocumentKey}
-                    />
-
-                    <LegalReaderCard
-                        document={activeDocument}
-                        ds={ds}
-                        isReviewed={reviewedDocuments[activeDocument.key] ?? false}
-                        layout={layout}
-                        onContentSizeChange={(height) => {
-                            updateDocumentMetrics(activeDocument.key, { contentHeight: height });
-                        }}
-                        onLayout={(height) => {
-                            updateDocumentMetrics(activeDocument.key, { viewportHeight: height });
-                        }}
-                        onScroll={(event) => {
-                            handleDocumentScroll(activeDocument.key, event);
-                        }}
-                    />
-
-                    <YStack gap="$2">
-                        {errorMessage !== null ? <StatusMessage message={errorMessage} ds={ds} /> : null}
-                        {!hasReviewedAllDocuments ? (
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodySm.fontSize}
-                                style={{ textAlign: "center" }}
-                            >
-                                Review both documents to unlock the acceptance button.
-                            </Paragraph>
-                        ) : null}
-                    </YStack>
-                </YStack>
-            </ScrollView>
-
-            <Footer
-                canAccept={canAccept}
+        <OnboardingShell
+            {...sharedShellProps}
+            ctaLabel={t("acceptTerms.submit", "Accept and continue")}
+            ctaLoadingLabel={t("acceptTerms.submitting", "Saving...")}
+            canSubmit={canAccept}
+            isLoading={isLoading}
+            onCtaPress={() => {
+                void handleAccept();
+            }}
+            errorMessage={errorMessage}
+            {...(helperText !== undefined ? { helperText } : {})}
+        >
+            <ReviewProgressCard
                 ds={ds}
-                isLoading={isLoading}
-                layout={layout}
-                t={t}
-                onAccept={() => {
-                    void handleAccept();
+                reviewedCount={reviewedCount}
+                reviewPercent={reviewPercent}
+                totalCount={legalDocuments.length}
+                titleLabel={t("acceptTerms.reviewProgressTitle", "Review progress")}
+                descriptionLabel={t(
+                    "acceptTerms.reviewProgressDescription",
+                    "{{reviewed}} of {{total}} documents reviewed",
+                    {
+                        reviewed: reviewedCount,
+                        total: legalDocuments.length,
+                    },
+                )}
+            />
+
+            <DocumentSwitcher
+                activeDocumentKey={activeDocumentKey}
+                documents={legalDocuments}
+                ds={ds}
+                reviewedDocuments={reviewedDocuments}
+                onSelect={setActiveDocumentKey}
+                reviewedLabel={t("acceptTerms.documentReviewed", "Reviewed")}
+                pendingLabel={t("acceptTerms.documentNeedsReview", "Needs review")}
+                sectionLabel={t("acceptTerms.documentSectionTitle", "Documents")}
+            />
+
+            <LegalReaderCard
+                document={activeDocument}
+                ds={ds}
+                isReviewed={reviewedDocuments[activeDocument.key] ?? false}
+                isTablet={layout.isTablet}
+                lastUpdatedLabel={t("acceptTerms.documentLastUpdated", "Last updated {{date}}", {
+                    date: activeDocument.last_updated,
+                })}
+                reviewedLabel={t("acceptTerms.documentReviewed", "Reviewed")}
+                scrollLabel={t("acceptTerms.documentScrollPrompt", "Scroll")}
+                onContentSizeChange={(height) => {
+                    updateDocumentMetrics(activeDocument.key, { contentHeight: height });
+                }}
+                onLayout={(height) => {
+                    updateDocumentMetrics(activeDocument.key, { viewportHeight: height });
+                }}
+                onScroll={(event) => {
+                    handleDocumentScroll(activeDocument.key, event);
                 }}
             />
-        </YStack>
-    );
-}
-
-interface HeaderProps {
-    readonly ds: ReturnType<typeof useDesignSystem>;
-    readonly layout: ReturnType<typeof useResponsiveLayout>;
-    readonly t: TFunction<"onboarding">;
-}
-
-function Header({ ds, layout, t }: HeaderProps) {
-    return (
-        <YStack
-            px={layout.screenPaddingHorizontal}
-            pt={layout.isTablet ? 56 : 44}
-            pb="$4"
-            borderBottomWidth={1}
-            borderBottomColor={ds.colors.border}
-            bg={ds.colors.background}
-        >
-            <YStack width="100%" gap="$2" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
-                <Paragraph
-                    color={ds.colors.primary}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.4}
-                >
-                    {t("acceptTerms.stepLabel", "Step 3 of 4")}
-                </Paragraph>
-                <XStack items="center" gap="$3">
-                    <YStack
-                        width={layout.isTablet ? 44 : 40}
-                        height={layout.isTablet ? 44 : 40}
-                        rounded={ds.radii.md}
-                        items="center"
-                        justify="center"
-                        bg={ds.colors.primarySoft}
-                        borderWidth={1}
-                        borderColor={ds.colors.primary}
-                    >
-                        <Shield size={20} color={ds.colors.primary} />
-                    </YStack>
-                    <YStack flex={1} gap="$1">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={
-                                layout.isTablet ? ds.typography.displayMd.fontSize : ds.typography.displaySm.fontSize
-                            }
-                            lineHeight={
-                                layout.isTablet
-                                    ? ds.typography.displayMd.lineHeight
-                                    : ds.typography.displaySm.lineHeight
-                            }
-                            textTransform="uppercase"
-                            fontStyle="italic"
-                            letterSpacing={-0.5}
-                        >
-                            {t("acceptTerms.title", "Terms & Privacy")}
-                        </Text>
-                        <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                            Review the service terms and privacy notice before entering the app.
-                        </Paragraph>
-                    </YStack>
-                </XStack>
-            </YStack>
-        </YStack>
+        </OnboardingShell>
     );
 }
 
@@ -365,14 +302,24 @@ interface ReviewProgressCardProps {
     readonly reviewedCount: number;
     readonly reviewPercent: number;
     readonly totalCount: number;
+    readonly titleLabel: string;
+    readonly descriptionLabel: string;
 }
 
-function ReviewProgressCard({ ds, reviewedCount, reviewPercent, totalCount }: ReviewProgressCardProps) {
+function ReviewProgressCard({
+    ds,
+    reviewedCount,
+    reviewPercent,
+    totalCount,
+    titleLabel,
+    descriptionLabel,
+}: ReviewProgressCardProps) {
+    const isComplete = reviewedCount === totalCount && totalCount > 0;
     return (
         <YStack
-            rounded={ds.radii.lg}
+            rounded={ds.radii.md}
             borderWidth={1}
-            borderColor={ds.colors.border}
+            borderColor={isComplete ? ds.colors.success : ds.colors.border}
             bg={ds.colors.surface}
             p="$4"
             gap="$3"
@@ -385,14 +332,14 @@ function ReviewProgressCard({ ds, reviewedCount, reviewPercent, totalCount }: Re
                         fontFamily={ds.fonts.bodyBold}
                         fontSize={ds.typography.titleSm.fontSize}
                     >
-                        Review progress
+                        {titleLabel}
                     </Text>
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodySm.fontSize}
                     >
-                        {reviewedCount} of {totalCount} documents reviewed
+                        {descriptionLabel}
                     </Paragraph>
                 </YStack>
                 <YStack
@@ -400,23 +347,28 @@ function ReviewProgressCard({ ds, reviewedCount, reviewPercent, totalCount }: Re
                     px="$3"
                     py="$2"
                     rounded={ds.radii.md}
-                    bg={ds.colors.primarySoft}
+                    bg={isComplete ? ds.colors.successSoft : ds.colors.primarySoft}
                     items="center"
                     borderWidth={1}
-                    borderColor={ds.colors.primary}
+                    borderColor={isComplete ? ds.colors.success : ds.colors.primary}
                 >
                     <Text
-                        color={ds.colors.primary}
+                        color={isComplete ? ds.colors.success : ds.colors.primary}
                         fontFamily={ds.fonts.bodyBold}
                         fontSize={ds.typography.labelLg.fontSize}
                     >
-                        {reviewPercent}%
+                        {`${reviewPercent}%`}
                     </Text>
                 </YStack>
             </XStack>
 
-            <YStack height={8} rounded={999} bg={ds.colors.border} overflow="hidden">
-                <YStack width={`${reviewPercent}%`} height="100%" rounded={999} bg={ds.colors.primary} />
+            <YStack height={8} rounded={ds.radii.full} bg={ds.colors.border} overflow="hidden">
+                <YStack
+                    width={`${reviewPercent}%`}
+                    height="100%"
+                    rounded={ds.radii.full}
+                    bg={isComplete ? ds.colors.success : ds.colors.primary}
+                />
             </YStack>
         </YStack>
     );
@@ -428,57 +380,89 @@ interface DocumentSwitcherProps {
     readonly ds: ReturnType<typeof useDesignSystem>;
     readonly reviewedDocuments: Record<string, boolean>;
     readonly onSelect: (documentKey: string) => void;
+    readonly reviewedLabel: string;
+    readonly pendingLabel: string;
+    readonly sectionLabel: string;
 }
 
-function DocumentSwitcher({ activeDocumentKey, documents, ds, reviewedDocuments, onSelect }: DocumentSwitcherProps) {
+function DocumentSwitcher({
+    activeDocumentKey,
+    documents,
+    ds,
+    reviewedDocuments,
+    onSelect,
+    reviewedLabel,
+    pendingLabel,
+    sectionLabel,
+}: DocumentSwitcherProps) {
     return (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-            {documents.map((document) => {
-                const isActive = activeDocumentKey === document.key;
-                const isReviewed = reviewedDocuments[document.key] ?? false;
+        <YStack gap="$2">
+            <Paragraph
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={ds.typography.labelMd.fontSize}
+                textTransform="uppercase"
+                letterSpacing={1.5}
+                px="$1"
+            >
+                {sectionLabel}
+            </Paragraph>
+            <XStack gap="$2">
+                {documents.map((document) => {
+                    const isActive = activeDocumentKey === document.key;
+                    const isReviewed = reviewedDocuments[document.key] ?? false;
 
-                return (
-                    <Button
-                        key={document.key}
-                        minW={160}
-                        height={52}
-                        rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={isActive ? ds.colors.primary : ds.colors.border}
-                        bg={isActive ? ds.colors.primarySoft : ds.colors.surface}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={() => {
-                            onSelect(document.key);
-                        }}
-                        accessibilityRole="tab"
-                        accessibilityState={{ selected: isActive }}
-                    >
-                        <XStack items="center" gap="$2">
-                            {isReviewed ? <Check size={15} color={ds.colors.success} /> : null}
-                            <YStack flex={1}>
-                                <Text
-                                    color={isActive ? ds.colors.primary : ds.colors.foreground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelMd.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.1}
+                    return (
+                        <Button
+                            key={document.key}
+                            flex={1}
+                            height={60}
+                            rounded={ds.radii.sm}
+                            borderWidth={1}
+                            borderColor={isActive ? ds.colors.primary : ds.colors.border}
+                            bg={isActive ? ds.colors.primarySoft : ds.colors.surface}
+                            pressStyle={{ opacity: 0.88 }}
+                            onPress={() => onSelect(document.key)}
+                            accessibilityRole="tab"
+                            accessibilityState={{ selected: isActive }}
+                        >
+                            <XStack flex={1} items="center" justify="space-between" gap="$3" py="$1">
+                                <YStack
+                                    width={16}
+                                    height={16}
+                                    rounded={ds.radii.full}
+                                    items="center"
+                                    justify="center"
+                                    bg={isReviewed ? ds.colors.success : ds.colors.mutedSurface}
+                                    borderWidth={1}
+                                    borderColor={isReviewed ? ds.colors.success : ds.colors.border}
                                 >
-                                    {document.short_title}
-                                </Text>
-                                <Text
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    numberOfLines={1}
-                                >
-                                    {isReviewed ? "Reviewed" : "Needs review"}
-                                </Text>
-                            </YStack>
-                        </XStack>
-                    </Button>
-                );
-            })}
-        </ScrollView>
+                                    {isReviewed ? <Check size={10} color={ds.colors.primaryForeground} /> : null}
+                                </YStack>
+                                <YStack flex={1} items="flex-start" gap="$1.5">
+                                    <Text
+                                        color={isActive ? ds.colors.primary : ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelMd.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.1}
+                                    >
+                                        {document.short_title}
+                                    </Text>
+                                    <Text
+                                        color={isReviewed ? ds.colors.success : ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodySm.fontSize}
+                                    >
+                                        {isReviewed ? reviewedLabel : pendingLabel}
+                                    </Text>
+                                </YStack>
+                            </XStack>
+                        </Button>
+                    );
+                })}
+            </XStack>
+        </YStack>
     );
 }
 
@@ -486,7 +470,10 @@ interface LegalReaderCardProps {
     readonly document: LegalDocument;
     readonly ds: ReturnType<typeof useDesignSystem>;
     readonly isReviewed: boolean;
-    readonly layout: ReturnType<typeof useResponsiveLayout>;
+    readonly isTablet: boolean;
+    readonly lastUpdatedLabel: string;
+    readonly reviewedLabel: string;
+    readonly scrollLabel: string;
     readonly onContentSizeChange: (height: number) => void;
     readonly onLayout: (height: number) => void;
     readonly onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
@@ -496,16 +483,19 @@ function LegalReaderCard({
     document,
     ds,
     isReviewed,
-    layout,
+    isTablet,
+    lastUpdatedLabel,
+    reviewedLabel,
+    scrollLabel,
     onContentSizeChange,
     onLayout,
     onScroll,
 }: LegalReaderCardProps) {
-    const readerHeight = layout.isTablet ? 560 : 430;
+    const readerHeight = isTablet ? 520 : 420;
 
     return (
         <YStack
-            rounded={ds.radii.xl}
+            rounded={ds.radii.md}
             borderWidth={1}
             borderColor={isReviewed ? ds.colors.success : ds.colors.border}
             bg={ds.colors.surface}
@@ -532,7 +522,12 @@ function LegalReaderCard({
                             {document.title}
                         </Text>
                     </YStack>
-                    <ReviewBadge ds={ds} isReviewed={isReviewed} />
+                    <ReviewBadge
+                        ds={ds}
+                        isReviewed={isReviewed}
+                        reviewedLabel={reviewedLabel}
+                        scrollLabel={scrollLabel}
+                    />
                 </XStack>
 
                 <Paragraph
@@ -540,7 +535,7 @@ function LegalReaderCard({
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={ds.typography.bodySm.fontSize}
                 >
-                    Last updated: {document.last_updated}
+                    {lastUpdatedLabel}
                 </Paragraph>
                 <Paragraph
                     color={ds.colors.mutedForeground}
@@ -578,9 +573,11 @@ function LegalReaderCard({
 interface ReviewBadgeProps {
     readonly ds: ReturnType<typeof useDesignSystem>;
     readonly isReviewed: boolean;
+    readonly reviewedLabel: string;
+    readonly scrollLabel: string;
 }
 
-function ReviewBadge({ ds, isReviewed }: ReviewBadgeProps) {
+function ReviewBadge({ ds, isReviewed, reviewedLabel, scrollLabel }: ReviewBadgeProps) {
     return (
         <YStack
             px="$3"
@@ -597,7 +594,7 @@ function ReviewBadge({ ds, isReviewed }: ReviewBadgeProps) {
                 textTransform="uppercase"
                 letterSpacing={1}
             >
-                {isReviewed ? "Reviewed" : "Scroll"}
+                {isReviewed ? reviewedLabel : scrollLabel}
             </Text>
         </YStack>
     );
@@ -649,74 +646,6 @@ function LegalSectionView({ ds, section }: LegalSectionViewProps) {
                     ))}
                 </YStack>
             ) : null}
-        </YStack>
-    );
-}
-
-interface StatusMessageProps {
-    readonly message: string;
-    readonly ds: ReturnType<typeof useDesignSystem>;
-}
-
-function StatusMessage({ message, ds }: StatusMessageProps) {
-    return (
-        <YStack borderWidth={1} borderColor={ds.colors.danger} bg={ds.colors.dangerSoft} rounded={ds.radii.md} p="$3">
-            <Paragraph color={ds.colors.danger} fontFamily={ds.fonts.bodyMedium}>
-                {message}
-            </Paragraph>
-        </YStack>
-    );
-}
-
-interface FooterProps {
-    readonly canAccept: boolean;
-    readonly ds: ReturnType<typeof useDesignSystem>;
-    readonly isLoading: boolean;
-    readonly layout: ReturnType<typeof useResponsiveLayout>;
-    readonly t: TFunction<"onboarding">;
-    readonly onAccept: () => void;
-}
-
-function Footer({ canAccept, ds, isLoading, layout, t, onAccept }: FooterProps) {
-    return (
-        <YStack
-            px={layout.screenPaddingHorizontal}
-            pb={layout.isTablet ? 40 : 28}
-            pt="$4"
-            borderTopWidth={1}
-            borderTopColor={ds.colors.border}
-            bg={ds.colors.background}
-        >
-            <YStack width="100%" gap="$3" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
-                <Button
-                    height={56}
-                    rounded={ds.radii.md}
-                    borderWidth={0}
-                    bg={ds.colors.primary}
-                    disabled={!canAccept}
-                    opacity={canAccept ? 1 : 0.5}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={onAccept}
-                    style={{ boxShadow: canAccept ? ds.shadows.accent : "none" }}
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: !canAccept, busy: isLoading }}
-                >
-                    <XStack items="center" gap="$2">
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelLg.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.4}
-                        >
-                            {isLoading
-                                ? t("acceptTerms.submitting", "Saving...")
-                                : t("acceptTerms.submit", "Accept and continue")}
-                        </Text>
-                        <ArrowRight size={16} color={ds.colors.primaryForeground} />
-                    </XStack>
-                </Button>
-            </YStack>
         </YStack>
     );
 }

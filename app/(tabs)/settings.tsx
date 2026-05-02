@@ -446,8 +446,7 @@ export default function SettingsScreen() {
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
+                            fontSize={ds.typography.labelSm.fontSize}
                             letterSpacing={1.1}
                         >
                             {t("profile.editProfile", { ns: "settings" })}
@@ -461,15 +460,12 @@ export default function SettingsScreen() {
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={() => {
-                            router.push("/settings/change-password");
-                        }}
+                        onPress={() => router.push("/settings/change-password")}
                     >
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
+                            fontSize={ds.typography.labelSm.fontSize}
                             letterSpacing={1.1}
                         >
                             {t("profile.changePassword", { ns: "settings" })}

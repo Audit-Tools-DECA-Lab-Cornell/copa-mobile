@@ -1,0 +1,10 @@
+# Auditor-only native E2E flow for the Expo development build.
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- runFlow: login.yaml
+- tapOn: "Reports"
+- extendedWaitUntil:
+      visible: ".*Report.*|.*Submitted.*|.*Riverside.*"
+      timeout: 30000

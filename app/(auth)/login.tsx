@@ -76,7 +76,7 @@ export default function LoginScreen() {
             return;
         }
 
-        router.replace("/accept-terms");
+        router.replace("/(tabs)");
     };
 
     const visibleErrorMessage = validationMessage ?? errorMessage;
@@ -160,6 +160,8 @@ export default function LoginScreen() {
                                     autoCorrect={false}
                                     keyboardType="email-address"
                                     textContentType="emailAddress"
+                                    accessibilityLabel="Login email"
+                                    testID="login-email-input"
                                     placeholder={t("login.emailPlaceholder", { ns: "auth" })}
                                     placeholderTextColor={ds.colors.placeholderColor as ColorTokens}
                                     color={ds.colors.foreground}
@@ -210,6 +212,8 @@ export default function LoginScreen() {
                                     autoCorrect={false}
                                     textContentType="password"
                                     secureTextEntry={!showPassword}
+                                    accessibilityLabel="Login password"
+                                    testID="login-password-input"
                                     placeholder={t("login.passwordPlaceholder", { ns: "auth" })}
                                     placeholderTextColor={ds.colors.placeholderColor as ColorTokens}
                                     color={ds.colors.foreground}
@@ -288,6 +292,8 @@ export default function LoginScreen() {
                             disabled={!canSubmit}
                             opacity={canSubmit ? 1 : 0.65}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            accessibilityLabel="Sign in"
+                            testID="login-submit-button"
                             onPress={() => {
                                 void handleLogin();
                             }}
