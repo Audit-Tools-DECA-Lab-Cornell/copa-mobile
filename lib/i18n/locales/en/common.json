@@ -31,6 +31,7 @@
         "submitted": "Completed"
     },
     "networkRequestFailed": "Network request failed.",
+    "notificationsBellBadgeCapped": "99+",
     "place": {
         "assignedPlace": "Assigned place"
     },
@@ -41,6 +42,7 @@
         "auditorAndPlaceAdmin": "Auditor and Place Admin",
         "placeAdmin": "Place Admin"
     },
+    "sessionExpired": "Session expired. Please sign in again.",
     "status": {
         "assigned": "Assigned",
         "completed": "Completed",

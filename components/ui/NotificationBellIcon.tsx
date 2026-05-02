@@ -29,7 +29,7 @@ export function NotificationBellIcon({ onPress }: NotificationBellIconProps) {
 
     const iconSize = layout.isTablet ? 22 : 20;
     const tapTarget = layout.isTablet ? 46 : 44;
-    const badgeLabel = unreadCount > 99 ? "99+" : String(unreadCount);
+    const badgeLabel = unreadCount > 99 ? t("notificationsBellBadgeCapped") : String(unreadCount);
 
     const accessibilityHint =
         unreadCount === 0

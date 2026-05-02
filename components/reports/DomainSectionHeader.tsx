@@ -37,7 +37,9 @@ export const DomainSectionHeader = memo(function DomainSectionHeader({
     const uPct =
         st !== null && st.usability_total_max > 0 ? formatPercentage(st.usability_total, st.usability_total_max) : null;
     const dualPctText =
-        pvPct !== null && uPct !== null && pvPct !== "--" && uPct !== "--" ? `PV ${pvPct} · U ${uPct}` : null;
+        pvPct !== null && uPct !== null && pvPct !== "--" && uPct !== "--"
+            ? `${t("playValueShort")} ${pvPct} · ${t("usabilityShort")} ${uPct}`
+            : null;
 
     return (
         <Pressable

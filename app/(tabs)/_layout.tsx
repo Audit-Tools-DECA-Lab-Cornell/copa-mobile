@@ -38,7 +38,8 @@ export default function TabLayout() {
     const tabBarLabelLineHeight = layout.isTablet ? ds.typography.labelSm.lineHeight : ds.typography.labelXs.lineHeight;
 
     /** Matches header bell cap so tab badge and in-app count stay consistent. */
-    const homeTabBadgeOptions = unreadCount > 0 ? { tabBarBadge: unreadCount > 99 ? "99+" : unreadCount } : {};
+    const homeTabBadgeOptions =
+        unreadCount > 0 ? { tabBarBadge: unreadCount > 99 ? t("notificationsBellBadgeCapped") : unreadCount } : {};
 
     return (
         <Tabs

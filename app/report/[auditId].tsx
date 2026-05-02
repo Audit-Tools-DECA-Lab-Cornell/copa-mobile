@@ -87,7 +87,9 @@ function ScoreMetricRow(
     const { label, value, maximum, barColor, scaleColor } = props;
     const isNotApplicable = maximum <= 0;
     const percentageText = formatPercentage(value, maximum);
-    const fractionText = isNotApplicable ? "N/A" : `${formatScoreValue(value)} / ${formatScoreValue(maximum)}`;
+    const fractionText = isNotApplicable
+        ? t("detail.metricFractionNotApplicable")
+        : `${formatScoreValue(value)} / ${formatScoreValue(maximum)}`;
 
     return (
         <YStack gap="$2" width="100%" bg={scaleColor ?? ds.colors.mutedSurface} px="$3" py="$3" rounded={ds.radii.sm}>
@@ -114,7 +116,7 @@ function ScoreMetricRow(
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={layout.isTablet ? ds.typography.titleSm.fontSize : ds.typography.bodyXs.fontSize}
                     >
-                        {isNotApplicable ? t("detail.metricNotAssessed", { ns: "reports" }) : percentageText}
+                        {isNotApplicable ? t("detail.metricNotAssessed") : percentageText}
                     </Text>
                 </XStack>
             </YStack>

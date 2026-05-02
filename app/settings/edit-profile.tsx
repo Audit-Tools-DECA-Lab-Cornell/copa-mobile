@@ -60,7 +60,7 @@ function getOptionLabel(
 export default function EditProfileScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
-    const { t } = useTranslation("settings");
+    const { t } = useTranslation(["settings", "common"]);
     const session = useAuthStore((state) => state.session);
 
     const [fullName, setFullName] = useState<string>("");
@@ -84,7 +84,7 @@ export default function EditProfileScreen() {
 
         if (session === null) {
             setIsLoading(false);
-            setErrorMessage(t("common.sessionExpired", "Session expired. Please sign in again."));
+            setErrorMessage(t("sessionExpired", { ns: "common" }));
             return () => {
                 isSubscribed = false;
             };
@@ -155,7 +155,7 @@ export default function EditProfileScreen() {
             return;
         }
         if (session === null) {
-            setErrorMessage(t("common.sessionExpired", "Session expired. Please sign in again."));
+            setErrorMessage(t("sessionExpired", { ns: "common" }));
             return;
         }
 

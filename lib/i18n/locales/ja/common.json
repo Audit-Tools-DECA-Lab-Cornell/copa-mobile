@@ -31,6 +31,7 @@
         "submitted": "完了"
     },
     "networkRequestFailed": "ネットワークリクエストに失敗しました。",
+    "notificationsBellBadgeCapped": "99+",
     "place": {
         "assignedPlace": "割り当て場所"
     },
@@ -41,6 +42,7 @@
         "auditorAndPlaceAdmin": "監査人および場所管理者",
         "placeAdmin": "場所管理者"
     },
+    "sessionExpired": "セッションの有効期限が切れました。再度サインインしてください。",
     "status": {
         "assigned": "割り当て済み",
         "completed": "完了済み",

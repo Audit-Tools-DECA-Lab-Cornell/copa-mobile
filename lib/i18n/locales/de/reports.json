@@ -18,6 +18,8 @@
         "loadingTitle": "Audit-Bericht wird vorbereitet",
         "metricChallenge": "Herausforderung",
         "metricDiversity": "Diversität",
+        "metricFractionNotApplicable": "k. A.",
+        "metricNotAssessed": "Nicht bewertet",
         "metricProvision": "Menge",
         "constructHeading": "Ergebnisbewertungen",
         "overallScore": "Gesamtpunktzahl",

@@ -31,6 +31,7 @@
         "submitted": "Abgeschlossen"
     },
     "networkRequestFailed": "Netzwerkanfrage fehlgeschlagen.",
+    "notificationsBellBadgeCapped": "99+",
     "place": {
         "assignedPlace": "Zugewiesener Ort"
     },
@@ -41,6 +42,7 @@
         "auditorAndPlaceAdmin": "Pruefperson und Ortsverwaltung",
         "placeAdmin": "Ortsverwaltung"
     },
+    "sessionExpired": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.",
     "status": {
         "assigned": "Zugewiesen",
         "completed": "Abgeschlossen",

@@ -14,6 +14,8 @@
         "loadingTitle": "ऑडिट रिपोर्ट तैयार की जा रही है",
         "metricChallenge": "चुनौती",
         "metricDiversity": "विविधता",
+        "metricFractionNotApplicable": "लागू नहीं",
+        "metricNotAssessed": "मूल्यांकन नहीं",
         "metricProvision": "मात्रा",
         "constructHeading": "परिणाम स्कोर",
         "overallScore": "समग्र स्कोर",

@@ -1,7 +1,4 @@
 {
-    "common": {
-        "sessionExpired": "Session expired. Please sign in again."
-    },
     "resetPassword": {
         "stepLabel": "Step 1 of 4",
         "title": "Set your password",

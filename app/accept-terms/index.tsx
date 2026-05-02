@@ -42,7 +42,7 @@ export default function AcceptTermsScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const router = useRouter();
-    const { t } = useTranslation("onboarding");
+    const { t } = useTranslation(["onboarding", "common"]);
     const session = useAuthStore((state) => state.session);
 
     const [legalDocuments, setLegalDocuments] = useState<readonly LegalDocument[]>(() => {
@@ -163,7 +163,7 @@ export default function AcceptTermsScreen() {
         setErrorMessage(null);
 
         if (session === null) {
-            setErrorMessage(t("common.sessionExpired", "Session expired. Please sign in again."));
+            setErrorMessage(t("sessionExpired", { ns: "common" }));
             return;
         }
 

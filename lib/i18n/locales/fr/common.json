@@ -31,6 +31,7 @@
         "submitted": "Terminé"
     },
     "networkRequestFailed": "La requête réseau a échoué.",
+    "notificationsBellBadgeCapped": "99+",
     "place": {
         "assignedPlace": "Lieu attribué"
     },
@@ -41,6 +42,7 @@
         "auditorAndPlaceAdmin": "Auditeur et administrateur du lieu",
         "placeAdmin": "Administrateur du lieu"
     },
+    "sessionExpired": "Session expirée. Veuillez vous reconnecter.",
     "status": {
         "assigned": "Attribué",
         "completed": "Terminé",

@@ -21,7 +21,7 @@ export default function AuditorCodeScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const router = useRouter();
-    const { t } = useTranslation("onboarding");
+    const { t } = useTranslation(["onboarding", "common"]);
     const session = useAuthStore((state) => state.session);
     const updateNextStep = useAuthStore((state) => state.updateNextStep);
 
@@ -35,7 +35,7 @@ export default function AuditorCodeScreen() {
         if (session === null) {
             setAuditorCode(null);
             setIsLoading(false);
-            setErrorMessage(t("common.sessionExpired", "Session expired. Please sign in again."));
+            setErrorMessage(t("sessionExpired", { ns: "common" }));
             return () => {
                 isSubscribed = false;
             };

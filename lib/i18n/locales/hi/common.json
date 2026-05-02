@@ -31,6 +31,7 @@
         "submitted": "पूर्ण"
     },
     "networkRequestFailed": "नेटवर्क अनुरोध विफल रहा।",
+    "notificationsBellBadgeCapped": "99+",
     "place": {
         "assignedPlace": "असाइन किया गया स्थान"
     },
@@ -41,6 +42,7 @@
         "auditorAndPlaceAdmin": "ऑडिटर और प्लेस एडमिन",
         "placeAdmin": "प्लेस एडमिन"
     },
+    "sessionExpired": "सत्र समाप्त हो गया। कृपया फिर से साइन इन करें।",
     "status": {
         "assigned": "असाइन किया गया",
         "completed": "पूर्ण",
