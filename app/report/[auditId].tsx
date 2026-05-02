@@ -434,7 +434,6 @@ function SectionNavigatorCard({ sectionRows, onSectionPress }: Readonly<SectionN
                         <Pressable
                             key={sectionRow.sectionKey}
                             accessibilityRole="button"
-                            className="border-2 bg-accent m-4"
                             accessibilityLabel={`Jump to section ${sectionRow.sectionNumber}: ${sectionRow.title}`}
                             onPress={() => {
                                 onSectionPress(sectionRow.sectionKey);
