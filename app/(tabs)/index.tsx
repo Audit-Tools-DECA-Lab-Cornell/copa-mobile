@@ -92,24 +92,13 @@ export default function DashboardScreen() {
     const places = useLocalFirstPlaces();
     const isLoading = usePlacesStore((state) => state.isLoading);
     const loadPlaces = usePlacesStore((state) => state.loadPlaces);
-    const loadDashboardSummary = usePlacesStore((state) => state.loadDashboardSummary);
-    const clearDashboardSummary = usePlacesStore((state) => state.clearDashboardSummary);
-    const dashboardSummary = usePlacesStore((state) => state.dashboardSummary);
     const scrollViewRef = useRef<ScrollView | null>(null);
 
     useEffect(() => {
         if (session === null) {
-            clearDashboardSummary();
             return;
         }
-        void loadDashboardSummary(session);
-    }, [session, loadDashboardSummary, clearDashboardSummary]);
-
-    useEffect(() => {
-        if (session === null) {
-            return;
-        }
-        void loadPlaces(session, { fetchAll: false, page: 1, pageSize: 8 }).catch(() => undefined);
+        void loadPlaces(session).catch(() => undefined);
     }, [session, loadPlaces]);
 
     const scrollDashboardToOffset = useCallback((offset: number) => {
@@ -122,28 +111,19 @@ export default function DashboardScreen() {
         scrollToOffset: scrollDashboardToOffset,
     });
 
-    const assignedCount = dashboardSummary?.total_assigned_places ?? places.length;
+    const assignedCount = places.length;
 
     const completedCount = useMemo(() => {
-        if (dashboardSummary !== null) {
-            return dashboardSummary.submitted_audits;
-        }
         return places.filter((p) => derivePlaceRequirementStatus(p) === "submitted").length;
-    }, [dashboardSummary, places]);
+    }, [places]);
 
     const inProgressCount = useMemo(() => {
-        if (dashboardSummary !== null) {
-            return dashboardSummary.in_progress_audits;
-        }
         return places.filter((p) => derivePlaceRequirementStatus(p) === "in_progress").length;
-    }, [dashboardSummary, places]);
+    }, [places]);
 
     const notStartedCount = useMemo(() => {
-        if (dashboardSummary !== null) {
-            return dashboardSummary.pending_places;
-        }
         return places.filter((p) => derivePlaceRequirementStatus(p) === "not_started").length;
-    }, [dashboardSummary, places]);
+    }, [places]);
 
     const submittedCount = completedCount;
 

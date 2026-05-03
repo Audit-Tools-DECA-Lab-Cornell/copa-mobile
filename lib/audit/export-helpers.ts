@@ -55,7 +55,14 @@ export async function loadOptionalExportAuditorProfile(
 }
 
 /**
- * Build the export payload for one place row using cached audit state when possible.
+ * Build the export payload for one place row.
+ *
+ * Always fetches the latest session from the server to guarantee the
+ * responses_json snapshot is present and current.  The in-store cached
+ * session is used only as an offline fallback when the fetch fails — the
+ * store's copy can lag behind the server for audits submitted before the
+ * responses_json snapshot was introduced, leading to an empty Responses
+ * table in the export.
  *
  * @param params Auth session, place summary, cached audit, and localized error messages.
  * @returns Exportable audit payload for share/export helpers.
@@ -75,8 +82,19 @@ export async function buildExportableAuditForPlace({
         throw new Error(exportAuditMissingMessage);
     }
 
-    const auditSession =
-        cachedAudit?.status === "SUBMITTED" ? cachedAudit : await fetchAuditSession(session, place.audit_id);
+    // Prefer a fresh server fetch so that the responses_json snapshot is
+    // always included.  Fall back to the cached SUBMITTED session only when
+    // the network is unavailable so offline exports still work.
+    let auditSession: AuditSession;
+    try {
+        auditSession = await fetchAuditSession(session, place.audit_id);
+    } catch {
+        if (cachedAudit?.status === "SUBMITTED") {
+            auditSession = cachedAudit;
+        } else {
+            throw new Error(exportAuditMissingMessage);
+        }
+    }
 
     return {
         auditSession,
