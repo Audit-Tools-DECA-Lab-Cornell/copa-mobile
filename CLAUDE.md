@@ -1,6 +1,208 @@
 # CLAUDE.md — audit-tools-playspace-mobile
 
-## Design System Implementation Brief
+## Phase 3 & 4 Implementation Brief
+
+Read PVUA_DESIGN_SYSTEM_PHASE3.md and PVUA_DESIGN_SYSTEM_PHASE4.md fully
+before writing any code. Phase 1 and 2 are already implemented.
+
+---
+
+## Repo context (unchanged from Phase 1/2 brief)
+
+- Expo + Expo Router, TypeScript, Tamagui v5
+- Package manager: bun
+- Theme in themes.ts (already updated), config in tamagui.config.ts
+
+---
+
+## Task sequence
+
+### Task 1 — Execute screen layout (single-column, pinned elements)
+
+File: app/(tabs)/execute/[placeId].tsx or the main execute screen component.
+
+The execute screen must have exactly this structure:
+
+[Top bar — 44px] ← back button + overflow menu
+[AuditProgressDots] ← PINNED — does not scroll with content
+[AuditSectionBlock] ← flex:1, scrollable if question text is long
+[Bottom nav bar — 64px] ← FIXED at bottom, does not scroll
+
+The AuditProgressDots must never scroll off screen. If the current
+implementation allows it to scroll away, restructure the layout so it
+is outside the ScrollView.
+
+Bottom nav bar contents:
+Left: Ghost "← Prev" button, Geist 13px, textSecondary
+Right: "Next →" button
+When answered: full-width terracotta (var(--accent-terracotta))
+When unanswered/skipped: outlined, var(--edge) border, textMuted
+NOT disabled — auditors must be able to skip
+Bottom: Auto-save indicator (see Task 3)
+
+---
+
+### Task 2 — Auto-save feedback sequence
+
+File: the execute screen or AuditSectionBlock component.
+
+Implement the ambient save indicator in the bottom nav bar area.
+
+State machine:
+idle → no UI rendered
+saving → "Saving..." text appears, fade in 150ms
+saved → cross-fade to "Saved locally", 200ms
+[after 2000ms] → "Saved locally" fades out, 300ms → back to idle
+
+Trigger:
+saving: when answer is committed (input blur or option select)
+saved: when MMKV write confirms (600ms after saving in most cases,
+or on the MMKV write callback if available)
+
+Typography: Geist 11px 400, textMuted (use bodyCounter font variant)
+Position: centered below the Prev/Next buttons in the bottom bar
+Do NOT use a toast. Do NOT use a banner. Ambient only.
+
+On server sync success: SyncStatusIsland handles that separately.
+The local save indicator and the sync indicator are independent.
+
+---
+
+### Task 3 — SyncStatusIsland integration with sync store
+
+File: SyncStatusIsland component (created in Phase 2) needs to be
+connected to the actual sync state.
+
+Find: lib/audit/use-audit-sync.ts or the Zustand store that tracks
+sync state.
+
+Connect the SyncStatusIsland's state prop to the actual sync values:
+isOnline === false → state="offline"
+isOnline && isSyncing → state="syncing"
+justSynced (recent) → state="synced" (auto-dismiss after 1500ms)
+otherwise → state="idle" (island not rendered)
+
+Place the SyncStatusIsland: at the top of the execute screen, below
+AuditProgressDots, above the section block. It should appear and
+disappear without shifting layout — use absolute positioning within
+the execute screen container so it overlays rather than pushes content.
+
+---
+
+### Task 4 — AuditProgressDots animation on domain advance
+
+File: components/ui/audit-progress-dots.tsx (created in Phase 2)
+
+Verify the spring transition fires correctly when activeDomain prop changes.
+
+Expected behavior:
+When activeDomain increments from N to N+1:
+Dot N: color animates terracotta → moss, spring 400ms
+Dot N+1: color animates edge → terracotta, spring 300ms, 100ms delay
+
+If the component uses static styles without animation, add the animation:
+Use Tamagui's animate prop with the spring preset, or
+React Native Animated with spring config { stiffness:200, damping:18 }
+
+---
+
+### Task 5 — Progress bar spring fill
+
+File: AuditSectionBlock component's progress bar.
+
+Verify the 2px violet progress bar animates its width change:
+On progressPercent prop change:
+Width transition: 600ms, spring { stiffness:120, damping:20 }
+
+In Tamagui, animated width changes require the component to use
+Tamagui's animation system. If the progress bar is a plain View,
+wrap it in an animated variant:
+
+const AnimatedView = styled(View, { animation: 'slow' })
+
+Use the 'slow' animation preset (or define one: stiffness 120, damping 20).
+
+On domain entry (restoring existing answers): set width with animation:false
+to skip the transition. Only animate forward progress.
+
+---
+
+### Task 6 — Score count-up on report screen
+
+File: app/(tabs)/reports/[auditId].tsx or the report detail screen.
+
+On screen mount, after a 300ms delay:
+Count-up all score values from 0 to their final values.
+Duration: 700ms per value.
+Easing: spring { stiffness:80, damping:14 } or equivalent timing function.
+
+Implement using React Native Animated or a simple useEffect interval:
+
+useEffect(() => {
+const timeout = setTimeout(() => {
+// start count-up
+}, 300);
+return () => clearTimeout(timeout);
+}, []);
+
+Check AccessibilityInfo.isReduceMotionEnabled() — if true, show final
+values immediately without animation.
+
+Domain score bars (if present in the report view):
+Animate width 0→final, staggered 40ms between bars, 500ms spring.
+Same reduced motion check.
+
+---
+
+### Task 7 — Audit submission moment
+
+File: wherever the submission confirmation/button lives in the execute flow.
+
+On user confirms submission:
+
+1. Button: pressStyle scale 0.97 (already set in Phase 2 if done)
+2. Button state: loading — show terracotta ActivityIndicator
+   Keep button at same dimensions (don't collapse)
+3. On API success:
+   Button shows checkmark icon (ti-check or similar)
+   Animate: scale 1.0→1.04→1.0 using spring with overshoot
+   Color: transition button background/border terracotta→moss
+4. After 600ms: navigate to report screen
+
+If Tamagui Button doesn't support the overshoot scale easily,
+use React Native Animated.spring with { toValue:1.04 } then back to 1.0.
+
+---
+
+## Global constraints
+
+- Never hardcode hex values — use Tamagui token references
+- bun run typecheck must pass after each task
+- Do not modify the audit execution state logic (Legend State store)
+- Do not modify MMKV persistence logic or sync logic
+- All animations respect AccessibilityInfo.isReduceMotionEnabled()
+- Tamagui animation system preferred over raw React Native Animated
+  except for complex sequences (submission moment)
+
+## Verification
+
+- [ ] AuditProgressDots never scrolls off screen during execute
+- [ ] Bottom nav bar is fixed — doesn't scroll with content
+- [ ] Next button is terracotta when answered, muted outline when not
+- [ ] Auto-save sequence: Saving→Saved locally→fade (ambient, no toast)
+- [ ] SyncStatusIsland connected to real sync state
+- [ ] AuditProgressDots spring-animates on domain advance
+- [ ] Progress bar spring-fills on question answer
+- [ ] No animation when restoring existing progress (domain entry)
+- [ ] Score count-up fires on report screen mount (700ms)
+- [ ] Submission moment: checkmark → moss → navigate to report
+- [ ] isReduceMotionEnabled() checked in all animated components
+- [ ] bun run ios succeeds
+- [ ] bun run android succeeds
+
+---
+
+The following briefing was used for the phase 1 and phase 2 implementation of the design system.
 
 This file instructs Claude Code on how to implement the PVUA design system
 update on the mobile app. Read it fully before writing any code.
