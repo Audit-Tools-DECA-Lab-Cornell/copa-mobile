@@ -2,7 +2,7 @@
 
 ## Phase 1: Foundations (Color + Typography)
 
------
+---
 
 ## Overview
 
@@ -21,13 +21,13 @@ The design must feel like a **serious research instrument**, not a consumer app.
 
 The design system has three distinct surface modes that share one token vocabulary but apply it at different densities:
 
-|Mode            |Context                   |Primary concern                               |
-|----------------|--------------------------|----------------------------------------------|
-|**Dashboard**   |Manager/admin web, desktop|Scannability, data comparison, status overview|
-|**Field**       |Auditor web + mobile      |Focus, legibility, one task at a time         |
-|**Print/Export**|PDF report output         |Light mode forced, clean for paper            |
+| Mode             | Context                    | Primary concern                                |
+| ---------------- | -------------------------- | ---------------------------------------------- |
+| **Dashboard**    | Manager/admin web, desktop | Scannability, data comparison, status overview |
+| **Field**        | Auditor web + mobile       | Focus, legibility, one task at a time          |
+| **Print/Export** | PDF report output          | Light mode forced, clean for paper             |
 
------
+---
 
 ## Part 1: Color System
 
@@ -38,7 +38,7 @@ The design system has three distinct surface modes that share one token vocabula
 - **Surface hierarchy through lightness, not color.** The background stacking (canvas → surface → surfaceRaised) is communicated exclusively through lightness contrast, not hue shifts. A minimum of 5 lightness points between adjacent levels.
 - **Semantic status colors are consistent across both apps.** The same hex that signals "complete" on the web dashboard signals "complete" on the mobile report. No drift.
 
------
+---
 
 ### 1.2 Core palette — dark mode
 
@@ -65,7 +65,7 @@ Focus:          #d09a70    HSL(28, 52%, 63%)   — focus rings, keyboard nav
 - TextMuted on Canvas: ~4.6:1 (passes WCAG AA)
 - TextMuted on SurfaceRaised: ~3.9:1 (passes WCAG AA for large text)
 
------
+---
 
 ### 1.3 Core palette — light mode
 
@@ -85,7 +85,7 @@ Edge:           rgba(30, 26, 22, 0.15)          — borders (alpha for flexibili
 Focus:          #b8743f    HSL(28, 50%, 48%)   — focus rings
 ```
 
------
+---
 
 ### 1.4 Accent colors — with assigned roles
 
@@ -149,7 +149,7 @@ Surface (light):  rgba(107, 82, 160, 0.10)
 Border (light):   rgba(107, 82, 160, 0.24)
 ```
 
------
+---
 
 ### 1.5 Semantic status colors
 
@@ -180,19 +180,19 @@ In-progress:
 
 **Status → color mapping for PVUA-specific states:**
 
-|State                            |Color signal                |Rationale                       |
-|---------------------------------|----------------------------|--------------------------------|
-|`place_audit_status: complete`   |Moss                        |Score exists, outcome measured  |
-|`place_audit_status: in_progress`|Terracotta surface          |Active, interactive work        |
-|`place_audit_status: pending`    |TextMuted, no badge color   |Not started, no signal needed   |
-|`place_survey_status: complete`  |Moss                        |Same logic as audit             |
-|`draft` audit                    |Terracotta surface          |Auto-save active, work in flight|
-|`submitted` audit                |Moss                        |Work done, outcome exists       |
-|Offline (mobile)                 |Warning                     |Connectivity reduced            |
-|Syncing (mobile)                 |Terracotta                  |Active operation                |
-|Synced (mobile)                  |Moss (brief, then dismisses)|Confirmed, no action needed     |
+| State                             | Color signal                 | Rationale                        |
+| --------------------------------- | ---------------------------- | -------------------------------- |
+| `place_audit_status: complete`    | Moss                         | Score exists, outcome measured   |
+| `place_audit_status: in_progress` | Terracotta surface           | Active, interactive work         |
+| `place_audit_status: pending`     | TextMuted, no badge color    | Not started, no signal needed    |
+| `place_survey_status: complete`   | Moss                         | Same logic as audit              |
+| `draft` audit                     | Terracotta surface           | Auto-save active, work in flight |
+| `submitted` audit                 | Moss                         | Work done, outcome exists        |
+| Offline (mobile)                  | Warning                      | Connectivity reduced             |
+| Syncing (mobile)                  | Terracotta                   | Active operation                 |
+| Synced (mobile)                   | Moss (brief, then dismisses) | Confirmed, no action needed      |
 
------
+---
 
 ### 1.6 Mobile palette — hue-locked
 
@@ -202,41 +202,41 @@ The previous Tamagui palette had an unintentional hue drift in stops 5–7 (jump
 
 ```typescript
 const darkPalette = [
-  "hsla(30, 22%, 10%, 1)",   // 1  canvas
-  "hsla(30, 22%, 13%, 1)",   // 2  surface
-  "hsla(30, 22%, 16%, 1)",   // 3  surface raised
-  "hsla(29, 22%, 20%, 1)",   // 4  surface sunken / alt
-  "hsla(29, 22%, 26%, 1)",   // 5  mid-dark (was 110° olive — fixed)
-  "hsla(29, 22%, 33%, 1)",   // 6  mid (was 188° teal — fixed)
-  "hsla(28, 23%, 41%, 1)",   // 7  mid-light (was 135° forest — fixed)
-  "hsla(28, 24%, 51%, 1)",   // 8  (was 83° yellow-green — fixed)
-  "hsla(27, 25%, 63%, 1)",   // 9  text muted
-  "hsla(27, 27%, 76%, 1)",   // 10 text secondary
-  "hsla(26, 30%, 88%, 1)",   // 11 text primary
-  "hsla(26, 33%, 96%, 1)",   // 12 near-white
-]
+    "hsla(30, 22%, 10%, 1)", // 1  canvas
+    "hsla(30, 22%, 13%, 1)", // 2  surface
+    "hsla(30, 22%, 16%, 1)", // 3  surface raised
+    "hsla(29, 22%, 20%, 1)", // 4  surface sunken / alt
+    "hsla(29, 22%, 26%, 1)", // 5  mid-dark (was 110° olive — fixed)
+    "hsla(29, 22%, 33%, 1)", // 6  mid (was 188° teal — fixed)
+    "hsla(28, 23%, 41%, 1)", // 7  mid-light (was 135° forest — fixed)
+    "hsla(28, 24%, 51%, 1)", // 8  (was 83° yellow-green — fixed)
+    "hsla(27, 25%, 63%, 1)", // 9  text muted
+    "hsla(27, 27%, 76%, 1)", // 10 text secondary
+    "hsla(26, 30%, 88%, 1)", // 11 text primary
+    "hsla(26, 33%, 96%, 1)", // 12 near-white
+];
 ```
 
 **Light palette (12 stops):**
 
 ```typescript
 const lightPalette = [
-  "hsla(33, 38%, 97%, 1)",   // 1  canvas
-  "hsla(32, 35%, 93%, 1)",   // 2  surface
-  "hsla(31, 32%, 89%, 1)",   // 3  surface raised (white in practice)
-  "hsla(30, 29%, 84%, 1)",   // 4
-  "hsla(29, 27%, 76%, 1)",   // 5
-  "hsla(28, 26%, 66%, 1)",   // 6
-  "hsla(27, 26%, 56%, 1)",   // 7
-  "hsla(27, 26%, 46%, 1)",   // 8
-  "hsla(26, 27%, 36%, 1)",   // 9
-  "hsla(25, 28%, 26%, 1)",   // 10
-  "hsla(24, 30%, 16%, 1)",   // 11
-  "hsla(23, 32%, 9%, 1)",    // 12 near-black
-]
+    "hsla(33, 38%, 97%, 1)", // 1  canvas
+    "hsla(32, 35%, 93%, 1)", // 2  surface
+    "hsla(31, 32%, 89%, 1)", // 3  surface raised (white in practice)
+    "hsla(30, 29%, 84%, 1)", // 4
+    "hsla(29, 27%, 76%, 1)", // 5
+    "hsla(28, 26%, 66%, 1)", // 6
+    "hsla(27, 26%, 56%, 1)", // 7
+    "hsla(27, 26%, 46%, 1)", // 8
+    "hsla(26, 27%, 36%, 1)", // 9
+    "hsla(25, 28%, 26%, 1)", // 10
+    "hsla(24, 30%, 16%, 1)", // 11
+    "hsla(23, 32%, 9%, 1)", // 12 near-black
+];
 ```
 
------
+---
 
 ### 1.7 High contrast modes
 
@@ -256,7 +256,7 @@ High contrast light:
   accentViolet:     #4d2a80
 ```
 
------
+---
 
 ## Part 2: Typography System
 
@@ -266,7 +266,7 @@ The academic reference introduced a useful principle: **use serif for substance,
 
 The existing font stack (Geist + Space Grotesk + JetBrains Mono) is correct. No changes to the actual fonts. What's being added is a more explicit role assignment so every typographic choice is intentional.
 
------
+---
 
 ### 2.2 Font role assignments
 
@@ -284,7 +284,7 @@ This is the addition. Used for: domain eyebrows, score dimension labels, section
 
 Existing usage (code blocks, `--font-code`) is unchanged. This adds a second semantic context for the same font.
 
------
+---
 
 ### 2.3 Type scale
 
@@ -292,41 +292,41 @@ All sizes in rem, base 16px. The `--app-font-scale` CSS variable from the existi
 
 #### Display tier (Space Grotesk)
 
-|Token           |Size           |Weight|Line-height|Tracking|Usage                            |
-|----------------|---------------|------|-----------|--------|---------------------------------|
-|`--text-display`|2rem (32px)    |700   |1.15       |-0.02em |Dashboard hero stats, page titles|
-|`--text-h1`     |1.625rem (26px)|600   |1.2        |-0.015em|Main page headings               |
-|`--text-h2`     |1.375rem (22px)|600   |1.25       |-0.01em |Section headings                 |
-|`--text-h3`     |1.125rem (18px)|600   |1.3        |-0.005em|Card titles, subsection headings |
-|`--text-h4`     |1rem (16px)    |600   |1.4        |0       |Minor headings, form group titles|
+| Token            | Size            | Weight | Line-height | Tracking | Usage                             |
+| ---------------- | --------------- | ------ | ----------- | -------- | --------------------------------- |
+| `--text-display` | 2rem (32px)     | 700    | 1.15        | -0.02em  | Dashboard hero stats, page titles |
+| `--text-h1`      | 1.625rem (26px) | 600    | 1.2         | -0.015em | Main page headings                |
+| `--text-h2`      | 1.375rem (22px) | 600    | 1.25        | -0.01em  | Section headings                  |
+| `--text-h3`      | 1.125rem (18px) | 600    | 1.3         | -0.005em | Card titles, subsection headings  |
+| `--text-h4`      | 1rem (16px)     | 600    | 1.4         | 0        | Minor headings, form group titles |
 
 #### Body tier (Geist)
 
-|Token            |Size            |Weight|Line-height|Usage                                 |
-|-----------------|----------------|------|-----------|--------------------------------------|
-|`--text-body-lg` |1rem (16px)     |400   |1.65       |Long descriptions, audit question text|
-|`--text-body`    |0.9375rem (15px)|400   |1.6        |Standard body, card content           |
-|`--text-body-sm` |0.875rem (14px) |400   |1.55       |Secondary content, table cells        |
-|`--text-body-xs` |0.8125rem (13px)|400   |1.5        |Compact content, tooltips             |
-|`--text-label`   |0.875rem (14px) |500   |1.4        |Form labels, button text              |
-|`--text-label-sm`|0.8125rem (13px)|500   |1.35       |Smaller labels, sidebar items         |
+| Token             | Size             | Weight | Line-height | Usage                                  |
+| ----------------- | ---------------- | ------ | ----------- | -------------------------------------- |
+| `--text-body-lg`  | 1rem (16px)      | 400    | 1.65        | Long descriptions, audit question text |
+| `--text-body`     | 0.9375rem (15px) | 400    | 1.6         | Standard body, card content            |
+| `--text-body-sm`  | 0.875rem (14px)  | 400    | 1.55        | Secondary content, table cells         |
+| `--text-body-xs`  | 0.8125rem (13px) | 400    | 1.5         | Compact content, tooltips              |
+| `--text-label`    | 0.875rem (14px)  | 500    | 1.4         | Form labels, button text               |
+| `--text-label-sm` | 0.8125rem (13px) | 500    | 1.35        | Smaller labels, sidebar items          |
 
 #### Mono metadata tier (JetBrains Mono)
 
 This is the new layer. These are not code — they are structural identifiers.
 
-|Token               |Size            |Weight|Tracking|Usage                                                  |
-|--------------------|----------------|------|--------|-------------------------------------------------------|
-|`--text-eyebrow`    |0.6875rem (11px)|500   |0.12em  |Domain/section eyebrows: "DOMAIN 3 · PLAY VALUE"       |
-|`--text-eyebrow-sm` |0.625rem (10px) |500   |0.14em  |Block labels, badge text: "SUBMITTED", "DRAFT"         |
-|`--text-score-label`|0.625rem (10px) |600   |0.10em  |Score dimension labels: "PV", "U", "S"                 |
-|`--text-counter`    |0.6875rem (11px)|400   |0.06em  |Progress counters: "Question 7 of 12", "Section 3 of 6"|
-|`--text-meta`       |0.6875rem (11px)|400   |0.04em  |Timestamps, IDs, auditor codes                         |
-|`--text-nav-section`|0.625rem (10px) |500   |0.10em  |Sidebar section separators: "MANAGER", "SETTINGS"      |
+| Token                | Size             | Weight | Tracking | Usage                                                   |
+| -------------------- | ---------------- | ------ | -------- | ------------------------------------------------------- |
+| `--text-eyebrow`     | 0.6875rem (11px) | 500    | 0.12em   | Domain/section eyebrows: "DOMAIN 3 · PLAY VALUE"        |
+| `--text-eyebrow-sm`  | 0.625rem (10px)  | 500    | 0.14em   | Block labels, badge text: "SUBMITTED", "DRAFT"          |
+| `--text-score-label` | 0.625rem (10px)  | 600    | 0.10em   | Score dimension labels: "PV", "U", "S"                  |
+| `--text-counter`     | 0.6875rem (11px) | 400    | 0.06em   | Progress counters: "Question 7 of 12", "Section 3 of 6" |
+| `--text-meta`        | 0.6875rem (11px) | 400    | 0.04em   | Timestamps, IDs, auditor codes                          |
+| `--text-nav-section` | 0.625rem (10px)  | 500    | 0.10em   | Sidebar section separators: "MANAGER", "SETTINGS"       |
 
 All mono metadata text is uppercase. No exceptions — the uppercase + tracking combination is the visual signal that distinguishes a label from content.
 
------
+---
 
 ### 2.4 Score display — typographic specification
 
@@ -361,7 +361,7 @@ PLAY VALUE    USABILITY    SOCIABILITY
 
 Labels in mono eyebrow style, numbers in display style, em dash for "not measured."
 
------
+---
 
 ### 2.5 Audit form section header — typographic specification
 
@@ -377,7 +377,7 @@ Question 7 of 12                       ← mono counter, --text-muted
 
 The violet eyebrow is the single place where the methodology color signals "this text comes from the PVUA instrument." When an auditor reads "DOMAIN 3 · SENSORY & MOTOR PLAY" in violet mono, they know they're working within the published framework.
 
------
+---
 
 ### 2.6 Sidebar navigation — typographic specification
 
@@ -396,7 +396,7 @@ Preferences                            ← Geist 14px, 400
 
 The role label at the top of the sidebar ("MANAGER", "AUDITOR") uses the mono section style. This is subtle but provides the role identity signal that the current system is missing — the auditor sidebar says "AUDITOR" in the same way the manager sidebar says "MANAGER."
 
------
+---
 
 ### 2.7 Status badge — typographic specification
 
@@ -415,7 +415,7 @@ Examples:
 
 The square-cornered badge (vs. pill) is deliberate. Pills suggest tag-like or continuous items. Square badges suggest discrete categorical states. The distinction matters for a tool where status has precise meaning.
 
------
+---
 
 ## Part 3: The Shared Token Problem
 
@@ -430,43 +430,43 @@ Create a single shared constants file — `packages/design-tokens/tokens.ts` or 
 ```typescript
 // tokens.ts — the single source of truth
 export const TOKENS = {
-  // Accents (hex values)
-  accentTerracottaDark:  "#c58a5c",
-  accentTerracottaLight: "#a86332",
-  accentMossDark:        "#5e9470",
-  accentMossLight:       "#3d7554",
-  accentSlateDark:       "#7a90b7",
-  accentSlateLight:      "#4d6a9a",
-  accentVioletDark:      "#9b86b2",
-  accentVioletLight:     "#6b52a0",
+    // Accents (hex values)
+    accentTerracottaDark: "#c58a5c",
+    accentTerracottaLight: "#a86332",
+    accentMossDark: "#5e9470",
+    accentMossLight: "#3d7554",
+    accentSlateDark: "#7a90b7",
+    accentSlateLight: "#4d6a9a",
+    accentVioletDark: "#9b86b2",
+    accentVioletLight: "#6b52a0",
 
-  // Surfaces (dark)
-  canvasDark:         "#171310",
-  surfaceDark:        "#211c17",
-  surfaceRaisedDark:  "#2c241d",
-  surfaceSunkenDark:  "#120f0c",
+    // Surfaces (dark)
+    canvasDark: "#171310",
+    surfaceDark: "#211c17",
+    surfaceRaisedDark: "#2c241d",
+    surfaceSunkenDark: "#120f0c",
 
-  // Surfaces (light)
-  canvasLight:        "#f7f1eb",
-  surfaceLight:       "#fdf8f3",
-  surfaceRaisedLight: "#ffffff",
-  surfaceSunkenLight: "#ede6da",
+    // Surfaces (light)
+    canvasLight: "#f7f1eb",
+    surfaceLight: "#fdf8f3",
+    surfaceRaisedLight: "#ffffff",
+    surfaceSunkenLight: "#ede6da",
 
-  // Text (dark)
-  textPrimaryDark:    "#ede5d8",
-  textSecondaryDark:  "#c4b9ae",
-  textMutedDark:      "#968880",
+    // Text (dark)
+    textPrimaryDark: "#ede5d8",
+    textSecondaryDark: "#c4b9ae",
+    textMutedDark: "#968880",
 
-  // Text (light)
-  textPrimaryLight:   "#1e1a16",
-  textSecondaryLight: "#4a423a",
-  textMutedLight:     "#7a6e62",
-} as const
+    // Text (light)
+    textPrimaryLight: "#1e1a16",
+    textSecondaryLight: "#4a423a",
+    textMutedLight: "#7a6e62",
+} as const;
 ```
 
 This file lives in the monorepo root or a shared package, and both `design-system.ts` and `themes.ts` import from it. The palette HSL values in `themes.ts` can't be derived from hex programmatically without conversion — it's acceptable for `themes.ts` to define its own HSL ramps as long as they visually match the hex values above for the key surfaces and accents.
 
------
+---
 
 ## Phase 1 checklist
 
@@ -484,7 +484,7 @@ The following changes are needed to implement this phase:
 - [ ] Create `tokens.ts` shared constants file and import into respective design system files
 - [ ] Audit all hardcoded color values in components and replace with design system tokens
 
------
+---
 
 ## What comes next
 

@@ -5,7 +5,7 @@
 This file instructs Claude Code on how to implement the PVUA design system
 update on the mobile app. Read it fully before writing any code.
 
------
+---
 
 ## Prerequisites — do not start until these are confirmed
 
@@ -17,7 +17,7 @@ update on the mobile app. Read it fully before writing any code.
 The mobile implementation is a **translation** of verified frontend decisions
 into Tamagui tokens and React Native patterns. It is not a redesign.
 
------
+---
 
 ## Repo context
 
@@ -31,7 +31,7 @@ into Tamagui tokens and React Native patterns. It is not a redesign.
 - **State:** Legend State (audit runtime) + Zustand (auth/places/prefs)
 - **Storage:** MMKV (on-device) + Expo Secure Store (auth)
 
------
+---
 
 ## Task sequence — do these in order, do not combine tasks
 
@@ -46,34 +46,34 @@ The new arrays stay in the 26–30° warm-brown band throughout.
 
 ```typescript
 const darkPalette = [
-  "hsla(30, 22%, 10%, 1)",   // 1  canvas
-  "hsla(30, 22%, 13%, 1)",   // 2  surface
-  "hsla(30, 22%, 16%, 1)",   // 3  surface raised
-  "hsla(29, 22%, 20%, 1)",   // 4  surface sunken / alt
-  "hsla(29, 22%, 26%, 1)",   // 5  mid-dark (was 110° olive — fixed)
-  "hsla(29, 22%, 33%, 1)",   // 6  mid (was 188° teal — fixed)
-  "hsla(28, 23%, 41%, 1)",   // 7  mid-light (was 135° forest — fixed)
-  "hsla(28, 24%, 51%, 1)",   // 8  (was 83° yellow-green — fixed)
-  "hsla(27, 25%, 63%, 1)",   // 9  text muted
-  "hsla(27, 27%, 76%, 1)",   // 10 text secondary
-  "hsla(26, 30%, 88%, 1)",   // 11 text primary
-  "hsla(26, 33%, 96%, 1)",   // 12 near-white
-]
+    "hsla(30, 22%, 10%, 1)", // 1  canvas
+    "hsla(30, 22%, 13%, 1)", // 2  surface
+    "hsla(30, 22%, 16%, 1)", // 3  surface raised
+    "hsla(29, 22%, 20%, 1)", // 4  surface sunken / alt
+    "hsla(29, 22%, 26%, 1)", // 5  mid-dark (was 110° olive — fixed)
+    "hsla(29, 22%, 33%, 1)", // 6  mid (was 188° teal — fixed)
+    "hsla(28, 23%, 41%, 1)", // 7  mid-light (was 135° forest — fixed)
+    "hsla(28, 24%, 51%, 1)", // 8  (was 83° yellow-green — fixed)
+    "hsla(27, 25%, 63%, 1)", // 9  text muted
+    "hsla(27, 27%, 76%, 1)", // 10 text secondary
+    "hsla(26, 30%, 88%, 1)", // 11 text primary
+    "hsla(26, 33%, 96%, 1)", // 12 near-white
+];
 
 const lightPalette = [
-  "hsla(33, 38%, 97%, 1)",   // 1  canvas
-  "hsla(32, 35%, 93%, 1)",   // 2  surface
-  "hsla(31, 32%, 89%, 1)",   // 3  surface raised
-  "hsla(30, 29%, 84%, 1)",   // 4
-  "hsla(29, 27%, 76%, 1)",   // 5
-  "hsla(28, 26%, 66%, 1)",   // 6
-  "hsla(27, 26%, 56%, 1)",   // 7
-  "hsla(27, 26%, 46%, 1)",   // 8
-  "hsla(26, 27%, 36%, 1)",   // 9
-  "hsla(25, 28%, 26%, 1)",   // 10
-  "hsla(24, 30%, 16%, 1)",   // 11
-  "hsla(23, 32%, 9%, 1)",    // 12 near-black
-]
+    "hsla(33, 38%, 97%, 1)", // 1  canvas
+    "hsla(32, 35%, 93%, 1)", // 2  surface
+    "hsla(31, 32%, 89%, 1)", // 3  surface raised
+    "hsla(30, 29%, 84%, 1)", // 4
+    "hsla(29, 27%, 76%, 1)", // 5
+    "hsla(28, 26%, 66%, 1)", // 6
+    "hsla(27, 26%, 56%, 1)", // 7
+    "hsla(27, 26%, 46%, 1)", // 8
+    "hsla(26, 27%, 36%, 1)", // 9
+    "hsla(25, 28%, 26%, 1)", // 10
+    "hsla(24, 30%, 16%, 1)", // 11
+    "hsla(23, 32%, 9%, 1)", // 12 near-black
+];
 ```
 
 Keep the `childrenThemes` block (warning/error/success with yellow/red/green)
@@ -82,7 +82,7 @@ exactly as-is. Do not modify it.
 **Verification:** After this task, run `bun run typecheck`. The theme shape
 must not have changed — only the palette values.
 
------
+---
 
 ### Task 2 — Update accent colors in `tamagui.config.ts`
 
@@ -118,7 +118,7 @@ If Tamagui token registration differs from the pattern above due to the
 installed version, adapt to the correct Tamagui v5 token registration pattern
 while preserving these values.
 
------
+---
 
 ### Task 3 — Add typography font variants to `tamagui.config.ts`
 
@@ -185,7 +185,7 @@ exactly what is loaded via `expo-font` — check existing font loading to
 confirm `SpaceGrotesk-Medium`, `Geist-Medium`, `Geist-Regular`,
 `JetBrainsMono-Regular` are the correct family names.
 
------
+---
 
 ### Task 4 — Create `SyncStatusIsland` component
 
@@ -195,11 +195,11 @@ Floating pill that shows the current sync state. Appears at the top of
 the execute screen when sync state is not idle.
 
 ```typescript
-type SyncState = 'offline' | 'syncing' | 'synced' | 'idle'
+type SyncState = "offline" | "syncing" | "synced" | "idle";
 
 interface SyncStatusIslandProps {
-  state: SyncState
-  onPress?: () => void
+    state: SyncState;
+    onPress?: () => void;
 }
 ```
 
@@ -245,19 +245,19 @@ animations. Use the Tamagui spring animation preset for transitions.
 
 ```typescript
 useEffect(() => {
-  if (state !== 'offline') return
-  const anim = Animated.loop(
-    Animated.sequence([
-      Animated.timing(opacity, { toValue: 0.4, duration: 1200, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 1, duration: 1200, useNativeDriver: true }),
-    ])
-  )
-  anim.start()
-  return () => anim.stop()
-}, [state])
+    if (state !== "offline") return;
+    const anim = Animated.loop(
+        Animated.sequence([
+            Animated.timing(opacity, { toValue: 0.4, duration: 1200, useNativeDriver: true }),
+            Animated.timing(opacity, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        ]),
+    );
+    anim.start();
+    return () => anim.stop();
+}, [state]);
 ```
 
------
+---
 
 ### Task 5 — Create `AuditProgressDots` component
 
@@ -267,12 +267,12 @@ Domain progress indicator for the execute tab header.
 
 ```typescript
 interface AuditProgressDotsProps {
-  placeName: string
-  auditLabel: string          // e.g. "Audit #3"
-  totalDomains: number
-  completedDomains: number    // domains fully completed
-  activeDomain: number        // 1-indexed, currently in progress
-  progressPercent: number     // overall % for the text label
+    placeName: string;
+    auditLabel: string; // e.g. "Audit #3"
+    totalDomains: number;
+    completedDomains: number; // domains fully completed
+    activeDomain: number; // 1-indexed, currently in progress
+    progressPercent: number; // overall % for the text label
 }
 ```
 
@@ -303,7 +303,7 @@ Stack (vertical):
 Use Tamagui `Circle` or `View` with `borderRadius` for dots.
 Animate via Tamagui's `animate` prop or `@legendapp/motion` if available.
 
------
+---
 
 ### Task 6 — Create mobile `AuditSectionBlock` component
 
@@ -314,19 +314,19 @@ implementation.
 
 ```typescript
 interface AuditSectionBlockProps {
-  domainNumber: number
-  domainName: string
-  sectionHeading: string
-  questionNumber: number
-  totalQuestions: number
-  sectionNumber: number
-  totalSections: number
-  questionText: string
-  progressPercent: number
-  hasProvisionScale?: boolean
-  onProvisionSelect?: (value: 0 | 1 | 2 | 3) => void
-  provisionValue?: 0 | 1 | 2 | 3 | null
-  autoSaveStatus?: 'idle' | 'saving' | 'saved'
+    domainNumber: number;
+    domainName: string;
+    sectionHeading: string;
+    questionNumber: number;
+    totalQuestions: number;
+    sectionNumber: number;
+    totalSections: number;
+    questionText: string;
+    progressPercent: number;
+    hasProvisionScale?: boolean;
+    onProvisionSelect?: (value: 0 | 1 | 2 | 3) => void;
+    provisionValue?: 0 | 1 | 2 | 3 | null;
+    autoSaveStatus?: "idle" | "saving" | "saved";
 }
 ```
 
@@ -373,7 +373,7 @@ saving: "Saving..."
 saved:  "Saved locally", fades out after 2000ms via Animated.timing opacity
 ```
 
------
+---
 
 ### Task 7 — Add tactile press feedback to all interactive elements
 
@@ -396,7 +396,7 @@ Check the existing Tamagui animation config (`animations` in
 `tamagui.config.ts`) — the `fast` preset (damping 20, stiffness 250) is
 already defined and is the correct one for press feedback.
 
------
+---
 
 ### Task 8 — Formalize or remove `EXPO_PUBLIC_GLASS_UI_ENABLED`
 
@@ -410,14 +410,14 @@ Define it as a proper design system variant. Create
 `lib/design/glass-config.ts`:
 
 ```typescript
-export const GLASS_UI_ENABLED = process.env.EXPO_PUBLIC_GLASS_UI_ENABLED === 'true'
+export const GLASS_UI_ENABLED = process.env.EXPO_PUBLIC_GLASS_UI_ENABLED === "true";
 
 export const glassSurface = {
-  backgroundColor: 'rgba(26, 22, 18, 0.85)',
-  borderColor: 'rgba(255, 255, 255, 0.08)',
-  // Tamagui doesn't support backdrop-filter natively on RN
-  // Use @react-native-community/blur if available, otherwise approximate
-}
+    backgroundColor: "rgba(26, 22, 18, 0.85)",
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    // Tamagui doesn't support backdrop-filter natively on RN
+    // Use @react-native-community/blur if available, otherwise approximate
+};
 ```
 
 **If glass UI is commented out, unused, or behind dead code:**
@@ -426,7 +426,7 @@ technical debt. Leave a comment: `// Glass UI removed — see PVUA design system
 
 Report which path you took in a code comment at the top of any file changed.
 
------
+---
 
 ## Global constraints — read before every task
 
@@ -456,7 +456,7 @@ Report which path you took in a code comment at the top of any file changed.
   exposes `useReducedMotion` or check `AccessibilityInfo.isReduceMotionEnabled`
   and disable animations accordingly
 
------
+---
 
 ## Font name verification
 
@@ -475,7 +475,7 @@ names registered with `expo-font`. Common discrepancies:
 
 Use whatever exact strings are already working in the existing font config.
 
------
+---
 
 ## Verification checklist after all tasks
 

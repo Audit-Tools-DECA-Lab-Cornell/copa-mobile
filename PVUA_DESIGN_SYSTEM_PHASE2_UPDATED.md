@@ -4,7 +4,7 @@
 
 ### (Updated: typography correction applied)
 
------
+---
 
 ## Typography Correction — Applied After Phase 1 Review
 
@@ -12,13 +12,13 @@
 
 **Revised mono rule — use JetBrains Mono ONLY for opaque coded data:**
 
-|Use mono for                  |Do NOT use mono for                     |
-|------------------------------|----------------------------------------|
-|Auditor codes: `AUD-2847`     |Domain eyebrows: "Domain 3 · Play Value"|
-|Timestamps: `2026-05-06 14:32`|Status badges: "Complete"               |
-|Raw score totals: `34/40`     |Progress counters: "Question 7 of 12"   |
-|Instrument version: `v5.2`    |Section labels in sidebar               |
-|Table column data (numeric)   |Any label longer than ~12 chars         |
+| Use mono for                   | Do NOT use mono for                      |
+| ------------------------------ | ---------------------------------------- |
+| Auditor codes: `AUD-2847`      | Domain eyebrows: "Domain 3 · Play Value" |
+| Timestamps: `2026-05-06 14:32` | Status badges: "Complete"                |
+| Raw score totals: `34/40`      | Progress counters: "Question 7 of 12"    |
+| Instrument version: `v5.2`     | Section labels in sidebar                |
+| Table column data (numeric)    | Any label longer than ~12 chars          |
 
 **Updated label typography:**
 
@@ -41,7 +41,7 @@ Sidebar section:  Geist, 11px, weight 500, tracking 0.04em, uppercase
 JetBrains Mono:   Auditor codes, timestamps, raw totals, IDs only
 ```
 
------
+---
 
 ## The "Grand but Clean" Principle for a Research Tool
 
@@ -61,7 +61,7 @@ Specific techniques that create this feeling:
 
 **Count-up stats.** Manager dashboard numbers count up on load. Draws the eye to what's current.
 
------
+---
 
 ## Component Catalogue
 
@@ -96,7 +96,7 @@ Label:     Geist 12px, textSecondary + status dot
 
 **Count-up:** numbers animate 0→target on mount. Duration 700–900ms, cubic-bezier(0.32,0.72,0,1). IntersectionObserver trigger. Only on first mount.
 
------
+---
 
 ### 2. Place Card
 
@@ -122,7 +122,7 @@ Status badge:     see §7
 
 **States:** default · hover (spotlight) · selected (solid terracotta border) · loading (skeleton shimmer)
 
------
+---
 
 ### 3. Project Card
 
@@ -138,7 +138,7 @@ Stats row:  Places count · Audits complete · Mean PV · Mean U (ScoreDisplayCo
 Footer:     Status badge + last activity (JetBrains Mono timestamp)
 ```
 
------
+---
 
 ### 4. Score Display — Compact
 
@@ -154,7 +154,7 @@ Used inline in place cards, assignment rows, audit list items.
 - Not measured: em dash "—" in textMuted
 - Color: moss for complete, terracotta for in-progress, textMuted for not-measured
 
------
+---
 
 ### 5. Score Display — Full
 
@@ -173,7 +173,7 @@ Per column:
 
 Count-up on first render. 1000ms, spring easing.
 
------
+---
 
 ### 6. Audit Section Block (Field Form)
 
@@ -208,7 +208,7 @@ The most important component in the product.
 
 **Auto-save:** ambient label only. Never a toast, never a banner. Geist 11px textMuted in the bottom-right corner of the block.
 
------
+---
 
 ### 7. Status Badge
 
@@ -226,7 +226,7 @@ States:
   Error:                 danger surface + border, danger text
 ```
 
------
+---
 
 ### 8. Sync Status Island (Mobile)
 
@@ -255,7 +255,7 @@ Transition:450ms cubic-bezier(0.32,0.72,0,1) on all properties
 Entrance:  spring from translateY(-8px) opacity-0 → translateY(0) opacity-1
 ```
 
------
+---
 
 ### 9. Audit Progress Dots (Mobile)
 
@@ -274,29 +274,23 @@ Dot transition on domain advance:
   Next → Active:      edge → terracotta, 0.3s spring, 100ms delay
 ```
 
------
+---
 
 ## Interaction Vocabulary
 
 ```css
 /* Easing — all interactive elements use these */
---ease-spring:    cubic-bezier(0.32, 0.72, 0, 1)   /* primary */
---ease-out-fast:  cubic-bezier(0.0, 0.0, 0.2, 1.0) /* enters */
---ease-in-fast:   cubic-bezier(0.4, 0.0, 1.0, 1.0) /* exits */
-
-/* Durations */
-micro:      150ms   /* hover, focus ring */
-standard:   200ms   /* state change, badge */
-component:  300ms   /* card hover, collapse */
-spring:     400–500ms /* modal, island, drawer */
-narrative:  700ms+  /* count-up */
+--ease-spring: cubic-bezier(0.32, 0.72, 0, 1) /* primary */ --ease-out-fast: cubic-bezier(0, 0, 0.2, 1) /* enters */
+    --ease-in-fast: cubic-bezier(0.4, 0, 1, 1) /* exits */ /* Durations */ micro: 150ms /* hover, focus ring */
+    standard: 200ms /* state change, badge */ component: 300ms /* card hover, collapse */ spring: 400–500ms
+    /* modal, island, drawer */ narrative: 700ms+ /* count-up */;
 ```
 
 **Touch feedback (mobile):** `active:scale-[0.97]` on all Pressable/Button, 150ms spring.
 
 **Reduced motion:** All animations respect `prefers-reduced-motion: reduce`. Instant text, instant numbers, no breathing dots.
 
------
+---
 
 ## What Not To Do
 
