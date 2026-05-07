@@ -2,11 +2,12 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import { Alert, ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { Button, Paragraph, Text, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
-import { getExecuteFlowSubject } from "lib/audit/execute-flow";
+import { ExecuteSectionBottomNav } from "components/ui/execute-section-bottom-nav";
+import { AuditProgressDots } from "components/ui/audit-progress-dots";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -218,6 +219,20 @@ export default function ExecuteSectionScreen() {
     const hasPendingLocalChanges =
         auditSession !== undefined && Object.keys(dirtySections[auditSession.audit_id] ?? {}).length > 0;
 
+    const handlePrevButton = useCallback(() => {
+        flushNoteToStore();
+        if (activeSection !== undefined) {
+            const previousSection = getPreviousSection(visibleSections, activeSection.section_key);
+            if (previousSection !== undefined && placeId !== null && projectId !== null) {
+                router.replace(
+                    `/execute/${placeId}/section/${previousSection.section_key}?projectId=${encodeURIComponent(
+                        projectId,
+                    )}` as Href,
+                );
+            }
+        }
+    }, [flushNoteToStore, visibleSections, activeSection, router, placeId, projectId]);
+
     if (
         placeId === null ||
         projectId === null ||
@@ -272,9 +287,6 @@ export default function ExecuteSectionScreen() {
     const nextSection = getNextSection(visibleSections, resolvedActiveSection.section_key);
     const activeSectionNumber =
         visibleSections.findIndex((s) => s.section_key === resolvedActiveSection.section_key) + 1;
-    const flowSubject = t(`subjects.${getExecuteFlowSubject(resolvedAuditSession.selected_execution_mode)}`, {
-        ns: "audit",
-    });
     const questionByKey = new Map(resolvedActiveSection.questions.map((question) => [question.question_key, question]));
     const questionRows = resolvedActiveSection.questions.map((question) => {
         return {
@@ -466,191 +478,175 @@ export default function ExecuteSectionScreen() {
             />
         </YStack>
     );
-    const actionButtons = (
-        <XStack gap="$2" items="center" justify="space-between" width="100%">
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => {
-                    flushNoteToStore();
-                    router.replace(
-                        `/execute/${resolvedPlaceId}/overview?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
-                    );
-                }}
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelLg.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={0.5}
-                >
-                    {t("section.backToOverview", { ns: "audit" })}
-                </Text>
-            </Button>
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                rounded={ds.radii.md}
-                borderWidth={0}
-                bg={ds.colors.primary}
-                width={"48%"}
-                disabled={isSavingDraft || (!canEditInputs && nextSection === undefined)}
-                opacity={isSavingDraft || (!canEditInputs && nextSection === undefined) ? 0.7 : 1}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => {
-                    void handlePrimaryAction();
-                }}
-            >
-                <Text
-                    color={ds.colors.primaryForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelLg.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={0.7}
-                >
-                    {isSavingDraft
-                        ? t("section.uploadingShort", { ns: "audit" })
-                        : nextSection === undefined
-                          ? t("copy.submitSubject", { ns: "audit", subject: flowSubject })
-                          : t("section.saveAndNext", { ns: "audit" })}
-                </Text>
-            </Button>
-        </XStack>
-    );
 
     return (
-        <ScrollView
-            ref={scrollViewRef}
-            contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 144,
-                gap: layout.sectionGap,
-                maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
-                includeTopPadding: false,
-            })}
-        >
-            <YStack gap="$3">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                    lineHeight={
-                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
+        <YStack flex={1} bg={ds.colors.background}>
+            {/* Pinned Progress Dots */}
+            {auditSession !== undefined && (
+                <AuditProgressDots
+                    placeName={auditSession.place_name}
+                    auditLabel={`Audit (${auditSession.audit_code})`}
+                    totalDomains={visibleSections.length}
+                    completedDomains={
+                        visibleSections.filter((s) => getInstrumentSectionLocalProgress(auditSession, s).isComplete)
+                            .length
                     }
-                >
-                    {`${activeSectionNumber}. ${resolvedActiveSection.title}`}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                >
-                    {sectionInstructionsPromptSegments.map((segment, index) => (
-                        <Fragment key={`${resolvedActiveSection.section_key}-seg-${index.toString()}`}>
-                            <Text
-                                fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
-                                fontSize={
-                                    layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize
-                                }
-                                color={segment.bold ? ds.colors.primary : ds.colors.foreground}
-                            >
-                                {segment.text}
-                            </Text>
-                        </Fragment>
-                    ))}
-                </Paragraph>
-            </YStack>
-
-            {layout.isTablet &&
-            !resolvedActiveSection.questions.some((question) => question.question_type === "checklist") ? (
-                <YStack gap="$3">
-                    <SectionQuestionTable
-                        rows={questionRows}
-                        disabled={!canEditInputs}
-                        onSelectAnswer={(questionKey, scaleKey, optionKey) => {
-                            const question = questionByKey.get(questionKey);
-                            if (question === undefined) {
-                                return;
-                            }
-                            handleSelectAnswer(question, questionKey, scaleKey, optionKey);
-                        }}
-                    />
-                    {hasPendingLocalChanges ? (
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {t("section.pendingSync", { ns: "audit" })}
-                        </Paragraph>
-                    ) : null}
-                    {errorMessage === null ? null : (
-                        <Paragraph
-                            color={ds.colors.warning}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                            lineHeight={ds.typography.bodySm.lineHeight}
-                        >
-                            {errorMessage}
-                        </Paragraph>
+                    activeDomain={visibleSections.findIndex((s) => s.section_key === activeSection?.section_key) + 1}
+                    progressPercent={Math.round(
+                        (visibleSections.filter((s) => getInstrumentSectionLocalProgress(auditSession, s).isComplete)
+                            .length /
+                            visibleSections.length) *
+                            100,
                     )}
-                    {notesPanel}
-                    {actionButtons}
-                </YStack>
-            ) : (
-                <YStack gap="$3">
-                    <YStack gap="$3">
-                        {questionRows.map(({ question, selectedAnswers }, index) => (
-                            <QuestionCard
-                                key={question.question_key}
-                                question={question}
-                                questionIndex={index + 1}
-                                totalQuestions={questionRows.length}
-                                selectedAnswers={selectedAnswers}
-                                disabled={!canEditInputs}
-                                onChangeAnswers={(questionKey, nextAnswers) => {
-                                    if (!canEditInputs) {
-                                        return;
-                                    }
-                                    applyLocalQuestionAnswer(
-                                        resolvedPairKey,
-                                        resolvedActiveSection.section_key,
-                                        questionKey,
-                                        nextAnswers,
-                                    );
-                                }}
-                            />
-                        ))}
-                    </YStack>
-                    {hasPendingLocalChanges ? (
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {t("section.pendingSync", { ns: "audit" })}
-                        </Paragraph>
-                    ) : null}
-                    {errorMessage === null ? null : (
-                        <Paragraph
-                            color={ds.colors.warning}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                            lineHeight={ds.typography.bodySm.lineHeight}
-                        >
-                            {errorMessage}
-                        </Paragraph>
-                    )}
-                    {notesPanel}
-                    {actionButtons}
-                </YStack>
+                />
             )}
-        </ScrollView>
+
+            {/* Scrollable Content */}
+            <ScrollView
+                ref={scrollViewRef}
+                contentInsetAdjustmentBehavior="automatic"
+                style={{ flex: 1, backgroundColor: ds.colors.background }}
+                contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                    bottomPadding: 64,
+                    gap: layout.sectionGap,
+                    maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
+                    includeTopPadding: false,
+                })}
+            >
+                <YStack gap="$3">
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
+                        lineHeight={
+                            layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
+                        }
+                    >
+                        {`${activeSectionNumber}. ${resolvedActiveSection.title}`}
+                    </Text>
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyLg.fontSize}
+                    >
+                        {sectionInstructionsPromptSegments.map((segment, index) => (
+                            <Fragment key={`${resolvedActiveSection.section_key}-seg-${index.toString()}`}>
+                                <Text
+                                    fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
+                                    fontSize={
+                                        layout.isTablet
+                                            ? ds.typography.titleMd.fontSize
+                                            : ds.typography.titleSm.fontSize
+                                    }
+                                    color={segment.bold ? ds.colors.primary : ds.colors.foreground}
+                                >
+                                    {segment.text}
+                                </Text>
+                            </Fragment>
+                        ))}
+                    </Paragraph>
+                </YStack>
+
+                {layout.isTablet &&
+                !resolvedActiveSection.questions.some((question) => question.question_type === "checklist") ? (
+                    <YStack gap="$3">
+                        <SectionQuestionTable
+                            rows={questionRows}
+                            disabled={!canEditInputs}
+                            onSelectAnswer={(questionKey, scaleKey, optionKey) => {
+                                const question = questionByKey.get(questionKey);
+                                if (question === undefined) {
+                                    return;
+                                }
+                                handleSelectAnswer(question, questionKey, scaleKey, optionKey);
+                            }}
+                        />
+                        {hasPendingLocalChanges ? (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                            >
+                                {t("section.pendingSync", { ns: "audit" })}
+                            </Paragraph>
+                        ) : null}
+                        {errorMessage === null ? null : (
+                            <Paragraph
+                                color={ds.colors.warning}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                                lineHeight={ds.typography.bodySm.lineHeight}
+                            >
+                                {errorMessage}
+                            </Paragraph>
+                        )}
+                        {notesPanel}
+                    </YStack>
+                ) : (
+                    <YStack gap="$3">
+                        <YStack gap="$3">
+                            {questionRows.map(({ question, selectedAnswers }, index) => (
+                                <QuestionCard
+                                    key={question.question_key}
+                                    question={question}
+                                    questionIndex={index + 1}
+                                    totalQuestions={questionRows.length}
+                                    selectedAnswers={selectedAnswers}
+                                    disabled={!canEditInputs}
+                                    onChangeAnswers={(questionKey, nextAnswers) => {
+                                        if (!canEditInputs) {
+                                            return;
+                                        }
+                                        applyLocalQuestionAnswer(
+                                            resolvedPairKey,
+                                            resolvedActiveSection.section_key,
+                                            questionKey,
+                                            nextAnswers,
+                                        );
+                                    }}
+                                />
+                            ))}
+                        </YStack>
+                        {hasPendingLocalChanges ? (
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                            >
+                                {t("section.pendingSync", { ns: "audit" })}
+                            </Paragraph>
+                        ) : null}
+                        {errorMessage === null ? null : (
+                            <Paragraph
+                                color={ds.colors.warning}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodySm.fontSize}
+                                lineHeight={ds.typography.bodySm.lineHeight}
+                            >
+                                {errorMessage}
+                            </Paragraph>
+                        )}
+                        {notesPanel}
+                    </YStack>
+                )}
+            </ScrollView>
+
+            {/* Fixed Bottom Navigation */}
+            {auditSession !== undefined && (
+                <ExecuteSectionBottomNav
+                    onPrevPress={handlePrevButton}
+                    onNextPress={async () => {
+                        flushNoteToStore();
+                        await handlePrimaryAction();
+                    }}
+                    showPrevButton={activeSectionNumber > 1}
+                    isPrimaryDisabled={isSavingDraft || (!canEditInputs && nextSection === undefined)}
+                    isSubmit={nextSection === undefined}
+                    saveStatus="idle"
+                    isSavingDraft={isSavingDraft}
+                />
+            )}
+        </YStack>
     );
 }
 
@@ -788,6 +784,22 @@ function getNextSection(
         return undefined;
     }
     return sections[currentIndex + 1];
+}
+
+/**
+ * @param sections Ordered visible sections.
+ * @param currentSectionKey Current section key.
+ * @returns Previous section or undefined when at the beginning.
+ */
+function getPreviousSection(
+    sections: readonly InstrumentSection[],
+    currentSectionKey: string,
+): InstrumentSection | undefined {
+    const currentIndex = sections.findIndex((section) => section.section_key === currentSectionKey);
+    if (currentIndex <= 0) {
+        return undefined;
+    }
+    return sections[currentIndex - 1];
 }
 
 /**
