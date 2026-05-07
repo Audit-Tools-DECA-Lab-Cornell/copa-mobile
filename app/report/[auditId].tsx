@@ -30,6 +30,7 @@ import {
 import type { AuditScoreTotals, AuditSession } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
+import { useCountUp } from "lib/ui/use-count-up";
 import { getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -57,7 +58,8 @@ function ScoreRatioBar(props: Readonly<{ value: number; max: number; color: stri
     const ds = useDesignSystem();
     const { value, max, color } = props;
     const safeRatio = max <= 0 ? 0 : Math.min(1, value / max);
-    const widthPercent = `${Math.round(safeRatio * 1000) / 10}%`;
+    const animatedRatio = useCountUp(safeRatio, { duration: 700, delay: 300 });
+    const widthPercent = `${Math.round(animatedRatio * 1000) / 10}%`;
 
     return (
         <XStack height={7} width="100%" rounded={9999} overflow="hidden" style={{ backgroundColor: ds.colors.border }}>
@@ -86,10 +88,11 @@ function ScoreMetricRow(
     const { t } = useTranslation("reports");
     const { label, value, maximum, barColor, scaleColor } = props;
     const isNotApplicable = maximum <= 0;
-    const percentageText = formatPercentage(value, maximum);
+    const animatedValue = useCountUp(value, { duration: 700, delay: 300 });
+    const percentageText = formatPercentage(animatedValue, maximum);
     const fractionText = isNotApplicable
         ? t("detail.metricFractionNotApplicable")
-        : `${formatScoreValue(value)} / ${formatScoreValue(maximum)}`;
+        : `${formatScoreValue(animatedValue)} / ${formatScoreValue(maximum)}`;
 
     return (
         <YStack gap="$2" width="100%" bg={scaleColor ?? ds.colors.mutedSurface} px="$3" py="$3" rounded={ds.radii.sm}>

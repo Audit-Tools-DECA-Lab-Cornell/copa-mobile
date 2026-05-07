@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated } from "react-native";
+import { ActivityIndicator, Animated } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Button, Text, YStack, XStack } from "tamagui";
+import { Check } from "@tamagui/lucide-icons-2";
 import { useDesignSystem } from "lib/design-system";
+import { useReduceMotion } from "lib/ui/use-reduce-motion";
+
+export type SubmitState = "idle" | "submitting" | "success";
 
 interface ExecuteSectionBottomNavProps {
     readonly onPrevPress: () => void;
@@ -12,6 +16,7 @@ interface ExecuteSectionBottomNavProps {
     readonly isSubmit: boolean;
     readonly isSavingDraft: boolean;
     readonly lastAnswerChangeTime: number | undefined; // Timestamp when last answer was applied
+    readonly submitState?: SubmitState;
 }
 
 /**
@@ -24,6 +29,10 @@ interface ExecuteSectionBottomNavProps {
  * - After 600ms → "Saved locally" fades in (cross-fade 200ms)
  * - After 2000ms total → Fades out (300ms)
  *
+ * Submission moment sequence (when submitState changes):
+ * - "submitting": button shows spinner, terracotta background
+ * - "success": button transitions to moss with checkmark, scale 1.0→1.04→1.0 overshoot
+ *
  * @param props Navigation and state props
  * @returns Fixed bottom navigation component
  */
@@ -35,12 +44,42 @@ export function ExecuteSectionBottomNav({
     isSubmit,
     isSavingDraft,
     lastAnswerChangeTime,
+    submitState = "idle",
 }: Readonly<ExecuteSectionBottomNavProps>) {
     const ds = useDesignSystem();
     const { t } = useTranslation(["audit", "common"]);
+    const reduceMotion = useReduceMotion();
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
     const opacityRef = useRef(new Animated.Value(0));
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const savingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const submitScaleRef = useRef(new Animated.Value(1));
+
+    // Submission moment overshoot animation when state transitions to "success"
+    useEffect(() => {
+        if (submitState !== "success") {
+            submitScaleRef.current.setValue(1);
+            return;
+        }
+        if (reduceMotion) {
+            submitScaleRef.current.setValue(1);
+            return;
+        }
+        Animated.sequence([
+            Animated.spring(submitScaleRef.current, {
+                toValue: 1.04,
+                stiffness: 240,
+                damping: 12,
+                useNativeDriver: true,
+            }),
+            Animated.spring(submitScaleRef.current, {
+                toValue: 1.0,
+                stiffness: 200,
+                damping: 18,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [submitState, reduceMotion]);
 
     // Manage auto-save feedback sequence
     useEffect(() => {
@@ -50,30 +89,44 @@ export function ExecuteSectionBottomNav({
 
         // Start showing "Saving..." with fade in
         setSaveStatus("saving");
-        opacityRef.current.setValue(0);
-        Animated.timing(opacityRef.current, {
-            toValue: 1,
-            duration: 150,
-            useNativeDriver: true,
-        }).start();
+        if (reduceMotion) {
+            opacityRef.current.setValue(1);
+        } else {
+            opacityRef.current.setValue(0);
+            Animated.timing(opacityRef.current, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: true,
+            }).start();
+        }
 
         // Clear any existing timeouts
-        if (timeoutRef.current !== null) {
-            clearTimeout(timeoutRef.current);
+        if (savingTimeoutRef.current !== null) {
+            clearTimeout(savingTimeoutRef.current);
+        }
+        if (idleTimeoutRef.current !== null) {
+            clearTimeout(idleTimeoutRef.current);
         }
 
         // After 600ms, cross-fade to "Saved locally"
-        timeoutRef.current = setTimeout(() => {
+        savingTimeoutRef.current = setTimeout(() => {
             setSaveStatus("saved");
-            Animated.timing(opacityRef.current, {
-                toValue: 1,
-                duration: 200,
-                useNativeDriver: true,
-            }).start();
+            if (!reduceMotion) {
+                Animated.timing(opacityRef.current, {
+                    toValue: 1,
+                    duration: 200,
+                    useNativeDriver: true,
+                }).start();
+            }
         }, 600);
 
         // After 2000ms total, fade out and return to idle
-        timeoutRef.current = setTimeout(() => {
+        idleTimeoutRef.current = setTimeout(() => {
+            if (reduceMotion) {
+                opacityRef.current.setValue(0);
+                setSaveStatus("idle");
+                return;
+            }
             Animated.timing(opacityRef.current, {
                 toValue: 0,
                 duration: 300,
@@ -84,11 +137,14 @@ export function ExecuteSectionBottomNav({
         }, 2000);
 
         return () => {
-            if (timeoutRef.current !== null) {
-                clearTimeout(timeoutRef.current);
+            if (savingTimeoutRef.current !== null) {
+                clearTimeout(savingTimeoutRef.current);
+            }
+            if (idleTimeoutRef.current !== null) {
+                clearTimeout(idleTimeoutRef.current);
             }
         };
-    }, [lastAnswerChangeTime]);
+    }, [lastAnswerChangeTime, reduceMotion]);
 
     return (
         <YStack
@@ -142,32 +198,50 @@ export function ExecuteSectionBottomNav({
                 </YStack>
 
                 {/* Next/Submit Button */}
-                <Button
-                    flex={0}
-                    height={44}
-                    rounded={8}
-                    bg={isPrimaryDisabled || isSavingDraft ? ds.colors.mutedForeground : ds.colors.primary}
-                    borderWidth={0}
-                    opacity={isPrimaryDisabled || isSavingDraft ? 0.6 : 1}
-                    disabled={isPrimaryDisabled || isSavingDraft}
-                    pressStyle={{ scale: 0.97 }}
-                    onPress={onNextPress}
-                >
-                    <Text
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={13}
-                        fontWeight="600"
-                        color={ds.colors.primaryForeground}
-                        textTransform="uppercase"
-                        letterSpacing={0.5}
+                <Animated.View style={{ transform: [{ scale: submitScaleRef.current }] }}>
+                    <Button
+                        flex={0}
+                        height={44}
+                        rounded={8}
+                        bg={
+                            submitState === "success"
+                                ? ds.colors.success
+                                : isPrimaryDisabled || isSavingDraft
+                                  ? ds.colors.mutedForeground
+                                  : ds.colors.primary
+                        }
+                        borderWidth={0}
+                        opacity={isPrimaryDisabled || isSavingDraft ? 0.6 : 1}
+                        disabled={isPrimaryDisabled || isSavingDraft || submitState !== "idle"}
+                        pressStyle={{ scale: 0.97 }}
+                        onPress={onNextPress}
                     >
-                        {isSavingDraft
-                            ? t("section.uploadingShort", { ns: "audit" })
-                            : isSubmit
-                              ? t("copy.submitSubject", { ns: "audit", subject: "Audit" })
-                              : t("section.nextLabel", { ns: "audit" })}
-                    </Text>
-                </Button>
+                        <XStack gap="$2" items="center">
+                            {submitState === "submitting" && (
+                                <ActivityIndicator size="small" color={ds.colors.primaryForeground} />
+                            )}
+                            {submitState === "success" && <Check size={16} color={ds.colors.primaryForeground} />}
+                            <Text
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={13}
+                                fontWeight="600"
+                                color={ds.colors.primaryForeground}
+                                textTransform="uppercase"
+                                letterSpacing={0.5}
+                            >
+                                {submitState === "submitting"
+                                    ? t("section.uploadingShort", { ns: "audit" })
+                                    : submitState === "success"
+                                      ? t("section.submittedShort", { ns: "audit", defaultValue: "Submitted" })
+                                      : isSavingDraft
+                                        ? t("section.uploadingShort", { ns: "audit" })
+                                        : isSubmit
+                                          ? t("copy.submitSubject", { ns: "audit", subject: "Audit" })
+                                          : t("section.nextLabel", { ns: "audit" })}
+                            </Text>
+                        </XStack>
+                    </Button>
+                </Animated.View>
             </XStack>
         </YStack>
     );

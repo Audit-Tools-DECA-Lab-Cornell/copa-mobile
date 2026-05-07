@@ -2,6 +2,7 @@ import { useMemo, useEffect } from "react";
 import { Animated } from "react-native";
 import { YStack, XStack, Text, View } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useReduceMotion } from "lib/ui/use-reduce-motion";
 
 interface AuditProgressDotsProps {
     readonly placeName: string;
@@ -32,6 +33,7 @@ export function AuditProgressDots({
     progressPercent,
 }: Readonly<AuditProgressDotsProps>) {
     const ds = useDesignSystem();
+    const reduceMotion = useReduceMotion();
 
     // Create animated values for each dot
     const dotAnimations = useMemo(
@@ -49,6 +51,11 @@ export function AuditProgressDots({
                 targetValue = 1; // active (terracotta)
             }
 
+            if (reduceMotion) {
+                dot.color.setValue(targetValue);
+                return;
+            }
+
             Animated.timing(dot.color, {
                 toValue: targetValue,
                 duration: index < completedDomains ? 400 : index === completedDomains ? 300 : 0,
@@ -56,7 +63,7 @@ export function AuditProgressDots({
                 useNativeDriver: false,
             }).start();
         });
-    }, [completedDomains, dotAnimations]);
+    }, [completedDomains, dotAnimations, reduceMotion]);
 
     const getColorForDot = (index: number) => {
         if (index < completedDomains) {

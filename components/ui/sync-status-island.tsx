@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Animated } from "react-native";
 import { XStack, YStack, Text } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
+import { useReduceMotion } from "lib/ui/use-reduce-motion";
 
 type SyncState = "offline" | "syncing" | "synced" | "idle";
 
@@ -19,6 +20,7 @@ interface SyncStatusIslandProps {
  */
 export function SyncStatusIsland({ state, onStateChange }: Readonly<SyncStatusIslandProps>) {
     const ds = useDesignSystem();
+    const reduceMotion = useReduceMotion();
     const dotOpacity = useRef(new Animated.Value(1)).current;
     const dotScale = useRef(new Animated.Value(1)).current;
 
@@ -33,7 +35,7 @@ export function SyncStatusIsland({ state, onStateChange }: Readonly<SyncStatusIs
 
     // Breathing animation for offline (slow 2s cycle)
     useEffect(() => {
-        if (state !== "offline") {
+        if (state !== "offline" || reduceMotion) {
             dotOpacity.setValue(1);
             return;
         }
@@ -55,11 +57,11 @@ export function SyncStatusIsland({ state, onStateChange }: Readonly<SyncStatusIs
 
         anim.start();
         return () => anim.stop();
-    }, [state, dotOpacity]);
+    }, [state, dotOpacity, reduceMotion]);
 
     // Pulse animation for syncing (1.2s cycle)
     useEffect(() => {
-        if (state !== "syncing") {
+        if (state !== "syncing" || reduceMotion) {
             dotScale.setValue(1);
             return;
         }
@@ -81,7 +83,7 @@ export function SyncStatusIsland({ state, onStateChange }: Readonly<SyncStatusIs
 
         anim.start();
         return () => anim.stop();
-    }, [state, dotScale]);
+    }, [state, dotScale, reduceMotion]);
 
     // Return null for idle state
     if (state === "idle") {

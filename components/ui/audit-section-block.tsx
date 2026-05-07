@@ -3,6 +3,7 @@ import { Animated } from "react-native";
 import { YStack, XStack, Text, Button } from "tamagui";
 import { ChevronRight } from "@tamagui/lucide-icons-2";
 import { useDesignSystem } from "lib/design-system";
+import { useReduceMotion } from "lib/ui/use-reduce-motion";
 
 interface AuditSectionBlockProps {
     readonly domainNumber: number;
@@ -42,6 +43,7 @@ export function AuditSectionBlock({
     autoSaveStatus = "idle",
 }: Readonly<AuditSectionBlockProps>) {
     const ds = useDesignSystem();
+    const reduceMotion = useReduceMotion();
     const [isProvisionExpanded, setIsProvisionExpanded] = useState(false);
     const progressAnim = useRef(new Animated.Value(progressPercent / 100)).current;
     const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -49,28 +51,42 @@ export function AuditSectionBlock({
 
     // Animate progress bar width
     useEffect(() => {
+        if (reduceMotion) {
+            progressAnim.setValue(progressPercent / 100);
+            return;
+        }
         Animated.spring(progressAnim, {
             toValue: progressPercent / 100,
             stiffness: 120,
             damping: 20,
             useNativeDriver: false,
         }).start();
-    }, [progressPercent, progressAnim]);
+    }, [progressPercent, progressAnim, reduceMotion]);
 
     // Animate provision icon rotation
     useEffect(() => {
+        if (reduceMotion) {
+            rotateAnim.setValue(isProvisionExpanded ? 1 : 0);
+            return;
+        }
         Animated.spring(rotateAnim, {
             toValue: isProvisionExpanded ? 1 : 0,
             stiffness: 200,
             damping: 18,
             useNativeDriver: true,
         }).start();
-    }, [isProvisionExpanded, rotateAnim]);
+    }, [isProvisionExpanded, rotateAnim, reduceMotion]);
 
     // Animate save status visibility
     useEffect(() => {
         if (autoSaveStatus === "saved") {
             saveOpacity.setValue(1);
+            if (reduceMotion) {
+                const idleTimer = setTimeout(() => {
+                    saveOpacity.setValue(0);
+                }, 2000);
+                return () => clearTimeout(idleTimer);
+            }
             const timer = setTimeout(() => {
                 Animated.timing(saveOpacity, {
                     toValue: 0,
@@ -82,7 +98,7 @@ export function AuditSectionBlock({
         }
         saveOpacity.setValue(0);
         return undefined;
-    }, [autoSaveStatus, saveOpacity]);
+    }, [autoSaveStatus, saveOpacity, reduceMotion]);
 
     const provisionLabels = ["None", "Limited", "Moderate", "High"];
 

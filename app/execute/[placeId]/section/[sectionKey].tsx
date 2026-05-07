@@ -88,6 +88,7 @@ export default function ExecuteSectionScreen() {
     const [localNote, setLocalNote] = useState("");
     const [isNoteFocused, setIsNoteFocused] = useState(false);
     const [lastAnswerChangeTime, setLastAnswerChangeTime] = useState<number | undefined>();
+    const [submitState, setSubmitState] = useState<"idle" | "submitting" | "success">("idle");
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
     const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
@@ -308,13 +309,20 @@ export default function ExecuteSectionScreen() {
             return;
         }
 
+        setSubmitState("submitting");
         try {
             const submittedSession = await submitAuditSession(resolvedAuthSession, resolvedAuditSession.audit_id);
             await loadPlaces(resolvedAuthSession).catch(() => undefined);
-            router.replace(
-                `/execute/${submittedSession.place_id}/overview?projectId=${encodeURIComponent(submittedSession.project_id)}` as Href,
-            );
+            // Show the success moment (moss checkmark + scale overshoot) before navigating.
+            // The bottom-nav animation runs ~400ms; navigate after 600ms total.
+            setSubmitState("success");
+            setTimeout(() => {
+                router.replace(
+                    `/execute/${submittedSession.place_id}/overview?projectId=${encodeURIComponent(submittedSession.project_id)}` as Href,
+                );
+            }, 600);
         } catch {
+            setSubmitState("idle");
             return;
         }
     };
@@ -676,6 +684,7 @@ export default function ExecuteSectionScreen() {
                     isSubmit={nextSection === undefined}
                     lastAnswerChangeTime={lastAnswerChangeTime}
                     isSavingDraft={isSavingDraft}
+                    submitState={submitState}
                 />
             )}
         </YStack>
