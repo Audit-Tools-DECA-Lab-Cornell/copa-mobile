@@ -106,13 +106,13 @@ export function AuditSectionBlock({
         <YStack gap="$4" p="$4" bg={ds.colors.surface} rounded={12}>
             {/* Header */}
             <YStack gap="$2">
-                {/* Domain eyebrow */}
+                {/* Domain eyebrow — violet marks the PVUA methodology context */}
                 <Text
                     fontFamily={ds.fonts.headingMedium}
                     fontSize={11}
                     fontWeight="500"
                     letterSpacing={0.48}
-                    color={ds.colors.primary}
+                    color={ds.colors.violet}
                     textTransform="uppercase"
                 >
                     Domain {domainNumber} · {domainName}
@@ -140,7 +140,7 @@ export function AuditSectionBlock({
                     <Animated.View
                         style={{
                             height: "100%",
-                            backgroundColor: ds.colors.primary,
+                            backgroundColor: ds.colors.violet,
                             width: progressAnim.interpolate({
                                 inputRange: [0, 1],
                                 outputRange: ["0%", "100%"],

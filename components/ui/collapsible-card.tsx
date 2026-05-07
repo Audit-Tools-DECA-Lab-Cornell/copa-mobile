@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from "react";
-import { Pressable } from "react-native";
+import { useRef, useState, type ReactNode } from "react";
+import { Animated, Pressable } from "react-native";
 import { ChevronDown } from "@tamagui/lucide-icons-2";
 import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem, isGlassUiEnabled } from "lib/design-system";
+import { useReduceMotion } from "lib/ui/use-reduce-motion";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
 interface CollapsibleCardProps {
@@ -30,9 +31,23 @@ export function CollapsibleCard({
 }: Readonly<CollapsibleCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const reduceMotion = useReduceMotion();
     const isGlassEnabled = isGlassUiEnabled();
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
     const visibleCollapsedHint = isExpanded ? undefined : collapsedHint;
+    const pressScale = useRef(new Animated.Value(1)).current;
+    const animatePressScale = (toValue: number) => {
+        if (reduceMotion) {
+            pressScale.setValue(toValue);
+            return;
+        }
+        Animated.spring(pressScale, {
+            toValue,
+            stiffness: 250,
+            damping: 20,
+            useNativeDriver: true,
+        }).start();
+    };
 
     return (
         <YStack
@@ -49,6 +64,8 @@ export function CollapsibleCard({
                 onPress={() => {
                     setIsExpanded((currentValue) => !currentValue);
                 }}
+                onPressIn={() => animatePressScale(0.97)}
+                onPressOut={() => animatePressScale(1)}
                 style={({ pressed }) => ({
                     borderRadius: ds.radii.md,
                     paddingHorizontal: 4,
@@ -56,56 +73,64 @@ export function CollapsibleCard({
                     backgroundColor: pressed ? ds.colors.surfaceMuted : "transparent",
                 })}
             >
-                <XStack items="center" gap="$3">
-                    {icon}
-                    <YStack flex={1} gap="$1">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.bodyMd.fontSize}
-                            lineHeight={
-                                layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.bodyMd.lineHeight
-                            }
-                        >
-                            {title}
-                        </Text>
-                        {subtitle === undefined ? null : (
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
+                <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+                    <XStack items="center" gap="$3">
+                        {icon}
+                        <YStack flex={1} gap="$1">
+                            <Text
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
                                 fontSize={
-                                    layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodyXs.fontSize
+                                    layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.bodyMd.fontSize
                                 }
                                 lineHeight={
-                                    layout.isTablet ? ds.typography.bodyMd.lineHeight : ds.typography.bodyXs.lineHeight
+                                    layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.bodyMd.lineHeight
                                 }
                             >
-                                {subtitle}
-                            </Paragraph>
-                        )}
-                        {visibleCollapsedHint === undefined ? null : (
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={
-                                    layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodyXs.fontSize
-                                }
-                                lineHeight={
-                                    layout.isTablet ? ds.typography.bodyMd.lineHeight : ds.typography.bodyXs.lineHeight
-                                }
-                            >
-                                {visibleCollapsedHint}
-                            </Paragraph>
-                        )}
-                    </YStack>
-                    <ChevronDown
-                        size={layout.isTablet ? 22 : 18}
-                        color={ds.colors.mutedForeground}
-                        style={{
-                            transform: isExpanded ? [{ rotate: "180deg" }] : [{ rotate: "0deg" }],
-                        }}
-                    />
-                </XStack>
+                                {title}
+                            </Text>
+                            {subtitle === undefined ? null : (
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={
+                                        layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodyXs.fontSize
+                                    }
+                                    lineHeight={
+                                        layout.isTablet
+                                            ? ds.typography.bodyMd.lineHeight
+                                            : ds.typography.bodyXs.lineHeight
+                                    }
+                                >
+                                    {subtitle}
+                                </Paragraph>
+                            )}
+                            {visibleCollapsedHint === undefined ? null : (
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={
+                                        layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodyXs.fontSize
+                                    }
+                                    lineHeight={
+                                        layout.isTablet
+                                            ? ds.typography.bodyMd.lineHeight
+                                            : ds.typography.bodyXs.lineHeight
+                                    }
+                                >
+                                    {visibleCollapsedHint}
+                                </Paragraph>
+                            )}
+                        </YStack>
+                        <ChevronDown
+                            size={layout.isTablet ? 22 : 18}
+                            color={ds.colors.mutedForeground}
+                            style={{
+                                transform: isExpanded ? [{ rotate: "180deg" }] : [{ rotate: "0deg" }],
+                            }}
+                        />
+                    </XStack>
+                </Animated.View>
             </Pressable>
             {isExpanded ? children : null}
         </YStack>

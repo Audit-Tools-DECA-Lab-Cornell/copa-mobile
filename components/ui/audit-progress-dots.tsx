@@ -41,7 +41,10 @@ export function AuditProgressDots({
         [totalDomains],
     );
 
-    // Animate dot transitions on domain advance
+    // Animate dot transitions on domain advance.
+    // Spec: previous active dot terracotta→moss spring 400ms; next dot edge→terracotta spring
+    // 300ms with 100ms delay. Uses Animated.spring so the color shift carries the same
+    // settling feel as the rest of the system (matching audit-section-block progress bar).
     useEffect(() => {
         dotAnimations.forEach((dot, index) => {
             let targetValue = 0; // remaining (edge color)
@@ -56,12 +59,20 @@ export function AuditProgressDots({
                 return;
             }
 
-            Animated.timing(dot.color, {
+            const springAnim = Animated.spring(dot.color, {
                 toValue: targetValue,
-                duration: index < completedDomains ? 400 : index === completedDomains ? 300 : 0,
-                delay: index === completedDomains ? 100 : 0,
+                stiffness: 200,
+                damping: 18,
                 useNativeDriver: false,
-            }).start();
+            });
+
+            if (index === completedDomains) {
+                // 100ms delay so the previous dot's moss transition starts first.
+                const timeoutId = setTimeout(() => springAnim.start(), 100);
+                return () => clearTimeout(timeoutId);
+            }
+            springAnim.start();
+            return undefined;
         });
     }, [completedDomains, dotAnimations, reduceMotion]);
 

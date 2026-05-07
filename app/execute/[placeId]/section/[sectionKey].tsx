@@ -89,6 +89,7 @@ export default function ExecuteSectionScreen() {
     const [isNoteFocused, setIsNoteFocused] = useState(false);
     const [lastAnswerChangeTime, setLastAnswerChangeTime] = useState<number | undefined>();
     const [submitState, setSubmitState] = useState<"idle" | "submitting" | "success">("idle");
+    const [isSyncedDismissed, setIsSyncedDismissed] = useState(false);
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
     const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
@@ -236,6 +237,17 @@ export default function ExecuteSectionScreen() {
         }
     }, [flushNoteToStore, visibleSections, activeSection, router, placeId, projectId]);
 
+    // Reset the synced-pill dismissal flag whenever sync activity moves out of the synced
+    // phase, so the next sync→synced transition shows the pill again. Declared here (before
+    // any conditional return) to satisfy the rules of hooks; the inner condition handles the
+    // unresolved auditSession case naturally.
+    const auditSyncPhase = auditSession === undefined ? undefined : syncStateByAuditId[auditSession.audit_id]?.phase;
+    useEffect(() => {
+        if (auditSyncPhase !== "idle" && auditSyncPhase !== "submitted" && isSyncedDismissed) {
+            setIsSyncedDismissed(false);
+        }
+    }, [auditSyncPhase, isSyncedDismissed]);
+
     if (
         placeId === null ||
         projectId === null ||
@@ -290,6 +302,17 @@ export default function ExecuteSectionScreen() {
     const nextSection = getNextSection(visibleSections, resolvedActiveSection.section_key);
     const activeSectionNumber =
         visibleSections.findIndex((s) => s.section_key === resolvedActiveSection.section_key) + 1;
+    // Section is "answered" when every required question has a complete response. Used to drive
+    // the Next button visual variant (outlined when unanswered, solid terracotta when answered).
+    const hasUnansweredRequired = resolvedActiveSection.questions.some((question) => {
+        if (!question.required) return false;
+        const answers = getQuestionAnswers(
+            resolvedAuditSession,
+            resolvedActiveSection.section_key,
+            question.question_key,
+        );
+        return !isInstrumentQuestionComplete(question, answers);
+    });
     const questionByKey = new Map(resolvedActiveSection.questions.map((question) => [question.question_key, question]));
     const questionRows = resolvedActiveSection.questions.map((question) => {
         return {
@@ -513,12 +536,25 @@ export default function ExecuteSectionScreen() {
         }
     };
 
-    const syncStatus = getSyncStatusFromAuditState();
+    const derivedSyncStatus = getSyncStatusFromAuditState();
+    // Once the synced pill has been auto-dismissed for the current cycle, treat it as idle
+    // until the next sync activity (offline / syncing) restarts the cycle. The reset effect
+    // is declared above the early-return guard to satisfy the rules of hooks.
+    const syncStatus = derivedSyncStatus === "synced" && isSyncedDismissed ? "idle" : derivedSyncStatus;
 
     return (
         <YStack flex={1} bg={ds.colors.background}>
             {/* Sync Status Island - appears when sync state is not idle */}
-            {syncStatus !== "idle" && <SyncStatusIsland state={syncStatus} />}
+            {syncStatus !== "idle" && (
+                <SyncStatusIsland
+                    state={syncStatus}
+                    onStateChange={(next) => {
+                        if (next === "idle") {
+                            setIsSyncedDismissed(true);
+                        }
+                    }}
+                />
+            )}
 
             {/* Pinned Progress Dots */}
             {auditSession !== undefined && (
@@ -682,6 +718,7 @@ export default function ExecuteSectionScreen() {
                     showPrevButton={activeSectionNumber > 1}
                     isPrimaryDisabled={isSavingDraft || (!canEditInputs && nextSection === undefined)}
                     isSubmit={nextSection === undefined}
+                    isAnswered={!hasUnansweredRequired}
                     lastAnswerChangeTime={lastAnswerChangeTime}
                     isSavingDraft={isSavingDraft}
                     submitState={submitState}

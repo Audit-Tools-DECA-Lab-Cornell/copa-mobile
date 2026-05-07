@@ -14,6 +14,7 @@ interface ExecuteSectionBottomNavProps {
     readonly showPrevButton: boolean;
     readonly isPrimaryDisabled: boolean;
     readonly isSubmit: boolean;
+    readonly isAnswered: boolean; // True when the current section has no unanswered required questions
     readonly isSavingDraft: boolean;
     readonly lastAnswerChangeTime: number | undefined; // Timestamp when last answer was applied
     readonly submitState?: SubmitState;
@@ -42,6 +43,7 @@ export function ExecuteSectionBottomNav({
     showPrevButton,
     isPrimaryDisabled,
     isSubmit,
+    isAnswered,
     isSavingDraft,
     lastAnswerChangeTime,
     submitState = "idle",
@@ -197,7 +199,13 @@ export function ExecuteSectionBottomNav({
                     )}
                 </YStack>
 
-                {/* Next/Submit Button */}
+                {/* Next/Submit Button.
+                 *
+                 * Three visual states (per Phase 3 spec — auditors can always skip, never blocked):
+                 *  - submitting/success: solid moss/terracotta with spinner or check
+                 *  - answered (default): solid terracotta — clear "advance" affordance
+                 *  - unanswered: outlined terracotta — present but non-insistent, signals "incomplete"
+                 */}
                 <Animated.View style={{ transform: [{ scale: submitScaleRef.current }] }}>
                     <Button
                         flex={0}
@@ -206,12 +214,15 @@ export function ExecuteSectionBottomNav({
                         bg={
                             submitState === "success"
                                 ? ds.colors.success
-                                : isPrimaryDisabled || isSavingDraft
-                                  ? ds.colors.mutedForeground
-                                  : ds.colors.primary
+                                : submitState === "submitting" || isSavingDraft
+                                  ? ds.colors.primary
+                                  : isAnswered
+                                    ? ds.colors.primary
+                                    : "transparent"
                         }
-                        borderWidth={0}
-                        opacity={isPrimaryDisabled || isSavingDraft ? 0.6 : 1}
+                        borderWidth={isAnswered || submitState !== "idle" || isSavingDraft ? 0 : 1}
+                        borderColor={ds.colors.border}
+                        opacity={isPrimaryDisabled && submitState === "idle" ? 0.6 : 1}
                         disabled={isPrimaryDisabled || isSavingDraft || submitState !== "idle"}
                         pressStyle={{ scale: 0.97 }}
                         onPress={onNextPress}
@@ -225,7 +236,11 @@ export function ExecuteSectionBottomNav({
                                 fontFamily={ds.fonts.bodyBold}
                                 fontSize={13}
                                 fontWeight="600"
-                                color={ds.colors.primaryForeground}
+                                color={
+                                    submitState === "idle" && !isSavingDraft && !isAnswered
+                                        ? ds.colors.mutedForeground
+                                        : ds.colors.primaryForeground
+                                }
                                 textTransform="uppercase"
                                 letterSpacing={0.5}
                             >
