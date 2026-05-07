@@ -131,6 +131,12 @@ to skip the transition. Only animate forward progress.
 
 File: app/(tabs)/reports/[auditId].tsx or the report detail screen.
 
+**Data contract (verify before implementing):**
+Before implementing count-up, verify that the report screen receives raw numeric
+score values (e.g., pv_score: 4.2) and not pre-formatted strings. If the store
+or API returns strings, parse them to floats first. Do not implement count-up on
+string values — format inside the display component, animate the raw number.
+
 On screen mount, after a 300ms delay:
 Count-up all score values from 0 to their final values.
 Duration: 700ms per value.
