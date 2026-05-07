@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { Animated } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Button, Text, YStack, XStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
@@ -8,14 +10,19 @@ interface ExecuteSectionBottomNavProps {
     readonly showPrevButton: boolean;
     readonly isPrimaryDisabled: boolean;
     readonly isSubmit: boolean;
-    readonly saveStatus: "idle" | "saving" | "saved";
     readonly isSavingDraft: boolean;
+    readonly lastAnswerChangeTime: number | undefined; // Timestamp when last answer was applied
 }
 
 /**
  * Fixed bottom navigation bar for audit section execution.
  * Contains Prev/Next buttons and auto-save status indicator.
  * Positioned absolute at screen bottom with fixed height.
+ *
+ * Auto-save feedback sequence:
+ * - Answer applied → "Saving..." fades in (150ms)
+ * - After 600ms → "Saved locally" fades in (cross-fade 200ms)
+ * - After 2000ms total → Fades out (300ms)
  *
  * @param props Navigation and state props
  * @returns Fixed bottom navigation component
@@ -26,11 +33,62 @@ export function ExecuteSectionBottomNav({
     showPrevButton,
     isPrimaryDisabled,
     isSubmit,
-    saveStatus,
     isSavingDraft,
+    lastAnswerChangeTime,
 }: Readonly<ExecuteSectionBottomNavProps>) {
     const ds = useDesignSystem();
     const { t } = useTranslation(["audit", "common"]);
+    const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+    const opacityRef = useRef(new Animated.Value(0));
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Manage auto-save feedback sequence
+    useEffect(() => {
+        if (lastAnswerChangeTime === undefined) {
+            return;
+        }
+
+        // Start showing "Saving..." with fade in
+        setSaveStatus("saving");
+        opacityRef.current.setValue(0);
+        Animated.timing(opacityRef.current, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+        }).start();
+
+        // Clear any existing timeouts
+        if (timeoutRef.current !== null) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        // After 600ms, cross-fade to "Saved locally"
+        timeoutRef.current = setTimeout(() => {
+            setSaveStatus("saved");
+            Animated.timing(opacityRef.current, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
+        }, 600);
+
+        // After 2000ms total, fade out and return to idle
+        timeoutRef.current = setTimeout(() => {
+            Animated.timing(opacityRef.current, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => {
+                setSaveStatus("idle");
+            });
+        }, 2000);
+
+        return () => {
+            if (timeoutRef.current !== null) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [lastAnswerChangeTime]);
 
     return (
         <YStack
@@ -65,27 +123,21 @@ export function ExecuteSectionBottomNav({
                     </Button>
                 )}
 
-                {/* Center spacer / Save status (Task 2 integration point) */}
+                {/* Center spacer / Save status */}
                 <YStack flex={1} justify="center" items="center">
-                    {saveStatus === "saving" && (
-                        <Text
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={11}
-                            fontWeight="400"
-                            color={ds.colors.mutedForeground}
-                        >
-                            {t("section.savingStatus", { ns: "audit" })}
-                        </Text>
-                    )}
-                    {saveStatus === "saved" && (
-                        <Text
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={11}
-                            fontWeight="400"
-                            color={ds.colors.mutedForeground}
-                        >
-                            {t("section.savedLocalStatus", { ns: "audit" })}
-                        </Text>
+                    {saveStatus !== "idle" && (
+                        <Animated.View style={{ opacity: opacityRef.current }}>
+                            <Text
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={11}
+                                fontWeight="400"
+                                color={ds.colors.mutedForeground}
+                            >
+                                {saveStatus === "saving"
+                                    ? t("section.savingStatus", { ns: "audit" })
+                                    : t("section.savedLocalStatus", { ns: "audit" })}
+                            </Text>
+                        </Animated.View>
                     )}
                 </YStack>
 

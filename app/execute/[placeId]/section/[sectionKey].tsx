@@ -86,6 +86,7 @@ export default function ExecuteSectionScreen() {
 
     const [localNote, setLocalNote] = useState("");
     const [isNoteFocused, setIsNoteFocused] = useState(false);
+    const [lastAnswerChangeTime, setLastAnswerChangeTime] = useState<number | undefined>();
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
     const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
@@ -421,6 +422,7 @@ export default function ExecuteSectionScreen() {
         const currentAnswers = getQuestionAnswers(resolvedAuditSession, resolvedActiveSection.section_key, questionKey);
         const nextAnswers = buildNextQuestionAnswers(currentAnswers, question, scaleKey, optionKey);
         applyLocalQuestionAnswer(resolvedPairKey, resolvedActiveSection.section_key, questionKey, nextAnswers);
+        setLastAnswerChangeTime(Date.now());
     };
     const notesPanel = (
         <YStack
@@ -603,6 +605,7 @@ export default function ExecuteSectionScreen() {
                                             questionKey,
                                             nextAnswers,
                                         );
+                                        setLastAnswerChangeTime(Date.now());
                                     }}
                                 />
                             ))}
@@ -642,7 +645,7 @@ export default function ExecuteSectionScreen() {
                     showPrevButton={activeSectionNumber > 1}
                     isPrimaryDisabled={isSavingDraft || (!canEditInputs && nextSection === undefined)}
                     isSubmit={nextSection === undefined}
-                    saveStatus="idle"
+                    lastAnswerChangeTime={lastAnswerChangeTime}
                     isSavingDraft={isSavingDraft}
                 />
             )}
