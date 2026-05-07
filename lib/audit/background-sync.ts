@@ -101,6 +101,8 @@ async function runPendingAuditSyncInternalAsync(options: Readonly<RunPendingAudi
     await usePlayspaceAuditStore.getState().hydrate(session.user.id);
     const hydratedStore = usePlayspaceAuditStore.getState();
     const flushResult = await hydratedStore.flushPendingChanges(session);
+    await hydratedStore.processQueuedSubmits(session);
+    await hydratedStore.refreshInstrument();
     return flushResult.failedAuditIds.length === 0;
 }
 

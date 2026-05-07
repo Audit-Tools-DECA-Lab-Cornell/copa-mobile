@@ -14,7 +14,10 @@
         "refreshFallback": "Unable to refresh audit.",
         "submitFallback": "Unable to submit your responses.",
         "submitNeedsUploadedDraft": "Reconnect and wait for your saved changes to upload before submitting.",
-        "syncFallback": "Background sync failed."
+        "syncFallback": "Background sync failed.",
+        "queuedSubmitQueued": "Your submission will be sent automatically when you reconnect.",
+        "queuedSubmitFailedTitle": "Submission could not be sent",
+        "queuedSubmitFailedMessage": "Your offline submission for {{placeName}} could not be delivered. Please resubmit or contact support."
     },
     "copy": {
         "continueToSubject": "Continue with {{subject}}",
@@ -63,7 +66,9 @@
             "pendingTitle": "Saved on this device",
             "retryTitle": "Upload paused",
             "syncingMessage": "Saved changes are uploading now. Keep the app open until this finishes if you need to submit right away.",
-            "syncingTitle": "Uploading changes"
+            "syncingTitle": "Uploading changes",
+            "queuedSubmitTitle": "Submission queued",
+            "queuedSubmitMessage": "Your responses are saved. The submission will be sent when you go back online."
         },
         "viewPlaceDetails": "View place details"
     },

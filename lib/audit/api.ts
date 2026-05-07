@@ -134,6 +134,25 @@ export async function submitAudit(
 }
 
 /**
+ * Request the backend to notify the auditor that their offline-queued submit
+ * could not be processed. Best-effort — silently ignored if the endpoint is not
+ * yet implemented on the server.
+ *
+ * @param session Authenticated mobile session.
+ * @param auditId UUID of the audit that failed to submit.
+ */
+export async function notifySubmitFailureAsync(session: AuthSession, auditId: string): Promise<void> {
+    try {
+        await requestJson(session, `/playspace/audits/${encodeURIComponent(auditId)}/notify-submit-failure`, {
+            method: "POST",
+            body: JSON.stringify({}),
+        });
+    } catch {
+        // Best-effort; backend endpoint may not be implemented yet
+    }
+}
+
+/**
  * Execute an authenticated playspace API request and decode JSON.
  *
  * @param session Authenticated mobile session.

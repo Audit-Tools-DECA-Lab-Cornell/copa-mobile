@@ -1,5 +1,6 @@
 import { batch, observable, observe } from "@legendapp/state";
 import { useSelector } from "@legendapp/state/react";
+import * as Network from "expo-network";
 import type { AuthSession } from "lib/auth/types";
 import { createModuleLogger } from "lib/logger";
 import {
@@ -40,6 +41,7 @@ import {
 import {
     createOrResumeAudit,
     fetchAuditSession,
+    notifySubmitFailureAsync,
     PlayspaceAuditApiError,
     saveAuditDraft,
     submitAudit,
@@ -75,6 +77,13 @@ interface FlushPendingChangesResult {
     readonly remainingDirtyAuditIds: string[];
 }
 
+export interface SubmitFailureNotification {
+    readonly auditId: string;
+    readonly placeName: string;
+    readonly message: string;
+    readonly at: string;
+}
+
 interface FlushSingleAuditResult {
     readonly auditId: string;
     readonly failed: boolean;
@@ -103,6 +112,9 @@ interface PlayspaceAuditStoreState {
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 
     hydrate: (accountId?: string | null) => Promise<void>;
+    refreshInstrument: () => Promise<void>;
+    processQueuedSubmits: (session: AuthSession) => Promise<void>;
+    popSubmitFailureNotifications: () => SubmitFailureNotification[];
     clearStoredState: (accountId?: string | null) => Promise<void>;
     ensurePlaceAudit: (
         session: AuthSession,
@@ -137,6 +149,7 @@ interface PlayspaceAuditStoreState {
 
 const PERSIST_DEBOUNCE_MS = 500;
 const MMKV_KEY_PREFIX = "audit.state.v4";
+const SUBMIT_FAILURE_NOTIFICATIONS_KEY = "playspace.submit_failure_notifications";
 
 type PersistedAuditDataSnapshot = Pick<
     PersistedAuditState,
@@ -447,8 +460,55 @@ function formatAuditErrorMessage(error: unknown, fallbackMessage: string): strin
 }
 
 // ---------------------------------------------------------------------------
+// Submit-failure notification helpers (persisted in MMKV, separate from audit state)
+// ---------------------------------------------------------------------------
+
+function readSubmitFailureNotifications(): SubmitFailureNotification[] {
+    try {
+        const raw = mmkvStorage.getString(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
+        if (raw === undefined) return [];
+        return JSON.parse(raw) as SubmitFailureNotification[];
+    } catch {
+        return [];
+    }
+}
+
+function appendSubmitFailureNotification(notification: SubmitFailureNotification): void {
+    try {
+        const existing = readSubmitFailureNotifications();
+        mmkvStorage.set(SUBMIT_FAILURE_NOTIFICATIONS_KEY, JSON.stringify([...existing, notification]));
+    } catch {
+        /* best-effort */
+    }
+}
+
+/** Read and clear all pending submit-failure notifications in one atomic operation. */
+function popSubmitFailureNotifications(): SubmitFailureNotification[] {
+    const notifications = readSubmitFailureNotifications();
+    if (notifications.length > 0) {
+        try {
+            mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
+        } catch {
+            /* best-effort */
+        }
+    }
+    return notifications;
+}
+
+// ---------------------------------------------------------------------------
 // Action functions
 // ---------------------------------------------------------------------------
+
+/**
+ * Sync the latest instrument from the server or MMKV cache and update the
+ * store when a newer version is available. Safe to call at any time.
+ */
+async function refreshInstrument(): Promise<void> {
+    const synced = await syncInstrument();
+    if (synced !== null) {
+        auditData$.instrument.set(synced);
+    }
+}
 
 /**
  * Hydrate the audit observable for an authenticated user from MMKV only.
@@ -1532,6 +1592,29 @@ function flushPendingChanges(session: AuthSession): Promise<FlushPendingChangesR
 async function submitAuditSessionInternal(session: AuthSession, auditId: string): Promise<AuditSession> {
     auditUI$.errorMessage.set(null);
     prepareAuditForExplicitSubmitRetry(auditId);
+
+    // Queue the submit for background delivery when offline.
+    const netState = await Network.getNetworkStateAsync();
+    const isOnline = netState.isConnected !== false && netState.isInternetReachable !== false;
+    if (!isOnline) {
+        const currentSession = auditData$.sessions_by_audit_id[auditId]?.peek();
+        if (currentSession !== undefined && currentSession.status !== "SUBMITTED") {
+            const currentPhase = auditData$.sync_state_by_audit_id.peek()[auditId]?.phase;
+            if (currentPhase !== "queued_submit") {
+                auditData$.sync_state_by_audit_id.set(
+                    writeAuditSyncState(
+                        auditData$.sync_state_by_audit_id.peek(),
+                        auditId,
+                        "queued_submit",
+                        new Date().toISOString(),
+                    ),
+                );
+                saveNow();
+            }
+            return currentSession;
+        }
+    }
+
     const currentSyncState = auditData$.sync_state_by_audit_id.peek()[auditId];
     if (currentSyncState?.phase === "blocked_validation") {
         const message = currentSyncState.detail ?? t("audit:errors.submitFallback");
@@ -1719,6 +1802,63 @@ const runSingleFlightSubmitAuditSession = createKeyedSingleFlightRunner(
     submitAuditSessionInternal,
 );
 
+/**
+ * Find audits in `queued_submit` phase, flush any remaining dirty fragments,
+ * and attempt the server submit now that connectivity is available.
+ *
+ * Called by the background sync task and the foreground network-restore handler.
+ */
+async function processQueuedSubmits(session: AuthSession): Promise<void> {
+    const data = auditData$.peek();
+    const queuedAuditIds = Object.entries(data.sync_state_by_audit_id)
+        .filter(([, state]) => state.phase === "queued_submit")
+        .map(([auditId]) => auditId);
+
+    if (queuedAuditIds.length === 0) return;
+
+    for (const auditId of queuedAuditIds) {
+        // Restore phase to dirty/idle so the flush and submit paths pick it up normally.
+        const latestData = auditData$.peek();
+        const hasDirty = hasDirtyFragmentsForAudit(
+            auditId,
+            latestData.dirty_meta,
+            latestData.dirty_pre_audit,
+            latestData.dirty_sections,
+        );
+        auditData$.sync_state_by_audit_id.set(
+            writeAuditSyncState(
+                latestData.sync_state_by_audit_id,
+                auditId,
+                hasDirty ? "dirty" : "idle",
+                new Date().toISOString(),
+            ),
+        );
+
+        try {
+            await runSingleFlightSubmitAuditSession(session, auditId);
+        } catch (error) {
+            const updatedData = auditData$.peek();
+            const updatedSyncState = updatedData.sync_state_by_audit_id[auditId];
+            const session_ = updatedData.sessions_by_audit_id[auditId];
+            const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
+
+            // Ensure phase reflects a hard failure (submitAuditSessionInternal already sets it,
+            // but we piggyback the notification write here regardless).
+            if (updatedSyncState !== undefined && updatedSyncState.phase !== "submitted") {
+                appendSubmitFailureNotification({
+                    auditId,
+                    placeName: session_?.place_name ?? auditId,
+                    message,
+                    at: new Date().toISOString(),
+                });
+                notifySubmitFailureAsync(session, auditId).catch(() => undefined);
+            }
+        }
+    }
+
+    saveNow();
+}
+
 function submitAuditSession(session: AuthSession, auditId: string): Promise<AuditSession> {
     return runSingleFlightSubmitAuditSession(session, auditId);
 }
@@ -1737,6 +1877,9 @@ function clearError(): void {
  */
 const actions = {
     hydrate,
+    refreshInstrument,
+    processQueuedSubmits,
+    popSubmitFailureNotifications,
     clearStoredState,
     ensurePlaceAudit,
     refreshAudit,
@@ -1767,10 +1910,15 @@ const dataGetters: Record<string, () => unknown> = {
         deriveGlobalSyncFeedback({
             syncStateByAuditId: auditData$.sync_state_by_audit_id.get(),
         }).isSavingDraft,
-    isSyncing: () =>
-        deriveGlobalSyncFeedback({
+    isSyncing: () => {
+        const feedback = deriveGlobalSyncFeedback({
             syncStateByAuditId: auditData$.sync_state_by_audit_id.get(),
-        }).isSyncing,
+        });
+        const hasQueuedSubmit = Object.values(auditData$.sync_state_by_audit_id.get()).some(
+            (s) => s.phase === "queued_submit",
+        );
+        return feedback.isSyncing || hasQueuedSubmit;
+    },
     errorMessage: () => auditUI$.errorMessage.get(),
     lastSyncError: () =>
         deriveGlobalSyncFeedback({
@@ -1823,7 +1971,9 @@ function buildEagerState(): PlayspaceAuditStoreState {
         isHydrated: auditUI$.isHydrated.peek(),
         isLoadingAudit: auditUI$.isLoadingAudit.peek(),
         isSavingDraft: globalSyncFeedback.isSavingDraft,
-        isSyncing: globalSyncFeedback.isSyncing,
+        isSyncing:
+            globalSyncFeedback.isSyncing ||
+            Object.values(auditData$.sync_state_by_audit_id.peek()).some((s) => s.phase === "queued_submit"),
         errorMessage: auditUI$.errorMessage.peek(),
         lastSyncError: globalSyncFeedback.message,
         lastSuccessfulSyncAt: auditData$.last_successful_sync_at.peek(),

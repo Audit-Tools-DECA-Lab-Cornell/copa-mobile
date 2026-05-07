@@ -1,6 +1,7 @@
 import "../tamagui.generated.css";
 
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from "@expo-google-fonts/geist";
+import * as Network from "expo-network";
 import {
     JetBrainsMono_400Regular,
     JetBrainsMono_500Medium,
@@ -24,7 +25,7 @@ import { logger } from "lib/logger";
 import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
+import { Alert, AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
@@ -224,6 +225,58 @@ function RootLayoutNav() {
             subscription.remove();
         };
     }, [authSession, authStatus, refreshUnreadCount]);
+
+    // Refresh instrument and drain queued submits when connectivity is restored.
+    useEffect(() => {
+        if (authStatus !== "authenticated" || authSession === null || !isAuditHydrated) {
+            return;
+        }
+
+        const refreshInstrument = usePlayspaceAuditStore.getState().refreshInstrument;
+        const processQueuedSubmits = usePlayspaceAuditStore.getState().processQueuedSubmits;
+
+        const subscription = Network.addNetworkStateListener((state) => {
+            if (state.isConnected && state.isInternetReachable !== false) {
+                refreshInstrument().catch(() => undefined);
+                processQueuedSubmits(authSession).catch(() => undefined);
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [authSession, authStatus, isAuditHydrated]);
+
+    // Show Alert on foreground when a queued offline submit previously failed.
+    useEffect(() => {
+        if (authStatus !== "authenticated" || authSession === null || !isAuditHydrated) {
+            return;
+        }
+
+        const checkFailures = () => {
+            const notifications = usePlayspaceAuditStore.getState().popSubmitFailureNotifications();
+            for (const notif of notifications) {
+                Alert.alert(
+                    t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
+                    t("errors.queuedSubmitFailedMessage", { ns: "audit", placeName: notif.placeName }),
+                    [{ text: "OK", style: "default" }],
+                );
+            }
+        };
+
+        // Check immediately when authenticated and hydrated.
+        checkFailures();
+
+        const subscription = AppState.addEventListener("change", (nextState: AppStateStatus) => {
+            if (nextState === "active") {
+                checkFailures();
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, [authSession, authStatus, isAuditHydrated, t]);
 
     useEffect(() => {
         if (authStatus === "loading") {

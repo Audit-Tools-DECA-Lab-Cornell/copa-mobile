@@ -422,7 +422,7 @@ export function createKeyedSingleFlightRunner<TKey extends string, TArgs extends
  * @returns True when local edits are still allowed to apply.
  */
 export function canApplyLocalDraftEdits(phase: AuditSyncPhase): boolean {
-    return phase !== "submitting" && phase !== "resolving_submit";
+    return phase !== "submitting" && phase !== "resolving_submit" && phase !== "queued_submit";
 }
 
 /**
@@ -872,6 +872,8 @@ export function normalizeHydratedSyncPhase(phase: AuditSyncPhase, hasDirtyFragme
             return hasDirtyFragments ? "dirty" : "blocked_auth";
         case "submitted":
             return null;
+        case "queued_submit":
+            return "queued_submit";
         default:
             return phase;
     }

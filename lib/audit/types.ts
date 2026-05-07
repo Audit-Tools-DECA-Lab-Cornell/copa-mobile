@@ -328,6 +328,7 @@ export const auditSyncPhaseSchema = z.enum([
     "blocked_auth",
     "blocked_validation",
     "blocked_server",
+    "queued_submit",
 ]);
 
 export const auditSyncStateSchema = z.object({
