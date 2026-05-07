@@ -8,6 +8,7 @@ import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
 import { ExecuteSectionBottomNav } from "components/ui/execute-section-bottom-nav";
 import { AuditProgressDots } from "components/ui/audit-progress-dots";
+import { SyncStatusIsland } from "components/ui/sync-status-island";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -481,8 +482,36 @@ export default function ExecuteSectionScreen() {
         </YStack>
     );
 
+    // Derive sync status for display
+    const getSyncStatusFromAuditState = (): "offline" | "syncing" | "synced" | "idle" => {
+        if (resolvedAuditSession === undefined) return "idle";
+        const syncState = syncStateByAuditId[resolvedAuditSession.audit_id];
+        if (syncState === undefined) return "idle";
+
+        switch (syncState.phase) {
+            case "blocked_network":
+                return "offline";
+            case "dirty":
+            case "saving":
+            case "submitting":
+            case "resolving_submit":
+            case "conflict":
+                return "syncing";
+            case "idle":
+            case "submitted":
+                return "synced";
+            default:
+                return "idle";
+        }
+    };
+
+    const syncStatus = getSyncStatusFromAuditState();
+
     return (
         <YStack flex={1} bg={ds.colors.background}>
+            {/* Sync Status Island - appears when sync state is not idle */}
+            {syncStatus !== "idle" && <SyncStatusIsland state={syncStatus} />}
+
             {/* Pinned Progress Dots */}
             {auditSession !== undefined && (
                 <AuditProgressDots
