@@ -1,6 +1,6 @@
-# Playspace Mobile
+# COPA mobile
 
-> Auditor-facing mobile app for the Playspace Play Value and Usability Audit Tool.
+> Auditor-facing mobile app for the Comprehensive Outdoor Playspace Audit (COPA) Tool.
 
 Built with **Expo + Expo Router + Tamagui** for native iOS and Android field use. Supports offline draft capture, later sync, submitted-audit reporting, and client-side export.
 
@@ -32,7 +32,7 @@ Built with **Expo + Expo Router + Tamagui** for native iOS and Android field use
 | -------------------------------------------------------- |
 | Auditor sign-in and session restoration                  |
 | Assigned place discovery                                 |
-| Starting or resuming Playspace audits                    |
+| Starting or resuming COPA audits                         |
 | Offline-first audit drafting and later sync              |
 | Submitted-audit reporting and export                     |
 | Lightweight mobile detail surfaces for places and audits |

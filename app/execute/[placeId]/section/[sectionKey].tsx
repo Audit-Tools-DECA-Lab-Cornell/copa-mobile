@@ -579,6 +579,17 @@ export default function ExecuteSectionScreen() {
                             }
                             handleSelectAnswer(question, questionKey, scaleKey, optionKey);
                         }}
+                        onChangeAnswers={(questionKey, nextAnswers) => {
+                            if (!canEditInputs) {
+                                return;
+                            }
+                            applyLocalQuestionAnswer(
+                                resolvedPairKey,
+                                resolvedActiveSection.section_key,
+                                questionKey,
+                                nextAnswers,
+                            );
+                        }}
                     />
                     {hasPendingLocalChanges ? (
                         <Paragraph

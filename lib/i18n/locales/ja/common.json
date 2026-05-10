@@ -35,8 +35,8 @@
     "place": {
         "assignedPlace": "割り当て場所"
     },
-    "playspaceAuditRequestFailed": "Playspace監査リクエストに失敗しました。",
-    "playspaceAuditServiceReturnedInvalidJson": "Playspace監査サービスが無効なJSONを返しました。",
+    "playspaceAuditRequestFailed": "COPA監査リクエストに失敗しました。",
+    "playspaceAuditServiceReturnedInvalidJson": "COPA監査サービスが無効なJSONを返しました。",
     "roles": {
         "auditor": "監査人",
         "auditorAndPlaceAdmin": "監査人および場所管理者",
@@ -82,5 +82,5 @@
     },
     "unableToLoadPlaces": "場所を読み込めません。",
     "unableToReachAuthenticationService": "認証サービスに接続できません。",
-    "unableToReachPlayspaceAuditService": "Playspace監査サービスに接続できません。"
+    "unableToReachPlayspaceAuditService": "COPA監査サービスに接続できません。"
 }

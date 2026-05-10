@@ -8,7 +8,7 @@ It should be treated as a product and UX guide, not as a pixel-accurate spec. Th
 
 ## Product Summary
 
-Audit Tools Playspace Mobile is a field app for auditors completing playspace assessments on mobile devices.
+Audit Tools Playspace Mobile (COPA) is a field app for auditors completing outdoor playspace assessments on mobile devices.
 
 The app is centered on a focused field workflow:
 

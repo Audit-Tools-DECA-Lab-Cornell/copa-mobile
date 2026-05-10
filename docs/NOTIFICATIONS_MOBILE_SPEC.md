@@ -2,7 +2,7 @@
 
 ## Document Overview
 
-This specification covers the implementation of a notification system for the Playspace mobile app (Expo + React Native). It is designed to work with the backend notification API and follows platform best practices from mobile-design, react-native-architecture, and ui-ux-pro-max skills.
+This specification covers the implementation of a notification system for the COPA mobile app (Comprehensive Outdoor Playspace Audit Tool, Expo + React Native). It is designed to work with the backend notification API and follows platform best practices from mobile-design, react-native-architecture, and ui-ux-pro-max skills.
 
 **Prerequisites Met:**
 

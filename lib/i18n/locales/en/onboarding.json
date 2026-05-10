@@ -86,7 +86,7 @@
         "stepLabel": "Step 3 of 4",
         "title": "Terms & Privacy",
         "subtitle": "Please read and accept before continuing.",
-        "headerSubtitle": "A quick read to confirm how Playspace handles audits and your data.",
+        "headerSubtitle": "A quick read to confirm how COPA handles audits and your data.",
         "loadingDocuments": "Loading legal documents...",
         "reviewProgressTitle": "Review progress",
         "reviewProgressDescription": "{{reviewed}} of {{total}} documents reviewed",
@@ -100,7 +100,7 @@
         "submit": "Accept and continue",
         "submitting": "Saving...",
         "termsHeading": "Terms of Use",
-        "termsBody": "By using Playspace, you agree to conduct audits honestly and in accordance with the instructions provided by your project manager. You will not share your access credentials. All data you submit becomes part of the audit record and may be reviewed by your manager and platform administrators. You must not use this platform for any purpose other than conducting play value and usability audits as assigned.",
+        "termsBody": "By using the Comprehensive Outdoor Playspace Audit (COPA) Tool, you agree to conduct audits honestly and in accordance with the instructions provided by your project manager. You will not share your access credentials. All data you submit becomes part of the audit record and may be reviewed by your manager and platform administrators. You must not use this platform for any purpose other than conducting outdoor playspace audits as assigned.",
         "privacyHeading": "Privacy Notice",
         "privacyBody": "Your personal details (name, email, demographics) are stored securely and used only to identify your submissions within the platform. Your auditor code — not your personal name — is associated with audit records visible to anyone other than your manager. You may request correction or deletion of your personal data by contacting your project manager.",
         "validation": {
@@ -119,6 +119,6 @@
         "helperText": "You can copy this code anytime from your profile in Settings.",
         "loading": "Loading",
         "loadFailed": "We could not load your auditor code. You can continue and find it later in settings.",
-        "submit": "Enter Playspace"
+        "submit": "Enter COPA"
     }
 }

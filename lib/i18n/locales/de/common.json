@@ -35,8 +35,8 @@
     "place": {
         "assignedPlace": "Zugewiesener Ort"
     },
-    "playspaceAuditRequestFailed": "Anfrage für den Playspace-Audit fehlgeschlagen.",
-    "playspaceAuditServiceReturnedInvalidJson": "Der Playspace-Auditdienst hat ungültiges JSON zurückgegeben.",
+    "playspaceAuditRequestFailed": "COPA-Audit-Anfrage fehlgeschlagen.",
+    "playspaceAuditServiceReturnedInvalidJson": "Der COPA-Audit-Dienst hat ungültiges JSON zurückgegeben.",
     "roles": {
         "auditor": "Pruefperson",
         "auditorAndPlaceAdmin": "Pruefperson und Ortsverwaltung",
@@ -82,5 +82,5 @@
     },
     "unableToLoadPlaces": "Orte konnten nicht geladen werden.",
     "unableToReachAuthenticationService": "Authentifizierungsdienst nicht erreichbar.",
-    "unableToReachPlayspaceAuditService": "Playspace-Auditdienst nicht erreichbar."
+    "unableToReachPlayspaceAuditService": "COPA-Audit-Dienst nicht erreichbar."
 }

@@ -1,2 +1,6 @@
 import { getBundledInstrument } from "/lib/audit/bundled-instrument";
-console.log("Sections:", getBundledInstrument()?.sections.length ?? 0);
+
+export function testBundleInstrument() {
+    const bundledInstrument = getBundledInstrument;
+    return bundledInstrument;
+}

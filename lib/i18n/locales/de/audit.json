@@ -27,7 +27,7 @@
         "emptyTitle": "Keine Prüfungen gefunden",
         "openSelectedAudit": "Ausgewaehltes Audit oeffnen",
         "searchPlaceholder": "Orte oder Projekte suchen",
-        "subtitle": "Waehlen Sie einen Ort, um den abschnittsweisen Playspace-Ablauf zu starten oder fortzusetzen.",
+        "subtitle": "Wählen Sie einen Ort, um den COPA-Audit-Ablauf abschnittsweise zu starten oder fortzusetzen.",
         "title": "Audit durchfuehren"
     },
     "mode": "— {{mode}}",
@@ -53,7 +53,7 @@
         "preamble": "Einleitung",
         "reviewDescription": "Überprüfen Sie alle Abschnitte an einem Ort und springen Sie direkt zum nächsten unvollständigen Abschnitt zurück.",
         "tapToExpand": "Zum Aufklappen tippen",
-        "preparingAudit": "Der Playspace-Audit-Ablauf wird vorbereitet...",
+        "preparingAudit": "Der COPA-Audit-Ablauf wird vorbereitet...",
         "preparingAuditTitle": "Audit wird vorbereitet",
         "sectionEmpty": "Keine Abschnitte entsprechen dem aktuellen Filter.",
         "sections": "Abschnitte",

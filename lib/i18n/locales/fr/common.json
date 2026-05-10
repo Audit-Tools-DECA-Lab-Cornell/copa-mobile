@@ -35,8 +35,8 @@
     "place": {
         "assignedPlace": "Lieu attribué"
     },
-    "playspaceAuditRequestFailed": "La requête d'audit Playspace a échoué.",
-    "playspaceAuditServiceReturnedInvalidJson": "Le service d'audit Playspace a renvoyé un JSON invalide.",
+    "playspaceAuditRequestFailed": "La demande d'audit COPA a échoué.",
+    "playspaceAuditServiceReturnedInvalidJson": "Le service d'audit COPA a renvoyé un JSON invalide.",
     "roles": {
         "auditor": "Auditeur",
         "auditorAndPlaceAdmin": "Auditeur et administrateur du lieu",
@@ -85,5 +85,5 @@
     },
     "unableToLoadPlaces": "Impossible de charger les lieux.",
     "unableToReachAuthenticationService": "Impossible de joindre le service d'authentification.",
-    "unableToReachPlayspaceAuditService": "Impossible de joindre le service d'audit Playspace."
+    "unableToReachPlayspaceAuditService": "Impossible de joindre le service d'audit COPA."
 }

@@ -27,7 +27,7 @@
         "emptyTitle": "Aucune audit ne correspond",
         "openSelectedAudit": "Ouvrir l’audit sélectionné",
         "searchPlaceholder": "Rechercher des lieux ou des projets",
-        "subtitle": "Choisissez un lieu pour démarrer ou reprendre le flux d’audit playspace section par section.",
+        "subtitle": "Choisissez un lieu pour démarrer ou reprendre le flux d’audit COPA section par section.",
         "title": "Exécution de l’audit"
     },
     "mode": "— {{mode}}",
@@ -53,7 +53,7 @@
         "preamble": "Préambule",
         "reviewDescription": "Révisez chaque section au même endroit et revenez directement à la prochaine section incomplète.",
         "tapToExpand": "Touchez pour développer",
-        "preparingAudit": "Préparation du flux d’audit playspace...",
+        "preparingAudit": "Préparation du flux d’audit COPA...",
         "preparingAuditTitle": "Préparation de l’audit",
         "sectionEmpty": "Aucune section ne correspond au filtre actuel.",
         "sections": "Sections",

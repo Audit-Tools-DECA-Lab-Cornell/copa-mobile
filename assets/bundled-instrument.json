@@ -1,14 +1,14 @@
 {
     "en": {
         "preamble": [
-            "## How the tool is structured\nThe Playspace Play Value and Usability Audit tool is structured in 22 domains. Each domain has between 2 and 12 items. All items represent specific features or characteristics of the environment.",
+            "## How the tool is structured\nThe Comprehensive Outdoor Playspace Audit (COPA) Tool is structured in 22 domains. Each domain has between 2 and 12 items. All items represent specific features or characteristics of the environment.",
             "Each item is assessed through up to four scales: Provision, Diversity, Challenge Opportunities, and Sociability Support. Not all items include every scale.",
             "### 1. Provision\nProvision is always answered first. When the provision answer is a zero-like response such as No or Not applicable, the remaining scales stay hidden because they do not apply.\n\n**Guiding question:** To what degree is this feature/environmental characteristic present or considered?",
             "### 2. Diversity\nDiversity evaluates whether the provided items offer a variety of types, forms, or opportunities. In other words, whether they are not all the same.\n\n**Guiding question:** To what extent is diversity in this feature/environmental characteristic considered?\n\nExample: For 5 swings: Are they all different types (e.g. large swing, baby swing, basket swing, rope swing), or are they all identical?\n\n**It is your judgment to indicate if there is No diversity, Some diversity, or A lot of diversity considered. You can only choose one.**",
             "### 3. Challenge opportunities\nChallenge opportunities assess whether the feature provides opportunities with different levels of difficulty.\n\n**Guiding question:** To what extent does this feature/environmental characteristic offer different levels of challenge?\n\nExample: The swings provided should be examined and judged to determine whether they provide increasing challenge opportunities.\n\n**It is your judgment to indicate if the provided swings offer different levels of difficulty. You can only choose one.**",
             "### 4. Sociability support\nSociability support assesses whether more than one child/person can use this feature/environmental characteristic together. It considers whether the feature can be used by more than one person at once, individually, in small groups, or in larger groups.\n\n**Guiding question:** Can more than one child (or person) use this feature together?\n\nExample: Can some of the swings be used alone? Can some be used in pairs? Can some be used in groups of children?\n\n**It is your judgment to indicate if they can be used alone, in pairs, or in groups.**",
             "## Open reflection\nThe open question gives you the possibility to write down reflections. A guiding question will ask you to describe one or two aspects you recommend changing in the playspace to increase its play value and usability.",
-            "## Two parts of the audit\nThe Playspace Play Value and Usability Audit tool uses two methods for assessing a playspace:\n\n- **(A) Onsite Audit of the Physical Environment**\nThis part of the audit assesses aspects of the playspace that can only be examined onsite in the physical environment.\nIt requires being physically present at the playspace.\n\n- **(B) Survey of Ecological Aspects of the Playspace**\nThis part of the audit assesses information related to the history, management practices, and how weather and seasons influence playspace use.\nIt does not require being onsite.\nIt must be answered by someone familiar with the playspace's background and context.",
+            "## Two parts of the audit\nThe Comprehensive Outdoor Playspace Audit (COPA) Tool uses two methods for assessing a playspace:\n\n- **(A) Onsite Audit of the Physical Environment**\nThis part of the audit assesses aspects of the playspace that can only be examined onsite in the physical environment.\nIt requires being physically present at the playspace.\n\n- **(B) Survey of Ecological Aspects of the Playspace**\nThis part of the audit assesses information related to the history, management practices, and how weather and seasons influence playspace use.\nIt does not require being onsite.\nIt must be answered by someone familiar with the playspace's background and context.",
             "## Before you continue\nBefore moving to the next section, you must decide which part(s) of the audit you will complete: A, B, or A & B.\n\nYour choice depends on how familiar you are with the playspace and what role you have."
         ],
         "sections": [
@@ -10535,7 +10535,7 @@
                 "description": "This choice displays only audit questions."
             }
         ],
-        "instrument_name": "Playspace Play Value and Usability Audit Tool",
+        "instrument_name": "Comprehensive Outdoor Playspace Audit (COPA) Tool",
         "instrument_version": "5.2",
         "pre_audit_questions": [
             {
@@ -10884,22 +10884,22 @@
                 "title": "Terms and Conditions",
                 "eyebrow": "Service agreement",
                 "last_updated": "April 30, 2026",
-                "summary": "These terms explain how invited auditors, managers, and administrators may use Playspace to complete place audits, surveys, reports, and related field-workflows.",
+                "summary": "These terms explain how invited auditors, managers, and administrators may use COPA to complete place audits, surveys, reports, and related field-workflows.",
                 "sections": [
                     {
                         "key": "acceptance",
                         "title": "1. Acceptance of these Terms",
                         "body": [
-                            "By creating an account, signing in, accepting an invitation, or using Playspace, you agree to these Terms and Conditions. If you use Playspace on behalf of an organization, you confirm that you are authorized to use the platform for that organization's projects and audit workflows.",
+                            "By creating an account, signing in, accepting an invitation, or using COPA, you agree to these Terms and Conditions. If you use COPA on behalf of an organization, you confirm that you are authorized to use the platform for that organization's projects and audit workflows.",
                             "If you do not agree with these Terms, do not use the platform or submit audit information through the mobile app."
                         ],
                         "bullets": []
                     },
                     {
                         "key": "service",
-                        "title": "2. About Playspace",
+                        "title": "2. About COPA",
                         "body": [
-                            "Playspace is an audit management platform for evaluating physical places, including play spaces and related public or private environments. The platform supports project setup, auditor assignments, field data collection, place audits, place surveys, scoring, progress tracking, report generation, and exports.",
+                            "COPA is an audit management platform for evaluating physical places, including play spaces and related public or private environments. The platform supports project setup, auditor assignments, field data collection, place audits, place surveys, scoring, progress tracking, report generation, and exports.",
                             "The backend is the source of truth for submitted audit data, scoring, and project records. The mobile app supports offline-first field work and syncs drafts or submissions when connectivity is available."
                         ],
                         "bullets": []
@@ -10922,7 +10922,7 @@
                         ],
                         "bullets": [
                             "Do not enter names, contact details, faces, or direct identifiers of children, visitors, or bystanders into audit notes.",
-                            "Do not use Playspace to record emergency incidents unless your organization has explicitly instructed you to do so through a separate approved process.",
+                            "Do not use COPA to record emergency incidents unless your organization has explicitly instructed you to do so through a separate approved process.",
                             "Do not submit offensive, discriminatory, harassing, or unrelated content in notes or reports."
                         ]
                     },
@@ -10930,7 +10930,7 @@
                         "key": "submissions",
                         "title": "5. Drafts, submissions, and reports",
                         "body": [
-                            "During an active audit session, Playspace may store draft answers, pre-audit selections, section notes, execution mode, and progress information. When you submit an audit or survey, the submission becomes part of the project record and may be visible to authorized managers, administrators, or reporting users.",
+                            "During an active audit session, COPA may store draft answers, pre-audit selections, section notes, execution mode, and progress information. When you submit an audit or survey, the submission becomes part of the project record and may be visible to authorized managers, administrators, or reporting users.",
                             "Reports, scores, and exports may include project details, place details, execution mode, timestamps, auditor codes, pre-audit responses, section responses, notes, and score totals. Submitted information may be difficult to fully remove from generated reports, backups, or records already downloaded by authorized users."
                         ],
                         "bullets": []
@@ -10939,7 +10939,7 @@
                         "key": "scoring",
                         "title": "6. Scores and professional judgment",
                         "body": [
-                            "Playspace may calculate raw score totals, progress values, and report summaries based on the configured instrument. Scores are decision-support outputs, not guarantees that a location is safe, compliant, accessible, inclusive, or suitable for any particular person or group.",
+                            "COPA may calculate raw score totals, progress values, and report summaries based on the configured instrument. Scores are decision-support outputs, not guarantees that a location is safe, compliant, accessible, inclusive, or suitable for any particular person or group.",
                             "Organizations remain responsible for interpreting results, validating field observations, deciding whether professional inspection is required, and taking any operational or safety action."
                         ],
                         "bullets": []
@@ -10948,7 +10948,7 @@
                         "key": "privacy-confidentiality",
                         "title": "7. Privacy and confidentiality",
                         "body": [
-                            "You must use personal information and project information only for authorized Playspace purposes. You may not copy, export, photograph, scrape, or share data outside the platform unless your role and organization permit it.",
+                            "You must use personal information and project information only for authorized COPA purposes. You may not copy, export, photograph, scrape, or share data outside the platform unless your role and organization permit it.",
                             "The Privacy Notice explains what information may be collected, how it is used, and how it may be shared with authorized parties."
                         ],
                         "bullets": []
@@ -10965,7 +10965,7 @@
                         "key": "availability",
                         "title": "9. Availability and changes",
                         "body": [
-                            "Playspace may be updated, interrupted, suspended, or changed from time to time. Features may differ between web, mobile, online, and offline states. We may improve workflows, scoring displays, exports, route guards, permissions, or data models to maintain product quality and security."
+                            "COPA may be updated, interrupted, suspended, or changed from time to time. Features may differ between web, mobile, online, and offline states. We may improve workflows, scoring displays, exports, route guards, permissions, or data models to maintain product quality and security."
                         ],
                         "bullets": []
                     },
@@ -10973,7 +10973,7 @@
                         "key": "intellectual-property",
                         "title": "10. Intellectual property",
                         "body": [
-                            "The platform, user interface, workflows, software, documentation, and product materials are owned by Playspace or its licensors. Your organization and its authorized users retain responsibility for the project content, place records, audit observations, and other information they submit, subject to the rights needed to operate, secure, support, and improve the service."
+                            "The platform, user interface, workflows, software, documentation, and product materials are owned by COPA or its licensors. Your organization and its authorized users retain responsibility for the project content, place records, audit observations, and other information they submit, subject to the rights needed to operate, secure, support, and improve the service."
                         ],
                         "bullets": []
                     },
@@ -10981,7 +10981,7 @@
                         "key": "disclaimers",
                         "title": "11. Disclaimers and limitation of liability",
                         "body": [
-                            "The platform is provided for audit management and reporting support. To the fullest extent permitted by law, Playspace is provided without warranties that it will be uninterrupted, error-free, or suitable for every project, jurisdiction, safety standard, accessibility standard, or regulatory requirement.",
+                            "The platform is provided for audit management and reporting support. To the fullest extent permitted by law, COPA is provided without warranties that it will be uninterrupted, error-free, or suitable for every project, jurisdiction, safety standard, accessibility standard, or regulatory requirement.",
                             "To the fullest extent permitted by law, the platform operator will not be liable for indirect, incidental, special, consequential, exemplary, or punitive damages, or for decisions made solely from scores or reports without appropriate professional review."
                         ],
                         "bullets": []
@@ -10991,7 +10991,7 @@
                         "title": "12. Suspension, termination, and contact",
                         "body": [
                             "Access may be suspended or terminated if an account is inactive, no longer assigned, created in error, compromised, or used in violation of these Terms. Your organization may also remove or change your access based on its own policies.",
-                            "For questions about these Terms, contact your project administrator or the Playspace support contact provided by your organization."
+                            "For questions about these Terms, contact your project administrator or the COPA support contact provided by your organization."
                         ],
                         "bullets": []
                     }
@@ -11003,14 +11003,14 @@
                 "title": "Privacy Notice",
                 "eyebrow": "Data handling notice",
                 "last_updated": "April 30, 2026",
-                "summary": "This notice explains what information Playspace may process when users manage projects, complete assigned audits, sync field data, and generate reports.",
+                "summary": "This notice explains what information COPA may process when users manage projects, complete assigned audits, sync field data, and generate reports.",
                 "sections": [
                     {
                         "key": "overview",
                         "title": "1. Overview",
                         "body": [
-                            "This Privacy Notice describes how Playspace collects, uses, shares, retains, and protects information when administrators, managers, and auditors use the platform. It applies to the web platform, mobile app, backend services, audit workflows, reporting surfaces, and support interactions.",
-                            "Playspace is designed for organizational audit work. In many projects, the organization that creates the project decides why the information is collected, which auditors are assigned, and who may access the resulting reports."
+                            "This Privacy Notice describes how COPA collects, uses, shares, retains, and protects information when administrators, managers, and auditors use the platform. It applies to the web platform, mobile app, backend services, audit workflows, reporting surfaces, and support interactions.",
+                            "COPA is designed for organizational audit work. In many projects, the organization that creates the project decides why the information is collected, which auditors are assigned, and who may access the resulting reports."
                         ],
                         "bullets": []
                     },
@@ -11018,7 +11018,7 @@
                         "key": "information-collected",
                         "title": "2. Information we may collect",
                         "body": [
-                            "The information processed by Playspace depends on your role, your organization's configuration, and the audit workflow you use."
+                            "The information processed by COPA depends on your role, your organization's configuration, and the audit workflow you use."
                         ],
                         "bullets": [
                             "Account information: name, email address, password credentials, verification status, approval status, login timestamps, and account role.",
@@ -11033,7 +11033,7 @@
                         "key": "no-bystander-identifiers",
                         "title": "3. Bystanders, children, and observed visitors",
                         "body": [
-                            "Playspace is not intended to collect direct identifiers of visitors, children, families, or bystanders observed at a place. Users should avoid entering names, faces, contact details, health information, school information, or other direct identifiers about observed people into notes or reports.",
+                            "COPA is not intended to collect direct identifiers of visitors, children, families, or bystanders observed at a place. Users should avoid entering names, faces, contact details, health information, school information, or other direct identifiers about observed people into notes or reports.",
                             "If a project requires collection of sensitive field information, the organization managing that project is responsible for providing appropriate instructions, permissions, and safeguards before collection begins."
                         ],
                         "bullets": []
@@ -11042,7 +11042,7 @@
                         "key": "use-of-information",
                         "title": "4. How we use information",
                         "body": [
-                            "Playspace uses information to authenticate users, manage accounts, assign auditors, provide assigned place access, support offline drafts, sync audit data, calculate progress and scores, generate reports, export audit records, troubleshoot issues, secure the platform, and improve product reliability.",
+                            "COPA uses information to authenticate users, manage accounts, assign auditors, provide assigned place access, support offline drafts, sync audit data, calculate progress and scores, generate reports, export audit records, troubleshoot issues, secure the platform, and improve product reliability.",
                             "We may also use aggregated or de-identified information to understand platform usage, improve workflows, test product quality, and develop reporting features, provided the information is not reasonably used to identify a person."
                         ],
                         "bullets": []
@@ -11052,7 +11052,7 @@
                         "title": "5. How information may be shared",
                         "body": [
                             "Information may be visible to authorized users based on role, account, project, assignment, and report permissions. For example, managers may review project and place information, auditors may access assigned places, and administrators may manage users, assignments, and reports.",
-                            "We may share information with service providers that help operate infrastructure, authentication, storage, analytics, security, support, or communications. These providers may process information only as needed to provide services to Playspace or the organization using it.",
+                            "We may share information with service providers that help operate infrastructure, authentication, storage, analytics, security, support, or communications. These providers may process information only as needed to provide services to COPA or the organization using it.",
                             "We may disclose information if required by law, legal process, security investigation, rights enforcement, or to protect users, the platform, or the public."
                         ],
                         "bullets": []
@@ -11088,7 +11088,7 @@
                         "key": "international-processing",
                         "title": "9. International processing",
                         "body": [
-                            "Playspace may process and store information in countries where its service providers, infrastructure, or support personnel operate. Those countries may have privacy or data protection laws that differ from the laws where you live or where the project takes place."
+                            "COPA may process and store information in countries where its service providers, infrastructure, or support personnel operate. Those countries may have privacy or data protection laws that differ from the laws where you live or where the project takes place."
                         ],
                         "bullets": []
                     },
@@ -11097,7 +11097,7 @@
                         "title": "10. Your choices and access requests",
                         "body": [
                             "Depending on your role, location, organization, and applicable law, you may be able to request access, correction, deletion, restriction, export, or objection related to your personal information. Some requests may need to be handled by the organization that controls the project or account.",
-                            "You can update certain profile information in the app where available. For other requests, contact your project administrator or the Playspace support contact provided by your organization."
+                            "You can update certain profile information in the app where available. For other requests, contact your project administrator or the COPA support contact provided by your organization."
                         ],
                         "bullets": []
                     },
@@ -11115,7 +11115,7 @@
                         "title": "12. Changes and contact",
                         "body": [
                             "We may update this Privacy Notice as the platform, data model, audit workflows, legal requirements, or service providers change. The updated notice will show a new effective date.",
-                            "For privacy questions, contact your project administrator or the Playspace support contact provided by your organization."
+                            "For privacy questions, contact your project administrator or the COPA support contact provided by your organization."
                         ],
                         "bullets": []
                     }

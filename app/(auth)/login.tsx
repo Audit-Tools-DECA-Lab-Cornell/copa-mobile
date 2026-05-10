@@ -15,7 +15,7 @@ const logger = createModuleLogger("login");
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Login screen for playspace mobile.
+ * Login screen for COPA mobile.
  */
 export default function LoginScreen() {
     const ds = useDesignSystem();
@@ -92,15 +92,15 @@ export default function LoginScreen() {
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{
                     paddingHorizontal: layout.screenPaddingHorizontal,
-                    paddingVertical: 48,
+                    paddingVertical: 24,
                     justifyContent: "center",
                 }}
             >
                 <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                     <YStack items="center" gap="$4">
                         <Image
-                            source={require("../../assets/images/icon.png")}
-                            style={{ width: 88, height: 88 }}
+                            source={require("../../assets/icon.png")}
+                            style={{ width: 150, height: 150 }}
                             resizeMode="contain"
                         />
 
@@ -114,7 +114,7 @@ export default function LoginScreen() {
                                 fontStyle="italic"
                                 letterSpacing={-0.5}
                             >
-                                Playspace
+                                COPA
                             </Text>
                             <Paragraph
                                 color={ds.colors.mutedForeground}

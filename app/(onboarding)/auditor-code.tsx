@@ -85,7 +85,7 @@ export default function AuditorCodeScreen() {
             eyebrow={t("auditorCode.stepLabel", "Step 4 of 4")}
             title={t("auditorCode.title", "Your auditor code")}
             subtitle={t("auditorCode.headerSubtitle", "Your unique identifier on every audit you submit.")}
-            ctaLabel={isLoading ? t("auditorCode.loading", "Loading") : t("auditorCode.submit", "Enter Playspace")}
+            ctaLabel={isLoading ? t("auditorCode.loading", "Loading") : t("auditorCode.submit", "Enter COPA")}
             ctaLoadingLabel={t("auditorCode.loading", "Loading")}
             canSubmit={!isLoading}
             isLoading={isLoading}

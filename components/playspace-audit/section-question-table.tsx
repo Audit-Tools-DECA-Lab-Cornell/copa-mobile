@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, TextInput } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Button, ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 
@@ -23,6 +23,11 @@ interface SectionQuestionTableProps {
     readonly rows: readonly QuestionTableRow[];
     readonly disabled: boolean;
     readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
+    /**
+     * Persist per-question notes when {@link InstrumentQuestion.notes_prompt} is set —
+     * mirrors {@link QuestionCard} so tablet matrix layout keeps the same fields as phone cards.
+     */
+    readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
 
 const SCALE_COLUMN_ORDER: readonly ScaleKey[] = ["provision", "diversity", "challenge", "sociability"];
@@ -31,7 +36,12 @@ const SCALE_COLUMN_ORDER: readonly ScaleKey[] = ["provision", "diversity", "chal
  * Tablet-first section matrix that lays out prompts on the left and scale
  * selectors in columns to the right.
  */
-export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonly<SectionQuestionTableProps>) {
+export function SectionQuestionTable({
+    rows,
+    disabled,
+    onSelectAnswer,
+    onChangeAnswers,
+}: Readonly<SectionQuestionTableProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
@@ -99,62 +109,87 @@ export function SectionQuestionTable({ rows, disabled, onSelectAnswer }: Readonl
 
                     {rows.map((row, rowIndex) => {
                         const activeScaleKeys = getActiveScaleKeysForQuestion(row.question, row.selectedAnswers);
+                        const rowBackground = rowIndex % 2 === 0 ? ds.colors.surface : ds.colors.surfaceMuted;
 
                         return (
-                            <XStack
-                                key={row.question.question_key}
-                                borderTopWidth={rowIndex === 0 ? 0 : 1}
-                                borderColor={ds.colors.border}
-                                bg={rowIndex % 2 === 0 ? ds.colors.surface : ds.colors.surfaceMuted}
-                                items="stretch"
-                            >
-                                <QuestionPromptCell question={row.question} width={columnMetrics.promptColumnWidth} />
-                                {visibleScaleKeys.map((scaleKey, columnIndex) => {
-                                    const scale = row.question.scales.find(
-                                        (currentScale) => currentScale.key === scaleKey,
-                                    );
-                                    const showTrailingBorder = columnIndex < visibleScaleKeys.length - 1;
+                            <Fragment key={row.question.question_key}>
+                                <XStack
+                                    borderTopWidth={rowIndex === 0 ? 0 : 1}
+                                    borderColor={ds.colors.border}
+                                    bg={rowBackground}
+                                    items="stretch"
+                                >
+                                    <QuestionPromptCell
+                                        question={row.question}
+                                        width={columnMetrics.promptColumnWidth}
+                                    />
+                                    {visibleScaleKeys.map((scaleKey, columnIndex) => {
+                                        const scale = row.question.scales.find(
+                                            (currentScale) => currentScale.key === scaleKey,
+                                        );
+                                        const showTrailingBorder = columnIndex < visibleScaleKeys.length - 1;
 
-                                    if (scale === undefined) {
+                                        if (scale === undefined) {
+                                            return (
+                                                <EmptyScaleCell
+                                                    key={`${row.question.question_key}.${scaleKey}`}
+                                                    width={readScaleColumnWidth(columnMetrics, scaleKey)}
+                                                    text={t("section.table.notAvailable")}
+                                                    showTrailingBorder={showTrailingBorder}
+                                                />
+                                            );
+                                        }
+
+                                        if (scaleKey !== "provision" && !activeScaleKeys.includes(scaleKey)) {
+                                            return (
+                                                <EmptyScaleCell
+                                                    key={`${row.question.question_key}.${scaleKey}`}
+                                                    width={readScaleColumnWidth(columnMetrics, scaleKey)}
+                                                    text={t("section.table.followUpPending")}
+                                                    showTrailingBorder={showTrailingBorder}
+                                                />
+                                            );
+                                        }
+
                                         return (
-                                            <EmptyScaleCell
+                                            <ScaleOptionCell
                                                 key={`${row.question.question_key}.${scaleKey}`}
+                                                questionKey={row.question.question_key}
+                                                scale={scale}
+                                                selectedOptionKey={
+                                                    typeof row.selectedAnswers[scale.key] === "string"
+                                                        ? (row.selectedAnswers[scale.key] as string)
+                                                        : undefined
+                                                }
                                                 width={readScaleColumnWidth(columnMetrics, scaleKey)}
-                                                text={t("section.table.notAvailable")}
+                                                disabled={disabled}
                                                 showTrailingBorder={showTrailingBorder}
+                                                onSelectAnswer={onSelectAnswer}
                                             />
                                         );
-                                    }
-
-                                    if (scaleKey !== "provision" && !activeScaleKeys.includes(scaleKey)) {
-                                        return (
-                                            <EmptyScaleCell
-                                                key={`${row.question.question_key}.${scaleKey}`}
-                                                width={readScaleColumnWidth(columnMetrics, scaleKey)}
-                                                text={t("section.table.followUpPending")}
-                                                showTrailingBorder={showTrailingBorder}
-                                            />
-                                        );
-                                    }
-
-                                    return (
-                                        <ScaleOptionCell
-                                            key={`${row.question.question_key}.${scaleKey}`}
-                                            questionKey={row.question.question_key}
-                                            scale={scale}
-                                            selectedOptionKey={
-                                                typeof row.selectedAnswers[scale.key] === "string"
-                                                    ? (row.selectedAnswers[scale.key] as string)
-                                                    : undefined
-                                            }
-                                            width={readScaleColumnWidth(columnMetrics, scaleKey)}
-                                            disabled={disabled}
-                                            showTrailingBorder={showTrailingBorder}
-                                            onSelectAnswer={onSelectAnswer}
-                                        />
-                                    );
-                                })}
-                            </XStack>
+                                    })}
+                                </XStack>
+                                {row.question.notes_prompt ? (
+                                    <QuestionNoteRow
+                                        notesPrompt={row.question.notes_prompt}
+                                        disabled={disabled}
+                                        tableWidth={columnMetrics.tableWidth}
+                                        background={rowBackground}
+                                        value={
+                                            typeof row.selectedAnswers.question_note === "string"
+                                                ? row.selectedAnswers.question_note
+                                                : ""
+                                        }
+                                        placeholder={t("audit.enterComments", "Enter any comments")}
+                                        onChangeText={(text) => {
+                                            onChangeAnswers(row.question.question_key, {
+                                                ...row.selectedAnswers,
+                                                question_note: text || null,
+                                            });
+                                        }}
+                                    />
+                                ) : null}
+                            </Fragment>
                         );
                     })}
                 </YStack>
@@ -269,6 +304,74 @@ function QuestionPromptCell({ question, width }: Readonly<QuestionPromptCellProp
                     </Fragment>
                 ))}
             </Text>
+        </YStack>
+    );
+}
+
+interface QuestionNoteRowProps {
+    readonly notesPrompt: string;
+    readonly disabled: boolean;
+    readonly tableWidth: number;
+    readonly background: string;
+    readonly value: string;
+    readonly placeholder: string;
+    readonly onChangeText: (text: string) => void;
+}
+
+/**
+ * Full-width note field under a matrix row when the instrument defines
+ * {@link InstrumentQuestion.notes_prompt}.
+ */
+function QuestionNoteRow({
+    notesPrompt,
+    disabled,
+    tableWidth,
+    background,
+    value,
+    placeholder,
+    onChangeText,
+}: Readonly<QuestionNoteRowProps>) {
+    const ds = useDesignSystem();
+
+    return (
+        <YStack
+            width={tableWidth}
+            borderTopWidth={1}
+            borderColor={ds.colors.border}
+            bg={background as ColorTokens}
+            px="$3.5"
+            py="$3"
+            gap="$2"
+        >
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodySemiBold}
+                fontSize={ds.typography.bodySm.fontSize}
+            >
+                {notesPrompt}
+            </Text>
+            <TextInput
+                multiline
+                numberOfLines={4}
+                editable={!disabled}
+                value={value}
+                onChangeText={onChangeText}
+                placeholder={placeholder}
+                placeholderTextColor={ds.colors.mutedForeground}
+                style={{
+                    alignSelf: "stretch",
+                    borderWidth: 1,
+                    borderColor: ds.colors.border,
+                    borderRadius: ds.radii.md,
+                    padding: 12,
+                    fontFamily: ds.fonts.bodyRegular,
+                    fontSize: ds.typography.bodySm.fontSize,
+                    color: ds.colors.foreground,
+                    backgroundColor: ds.colors.surface,
+                    minHeight: 100,
+                    textAlignVertical: "top",
+                }}
+            />
         </YStack>
     );
 }

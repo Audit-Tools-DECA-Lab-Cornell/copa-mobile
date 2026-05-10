@@ -1,6 +1,6 @@
 export default {
     expo: {
-        name: "Playspace Audit Tool",
+        name: "COPA",
         slug: "audit-tools-playspace-mobile",
         version: "1.2.1",
         orientation: "portrait",

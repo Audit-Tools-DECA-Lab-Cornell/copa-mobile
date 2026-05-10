@@ -81,7 +81,7 @@ const { calculateQuestionScores, formatPercentage, getCombinedConstructScore } =
 
 const instrumentFixture = {
     instrument_key: "pvua_demo",
-    instrument_name: "Demo Playspace Instrument",
+    instrument_name: "Demo COPA Instrument",
     instrument_version: "1.0",
     current_sheet: "Demo Sheet",
     source_files: [],
@@ -215,7 +215,7 @@ const sessionFixture = {
     project_name: "Demo Project",
     place_id: "33333333-3333-4333-8333-333333333333",
     place_name: "Demo Place",
-    place_type: "playground",
+    place_type: "Neighborhood Playspace",
     allowed_execution_modes: ["survey", "audit", "both"],
     selected_execution_mode: "survey",
     status: "IN_PROGRESS",

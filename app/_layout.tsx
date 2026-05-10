@@ -85,7 +85,7 @@ export default function RootLayout() {
     }, [isPreferencesHydrated, languagePreference]);
 
     useEffect(() => {
-        logger.info("Playspace mobile app initialized");
+        logger.info("COPA mobile app initialized");
     }, []);
 
     if ((!fontsLoaded && !fontError) || !isPreferencesHydrated) {

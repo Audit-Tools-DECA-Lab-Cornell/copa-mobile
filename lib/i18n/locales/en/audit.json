@@ -30,7 +30,7 @@
         "emptyTitle": "No audits match",
         "openSelectedAudit": "Open selected audit",
         "searchPlaceholder": "Search places or projects",
-        "subtitle": "Choose a place to start or resume the section-by-section playspace audit flow.",
+        "subtitle": "Choose a place to start or resume the section-by-section COPA audit flow.",
         "title": "Audit Execute"
     },
     "mode": "— {{mode}}",
@@ -56,7 +56,7 @@
         "preamble": "Preamble",
         "reviewDescription": "Review every section in one place and jump back into the next incomplete section.",
         "tapToExpand": "Tap to expand",
-        "preparingAudit": "Preparing the playspace audit flow...",
+        "preparingAudit": "Preparing the COPA audit flow...",
         "preparingAuditTitle": "Preparing Audit",
         "sectionEmpty": "No sections match the current filter.",
         "sections": "Sections",

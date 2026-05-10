@@ -180,10 +180,7 @@ export default function AcceptTermsScreen() {
         icon: Shield,
         eyebrow: t("acceptTerms.stepLabel", "Step 3 of 4"),
         title: t("acceptTerms.title", "Terms & Privacy"),
-        subtitle: t(
-            "acceptTerms.headerSubtitle",
-            "A quick read to confirm how Playspace handles audits and your data.",
-        ),
+        subtitle: t("acceptTerms.headerSubtitle", "A quick read to confirm how COPA handles audits and your data."),
     } as const;
 
     if (isLoadingDocuments) {

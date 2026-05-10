@@ -27,7 +27,7 @@
         "emptyTitle": "一致する監査はありません",
         "openSelectedAudit": "選択した監査を開く",
         "searchPlaceholder": "場所またはプロジェクトを検索",
-        "subtitle": "セクションごとのプレイスペース監査フローを開始または再開する場所を選択してください。",
+        "subtitle": "セクションごとの COPA 監査フローを開始または再開する場所を選択してください。",
         "title": "監査の実行"
     },
     "mode": "— {{mode}}",
@@ -53,7 +53,7 @@
         "preamble": "前置き",
         "reviewDescription": "すべてのセクションを1か所で確認し、次の未完了セクションに戻れます。",
         "tapToExpand": "タップして展開",
-        "preparingAudit": "プレイスペース監査フローを準備しています...",
+        "preparingAudit": "COPA 監査フローを準備しています...",
         "preparingAuditTitle": "監査を準備中",
         "sectionEmpty": "現在のフィルターに一致するセクションはありません。",
         "sections": "セクション",

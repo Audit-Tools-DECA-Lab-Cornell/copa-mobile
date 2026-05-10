@@ -14,7 +14,7 @@ import type { AuthSession } from "lib/auth/types";
 import { z } from "zod";
 
 /**
- * Structured API error for playspace audit requests.
+ * Structured API error for COPA audit API requests.
  */
 export class PlayspaceAuditApiError extends Error {
     readonly statusCode: number;
@@ -175,7 +175,7 @@ export async function requestJson(session: AuthSession, path: string, init: Requ
     } catch (error) {
         const message = error instanceof Error ? error.message : t("networkRequestFailed", "Network request failed.");
         throw new PlayspaceAuditApiError(
-            t("unableToReachPlayspaceAuditService", "Unable to reach playspace audit service."),
+            t("unableToReachPlayspaceAuditService", "Unable to reach COPA audit service."),
             0,
             message,
         );
@@ -184,7 +184,7 @@ export async function requestJson(session: AuthSession, path: string, init: Requ
     if (!response.ok) {
         const details = await readErrorDetails(response);
         throw new PlayspaceAuditApiError(
-            t("playspaceAuditRequestFailed", "Playspace audit request failed."),
+            t("playspaceAuditRequestFailed", "COPA audit request failed."),
             response.status,
             details,
         );
@@ -194,17 +194,17 @@ export async function requestJson(session: AuthSession, path: string, init: Requ
         return await response.json();
     } catch {
         throw new PlayspaceAuditApiError(
-            t("playspaceAuditServiceReturnedInvalidJson", "Playspace audit service returned invalid JSON."),
+            t("playspaceAuditServiceReturnedInvalidJson", "COPA audit service returned invalid JSON."),
             500,
         );
     }
 }
 
 /**
- * Build the auth headers expected by the Playspace backend.
+ * Build the auth headers expected by the COPA audit backend.
  *
  * @param session Authenticated mobile session.
- * @returns Stable headers for the playspace backend.
+ * @returns Stable headers for the COPA audit backend.
  */
 function buildAuthenticatedHeaders(session: AuthSession): Record<string, string> {
     return {

@@ -35,8 +35,8 @@
     "place": {
         "assignedPlace": "असाइन किया गया स्थान"
     },
-    "playspaceAuditRequestFailed": "Playspace ऑडिट अनुरोध विफल रहा।",
-    "playspaceAuditServiceReturnedInvalidJson": "Playspace ऑडिट सेवा ने अमान्य JSON लौटाया।",
+    "playspaceAuditRequestFailed": "COPA ऑडिट अनुरोध विफल रहा।",
+    "playspaceAuditServiceReturnedInvalidJson": "COPA ऑडिट सेवा ने अमान्य JSON लौटाया।",
     "roles": {
         "auditor": "ऑडिटर",
         "auditorAndPlaceAdmin": "ऑडिटर और प्लेस एडमिन",
@@ -82,5 +82,5 @@
     },
     "unableToLoadPlaces": "स्थान लोड नहीं किए जा सके।",
     "unableToReachAuthenticationService": "प्रमाणीकरण सेवा तक नहीं पहुंचा जा सका।",
-    "unableToReachPlayspaceAuditService": "Playspace ऑडिट सेवा तक नहीं पहुंचा जा सका।"
+    "unableToReachPlayspaceAuditService": "COPA ऑडिट सेवा तक नहीं पहुंचा जा सका।"
 }
