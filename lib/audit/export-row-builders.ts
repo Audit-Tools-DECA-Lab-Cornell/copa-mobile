@@ -393,7 +393,8 @@ export function buildSingleAuditResponseRows(
 
             rows.push(buildQuestionResponseRow(sectionIndex, questionIndex, question, questionAnswers, questionScores));
 
-            const questionComment = typeof questionAnswers.comment === "string" ? questionAnswers.comment.trim() : "";
+            const questionComment =
+                typeof questionAnswers.question_note === "string" ? questionAnswers.question_note.trim() : "";
             if (questionComment.length > 0) {
                 rows.push(
                     buildQuestionCommentRow(

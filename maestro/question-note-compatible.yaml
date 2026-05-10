@@ -1,0 +1,10 @@
+# Auditor execution flow should still open cleanly with question-note-capable
+# instrument payloads. The seeded environment may not expose a visible question
+# comment prompt on first launch, so this flow focuses on the execution screen
+# remaining reachable after the contract change.
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- runFlow: create-audit.yaml
+- extendedWaitUntil:
+      visible: ".*Provision.*|.*This playspace.*|.*Audit.*"
+      timeout: 30000

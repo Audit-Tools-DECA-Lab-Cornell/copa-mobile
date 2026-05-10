@@ -82,6 +82,7 @@ export const instrumentQuestionSchema = z.object({
     options: z.array(choiceOptionSchema).default([]),
     required: z.boolean().default(true),
     display_if: questionDisplayConditionSchema.nullable().optional(),
+    notes_prompt: z.string().nullable().optional(),
 });
 
 export const instrumentSectionSchema = z.object({
@@ -168,7 +169,10 @@ export const questionResponseValueSchema = z.union([
     z.null(),
 ]);
 
-export const questionResponsePayloadSchema = z.record(z.string(), questionResponseValueSchema);
+export const questionResponsePayloadSchema = z.record(
+    z.string(),
+    z.union([questionResponseValueSchema, z.string().nullable()]),
+);
 
 export const auditSectionStateSchema = z.object({
     section_key: z.string().min(1),

@@ -54,4 +54,4 @@ export function getBundledInstrument(): PlayspaceInstrument | null {
  * Useful for comparing against the server's active version when deciding
  * whether to show a "newer instrument available" notice.
  */
-export const BUNDLED_INSTRUMENT_VERSION: string = rawBundledInstrument.instrument_version ?? "unknown";
+export const BUNDLED_INSTRUMENT_VERSION: string = rawBundledInstrument["en"].instrument_version ?? "unknown";

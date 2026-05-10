@@ -224,6 +224,24 @@ function collectSectionNote(
     return `${sectionIndex}. ${sectionTitle}: ${trimmed}`;
 }
 
+function collectQuestionNote(
+    question: InstrumentQuestion,
+    answers: QuestionResponsePayload,
+    sectionIndex: number,
+): string | null {
+    const raw = answers.question_note;
+    if (typeof raw !== "string") {
+        return null;
+    }
+    const trimmed = raw.trim();
+    if (trimmed.length === 0) {
+        return null;
+    }
+    const parts = question.question_key.match(/\d+/g);
+    const localIndex = parts !== null ? parts[parts.length - 1] : "?";
+    return `${sectionIndex}.${localIndex} ${question.prompt.replaceAll("**", "")}: ${trimmed}`;
+}
+
 function parseQuestionKeyParts(questionKey: string): number[] {
     const matches = questionKey.match(/\d+/g);
     if (matches === null) {
@@ -382,6 +400,10 @@ export function buildDomainReportRows(auditSession: AuditSession, instrument: Pl
                     auditSession.aggregate.sections[section.section_key]?.responses[question.question_key] ?? {};
                 if (question.question_type === "scaled") {
                     questions.push(buildDomainQuestionRow(question, responses));
+                }
+                const questionNote = collectQuestionNote(question, responses, sectionIndex + 1);
+                if (questionNote !== null) {
+                    sectionNotes.push(questionNote);
                 }
             });
             if (sectionTouchesDomain) {

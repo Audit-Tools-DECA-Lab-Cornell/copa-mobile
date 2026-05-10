@@ -103,6 +103,7 @@ export function QuestionCard({
                     question={question}
                     selectedOptionKeys={selectedChecklistOptionKeys}
                     otherText={otherChecklistText}
+                    currentAnswers={selectedAnswers}
                     disabled={disabled}
                     onChangeAnswers={onChangeAnswers}
                 />
@@ -142,6 +143,43 @@ export function QuestionCard({
                     {t("section.followUpHidden")}
                 </Paragraph>
             ) : null}
+
+            {question.notes_prompt && (
+                <YStack gap="$2">
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodySemiBold}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {question.notes_prompt}
+                    </Text>
+                    <TextInput
+                        multiline
+                        numberOfLines={4}
+                        style={{
+                            borderWidth: 1,
+                            borderColor: ds.colors.border,
+                            borderRadius: ds.radii.md,
+                            padding: 12,
+                            fontFamily: ds.fonts.bodyRegular,
+                            fontSize: ds.typography.bodySm.fontSize,
+                            color: ds.colors.foreground,
+                            backgroundColor: ds.colors.surface,
+                            minHeight: 100,
+                        }}
+                        placeholder={t("audit.enterComments", "Enter any comments")}
+                        placeholderTextColor={ds.colors.mutedForeground}
+                        editable={!disabled}
+                        value={typeof selectedAnswers.question_note === "string" ? selectedAnswers.question_note : ""}
+                        onChangeText={(text) => {
+                            onChangeAnswers(question.question_key, {
+                                ...selectedAnswers,
+                                question_note: text || null,
+                            });
+                        }}
+                    />
+                </YStack>
+            )}
         </YStack>
     );
 }
@@ -262,6 +300,7 @@ interface ChecklistSelectorProps {
     readonly question: InstrumentQuestion;
     readonly selectedOptionKeys: readonly string[];
     readonly otherText: string;
+    readonly currentAnswers: QuestionResponsePayload;
     readonly disabled: boolean;
     readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
@@ -270,6 +309,7 @@ function ChecklistSelector({
     question,
     selectedOptionKeys,
     otherText,
+    currentAnswers,
     disabled,
     onChangeAnswers,
 }: Readonly<ChecklistSelectorProps>) {
@@ -318,7 +358,7 @@ function ChecklistSelector({
                                 }
                                 onChangeAnswers(
                                     question.question_key,
-                                    toggleChecklistOption(selectedOptionKeys, option.key, otherText),
+                                    toggleChecklistOption(selectedOptionKeys, option.key, otherText, currentAnswers),
                                 );
                             }}
                         >
@@ -347,7 +387,10 @@ function ChecklistSelector({
                     value={otherText}
                     editable={!disabled}
                     onChangeText={(nextText) => {
-                        onChangeAnswers(question.question_key, setChecklistOtherText(selectedOptionKeys, nextText));
+                        onChangeAnswers(
+                            question.question_key,
+                            setChecklistOtherText(selectedOptionKeys, nextText, currentAnswers),
+                        );
                     }}
                     placeholder="Describe other"
                     placeholderTextColor={ds.colors.placeholderColor}
@@ -394,6 +437,7 @@ function toggleChecklistOption(
     selectedOptionKeys: readonly string[],
     optionKey: string,
     otherText: string,
+    currentAnswers: QuestionResponsePayload,
 ): QuestionResponsePayload {
     const nextSelectedOptionKeys = selectedOptionKeys.includes(optionKey)
         ? selectedOptionKeys.filter((currentKey) => currentKey !== optionKey)
@@ -407,16 +451,30 @@ function toggleChecklistOption(
         nextAnswers.other_details = { text: otherText };
     }
 
+    const questionNote = typeof currentAnswers.question_note === "string" ? currentAnswers.question_note : null;
+    if (questionNote !== null) {
+        nextAnswers.question_note = questionNote;
+    }
+
     return nextAnswers;
 }
 
-function setChecklistOtherText(selectedOptionKeys: readonly string[], nextText: string): QuestionResponsePayload {
+function setChecklistOtherText(
+    selectedOptionKeys: readonly string[],
+    nextText: string,
+    currentAnswers: QuestionResponsePayload,
+): QuestionResponsePayload {
     const nextAnswers: QuestionResponsePayload = {
         selected_option_keys: [...selectedOptionKeys],
     };
 
     if (nextText.trim().length > 0) {
         nextAnswers.other_details = { text: nextText };
+    }
+
+    const questionNote = typeof currentAnswers.question_note === "string" ? currentAnswers.question_note : null;
+    if (questionNote !== null) {
+        nextAnswers.question_note = questionNote;
     }
 
     return nextAnswers;
@@ -443,5 +501,6 @@ function buildNextScaledQuestionAnswers(
         return nextAnswers;
     }
 
-    return { provision: optionKey };
+    const questionNote = typeof currentAnswers.question_note === "string" ? currentAnswers.question_note : null;
+    return questionNote === null ? { provision: optionKey } : { provision: optionKey, question_note: questionNote };
 }

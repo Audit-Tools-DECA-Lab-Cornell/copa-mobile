@@ -265,7 +265,7 @@ function buildPdfResponseRows(exportableAudit: ExportableAudit, instrument: Play
             sectionTotals = addScoreTotals(sectionTotals, scores);
             rows.push(renderPdfQuestionRow(sectionIndex, questionRowIndex, question, answers, scores));
 
-            const questionComment = typeof answers.comment === "string" ? answers.comment.trim() : "";
+            const questionComment = typeof answers.question_note === "string" ? answers.question_note.trim() : "";
             if (questionComment.length > 0) {
                 rows.push(renderBannerRow(`Auditor Comment: ${questionComment}`, "question-comment"));
             }
