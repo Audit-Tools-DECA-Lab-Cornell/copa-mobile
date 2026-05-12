@@ -18,7 +18,7 @@
 import { createModuleLogger } from "lib/logger";
 import { playspaceInstrumentSchema, type PlayspaceInstrument } from "lib/audit/types";
 
-import rawBundledInstrument from "../../assets/bundled-instrument.json";
+import rawBundledInstrument from "assets/bundled-instrument.json";
 
 const log = createModuleLogger("bundled-instrument");
 
