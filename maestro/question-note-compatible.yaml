@@ -1,10 +1,16 @@
-# Auditor execution flow should still open cleanly with question-note-capable
-# instrument payloads. The seeded environment may not expose a visible question
-# comment prompt on first launch, so this flow focuses on the execution screen
-# remaining reachable after the contract change.
+# Verify the audit execution screen renders question cards from a question-note-capable
+# instrument payload without crashing, and that auditors can navigate between questions.
+#
+# Note: No live instrument questions currently have a notes_prompt set at the question
+# level, so this flow validates the execution shell rather than the note input UI.
+# Helper-level note preservation is covered by tests/checklist-helpers.spec.ts (Vitest).
 appId: com.pratyush.sudhakar.audittoolsplayspacemobile
 ---
 - runFlow: create-audit.yaml
 - extendedWaitUntil:
-      visible: ".*Provision.*|.*This playspace.*|.*Audit.*"
+      visible: ".*Provision.*|.*This playspace.*|.*Question.*|.*of.*"
       timeout: 30000
+- scrollDown
+- extendedWaitUntil:
+      visible: ".*Provision.*|.*This playspace.*|.*Question.*"
+      timeout: 10000

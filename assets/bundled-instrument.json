@@ -4489,7 +4489,6 @@
                         "required": true,
                         "constructs": ["play_value"],
                         "section_key": "section_13_natural_play_features",
-                        "notes_prompt": "Question notes prompt",
                         "question_key": "q_13_1",
                         "question_type": "scaled"
                     },

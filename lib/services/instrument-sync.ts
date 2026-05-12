@@ -12,7 +12,7 @@ import { getApiBaseUrl } from "lib/api-base-url";
 import { getBundledInstrument } from "lib/audit/bundled-instrument";
 import { createModuleLogger } from "lib/logger";
 import { mmkvStorage } from "lib/storage/mmkv";
-import type { PlayspaceInstrument } from "lib/audit/types";
+import { playspaceInstrumentSchema, type PlayspaceInstrument } from "lib/audit/types";
 
 const log = createModuleLogger("instrument-sync");
 
@@ -46,12 +46,13 @@ export async function fetchInstrumentFromApi(
         }
 
         const payload: unknown = await response.json();
-        if (typeof payload !== "object" || payload === null) {
-            log.warn("instrument fetch returned non-object payload");
+        const parsed = playspaceInstrumentSchema.safeParse(payload);
+        if (!parsed.success) {
+            log.withMetadata({ error: parsed.error.message }).warn("instrument fetch returned unexpected shape");
             return null;
         }
 
-        return payload as PlayspaceInstrument;
+        return parsed.data;
     } catch (error) {
         log.withError(error).warn("instrument fetch failed");
         return null;
@@ -69,7 +70,12 @@ export function getCachedInstrument(): PlayspaceInstrument | null {
         if (raw === undefined) {
             return null;
         }
-        return JSON.parse(raw) as PlayspaceInstrument;
+        const parsed = playspaceInstrumentSchema.safeParse(JSON.parse(raw));
+        if (!parsed.success) {
+            mmkvStorage.remove(INSTRUMENT_CACHE_KEY);
+            return null;
+        }
+        return parsed.data;
     } catch (error) {
         log.withError(error).warn("failed to read cached instrument");
         return null;
