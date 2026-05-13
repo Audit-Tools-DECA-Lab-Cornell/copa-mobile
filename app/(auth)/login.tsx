@@ -99,7 +99,7 @@ export default function LoginScreen() {
                 <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                     <YStack items="center" gap="$4">
                         <Image
-                            source={require("../../assets/icon.png")}
+                            source={require("assets/icon.png")}
                             style={{ width: 150, height: 150 }}
                             resizeMode="contain"
                         />

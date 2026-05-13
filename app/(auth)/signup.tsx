@@ -96,7 +96,7 @@ export default function SignupScreen() {
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{
                     paddingHorizontal: layout.screenPaddingHorizontal,
-                    paddingVertical: 48,
+                    paddingVertical: 24,
                     justifyContent: "center",
                 }}
             >
@@ -104,8 +104,8 @@ export default function SignupScreen() {
                     {/* Header */}
                     <YStack items="center" gap="$4">
                         <Image
-                            source={require("../../assets/images/icon.png")}
-                            style={{ width: 88, height: 88 }}
+                            source={require("assets/icon.png")}
+                            style={{ width: 150, height: 150 }}
                             resizeMode="contain"
                         />
                         <YStack items="center" gap="$2">

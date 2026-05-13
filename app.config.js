@@ -4,7 +4,7 @@ export default {
         slug: "audit-tools-playspace-mobile",
         version: "1.2.1",
         orientation: "portrait",
-        icon: "./assets/images/icon.png",
+        icon: "./assets/icon-ios.png",
         scheme: "audit-tools-playspace-mobile",
         userInterfaceStyle: "automatic",
         splash: {
@@ -15,6 +15,7 @@ export default {
         assetBundlePatterns: ["**/*"],
         ios: {
             supportsTablet: true,
+            icon: "./assets/icon-ios.png",
             bundleIdentifier: "com.pratyush.sudhakar.audit-tools-playspace-mobile",
             appleTeamId: "ZD947U862S",
             infoPlist: {
