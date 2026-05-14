@@ -40,6 +40,7 @@ TranslationPath: TypeAlias = tuple[PathToken, ...]
 JsonScalar: TypeAlias = str | int | float | bool | None
 JsonValue: TypeAlias = JsonScalar | list["JsonValue"] | dict[str, "JsonValue"]
 
+
 class MissingValue:
     """Sentinel used to differentiate absent values from explicit null values."""
 
@@ -322,9 +323,13 @@ def resolve_target_locales(
     """Resolve which target locale folders should be processed."""
 
     if len(requested_locales) > 0:
-        cleaned_locales = tuple(locale.strip() for locale in requested_locales if locale.strip() != "")
+        cleaned_locales = tuple(
+            locale.strip() for locale in requested_locales if locale.strip() != ""
+        )
         if len(cleaned_locales) == 0:
-            raise TranslationScriptError("At least one non-empty --target-locale value is required.")
+            raise TranslationScriptError(
+                "At least one non-empty --target-locale value is required."
+            )
         return cleaned_locales
 
     discovered_locales = tuple(
@@ -359,7 +364,9 @@ def translate_requested_files(
 
         for file in locale_files:
             if file.kind == "json":
-                result = translate_json_file(config=config, translator=translator, file=file)
+                result = translate_json_file(
+                    config=config, translator=translator, file=file
+                )
             else:
                 if source_instrument_bundle is None:
                     source_instrument_bundle = load_instrument_bundle(
@@ -379,7 +386,9 @@ def translate_requested_files(
     return results
 
 
-def discover_translatable_files(config: ScriptConfig, locale: str) -> list[TranslatableFile]:
+def discover_translatable_files(
+    config: ScriptConfig, locale: str
+) -> list[TranslatableFile]:
     """List locale files that match the requested format and optional file filters."""
 
     source_locale_dir = config.locales_dir / config.source_locale
@@ -410,7 +419,11 @@ def discover_translatable_files(config: ScriptConfig, locale: str) -> list[Trans
     if len(config.file_filters) == 0:
         return files
 
-    return [file for file in files if file_matches_filters(file=file, filters=config.file_filters)]
+    return [
+        file
+        for file in files
+        if file_matches_filters(file=file, filters=config.file_filters)
+    ]
 
 
 def file_matches_filters(file: TranslatableFile, filters: tuple[str, ...]) -> bool:
@@ -422,7 +435,9 @@ def file_matches_filters(file: TranslatableFile, filters: tuple[str, ...]) -> bo
         normalized_filter = value.strip().replace("\\", "/")
         if normalized_filter == "":
             continue
-        if source_suffix.endswith(normalized_filter) or target_suffix.endswith(normalized_filter):
+        if source_suffix.endswith(normalized_filter) or target_suffix.endswith(
+            normalized_filter
+        ):
             return True
     return False
 
@@ -447,7 +462,9 @@ def translate_json_file(
     )
 
     if len(translation_entries) == 0:
-        print(f"Skipping {file.target_path.relative_to(config.repo_root)} (no missing strings).")
+        print(
+            f"Skipping {file.target_path.relative_to(config.repo_root)} (no missing strings)."
+        )
         return FileTranslationResult(file=file, translated_count=0, updated=False)
 
     print(
@@ -464,7 +481,9 @@ def translate_json_file(
         current_value=current_target_data,
         translated_mapping=translated_mapping,
     )
-    ordered_output = reorder_like_source(source_value=source_data, target_value=next_target_data)
+    ordered_output = reorder_like_source(
+        source_value=source_data, target_value=next_target_data
+    )
 
     if not config.dry_run:
         write_json_file(path=file.target_path, value=ordered_output)
@@ -496,7 +515,9 @@ def translate_instrument_file(
     )
 
     if len(translation_entries) == 0:
-        print(f"Skipping {file.target_path.relative_to(config.repo_root)} (no missing strings).")
+        print(
+            f"Skipping {file.target_path.relative_to(config.repo_root)} (no missing strings)."
+        )
         return FileTranslationResult(file=file, translated_count=0, updated=False)
 
     print(
@@ -513,7 +534,9 @@ def translate_instrument_file(
         current_value=current_target_bundle,
         translated_mapping=translated_mapping,
     )
-    ordered_output = reorder_like_source(source_value=source_bundle, target_value=next_target_bundle)
+    ordered_output = reorder_like_source(
+        source_value=source_bundle, target_value=next_target_bundle
+    )
 
     if not config.dry_run:
         write_instrument_typescript(
@@ -538,7 +561,9 @@ def read_json_file(path: Path) -> JsonValue:
     except FileNotFoundError as error:
         raise TranslationScriptError(f"JSON file was not found: {path}") from error
     except json.JSONDecodeError as error:
-        raise TranslationScriptError(f"Could not parse JSON file {path}: {error}") from error
+        raise TranslationScriptError(
+            f"Could not parse JSON file {path}: {error}"
+        ) from error
 
 
 def write_json_file(path: Path, value: JsonValue) -> None:
@@ -575,7 +600,9 @@ def write_instrument_typescript(path: Path, locale: str, value: JsonValue) -> No
         file_handle.write(file_contents)
 
 
-def load_instrument_bundle(repo_root: Path, mode: Literal["source", "current"], locale: str) -> JsonValue:
+def load_instrument_bundle(
+    repo_root: Path, mode: Literal["source", "current"], locale: str
+) -> JsonValue:
     """Load instrument translation data through the Bun helper script."""
 
     bun_executable = "bun"
@@ -659,7 +686,11 @@ def collect_translation_entries(
     if isinstance(source_value, dict):
         current_dict = current_value if isinstance(current_value, dict) else None
         for key, value in source_value.items():
-            next_current = current_dict[key] if current_dict is not None and key in current_dict else MISSING
+            next_current = (
+                current_dict[key]
+                if current_dict is not None and key in current_dict
+                else MISSING
+            )
             entries.extend(
                 collect_translation_entries(
                     source_value=value,
@@ -673,7 +704,9 @@ def collect_translation_entries(
     return entries
 
 
-def should_translate_string(source_text: str, current_value: MaybeJsonValue, overwrite: bool) -> bool:
+def should_translate_string(
+    source_text: str, current_value: MaybeJsonValue, overwrite: bool
+) -> bool:
     """Decide whether one source string still needs translation."""
 
     if source_text.strip() == "":
@@ -705,7 +738,9 @@ def merge_translations_into_value(
 
     for identifier, translated_text in translated_mapping.items():
         path = identifier_to_translation_path(identifier)
-        set_nested_value(root=cast(JsonValue, next_value), path=path, value=translated_text)
+        set_nested_value(
+            root=cast(JsonValue, next_value), path=path, value=translated_text
+        )
 
     return cast(JsonValue, next_value)
 
@@ -714,7 +749,9 @@ def set_nested_value(root: JsonValue, path: TranslationPath, value: str) -> None
     """Assign a value into a nested dict/list structure, creating containers as needed."""
 
     if len(path) == 0:
-        raise TranslationScriptError("Cannot write a translated value to an empty path.")
+        raise TranslationScriptError(
+            "Cannot write a translated value to an empty path."
+        )
 
     current: JsonValue = root
     for index, token in enumerate(path):
@@ -765,7 +802,9 @@ def create_container_for_next_token(next_token: PathToken | None) -> JsonValue:
     return {}
 
 
-def is_compatible_container(current_value: JsonValue | None, desired_container: JsonValue) -> bool:
+def is_compatible_container(
+    current_value: JsonValue | None, desired_container: JsonValue
+) -> bool:
     """Return True when an existing value already matches the needed container shape."""
 
     if isinstance(desired_container, list):
@@ -789,7 +828,9 @@ def reorder_like_source(source_value: JsonValue, target_value: JsonValue) -> Jso
     if isinstance(source_value, list) and isinstance(target_value, list):
         ordered_list: list[JsonValue] = []
         for index, target_child in enumerate(target_value):
-            source_child = source_value[index] if index < len(source_value) else target_child
+            source_child = (
+                source_value[index] if index < len(source_value) else target_child
+            )
             ordered_list.append(reorder_like_source(source_child, target_child))
         return ordered_list
 
@@ -836,7 +877,9 @@ def identifier_to_translation_path(identifier: str) -> TranslationPath:
                 buffer = ""
             closing_index = identifier.find("]", index)
             if closing_index == -1:
-                raise TranslationScriptError(f"Invalid translation identifier: {identifier}")
+                raise TranslationScriptError(
+                    f"Invalid translation identifier: {identifier}"
+                )
             index_value = identifier[index + 1 : closing_index]
             path.append(int(index_value))
             index = closing_index + 1
@@ -853,7 +896,11 @@ def identifier_to_translation_path(identifier: str) -> TranslationPath:
 def locale_to_export_prefix(locale: str) -> str:
     """Match the export naming scheme used by instrument locale modules."""
 
-    segments = [segment.lower() for segment in re.split(r"[^A-Za-z0-9]+", locale) if segment != ""]
+    segments = [
+        segment.lower()
+        for segment in re.split(r"[^A-Za-z0-9]+", locale)
+        if segment != ""
+    ]
     if len(segments) == 0:
         raise TranslationScriptError(f"Invalid locale code: {locale}")
 
@@ -889,6 +936,7 @@ class OpenAITranslator:
     def __init__(self, config: ScriptConfig) -> None:
         self._config = config
         self._api_key = os.getenv("OPENAI_API_KEY")
+
     def translate_entries(
         self,
         source_locale: str,
@@ -951,7 +999,9 @@ class OpenAITranslator:
                 previous_failure_reason = str(error)
                 delay_seconds = min(2 ** (attempt - 1), 8)
                 if self._config.verbose:
-                    print(f"    Retry {attempt}/{self._config.retries - 1} after error: {error}")
+                    print(
+                        f"    Retry {attempt}/{self._config.retries - 1} after error: {error}"
+                    )
                 time.sleep(delay_seconds)
 
         raise TranslationScriptError("Translation retries were exhausted unexpectedly.")
@@ -966,9 +1016,17 @@ class OpenAITranslator:
         """Request one translation payload, progressively relaxing optional API features if needed."""
 
         request_profiles = (
-            RequestProfile(use_json_mode=True, include_reasoning=True, include_text_verbosity=True),
-            RequestProfile(use_json_mode=False, include_reasoning=True, include_text_verbosity=True),
-            RequestProfile(use_json_mode=False, include_reasoning=False, include_text_verbosity=False),
+            RequestProfile(
+                use_json_mode=True, include_reasoning=True, include_text_verbosity=True
+            ),
+            RequestProfile(
+                use_json_mode=False, include_reasoning=True, include_text_verbosity=True
+            ),
+            RequestProfile(
+                use_json_mode=False,
+                include_reasoning=False,
+                include_text_verbosity=False,
+            ),
         )
 
         last_error: TranslationScriptError | None = None
@@ -996,7 +1054,9 @@ class OpenAITranslator:
                 continue
 
         if last_error is None:
-            raise TranslationScriptError("The translation request failed without a specific error.")
+            raise TranslationScriptError(
+                "The translation request failed without a specific error."
+            )
         raise last_error
 
     def _post_response_request(self, payload: dict[str, JsonValue]) -> JsonValue:
@@ -1014,7 +1074,9 @@ class OpenAITranslator:
         )
 
         try:
-            with urllib_request.urlopen(http_request, timeout=self._config.timeout_seconds) as response:
+            with urllib_request.urlopen(
+                http_request, timeout=self._config.timeout_seconds
+            ) as response:
                 response_text = response.read().decode("utf-8")
         except urllib_error.HTTPError as error:
             error_body = error.read().decode("utf-8", errors="replace")
@@ -1023,12 +1085,16 @@ class OpenAITranslator:
                 status_code=error.status,
             ) from error
         except urllib_error.URLError as error:
-            raise OpenAIRequestError(f"Network error while calling the Responses API: {error}") from error
+            raise OpenAIRequestError(
+                f"Network error while calling the Responses API: {error}"
+            ) from error
 
         try:
             return cast(JsonValue, json.loads(response_text))
         except json.JSONDecodeError as error:
-            raise TranslationScriptError(f"Could not parse the Responses API JSON body: {error}") from error
+            raise TranslationScriptError(
+                f"Could not parse the Responses API JSON body: {error}"
+            ) from error
 
 
 @dataclass(frozen=True)
@@ -1050,7 +1116,9 @@ def build_translation_batches(
     if item_limit <= 0:
         raise TranslationScriptError("--batch-item-limit must be greater than zero.")
     if character_limit <= 0:
-        raise TranslationScriptError("--batch-character-limit must be greater than zero.")
+        raise TranslationScriptError(
+            "--batch-character-limit must be greater than zero."
+        )
 
     batches: list[TranslationBatch] = []
     current_entries: list[TranslationEntry] = []
@@ -1058,12 +1126,9 @@ def build_translation_batches(
 
     for entry in entries:
         entry_character_count = len(entry.source_text)
-        should_flush = (
-            len(current_entries) >= item_limit
-            or (
-                len(current_entries) > 0
-                and current_character_count + entry_character_count > character_limit
-            )
+        should_flush = len(current_entries) >= item_limit or (
+            len(current_entries) > 0
+            and current_character_count + entry_character_count > character_limit
         )
         if should_flush:
             batches.append(TranslationBatch(entries=tuple(current_entries)))
@@ -1123,7 +1188,9 @@ def build_openai_request_payload(
     return request_payload
 
 
-def build_translation_instructions(target_locale: str, previous_failure_reason: str) -> str:
+def build_translation_instructions(
+    target_locale: str, previous_failure_reason: str
+) -> str:
     """Create a focused translation prompt for the current target locale."""
 
     locale_hint = LOCALE_STYLE_HINTS.get(
@@ -1183,11 +1250,15 @@ def extract_output_text(response_payload: JsonValue) -> str:
     """Extract assistant text content from a raw Responses API response object."""
 
     if not isinstance(response_payload, dict):
-        raise TranslationScriptError("The Responses API returned a non-object JSON payload.")
+        raise TranslationScriptError(
+            "The Responses API returned a non-object JSON payload."
+        )
 
     output_items = response_payload.get("output")
     if not isinstance(output_items, list):
-        raise TranslationScriptError("The Responses API payload did not contain an `output` array.")
+        raise TranslationScriptError(
+            "The Responses API payload did not contain an `output` array."
+        )
 
     text_parts: list[str] = []
     for item in output_items:
@@ -1209,7 +1280,9 @@ def extract_output_text(response_payload: JsonValue) -> str:
                     text_parts.append(text_value)
 
     if len(text_parts) == 0:
-        raise TranslationScriptError("The Responses API returned no assistant text content.")
+        raise TranslationScriptError(
+            "The Responses API returned no assistant text content."
+        )
 
     return "".join(text_parts)
 
@@ -1228,12 +1301,16 @@ def parse_json_object_text(response_text: str) -> JsonValue:
 
     match = re.search(r"\{.*\}", stripped_text, re.DOTALL)
     if match is None:
-        raise TranslationScriptError("The model response did not contain a parseable JSON object.")
+        raise TranslationScriptError(
+            "The model response did not contain a parseable JSON object."
+        )
 
     try:
         return cast(JsonValue, json.loads(match.group(0)))
     except json.JSONDecodeError as error:
-        raise TranslationScriptError(f"The model returned invalid JSON: {error}") from error
+        raise TranslationScriptError(
+            f"The model returned invalid JSON: {error}"
+        ) from error
 
 
 def validate_translation_payload(
@@ -1247,7 +1324,9 @@ def validate_translation_payload(
 
     translations_value = payload.get("translations")
     if not isinstance(translations_value, list):
-        raise TranslationScriptError("The model JSON response must contain a `translations` array.")
+        raise TranslationScriptError(
+            "The model JSON response must contain a `translations` array."
+        )
 
     expected_ids = [entry.identifier for entry in entries]
     actual_ids: list[str] = []
@@ -1260,7 +1339,9 @@ def validate_translation_payload(
         item_id = item.get("id")
         text = item.get("text")
         if not isinstance(item_id, str) or not isinstance(text, str):
-            raise TranslationScriptError("Each translation item must contain string `id` and `text` fields.")
+            raise TranslationScriptError(
+                "Each translation item must contain string `id` and `text` fields."
+            )
 
         actual_ids.append(item_id)
         translated_mapping[item_id] = text
