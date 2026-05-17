@@ -1,5 +1,7 @@
 import "../tamagui.generated.css";
 
+import { vexo } from "vexo-analytics";
+
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from "@expo-google-fonts/geist";
 import * as Network from "expo-network";
 import {
@@ -31,6 +33,8 @@ import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
 import { usePreferencesStore } from "stores/preferences-store";
 import { StatusBar } from "expo-status-bar";
+
+vexo(process.env.EXPO_PUBLIC_VEXO_API_KEY ?? "");
 export { ErrorBoundary } from "expo-router";
 
 const SCREENSHOT_AUTOMATION_ENABLED = __DEV__;
