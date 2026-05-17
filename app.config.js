@@ -15,7 +15,8 @@ export default {
         assetBundlePatterns: ["**/*"],
         ios: {
             supportsTablet: true,
-            icon: "./assets/icon-ios.png",
+            icon: "./assets/ios-icons/AppIcon.icon",
+            buildNumber: "1",
             bundleIdentifier: "com.pratyush.sudhakar.audit-tools-playspace-mobile",
             appleTeamId: "ZD947U862S",
             infoPlist: {
@@ -23,6 +24,7 @@ export default {
             },
         },
         android: {
+            icon: "./assets/images/favicon.png",
             adaptiveIcon: {
                 foregroundImage: "./assets/images/adaptive-icon.png",
                 backgroundColor: "#F7F1EB",

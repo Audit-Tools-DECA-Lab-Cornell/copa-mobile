@@ -1,0 +1,68 @@
+{
+    "fill": "automatic",
+    "groups": [
+        {
+            "blend-mode-specializations": [
+                {
+                    "value": "normal"
+                },
+                {
+                    "appearance": "dark",
+                    "value": "normal"
+                }
+            ],
+            "blur-material": null,
+            "layers": [
+                {
+                    "image-name": "icon-compact.png",
+                    "name": "icon-compact",
+                    "position-specializations": [
+                        {
+                            "idiom": "square",
+                            "value": {
+                                "scale": 2.12,
+                                "translation-in-points": [0, 0]
+                            }
+                        },
+                        {
+                            "idiom": "watchOS",
+                            "value": {
+                                "scale": 2.12,
+                                "translation-in-points": [0, 0]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "position-specializations": [
+                {
+                    "idiom": "square",
+                    "value": {
+                        "scale": 1,
+                        "translation-in-points": [0, 0]
+                    }
+                },
+                {
+                    "idiom": "watchOS",
+                    "value": {
+                        "scale": 0.75,
+                        "translation-in-points": [0, 0]
+                    }
+                }
+            ],
+            "shadow": {
+                "kind": "neutral",
+                "opacity": 0.5
+            },
+            "specular": false,
+            "translucency": {
+                "enabled": false,
+                "value": 0.5
+            }
+        }
+    ],
+    "supported-platforms": {
+        "circles": ["watchOS"],
+        "squares": "shared"
+    }
+}
