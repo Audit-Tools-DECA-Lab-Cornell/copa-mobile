@@ -5,8 +5,8 @@ import * as Sharing from "expo-sharing";
 import type { DesignSystemTheme } from "lib/design-system";
 import type { PlayspaceInstrument } from "lib/audit/types";
 
-import { buildWorkbookCsvText, buildXlsxWorkbookBase64 } from "./export-excel";
-import { buildSingleAuditPdfHtml, buildWorkbookPdfHtml } from "./export-pdf";
+import { buildWorkbookCsvText, buildXlsxWorkbookBase64 } from "./excel";
+import { buildSingleAuditPdfHtml, buildWorkbookPdfHtml } from "./pdf";
 import {
     CSV_MIME_TYPE,
     CSV_UTI,
@@ -16,7 +16,7 @@ import {
     XLSX_UTI,
     type ExportableAudit,
     type WorkbookPayload,
-} from "./export-types";
+} from "./types";
 
 /** Write the workbook CSV and open the platform share sheet. */
 export async function shareCsvWorkbook(workbook: WorkbookPayload): Promise<string> {

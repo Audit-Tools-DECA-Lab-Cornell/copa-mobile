@@ -9,6 +9,8 @@ import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getPreAuditValues, getVisiblePreAuditQuestions, isRequiredPreAuditComplete } from "lib/audit/selectors";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { CollapsibleCard } from "components/ui/collapsible-card";
+import { AuditExportCard } from "components/playspace-audit/audit-export-card";
+import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import type { ExecutionMode } from "lib/audit/types";
@@ -72,6 +74,11 @@ export default function ExecutePlaceScreen() {
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
     const isCurrentAuditUserReady = authSession !== null && currentUserId === authSession.user.id;
+    const places = useLocalFirstPlaces();
+    const currentPlace = useMemo(() => {
+        if (placeId === null) return null;
+        return places.find((place) => place.place_id === placeId) ?? null;
+    }, [places, placeId]);
 
     const themedHeaderOptions = useMemo(
         () => ({
@@ -379,6 +386,7 @@ export default function ExecutePlaceScreen() {
                             requiresSpaceAudit={requiresSpaceAudit}
                             isSetupFlowComplete={isSetupFlowComplete}
                         />
+                        <AuditExportCard auditSession={auditSession} place={currentPlace} />
                     </YStack>
                     {supportRail}
                 </XStack>
@@ -408,6 +416,7 @@ export default function ExecutePlaceScreen() {
                         requiresSpaceAudit={requiresSpaceAudit}
                         isSetupFlowComplete={isSetupFlowComplete}
                     />
+                    <AuditExportCard auditSession={auditSession} place={currentPlace} />
                 </YStack>
             )}
         </ScrollView>

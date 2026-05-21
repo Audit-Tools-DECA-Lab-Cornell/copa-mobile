@@ -4,6 +4,18 @@
         "generatedOnSubmit": "Generated on final submit",
         "minutes": "{{count}} minutes"
     },
+    "export": {
+        "csv": "CSV",
+        "description": "Save your in-progress answers as a file so you can keep a backup or share it with your manager.",
+        "excel": "Excel",
+        "eyebrow": "Save a copy",
+        "failedMessage": "Unable to save a copy of your audit.",
+        "failedTitle": "Save failed",
+        "pdf": "PDF",
+        "readyMessage": "{{fileName}} is ready to share.",
+        "readyTitle": "Saved copy ready",
+        "title": "Save a copy of this audit"
+    },
     "errors": {
         "accessDenied403": "Access denied (403): you are not allowed to access this place or audit.",
         "detailsLabel": "Details: {{details}}",

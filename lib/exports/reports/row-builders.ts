@@ -33,7 +33,7 @@ import {
     type SpreadsheetRow,
     type WorkbookPayload,
     type WorkbookTable,
-} from "./export-types";
+} from "./types";
 import {
     deriveSummaryScore,
     formatAuditStatusLabel,
@@ -54,7 +54,7 @@ import {
     resolvePreAuditDisplayValues,
     slugifySegment,
     stripPromptMarkup,
-} from "./export-format-utils";
+} from "./format-utils";
 
 /** Convert one audit into workbook-style sheets. */
 export function buildSingleAuditWorkbook(

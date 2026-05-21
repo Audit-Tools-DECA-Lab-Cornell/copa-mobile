@@ -1,0 +1,218 @@
+import { describe, expect, it } from "vitest";
+
+import { auditSessionSchema, playspaceInstrumentSchema } from "lib/audit/types";
+import {
+    buildInProgressAuditResponseRows,
+    buildInProgressAuditWorkbook,
+    buildInProgressOverviewRows,
+} from "lib/exports/audits/row-builders";
+
+const instrument = playspaceInstrumentSchema.parse({
+    instrument_key: "pvua_v5_2",
+    instrument_name: "PVUA",
+    instrument_version: "5.2",
+    current_sheet: "Sheet1",
+    source_files: [],
+    preamble: [],
+    execution_modes: [
+        {
+            key: "audit",
+            label: "Audit",
+            description: null,
+        },
+    ],
+    pre_audit_questions: [],
+    scale_guidance: [],
+    sections: [
+        {
+            section_key: "section_13_natural_play_features",
+            title: "Natural Play Features",
+            description: null,
+            instruction: "Read each statement.",
+            notes_prompt: null,
+            questions: [
+                {
+                    question_key: "q_13_1",
+                    mode: "audit",
+                    constructs: ["play_value"],
+                    domains: ["Natural Play Features"],
+                    section_key: "section_13_natural_play_features",
+                    prompt: "This playspace has climbable vegetation.",
+                    question_type: "scaled",
+                    required: true,
+                    display_if: null,
+                    notes_prompt: null,
+                    options: [],
+                    scales: [
+                        {
+                            key: "provision",
+                            title: "Provision",
+                            prompt: "How much is provided?",
+                            options: [
+                                {
+                                    key: "a_lot",
+                                    label: "A lot",
+                                    addition_value: 2,
+                                    boost_value: 2,
+                                    allows_follow_up_scales: true,
+                                    is_not_applicable: false,
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    question_key: "q_13_2",
+                    mode: "audit",
+                    constructs: ["play_value"],
+                    domains: ["Natural Play Features"],
+                    section_key: "section_13_natural_play_features",
+                    prompt: "Unanswered question for the partial case.",
+                    question_type: "scaled",
+                    required: true,
+                    display_if: null,
+                    notes_prompt: null,
+                    options: [],
+                    scales: [
+                        {
+                            key: "provision",
+                            title: "Provision",
+                            prompt: "How much is provided?",
+                            options: [
+                                {
+                                    key: "a_little",
+                                    label: "A little",
+                                    addition_value: 1,
+                                    boost_value: 1,
+                                    allows_follow_up_scales: true,
+                                    is_not_applicable: false,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    ],
+    legal_documents: [],
+});
+
+const inProgressAuditSession = auditSessionSchema.parse({
+    audit_id: "11111111-1111-4111-8111-111111111111",
+    audit_code: "AUD-001",
+    project_id: "22222222-2222-4222-8222-222222222222",
+    project_name: "Project Alpha",
+    place_id: "33333333-3333-4333-8333-333333333333",
+    place_name: "Place Alpha",
+    place_type: "Public Playspace",
+    allowed_execution_modes: ["audit"],
+    selected_execution_mode: "audit",
+    status: "IN_PROGRESS",
+    instrument_key: "pvua_v5_2",
+    instrument_version: "5.2",
+    instrument,
+    schema_version: 1,
+    revision: 3,
+    started_at: "2026-05-01T12:00:00.000Z",
+    submitted_at: null,
+    total_minutes: null,
+    meta: {
+        execution_mode: "audit",
+    },
+    pre_audit: {
+        place_size: null,
+        current_users_0_5: null,
+        current_users_6_12: null,
+        current_users_13_17: null,
+        current_users_18_plus: null,
+        playspace_busyness: null,
+        season: null,
+        weather_conditions: [],
+        wind_conditions: null,
+    },
+    sections: {
+        section_13_natural_play_features: {
+            section_key: "section_13_natural_play_features",
+            note: null,
+            responses: {
+                q_13_1: {
+                    provision: "a_lot",
+                },
+            },
+        },
+    },
+    scores: {
+        draft_progress_percent: 50,
+        execution_mode: "audit",
+        audit: null,
+        survey: null,
+        overall: null,
+        by_section: {},
+        by_domain: {},
+    },
+    progress: {
+        required_pre_audit_complete: false,
+        visible_section_count: 1,
+        completed_section_count: 0,
+        total_visible_questions: 2,
+        answered_visible_questions: 1,
+        ready_to_submit: false,
+        sections: [
+            {
+                section_key: "section_13_natural_play_features",
+                title: "Natural Play Features",
+                visible_question_count: 2,
+                answered_question_count: 1,
+                is_complete: false,
+            },
+        ],
+    },
+});
+
+describe("in-progress audit export", () => {
+    it("includes a progress row in the overview using the live progress totals", () => {
+        const rows = buildInProgressOverviewRows(
+            {
+                auditSession: inProgressAuditSession,
+                context: null,
+                auditorProfile: null,
+            },
+            instrument,
+        );
+
+        expect(rows).toEqual(expect.arrayContaining([["Questions Answered", "1 of 2"]]));
+        expect(rows).toEqual(expect.arrayContaining([["Status", "In progress"]]));
+    });
+
+    it("emits answered scale cells and leaves unanswered scale cells blank", () => {
+        const rows = buildInProgressAuditResponseRows(
+            {
+                auditSession: inProgressAuditSession,
+                context: null,
+                auditorProfile: null,
+            },
+            instrument,
+        );
+
+        const answeredRow = rows.find((row) => row[0] === "13.1");
+        expect(answeredRow?.[5]).toContain("A lot");
+
+        const unansweredRow = rows.find((row) => row[0] === "13.2");
+        expect(unansweredRow?.[5]).toBe("");
+        expect(unansweredRow?.[6]).toBe("");
+    });
+
+    it("uses an in-progress prefix in the workbook file base name", () => {
+        const workbook = buildInProgressAuditWorkbook(
+            {
+                auditSession: inProgressAuditSession,
+                context: null,
+                auditorProfile: null,
+            },
+            instrument,
+        );
+
+        expect(workbook.fileBaseName.startsWith("pvua-in-progress-")).toBe(true);
+        expect(workbook.tables.map((table) => table.name)).toEqual(["Overview", "PreAudit", "Responses"]);
+    });
+});

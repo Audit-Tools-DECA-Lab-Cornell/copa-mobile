@@ -1,5 +1,5 @@
 import { fetchAuditSession } from "lib/audit/api";
-import type { ExportAuditorProfile, ExportableAudit } from "lib/audit/export";
+import type { ExportAuditorProfile, ExportableAudit } from "lib/exports/reports";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { fetchMyAuditorProfile, type MyAuditorProfile } from "lib/audit/profile-api";
 import type { AuditSession } from "lib/audit/types";

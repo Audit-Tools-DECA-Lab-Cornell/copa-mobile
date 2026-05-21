@@ -15,8 +15,8 @@ import {
     formatExecutionModeLabel,
 } from "lib/audit/report-helpers";
 import { fetchAuditSession } from "lib/audit/api";
-import { shareSingleAuditExport, type AuditExportFormat } from "lib/audit/export";
-import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
+import { shareSingleAuditExport, type AuditExportFormat } from "lib/exports/reports";
+import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/exports/reports/helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import {

@@ -9,8 +9,8 @@ import type {
     QuestionScale,
 } from "lib/audit/types";
 
-import type { AuditExportContext, ExportAuditorProfile, SpreadsheetCell } from "./export-types";
-import { INVALID_SHEET_NAME_CHARACTERS } from "./export-types";
+import type { AuditExportContext, ExportAuditorProfile, SpreadsheetCell } from "./types";
+import { INVALID_SHEET_NAME_CHARACTERS } from "./types";
 
 /** Round to two decimal places. */
 export function roundToTwoDecimals(value: number): number {

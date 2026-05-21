@@ -1,8 +1,8 @@
 import type { DesignSystemTheme } from "lib/design-system";
 import type { PlayspaceInstrument } from "lib/audit/types";
 
-import { shareCsvWorkbook, shareSingleAuditPdf, shareWorkbookPdf, shareXlsxWorkbook } from "./export-share";
-import { buildBulkAuditWorkbook, buildSingleAuditResponseRows, buildSingleAuditWorkbook } from "./export-row-builders";
+import { shareCsvWorkbook, shareSingleAuditPdf, shareWorkbookPdf, shareXlsxWorkbook } from "./share";
+import { buildBulkAuditWorkbook, buildSingleAuditResponseRows, buildSingleAuditWorkbook } from "./row-builders";
 import {
     PREVIEW_RESPONSE_COLUMN_INDEXES,
     SINGLE_RESPONSE_HEADERS,
@@ -10,8 +10,8 @@ import {
     type AuditExportPreview,
     type ExportAuditorProfile,
     type ExportableAudit,
-} from "./export-types";
-import { stringifyCell } from "./export-format-utils";
+} from "./types";
+import { stringifyCell } from "./format-utils";
 
 export type {
     AuditExportContext,
@@ -23,9 +23,9 @@ export type {
     SpreadsheetRow,
     WorkbookPayload,
     WorkbookTable,
-} from "./export-types";
+} from "./types";
 
-export { MOBILE_EXPORT_PALETTE, SINGLE_RESPONSE_HEADERS, WEB_AUDIT_EXPORT_PALETTE } from "./export-types";
+export { MOBILE_EXPORT_PALETTE, SINGLE_RESPONSE_HEADERS, WEB_AUDIT_EXPORT_PALETTE } from "./types";
 
 /**
  * Build a small workbook-like preview table for one submitted audit.
