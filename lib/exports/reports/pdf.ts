@@ -24,7 +24,7 @@ import {
     type SpreadsheetCell,
     type SpreadsheetRow,
     type WorkbookPayload,
-} from "./export-types";
+} from "./types";
 import {
     deriveSummaryScore,
     escapeHtml,
@@ -39,8 +39,8 @@ import {
     formatTimestampForDisplay,
     resolveExecutionMode,
     stripPromptMarkup,
-} from "./export-format-utils";
-import { isQuestionVisible } from "./export-row-builders";
+} from "./format-utils";
+import { isQuestionVisible } from "./row-builders";
 
 const palette = WEB_AUDIT_EXPORT_PALETTE;
 

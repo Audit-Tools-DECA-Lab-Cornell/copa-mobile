@@ -12,8 +12,8 @@ import {
     type SpreadsheetRow,
     type WorkbookPayload,
     type WorkbookTable,
-} from "./export-types";
-import { sanitizeSheetName, stringifyCell } from "./export-format-utils";
+} from "./types";
+import { sanitizeSheetName, stringifyCell } from "./format-utils";
 
 type StyledCell = XLSX.CellObject & { s?: Record<string, unknown> };
 

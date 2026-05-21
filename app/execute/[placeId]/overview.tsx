@@ -28,7 +28,9 @@ import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/res
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { FilterChip } from "components/ui/filter-chip";
+import { AuditExportCard } from "components/playspace-audit/audit-export-card";
 import { useDesignSystem } from "lib/design-system";
+import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -67,6 +69,11 @@ export default function ExecuteSectionOverviewScreen() {
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
     const isCurrentAuditUserReady = authSession !== null && currentUserId === authSession.user.id;
+    const places = useLocalFirstPlaces();
+    const currentPlace = useMemo(() => {
+        if (placeId === null) return null;
+        return places.find((place) => place.place_id === placeId) ?? null;
+    }, [places, placeId]);
 
     const themedHeaderOptions = useMemo(
         () => ({
@@ -376,6 +383,7 @@ export default function ExecuteSectionOverviewScreen() {
                             lastSyncError={lastSyncError}
                         />
                         {setupSummaryCard}
+                        <AuditExportCard auditSession={auditSession} place={currentPlace} />
                     </YStack>
                 </XStack>
             ) : (
@@ -387,6 +395,7 @@ export default function ExecuteSectionOverviewScreen() {
                     />
                     {setupSummaryCard}
                     {sectionReviewCard}
+                    <AuditExportCard auditSession={auditSession} place={currentPlace} />
                 </YStack>
             )}
         </ScrollView>

@@ -8,9 +8,9 @@ import { TypeFilterSelect } from "components/ui/type-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
 import { useRouter, type Href } from "expo-router";
-import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/audit/export";
-import { buildAuditExportPreview, shareBulkAuditExport } from "lib/audit/export";
-import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/audit/export-helpers";
+import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/exports/reports";
+import { buildAuditExportPreview, shareBulkAuditExport } from "lib/exports/reports";
+import { buildExportableAuditForPlace, loadOptionalExportAuditorProfile } from "lib/exports/reports/helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     deriveLocality,

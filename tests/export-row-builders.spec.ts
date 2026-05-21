@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { COMMENT_ROW_SENTINEL } from "lib/audit/export-types";
-import { buildSingleAuditResponseRows } from "lib/audit/export-row-builders";
+import { COMMENT_ROW_SENTINEL } from "lib/exports/reports/types";
+import { buildSingleAuditResponseRows } from "lib/exports/reports/row-builders";
 import { auditSessionSchema, playspaceInstrumentSchema } from "lib/audit/types";
 
 describe("audit export row builders", () => {
