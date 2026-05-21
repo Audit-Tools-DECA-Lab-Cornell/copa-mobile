@@ -215,4 +215,35 @@ describe("in-progress audit export", () => {
         expect(workbook.fileBaseName.startsWith("pvua-in-progress-")).toBe(true);
         expect(workbook.tables.map((table) => table.name)).toEqual(["Overview", "PreAudit", "Responses"]);
     });
+
+    it("includes mode-specific questions when the audit was executed in 'both' mode", () => {
+        const bothModeSession = auditSessionSchema.parse({
+            ...inProgressAuditSession,
+            allowed_execution_modes: ["both"],
+            selected_execution_mode: "both",
+            meta: { execution_mode: "both" },
+            sections: {
+                section_13_natural_play_features: {
+                    section_key: "section_13_natural_play_features",
+                    note: null,
+                    responses: {
+                        q_13_1: { provision: "a_lot" },
+                    },
+                },
+            },
+        });
+
+        const rows = buildInProgressAuditResponseRows(
+            {
+                auditSession: bothModeSession,
+                context: null,
+                auditorProfile: null,
+            },
+            instrument,
+        );
+
+        const answeredRow = rows.find((row) => row[0] === "13.1");
+        expect(answeredRow).toBeDefined();
+        expect(answeredRow?.[5]).toContain("A lot");
+    });
 });

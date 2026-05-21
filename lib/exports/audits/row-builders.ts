@@ -5,6 +5,7 @@ import type {
     PreAuditQuestion,
     QuestionResponsePayload,
 } from "lib/audit/types";
+import { getVisibleSections } from "lib/audit/selectors";
 
 import {
     formatChecklistAnswer,
@@ -24,7 +25,6 @@ import {
     slugifySegment,
     stripPromptMarkup,
 } from "lib/exports/reports/format-utils";
-import { isQuestionVisible } from "lib/exports/reports/row-builders";
 import type { ExportAuditorProfile, SpreadsheetRow, WorkbookPayload, WorkbookTable } from "lib/exports/reports/types";
 
 import {
@@ -97,7 +97,14 @@ export function buildInProgressOverviewRows(
     ];
 }
 
-/** Build the full set of response rows (header row excluded) for an in-progress audit. */
+/**
+ * Build the full set of response rows (header row excluded) for an in-progress audit.
+ *
+ * The visible section/question set is computed by `getVisibleSections`, the
+ * same selector the audit-execution screens use, so the export mirrors what
+ * the auditor sees in the app — including the `"both"` execution-mode case
+ * where mode filtering is bypassed.
+ */
 export function buildInProgressAuditResponseRows(
     exportableAudit: InProgressExportableAudit,
     instrument: PlayspaceInstrument,
@@ -106,19 +113,23 @@ export function buildInProgressAuditResponseRows(
     const executionMode = resolveExecutionMode(auditSession);
     const rows: SpreadsheetRow[] = [];
 
-    for (const [sectionIndex, section] of instrument.sections.entries()) {
-        const sectionState = auditSession.sections[section.section_key];
-        const sectionResponses = sectionState?.responses ?? {};
-        const visibleQuestions = section.questions.filter((question) =>
-            isQuestionVisible(question, executionMode, sectionResponses),
-        );
-        if (visibleQuestions.length === 0) {
+    const sectionResponsesBySection = Object.fromEntries(
+        Object.entries(auditSession.sections).map(([sectionKey, sectionState]) => [sectionKey, sectionState.responses]),
+    );
+    const visibleSections =
+        executionMode === null ? [] : getVisibleSections(instrument, executionMode, sectionResponsesBySection);
+
+    for (const [sectionIndex, section] of visibleSections.entries()) {
+        if (section.questions.length === 0) {
             continue;
         }
 
+        const sectionState = auditSession.sections[section.section_key];
+        const sectionResponses = sectionState?.responses ?? {};
+
         rows.push(buildSectionHeaderRow(sectionIndex, section.title, section.description, section.instruction));
 
-        for (const [questionIndex, question] of visibleQuestions.entries()) {
+        for (const [questionIndex, question] of section.questions.entries()) {
             const questionAnswers = sectionResponses[question.question_key] ?? {};
             rows.push(buildQuestionResponseRow(sectionIndex, questionIndex, question, questionAnswers));
 

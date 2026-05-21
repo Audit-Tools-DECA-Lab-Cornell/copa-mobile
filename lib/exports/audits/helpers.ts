@@ -11,10 +11,14 @@ interface BuildInProgressExportableAuditParams {
 }
 
 /**
- * Build the export payload for an in-progress audit using on-device data only.
+ * Build the export payload for an in-progress audit from on-device data only.
  *
- * Unlike the submitted-audit export, this never reaches the network: the whole
- * point is to let the auditor save a copy when the submit step is failing.
+ * The caller passes the `AuditSession` it already pulled from the audit store
+ * (`sessionsByPairKey[pairKey]`), which is the same source the section UI
+ * reads from. Local-only edits made via `applyLocalQuestionAnswer` are written
+ * back into that session before any sync happens, so the exported file always
+ * reflects what the auditor currently sees in the app — even when the device
+ * is offline or a submit attempt has failed.
  */
 export function buildInProgressExportableAudit({
     auditSession,
