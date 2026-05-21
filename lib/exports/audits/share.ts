@@ -3,20 +3,40 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 
 import type { PlayspaceInstrument } from "lib/audit/types";
-import { shareCsvWorkbook, shareXlsxWorkbook } from "lib/exports/reports/share";
-import { PDF_MIME_TYPE, PDF_UTI, type WorkbookPayload } from "lib/exports/reports/types";
+import {
+    CSV_MIME_TYPE,
+    CSV_UTI,
+    PDF_MIME_TYPE,
+    PDF_UTI,
+    XLSX_MIME_TYPE,
+    XLSX_UTI,
+    type WorkbookPayload,
+} from "lib/exports/reports/types";
 
+import { buildInProgressAuditCsvText, buildInProgressAuditXlsxBase64 } from "./excel";
 import { buildInProgressAuditPdfHtml } from "./pdf";
 import type { InProgressExportableAudit } from "./types";
 
 /** Write the workbook CSV and open the platform share sheet. */
 export async function shareInProgressAuditCsv(workbook: WorkbookPayload): Promise<string> {
-    return await shareCsvWorkbook(workbook);
+    const fileName = `${workbook.fileBaseName}.csv`;
+    const fileUri = buildCacheFileUri(fileName);
+    await FileSystem.writeAsStringAsync(fileUri, buildInProgressAuditCsvText(workbook), {
+        encoding: FileSystem.EncodingType.UTF8,
+    });
+    await shareLocalFile(fileUri, fileName, CSV_MIME_TYPE, CSV_UTI);
+    return fileName;
 }
 
 /** Write the styled workbook XLSX and open the platform share sheet. */
 export async function shareInProgressAuditXlsx(workbook: WorkbookPayload): Promise<string> {
-    return await shareXlsxWorkbook(workbook);
+    const fileName = `${workbook.fileBaseName}.xlsx`;
+    const fileUri = buildCacheFileUri(fileName);
+    await FileSystem.writeAsStringAsync(fileUri, buildInProgressAuditXlsxBase64(workbook), {
+        encoding: FileSystem.EncodingType.Base64,
+    });
+    await shareLocalFile(fileUri, fileName, XLSX_MIME_TYPE, XLSX_UTI);
+    return fileName;
 }
 
 /** Render the in-progress audit PDF and open the platform share sheet. */

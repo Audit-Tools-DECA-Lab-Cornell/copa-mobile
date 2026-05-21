@@ -55,8 +55,24 @@ export const SECTION_NOTE_SENTINEL = "__section_note__" as const;
 /** Sentinel placed in col 1 for the normal-weight Auditor Note response row. */
 export const SECTION_NOTE_RESPONSE_SENTINEL = "__section_note_response__" as const;
 
-/** Display value used when a scale answer is missing on an in-progress question. */
-export const UNANSWERED_PLACEHOLDER = "" as const;
+/**
+ * Display value used in scale, checklist, and pre-audit cells when the auditor
+ * has not recorded an answer yet. Surfacing a visible placeholder (instead of
+ * leaving the cell blank) makes it obvious in CSV exports that the slot is
+ * intentionally empty, and lets the XLSX/PDF renderers attach a "needs
+ * attention" highlight to the same cells.
+ */
+export const UNANSWERED_PLACEHOLDER = "Not answered" as const;
 
 /** Display value used when a value is not yet known (e.g. progress totals on a fresh audit). */
 export const PENDING_PLACEHOLDER = "—" as const;
+
+/**
+ * Soft warning palette applied to unanswered cells in the in-progress XLSX
+ * and PDF exports. The fill is a pale red and the text is a muted red — clear
+ * enough to spot from across a printed page without screaming "error".
+ */
+export const UNANSWERED_CELL_PALETTE = {
+    fillHex: "FEF2F2",
+    textHex: "B91C1C",
+} as const;

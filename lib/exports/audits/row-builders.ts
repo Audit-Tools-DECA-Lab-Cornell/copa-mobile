@@ -37,8 +37,14 @@ import {
     PENDING_PLACEHOLDER,
     SECTION_NOTE_RESPONSE_SENTINEL,
     SECTION_NOTE_SENTINEL,
+    UNANSWERED_PLACEHOLDER,
     type InProgressExportableAudit,
 } from "./types";
+
+/** Replace empty answer strings with the visible "Not answered" placeholder. */
+function orUnanswered(value: string): string {
+    return value.trim().length === 0 ? UNANSWERED_PLACEHOLDER : value;
+}
 
 /** Convert one in-progress audit into workbook-style sheets. */
 export function buildInProgressAuditWorkbook(
@@ -228,7 +234,7 @@ function buildPreAuditRow(
         question,
         readPreAuditQuestionValues(auditSession, auditorProfile, question),
     );
-    return [question.label, joinDisplayValues(displayValues)];
+    return [question.label, orUnanswered(joinDisplayValues(displayValues))];
 }
 
 function buildSectionHeaderRow(
@@ -265,8 +271,25 @@ function buildQuestionResponseRow(
     const prompt = stripPromptMarkup(question.prompt);
 
     if (question.question_type === "checklist") {
-        return [questionKey, mode, constructs, domain, prompt, formatChecklistAnswer(question, answers), "", "", ""];
+        return [
+            questionKey,
+            mode,
+            constructs,
+            domain,
+            prompt,
+            orUnanswered(formatChecklistAnswer(question, answers)),
+            "",
+            "",
+            "",
+        ];
     }
+
+    const readScale = (scaleKey: "provision" | "diversity" | "sociability" | "challenge"): string => {
+        const rawValue = answers[scaleKey];
+        return orUnanswered(
+            formatQuestionAnswer(question, scaleKey, typeof rawValue === "string" ? rawValue : undefined),
+        );
+    };
 
     return [
         questionKey,
@@ -274,26 +297,10 @@ function buildQuestionResponseRow(
         constructs,
         domain,
         prompt,
-        formatQuestionAnswer(
-            question,
-            "provision",
-            typeof answers.provision === "string" ? answers.provision : undefined,
-        ),
-        formatQuestionAnswer(
-            question,
-            "diversity",
-            typeof answers.diversity === "string" ? answers.diversity : undefined,
-        ),
-        formatQuestionAnswer(
-            question,
-            "sociability",
-            typeof answers.sociability === "string" ? answers.sociability : undefined,
-        ),
-        formatQuestionAnswer(
-            question,
-            "challenge",
-            typeof answers.challenge === "string" ? answers.challenge : undefined,
-        ),
+        readScale("provision"),
+        readScale("diversity"),
+        readScale("sociability"),
+        readScale("challenge"),
     ];
 }
 

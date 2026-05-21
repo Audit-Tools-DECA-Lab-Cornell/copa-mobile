@@ -14,6 +14,8 @@ import {
     PENDING_PLACEHOLDER,
     SECTION_NOTE_RESPONSE_SENTINEL,
     SECTION_NOTE_SENTINEL,
+    UNANSWERED_CELL_PALETTE,
+    UNANSWERED_PLACEHOLDER,
     type InProgressExportableAudit,
 } from "./types";
 
@@ -109,7 +111,7 @@ function renderInProgressTable(rows: readonly SpreadsheetRow[]): string {
         .map((row) => {
             const rowClass = getRowClass(row);
             const classAttribute = rowClass.length > 0 ? ` class="${rowClass}"` : "";
-            const cells = row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("");
+            const cells = row.map((cell) => renderCell(cell, rowClass)).join("");
             return `<tr${classAttribute}>${cells}</tr>`;
         })
         .join("");
@@ -120,6 +122,13 @@ function renderInProgressTable(rows: readonly SpreadsheetRow[]): string {
         `<tbody>${bodyHtml}</tbody>`,
         "</table>",
     ].join("");
+}
+
+function renderCell(cell: SpreadsheetCell, rowClass: string): string {
+    if (typeof cell === "string" && cell === UNANSWERED_PLACEHOLDER && rowClass === "") {
+        return `<td class="unanswered-cell">${escapeHtml(cell)}</td>`;
+    }
+    return `<td>${escapeHtml(cell)}</td>`;
 }
 
 function getRowClass(row: SpreadsheetRow): string {
@@ -170,5 +179,6 @@ thead th { background: var(--header-fill); color: var(--header-text); font-weigh
 .generic-table .section-row td { background: var(--section-fill) !important; font-weight: 700; color: var(--section-title-text); }
 .generic-table .comment-row td, .generic-table .section-note-response-row td { background: var(--row-even) !important; color: var(--muted-text); font-style: italic; }
 .generic-table .section-note-row td { background: var(--section-fill) !important; color: var(--section-title-text); font-weight: 700; }
+.generic-table td.unanswered-cell { background: #${UNANSWERED_CELL_PALETTE.fillHex} !important; color: #${UNANSWERED_CELL_PALETTE.textHex}; font-style: italic; }
 `;
 }

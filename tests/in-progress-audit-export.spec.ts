@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { auditSessionSchema, playspaceInstrumentSchema } from "lib/audit/types";
+import { buildInProgressAuditXlsxBase64 } from "lib/exports/audits/excel";
 import {
     buildInProgressAuditResponseRows,
     buildInProgressAuditWorkbook,
     buildInProgressOverviewRows,
 } from "lib/exports/audits/row-builders";
+import { UNANSWERED_PLACEHOLDER } from "lib/exports/audits/types";
 
 const instrument = playspaceInstrumentSchema.parse({
     instrument_key: "pvua_v5_2",
@@ -184,7 +186,7 @@ describe("in-progress audit export", () => {
         expect(rows).toEqual(expect.arrayContaining([["Status", "In progress"]]));
     });
 
-    it("emits answered scale cells and leaves unanswered scale cells blank", () => {
+    it("emits answered scale cells verbatim and flags unanswered scale cells with the placeholder", () => {
         const rows = buildInProgressAuditResponseRows(
             {
                 auditSession: inProgressAuditSession,
@@ -198,8 +200,22 @@ describe("in-progress audit export", () => {
         expect(answeredRow?.[5]).toContain("A lot");
 
         const unansweredRow = rows.find((row) => row[0] === "13.2");
-        expect(unansweredRow?.[5]).toBe("");
-        expect(unansweredRow?.[6]).toBe("");
+        expect(unansweredRow?.[5]).toBe(UNANSWERED_PLACEHOLDER);
+        expect(unansweredRow?.[6]).toBe(UNANSWERED_PLACEHOLDER);
+    });
+
+    it("includes the unanswered placeholder in the XLSX payload so downstream styling can target it", () => {
+        const workbook = buildInProgressAuditWorkbook(
+            {
+                auditSession: inProgressAuditSession,
+                context: null,
+                auditorProfile: null,
+            },
+            instrument,
+        );
+        const base64 = buildInProgressAuditXlsxBase64(workbook);
+        const decoded = Buffer.from(base64, "base64").toString("binary");
+        expect(decoded).toContain(UNANSWERED_PLACEHOLDER);
     });
 
     it("uses an in-progress prefix in the workbook file base name", () => {
