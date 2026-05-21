@@ -21,7 +21,7 @@ import { useAuthStore } from "stores/auth-store";
 import { ActionButton } from "components/ui/action-button";
 
 interface AuditExportCardProps {
-    readonly auditSession: AuditSession;
+    readonly auditSession: AuditSession | undefined;
     readonly place: AuditorPlace | null;
 }
 
@@ -46,7 +46,7 @@ export function AuditExportCard({ auditSession, place }: Readonly<AuditExportCar
 
     const handleExport = useCallback(
         async (format: InProgressAuditExportFormat) => {
-            if (instrument === null) {
+            if (instrument === null || auditSession === undefined) {
                 return;
             }
             setActiveFormat(format);
@@ -94,6 +94,10 @@ export function AuditExportCard({ auditSession, place }: Readonly<AuditExportCar
         },
         [auditSession, instrument, place, session, t, toast],
     );
+
+    if (auditSession === undefined) {
+        return null;
+    }
 
     return (
         <YStack
