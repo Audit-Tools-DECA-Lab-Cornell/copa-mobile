@@ -7,12 +7,8 @@
         "development": {
             "developmentClient": true,
             "distribution": "internal",
-            "ios": {
-                "simulator": true
-            },
-            "android": {
-                "buildType": "apk"
-            },
+            "ios": { "simulator": true },
+            "android": { "buildType": "apk" },
             "channel": "development"
         },
         "preview": {
@@ -21,25 +17,27 @@
         },
         "production": {
             "autoIncrement": true,
-            "android": {
-                "buildType": "app-bundle"
-            },
+            "android": { "buildType": "app-bundle" },
             "distribution": "store",
             "channel": "production"
         },
         "apkClient": {
-            "android": {
-                "buildType": "apk"
-            },
+            "android": { "buildType": "apk" },
             "channel": "apkclient"
         }
     },
     "submit": {
         "production": {
             "android": {
-                "track": "internal",
+                "track": "alpha",
                 "serviceAccountKeyPath": "./credentials/google/playspace-deca.json",
-                "releaseStatus": "draft"
+                "releaseStatus": "completed"
+            }
+        },
+        "internal-testing": {
+            "extends": "production",
+            "android": {
+                "track": "internal"
             }
         }
     }
