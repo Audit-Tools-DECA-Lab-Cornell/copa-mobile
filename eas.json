@@ -35,9 +35,11 @@
             }
         },
         "internal-testing": {
-            "extends": "production",
             "android": {
-                "track": "internal"
+                "track": "internal",
+                "serviceAccountKeyPath": "./credentials/google/playspace-deca.json",
+                "releaseStatus": "completed",
+                "changesNotSentForReview": true
             }
         }
     }
