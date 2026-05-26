@@ -21,6 +21,31 @@
         "continueToSubjectInfo": "{{subject}}の詳細に進む",
         "submitSubject": "{{subject}}を送信"
     },
+    "finalComments": {
+        "alreadySubmittedMessage": "This audit has already been submitted. You can review it from the overview screen.",
+        "alreadySubmittedTitle": "Audit Already Submitted",
+        "backToReview": "Back to review",
+        "blockers": {
+            "completeSetup": "Complete the required setup questions.",
+            "finishSections_one": "Finish the remaining section.",
+            "finishSections_other": "Finish the remaining {{count}} sections."
+        },
+        "helper": "This is optional. Add any closing observations, recommendations, or context you want attached to the completed audit.",
+        "incompleteMessage": "All required setup questions and sections must be complete before you can add final comments and submit.",
+        "incompleteTitle": "Audit Not Ready",
+        "placeholder": "Add any final comments or recommendations...",
+        "preparingMessage": "Loading the latest audit state before final submission...",
+        "preparingTitle": "Preparing Final Comments",
+        "prompt": "Any final comments before you submit this completed audit?",
+        "promptTitle": "Final comments",
+        "stepEyebrow": "Final step",
+        "submit": "Submit audit",
+        "submitConfirmCancel": "Review",
+        "submitConfirmMessage": "Once submitted, this audit cannot be edited. Make sure your final comments and answers are ready before continuing.",
+        "submitConfirmSubmit": "Submit",
+        "submitConfirmTitle": "Submit Audit?",
+        "subtitle": "Leave any final comments you want saved with this completed audit before submitting."
+    },
     "executeLanding": {
         "continueSelectedPlace": "選択した場所を続行",
         "emptyMessage": "別の検索条件またはフィルターの組み合わせをお試しください。",
@@ -141,6 +166,7 @@
         "reviewSection": "セクションを確認",
         "saveAndNext": "保存して次へ",
         "saveSection": "セクションを保存",
+        "finalCommentsCta": "Continue",
         "sectionNotes": "セクションのノート",
         "table": {
             "followUpPending": "この尺度を有効にするには、数量の質問に肯定的な回答を選択してください。",

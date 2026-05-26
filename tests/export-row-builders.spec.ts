@@ -1,10 +1,98 @@
 import { describe, expect, it } from "vitest";
 
 import { COMMENT_ROW_SENTINEL } from "lib/exports/reports/types";
-import { buildSingleAuditResponseRows } from "lib/exports/reports/row-builders";
+import { buildOverviewRows, buildSingleAuditResponseRows } from "lib/exports/reports/row-builders";
 import { auditSessionSchema, playspaceInstrumentSchema } from "lib/audit/types";
 
 describe("audit export row builders", () => {
+    it("includes final comments in the overview when present", () => {
+        const instrument = playspaceInstrumentSchema.parse({
+            instrument_key: "pvua_v5_2",
+            instrument_name: "PVUA",
+            instrument_version: "5.2",
+            current_sheet: "Sheet1",
+            source_files: [],
+            preamble: [],
+            execution_modes: [
+                {
+                    key: "audit",
+                    label: "Audit",
+                    description: null,
+                },
+            ],
+            pre_audit_questions: [],
+            scale_guidance: [],
+            sections: [],
+            legal_documents: [],
+        });
+
+        const auditSession = auditSessionSchema.parse({
+            audit_id: "11111111-1111-4111-8111-111111111111",
+            audit_code: "AUD-001",
+            project_id: "22222222-2222-4222-8222-222222222222",
+            project_name: "Project Alpha",
+            place_id: "33333333-3333-4333-8333-333333333333",
+            place_name: "Place Alpha",
+            place_type: "Public Playspace",
+            allowed_execution_modes: ["audit"],
+            selected_execution_mode: "audit",
+            status: "SUBMITTED",
+            instrument_key: "pvua_v5_2",
+            instrument_version: "5.2",
+            instrument,
+            schema_version: 1,
+            revision: 3,
+            started_at: "2026-05-01T12:00:00.000Z",
+            submitted_at: "2026-05-01T12:30:00.000Z",
+            total_minutes: 30,
+            meta: {
+                execution_mode: "audit",
+                final_comments: "Visibility was strongest from the north path after sunset.",
+            },
+            pre_audit: {
+                place_size: null,
+                current_users_0_5: null,
+                current_users_6_12: null,
+                current_users_13_17: null,
+                current_users_18_plus: null,
+                playspace_busyness: null,
+                season: null,
+                weather_conditions: [],
+                wind_conditions: null,
+            },
+            sections: {},
+            scores: {
+                draft_progress_percent: 100,
+                execution_mode: "audit",
+                audit: null,
+                survey: null,
+                overall: null,
+                by_section: {},
+                by_domain: {},
+            },
+            progress: {
+                required_pre_audit_complete: true,
+                visible_section_count: 0,
+                completed_section_count: 0,
+                total_visible_questions: 0,
+                answered_visible_questions: 0,
+                ready_to_submit: true,
+                sections: [],
+            },
+        });
+
+        const rows = buildOverviewRows(
+            {
+                auditSession,
+                context: null,
+                auditorProfile: null,
+            },
+            instrument,
+        );
+
+        expect(rows).toContainEqual(["Final Comments", "Visibility was strongest from the north path after sunset."]);
+    });
+
     it("emits a question comment row when a response stores question_note", () => {
         const instrument = playspaceInstrumentSchema.parse({
             instrument_key: "pvua_v5_2",

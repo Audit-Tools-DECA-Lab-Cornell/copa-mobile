@@ -32,8 +32,9 @@ export function buildInProgressAuditPdfHtml(
     const location = formatLocality(context);
     const executionModeLabel = formatExecutionModeLabel(auditSession, instrument);
     const startedAt = formatTimestampForDisplay(auditSession.started_at);
+    const finalComments = auditSession.meta.final_comments?.trim() ?? "";
 
-    const detailsRows: readonly (readonly [string, SpreadsheetCell])[] = [
+    const detailsRows: [string, SpreadsheetCell][] = [
         ["Place", auditSession.place_name],
         ["Project", auditSession.project_name],
         ["Status", "In progress"],
@@ -41,8 +42,13 @@ export function buildInProgressAuditPdfHtml(
         ["Started", startedAt.length > 0 ? startedAt : PENDING_PLACEHOLDER],
         ["Questions Answered", `${progress.answered_visible_questions} of ${progress.total_visible_questions}`],
         ["Sections Completed", `${progress.completed_section_count} of ${progress.visible_section_count}`],
-        ...(location.length > 0 ? ([["Location", location]] as const) : []),
     ];
+    if (location.length > 0) {
+        detailsRows.push(["Location", location]);
+    }
+    if (finalComments.length > 0) {
+        detailsRows.push(["Final Comments", finalComments]);
+    }
 
     const profileRows: readonly (readonly [string, SpreadsheetCell])[] = auditorProfile
         ? [

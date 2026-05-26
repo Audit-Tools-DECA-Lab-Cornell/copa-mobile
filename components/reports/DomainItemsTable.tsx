@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, type ReactNode } from "react";
 import { ScrollView } from "react-native";
 import { Text, XStack, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
@@ -27,10 +27,6 @@ function formatPlayUsabilityCell(
         return `${translate.scoreAchieved(na)}\n${translate.maxScore(na)}`;
     }
     return `${translate.scoreAchieved(formatScoreValue(score))}\n${translate.maxScore(formatScoreValue(max))}`;
-}
-
-function scaleCell(label: string | null, notAssessed: string): string {
-    return label === null || label.trim().length === 0 ? notAssessed : label;
 }
 
 /** Column width constants scaled by viewport tier. */
@@ -65,7 +61,6 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         [layout.isTablet, layout.isWideTablet],
     );
 
-    const notAssessed = t("detail.metricNotAssessed", { ns: "reports" });
     const translatePv = {
         notApplicable: () => t("extendedTable.notApplicable"),
         scoreAchieved: (scoreText: string) => t("extendedTable.scoreAchieved", { score: scoreText }),
@@ -76,6 +71,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
 
     const cellFont = ds.typography.bodyXs.fontSize;
     const cellLine = ds.typography.bodyXs.lineHeight;
+    const mutedDashOpacity = 0.55;
 
     const HeaderCell = ({
         children,
@@ -111,23 +107,52 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         textAlign = "center",
         mono = false,
         muted = false,
+        opacity,
+        bold = false,
     }: {
-        children: string;
+        children: ReactNode;
         textAlign?: "center" | "left";
         mono?: boolean;
         muted?: boolean;
+        opacity?: number;
+        bold?: boolean;
     }) => (
         <Text
             color={muted ? ds.colors.mutedForeground : ds.colors.foreground}
-            fontFamily={mono ? ds.fonts.monoMedium : undefined}
+            fontFamily={mono ? ds.fonts.monoMedium : bold ? ds.fonts.bodyBold : undefined}
             fontSize={cellFont}
             lineHeight={cellLine}
             width="100%"
+            opacity={opacity}
             style={{ textAlign }}
         >
             {children}
         </Text>
     );
+
+    function renderScaleCellState(options: {
+        label: string | null;
+        applicable: boolean;
+        isNotApplicable: boolean;
+        followUpScalesAsked?: boolean;
+    }): ReactNode {
+        const { label, applicable, isNotApplicable, followUpScalesAsked = true } = options;
+        if (!applicable || !followUpScalesAsked) {
+            return (
+                <DataText textAlign="center" muted opacity={mutedDashOpacity}>
+                    —
+                </DataText>
+            );
+        }
+        if (isNotApplicable) {
+            return (
+                <DataText textAlign="center" bold>
+                    Not applicable
+                </DataText>
+            );
+        }
+        return <DataText textAlign="center">{label ?? "—"}</DataText>;
+    }
 
     return (
         <ScrollView horizontal showsHorizontalScrollIndicator>
@@ -183,7 +208,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                         align = "center",
                         first = false,
                     }: {
-                        children: React.ReactNode;
+                        children: ReactNode;
                         width: number;
                         align?: "center" | "flex-start";
                         first?: boolean;
@@ -217,32 +242,41 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
 
                             {/* Provision */}
                             <CellWrapper width={cols.scaleColWidth}>
-                                <DataText textAlign="center">
-                                    {scaleCell(question.provisionLabel, notAssessed)}
-                                </DataText>
+                                {renderScaleCellState({
+                                    label: question.provisionLabel,
+                                    applicable: question.provisionApplicable,
+                                    isNotApplicable: question.provisionIsNotApplicable,
+                                })}
                             </CellWrapper>
 
                             {/* Diversity */}
                             <CellWrapper width={cols.scaleColWidth}>
-                                <DataText textAlign="center">
-                                    {scaleCell(question.diversityLabel, notAssessed)}
-                                </DataText>
+                                {renderScaleCellState({
+                                    label: question.diversityLabel,
+                                    applicable: question.diversityApplicable,
+                                    isNotApplicable: question.diversityIsNotApplicable,
+                                    followUpScalesAsked: question.followUpScalesAsked,
+                                })}
                             </CellWrapper>
 
                             {/* Challenge */}
                             <CellWrapper width={cols.scaleColWidth}>
-                                <DataText textAlign="center">
-                                    {question.challengeApplicable
-                                        ? scaleCell(question.challengeLabel, notAssessed)
-                                        : t("extendedTable.notApplicable")}
-                                </DataText>
+                                {renderScaleCellState({
+                                    label: question.challengeLabel,
+                                    applicable: question.challengeApplicable,
+                                    isNotApplicable: question.challengeIsNotApplicable,
+                                    followUpScalesAsked: question.followUpScalesAsked,
+                                })}
                             </CellWrapper>
 
                             {/* Sociability */}
                             <CellWrapper width={cols.scaleColWidth}>
-                                <DataText textAlign="center">
-                                    {scaleCell(question.sociabilityLabel, notAssessed)}
-                                </DataText>
+                                {renderScaleCellState({
+                                    label: question.sociabilityLabel,
+                                    applicable: question.sociabilityApplicable,
+                                    isNotApplicable: question.sociabilityIsNotApplicable,
+                                    followUpScalesAsked: question.followUpScalesAsked,
+                                })}
                             </CellWrapper>
 
                             {/* Play value */}

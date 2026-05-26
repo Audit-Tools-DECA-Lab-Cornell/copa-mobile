@@ -172,6 +172,34 @@ const inProgressAuditSession = auditSessionSchema.parse({
 });
 
 describe("in-progress audit export", () => {
+    it("includes final comments in the overview when present", () => {
+        const auditSession = auditSessionSchema.parse({
+            ...inProgressAuditSession,
+            meta: {
+                ...inProgressAuditSession.meta,
+                final_comments: "Watch drainage near the north entry after heavy rain.",
+            },
+            aggregate: {
+                ...inProgressAuditSession.aggregate,
+                meta: {
+                    ...inProgressAuditSession.aggregate.meta,
+                    final_comments: "Watch drainage near the north entry after heavy rain.",
+                },
+            },
+        });
+
+        const rows = buildInProgressOverviewRows(
+            {
+                auditSession,
+                context: null,
+                auditorProfile: null,
+            },
+            instrument,
+        );
+
+        expect(rows).toContainEqual(["Final Comments", "Watch drainage near the north entry after heavy rain."]);
+    });
+
     it("includes a progress row in the overview using the live progress totals", () => {
         const rows = buildInProgressOverviewRows(
             {

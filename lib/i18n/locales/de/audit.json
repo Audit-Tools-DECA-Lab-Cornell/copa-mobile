@@ -21,6 +21,31 @@
         "continueToSubjectInfo": "Weiter zu den Details für {{subject}}",
         "submitSubject": "{{subject}} absenden"
     },
+    "finalComments": {
+        "alreadySubmittedMessage": "This audit has already been submitted. You can review it from the overview screen.",
+        "alreadySubmittedTitle": "Audit Already Submitted",
+        "backToReview": "Back to review",
+        "blockers": {
+            "completeSetup": "Complete the required setup questions.",
+            "finishSections_one": "Finish the remaining section.",
+            "finishSections_other": "Finish the remaining {{count}} sections."
+        },
+        "helper": "This is optional. Add any closing observations, recommendations, or context you want attached to the completed audit.",
+        "incompleteMessage": "All required setup questions and sections must be complete before you can add final comments and submit.",
+        "incompleteTitle": "Audit Not Ready",
+        "placeholder": "Add any final comments or recommendations...",
+        "preparingMessage": "Loading the latest audit state before final submission...",
+        "preparingTitle": "Preparing Final Comments",
+        "prompt": "Any final comments before you submit this completed audit?",
+        "promptTitle": "Final comments",
+        "stepEyebrow": "Final step",
+        "submit": "Submit audit",
+        "submitConfirmCancel": "Review",
+        "submitConfirmMessage": "Once submitted, this audit cannot be edited. Make sure your final comments and answers are ready before continuing.",
+        "submitConfirmSubmit": "Submit",
+        "submitConfirmTitle": "Submit Audit?",
+        "subtitle": "Leave any final comments you want saved with this completed audit before submitting."
+    },
     "executeLanding": {
         "continueSelectedPlace": "Ausgewaehlten Ort fortsetzen",
         "emptyMessage": "Versuchen Sie eine andere Such- oder Filterkombination.",
@@ -141,6 +166,7 @@
         "reviewSection": "Abschnitt pruefen",
         "saveAndNext": "Speichern und weiter",
         "saveSection": "Abschnitt speichern",
+        "finalCommentsCta": "Continue",
         "sectionNotes": "Abschnittsnotizen",
         "table": {
             "followUpPending": "Wählen Sie eine positive Mengenangabe, um diese Skala freizuschalten.",

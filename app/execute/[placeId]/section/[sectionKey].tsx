@@ -1,17 +1,24 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Alert, ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { LayoutDashboard } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
-import { getExecuteFlowSubject } from "lib/audit/execute-flow";
+import {
+    buildFinalCommentsRoute,
+    buildHomeRoute,
+    buildSectionOverviewRoute,
+    buildSectionRoute,
+    getNextSection,
+    getPreviousSection,
+} from "lib/audit/section-navigation";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
-    getInstrumentSectionLocalProgress,
     getQuestionAnswers,
     getSectionNote,
     getVisibleSections,
@@ -31,7 +38,6 @@ import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { requestImmediateAuditSync } from "lib/audit/use-audit-sync";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
-import { usePlacesStore } from "stores/places-store";
 import { parsePromptSegments } from "lib/audit/prompt-segments";
 
 /**
@@ -63,14 +69,12 @@ export default function ExecuteSectionScreen() {
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
     const applyLocalQuestionAnswer = usePlayspaceAuditStore((state) => state.applyLocalQuestionAnswer);
     const applyLocalSectionNote = usePlayspaceAuditStore((state) => state.applyLocalSectionNote);
-    const submitAuditSession = usePlayspaceAuditStore((state) => state.submitAuditSession);
     const isSavingDraft = usePlayspaceAuditStore((state) => state.isSavingDraft);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
-    const loadPlaces = usePlacesStore((state) => state.loadPlaces);
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
@@ -108,20 +112,6 @@ export default function ExecuteSectionScreen() {
         }),
         [ds],
     );
-
-    useLayoutEffect(() => {
-        if (activeSection !== undefined) {
-            navigation.setOptions({
-                ...themedHeaderOptions,
-                headerTitle: () => (
-                    <AuditHeaderTitle
-                        primary={auditSession?.place_name ?? ""}
-                        secondary={`Section: ${activeSection.title}`}
-                    />
-                ),
-            });
-        }
-    }, [themedHeaderOptions, navigation, activeSection, auditSession]);
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -205,6 +195,42 @@ export default function ExecuteSectionScreen() {
         localNoteRef.current = text;
     }, []);
 
+    const handleReturnHome = useCallback(() => {
+        flushNoteToStore();
+        requestImmediateAuditSync("section_change");
+        router.replace(buildHomeRoute() as Href);
+    }, [flushNoteToStore, router]);
+
+    useLayoutEffect(() => {
+        if (activeSection !== undefined) {
+            navigation.setOptions({
+                ...themedHeaderOptions,
+                headerTitle: () => (
+                    <AuditHeaderTitle
+                        primary={auditSession?.place_name ?? ""}
+                        secondary={`Section: ${activeSection.title}`}
+                    />
+                ),
+                headerRight: () => (
+                    <Button chromeless onPress={handleReturnHome} accessibilityLabel={t("tabs.home", { ns: "common" })}>
+                        <XStack gap="$1.5" items="center">
+                            <LayoutDashboard size={16} color={ds.colors.primary} />
+                            <Text
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelSm.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1}
+                            >
+                                {t("tabs.home", { ns: "common" })}
+                            </Text>
+                        </XStack>
+                    </Button>
+                ),
+            });
+        }
+    }, [themedHeaderOptions, navigation, activeSection, auditSession, handleReturnHome, t, ds]);
+
     const scrollSectionToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
     }, []);
@@ -263,18 +289,15 @@ export default function ExecuteSectionScreen() {
     const resolvedPlaceId = placeId;
     const resolvedProjectId = projectId;
     const resolvedPairKey = pairKey;
-    const resolvedAuthSession = authSession;
     const resolvedAuditSession = auditSession;
     const resolvedActiveSection = activeSection;
     const sectionInstructionsPromptSegments = parsePromptSegments(
         resolvedActiveSection.description ?? resolvedActiveSection.instruction,
     );
     const nextSection = getNextSection(visibleSections, resolvedActiveSection.section_key);
+    const previousSection = getPreviousSection(visibleSections, resolvedActiveSection.section_key);
     const activeSectionNumber =
         visibleSections.findIndex((s) => s.section_key === resolvedActiveSection.section_key) + 1;
-    const flowSubject = t(`subjects.${getExecuteFlowSubject(resolvedAuditSession.selected_execution_mode)}`, {
-        ns: "audit",
-    });
     const questionByKey = new Map(resolvedActiveSection.questions.map((question) => [question.question_key, question]));
     const questionRows = resolvedActiveSection.questions.map((question) => {
         return {
@@ -286,23 +309,14 @@ export default function ExecuteSectionScreen() {
             ),
         };
     });
-    const proceedToNextOrSubmit = async (): Promise<void> => {
+    const proceedToNextStep = async (): Promise<void> => {
         if (nextSection !== undefined) {
-            router.replace(
-                `/execute/${resolvedPlaceId}/section/${nextSection.section_key}?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
-            );
+            router.replace(buildSectionRoute(resolvedPlaceId, resolvedProjectId, nextSection.section_key) as Href);
             return;
         }
-
-        try {
-            const submittedSession = await submitAuditSession(resolvedAuthSession, resolvedAuditSession.audit_id);
-            await loadPlaces(resolvedAuthSession).catch(() => undefined);
-            router.replace(
-                `/execute/${submittedSession.place_id}/overview?projectId=${encodeURIComponent(submittedSession.project_id)}` as Href,
-            );
-        } catch {
-            return;
-        }
+        router.push(
+            buildFinalCommentsRoute(resolvedPlaceId, resolvedProjectId, resolvedActiveSection.section_key) as Href,
+        );
     };
 
     const handlePrimaryAction = async (): Promise<void> => {
@@ -320,36 +334,6 @@ export default function ExecuteSectionScreen() {
             return !isInstrumentQuestionComplete(question, answers);
         });
 
-        const isSubmit = nextSection === undefined;
-
-        if (isSubmit) {
-            const incompleteSections = visibleSections.filter((section) => {
-                const progress = getInstrumentSectionLocalProgress(resolvedAuditSession, section);
-                return !progress.isComplete;
-            });
-
-            if (incompleteSections.length > 0) {
-                const sectionList = incompleteSections
-                    .map((s) => {
-                        const num = visibleSections.indexOf(s) + 1;
-                        return `${num}. ${s.title}`;
-                    })
-                    .join("\n");
-
-                Alert.alert(
-                    t("section.submitBlockedTitle", { ns: "audit" }),
-                    `${t("section.submitBlockedMessage", { ns: "audit" })}\n\n${t("section.submitBlockedListLabel", { ns: "audit" })}\n${sectionList}`,
-                    [
-                        {
-                            text: t("section.submitBlockedOk", { ns: "audit" }),
-                            style: "cancel",
-                        },
-                    ],
-                );
-                return;
-            }
-        }
-
         if (unansweredQuestions.length > 0) {
             const questionList = unansweredQuestions.map((q) => formatQuestionKey(q.question_key)).join(", ");
 
@@ -364,7 +348,7 @@ export default function ExecuteSectionScreen() {
                     {
                         text: t("section.incompleteConfirmContinue", { ns: "audit" }),
                         onPress: () => {
-                            void proceedToNextOrSubmit();
+                            void proceedToNextStep();
                         },
                     },
                 ],
@@ -372,28 +356,7 @@ export default function ExecuteSectionScreen() {
             return;
         }
 
-        if (isSubmit) {
-            Alert.alert(
-                t("section.submitConfirmTitle", { ns: "audit" }),
-                t("section.submitConfirmMessage", { ns: "audit" }),
-                [
-                    {
-                        text: t("section.submitConfirmCancel", { ns: "audit" }),
-                        style: "cancel",
-                    },
-                    {
-                        text: t("section.submitConfirmSubmit", { ns: "audit" }),
-                        style: "destructive",
-                        onPress: () => {
-                            void proceedToNextOrSubmit();
-                        },
-                    },
-                ],
-            );
-            return;
-        }
-
-        await proceedToNextOrSubmit();
+        await proceedToNextStep();
     };
 
     const handleSelectAnswer = (
@@ -467,37 +430,77 @@ export default function ExecuteSectionScreen() {
         </YStack>
     );
     const actionButtons = (
-        <XStack gap="$2" items="center" justify="space-between" width="100%">
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={() => {
-                    flushNoteToStore();
-                    router.replace(
-                        `/execute/${resolvedPlaceId}/overview?projectId=${encodeURIComponent(resolvedProjectId)}` as Href,
-                    );
-                }}
+        <YStack gap="$2" width="100%">
+            <XStack
+                gap="$2"
+                items="stretch"
+                justify={layout.isTablet ? "space-between" : "flex-start"}
+                width="100%"
+                flexDirection={layout.isTablet ? "row" : "column"}
             >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelLg.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={0.5}
+                <Button
+                    flex={1}
+                    height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                    rounded={ds.radii.md}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.input}
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={() => {
+                        flushNoteToStore();
+                        router.replace(buildSectionOverviewRoute(resolvedPlaceId, resolvedProjectId) as Href);
+                    }}
                 >
-                    {t("section.backToOverview", { ns: "audit" })}
-                </Text>
-            </Button>
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelLg.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
+                    >
+                        {t("section.backToOverview", { ns: "audit" })}
+                    </Text>
+                </Button>
+                <Button
+                    flex={1}
+                    height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                    rounded={ds.radii.md}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.input}
+                    disabled={previousSection === undefined}
+                    opacity={previousSection === undefined ? 0.55 : 1}
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={() => {
+                        if (previousSection === undefined) {
+                            return;
+                        }
+                        flushNoteToStore();
+                        router.replace(
+                            buildSectionRoute(resolvedPlaceId, resolvedProjectId, previousSection.section_key) as Href,
+                        );
+                    }}
+                >
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelLg.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
+                    >
+                        {t("section.saveAndBackToPrevious", {
+                            ns: "audit",
+                            defaultValue: "Save and back to previous section",
+                        })}
+                    </Text>
+                </Button>
+            </XStack>
             <Button
+                width="100%"
                 height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
                 rounded={ds.radii.md}
                 borderWidth={0}
                 bg={ds.colors.primary}
-                width={"48%"}
                 disabled={isSavingDraft || (!canEditInputs && nextSection === undefined)}
                 opacity={isSavingDraft || (!canEditInputs && nextSection === undefined) ? 0.7 : 1}
                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
@@ -515,11 +518,11 @@ export default function ExecuteSectionScreen() {
                     {isSavingDraft
                         ? t("section.uploadingShort", { ns: "audit" })
                         : nextSection === undefined
-                          ? t("copy.submitSubject", { ns: "audit", subject: flowSubject })
+                          ? t("section.finalCommentsCta", { ns: "audit" })
                           : t("section.saveAndNext", { ns: "audit" })}
                 </Text>
             </Button>
-        </XStack>
+        </YStack>
     );
 
     return (
@@ -783,22 +786,6 @@ function readSingleParam(value: string | string[] | undefined): string | null {
         return value[0];
     }
     return null;
-}
-
-/**
- * @param sections Ordered visible sections.
- * @param currentSectionKey Current section key.
- * @returns Next section or undefined when at the end.
- */
-function getNextSection(
-    sections: readonly InstrumentSection[],
-    currentSectionKey: string,
-): InstrumentSection | undefined {
-    const currentIndex = sections.findIndex((section) => section.section_key === currentSectionKey);
-    if (currentIndex < 0) {
-        return undefined;
-    }
-    return sections[currentIndex + 1];
 }
 
 /**

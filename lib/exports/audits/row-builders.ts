@@ -82,6 +82,7 @@ export function buildInProgressOverviewRows(
     const answeredLabel = `${progress.answered_visible_questions} of ${progress.total_visible_questions}`;
     const sectionsLabel = `${progress.completed_section_count} of ${progress.visible_section_count}`;
     const executionModeLabel = formatExecutionModeLabel(auditSession, instrument);
+    const finalComments = auditSession.meta.final_comments?.trim() ?? "";
 
     return [
         ["Field", "Value"],
@@ -95,6 +96,7 @@ export function buildInProgressOverviewRows(
         ["Started At", formatTimestampForDisplay(auditSession.started_at) || PENDING_PLACEHOLDER],
         ["Questions Answered", answeredLabel],
         ["Sections Completed", sectionsLabel],
+        ...(finalComments.length > 0 ? ([["Final Comments", finalComments]] as SpreadsheetRow[]) : []),
         ["Auditor Code", auditorProfile?.auditorCode ?? ""],
         ["Auditor Country", auditorProfile?.country ?? ""],
         ["Auditor Gender", auditorProfile?.gender ?? ""],

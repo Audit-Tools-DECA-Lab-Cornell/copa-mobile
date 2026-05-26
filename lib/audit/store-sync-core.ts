@@ -78,6 +78,18 @@ interface ApplyLocalExecutionModeChangeArgs {
     readonly dirtyMeta: DirtyMeta;
 }
 
+interface ApplyLocalAuditStartChangeArgs {
+    readonly session: AuditSession;
+    readonly startedAt: string;
+}
+
+interface ApplyLocalFinalCommentsChangeArgs {
+    readonly session: AuditSession;
+    readonly finalComments: string;
+    readonly nextVersion: number;
+    readonly dirtyMeta: DirtyMeta;
+}
+
 interface CanEditAuditInputsArgs {
     readonly session: AuditSession;
     readonly phase: AuditSyncPhase | null | undefined;
@@ -140,6 +152,17 @@ interface ApplyLocalPreAuditChangeResult {
 }
 
 interface ApplyLocalExecutionModeChangeResult {
+    readonly session: AuditSession;
+    readonly dirtyMeta: DirtyMeta;
+    readonly didChange: boolean;
+}
+
+interface ApplyLocalAuditStartChangeResult {
+    readonly session: AuditSession;
+    readonly didChange: boolean;
+}
+
+interface ApplyLocalFinalCommentsChangeResult {
     readonly session: AuditSession;
     readonly dirtyMeta: DirtyMeta;
     readonly didChange: boolean;
@@ -1133,6 +1156,7 @@ export function buildDraftPatchSnapshot(args: BuildDraftPatchSnapshotArgs): Pend
     if (metaVersion !== null) {
         patch.meta = {
             execution_mode: args.session.meta.execution_mode,
+            final_comments: args.session.meta.final_comments,
         };
     }
 
@@ -1207,6 +1231,8 @@ export function applyFetchedSessionSnapshot(args: ApplyFetchedSessionSnapshotArg
     for (const sectionKey of Object.keys(args.dirtySections[currentSession.audit_id] ?? {})) {
         mergedSession = copySectionDraftFromSession(currentSession, mergedSession, sectionKey);
     }
+
+    mergedSession = preserveLaterLocalStartTime(currentSession, mergedSession);
 
     return {
         session: mergedSession,
@@ -1446,11 +1472,13 @@ export function applyLocalExecutionModeChange(
         selected_execution_mode: args.executionMode,
         meta: {
             execution_mode: args.executionMode,
+            final_comments: args.session.meta.final_comments,
         },
         aggregate: {
             ...args.session.aggregate,
             meta: {
                 execution_mode: args.executionMode,
+                final_comments: args.session.aggregate.meta.final_comments,
             },
         },
         scores: {
@@ -1468,6 +1496,88 @@ export function applyLocalExecutionModeChange(
                 draft_progress_percent: nextLocalProgress.draftProgressPercent,
             },
             progress: nextLocalProgress.progress,
+        },
+        dirtyMeta: markMetaDirty(args.dirtyMeta, args.session.audit_id, args.nextVersion),
+        didChange: true,
+    };
+}
+
+/**
+ * Stamp the local audit start timestamp when the auditor opens a pristine draft
+ * for the first time on-device.
+ *
+ * This stays local-only for now so the mobile flow can report the practical
+ * "opened" time even while the backend still returns an earlier access-time
+ * timestamp.
+ *
+ * @param args Current session plus the on-device start timestamp.
+ * @returns Updated pure result when the draft is still pristine.
+ */
+export function applyLocalAuditStartChange(args: ApplyLocalAuditStartChangeArgs): ApplyLocalAuditStartChangeResult {
+    if (!isAuditSessionEditable(args.session) || !canStampLocalAuditStart(args.session)) {
+        return {
+            session: args.session,
+            didChange: false,
+        };
+    }
+
+    const nextStartedAtMs = Date.parse(args.startedAt);
+    if (Number.isNaN(nextStartedAtMs) || args.session.started_at === args.startedAt) {
+        return {
+            session: args.session,
+            didChange: false,
+        };
+    }
+
+    return {
+        session: {
+            ...args.session,
+            started_at: args.startedAt,
+        },
+        didChange: true,
+    };
+}
+
+/**
+ * Apply an audit-level final-comments edit without mutating the original session.
+ *
+ * @param args Current session, updated comment text, and dirty-meta inputs.
+ * @returns Updated pure result including dirty-meta changes when needed.
+ */
+export function applyLocalFinalCommentsChange(
+    args: ApplyLocalFinalCommentsChangeArgs,
+): ApplyLocalFinalCommentsChangeResult {
+    if (!isAuditSessionEditable(args.session)) {
+        return {
+            session: args.session,
+            dirtyMeta: args.dirtyMeta,
+            didChange: false,
+        };
+    }
+
+    const normalizedFinalComments = normalizeDraftComment(args.finalComments);
+    if (args.session.meta.final_comments === normalizedFinalComments) {
+        return {
+            session: args.session,
+            dirtyMeta: args.dirtyMeta,
+            didChange: false,
+        };
+    }
+
+    return {
+        session: {
+            ...args.session,
+            meta: {
+                ...args.session.meta,
+                final_comments: normalizedFinalComments,
+            },
+            aggregate: {
+                ...args.session.aggregate,
+                meta: {
+                    ...args.session.aggregate.meta,
+                    final_comments: normalizedFinalComments,
+                },
+            },
         },
         dirtyMeta: markMetaDirty(args.dirtyMeta, args.session.audit_id, args.nextVersion),
         didChange: true,
@@ -1969,11 +2079,13 @@ function copyMetaDraftFromSession(source: AuditSession, target: AuditSession): A
         selected_execution_mode: source.selected_execution_mode,
         meta: {
             execution_mode: source.meta.execution_mode,
+            final_comments: source.meta.final_comments,
         },
         aggregate: {
             ...target.aggregate,
             meta: {
                 execution_mode: source.meta.execution_mode,
+                final_comments: source.meta.final_comments,
             },
         },
         scores: {
@@ -1981,6 +2093,51 @@ function copyMetaDraftFromSession(source: AuditSession, target: AuditSession): A
             execution_mode: source.scores.execution_mode,
         },
     };
+}
+
+function preserveLaterLocalStartTime(source: AuditSession, target: AuditSession): AuditSession {
+    const sourceStartedAtMs = Date.parse(source.started_at);
+    const targetStartedAtMs = Date.parse(target.started_at);
+    if (Number.isNaN(sourceStartedAtMs) || Number.isNaN(targetStartedAtMs) || sourceStartedAtMs <= targetStartedAtMs) {
+        return target;
+    }
+
+    return {
+        ...target,
+        started_at: source.started_at,
+    };
+}
+
+function canStampLocalAuditStart(session: AuditSession): boolean {
+    return (
+        session.selected_execution_mode === null &&
+        session.meta.execution_mode === null &&
+        session.meta.final_comments === null &&
+        !hasPreAuditContent(session.pre_audit) &&
+        !hasSectionContent(session.sections) &&
+        session.progress.answered_visible_questions === 0 &&
+        (session.scores.draft_progress_percent ?? 0) === 0
+    );
+}
+
+function hasPreAuditContent(values: AuditPreAuditValues): boolean {
+    return (
+        values.place_size !== null ||
+        values.current_users_0_5 !== null ||
+        values.current_users_6_12 !== null ||
+        values.current_users_13_17 !== null ||
+        values.current_users_18_plus !== null ||
+        values.playspace_busyness !== null ||
+        values.season !== null ||
+        values.weather_conditions.length > 0 ||
+        values.wind_conditions !== null
+    );
+}
+
+function hasSectionContent(sections: Record<string, AuditSectionState>): boolean {
+    return Object.values(sections).some((section) => {
+        return section.note !== null || Object.keys(section.responses).length > 0;
+    });
 }
 
 function copyPreAuditDraftFromSession(source: AuditSession, target: AuditSession): AuditSession {
@@ -2036,6 +2193,11 @@ function clearDirtyStateForAudit(
         dirtyPreAudit: nextDirtyPreAudit,
         dirtySections: nextDirtySections,
     };
+}
+
+function normalizeDraftComment(value: string): string | null {
+    const trimmedValue = value.trim();
+    return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 function clearAcknowledgedSectionVersions(

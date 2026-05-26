@@ -5,7 +5,9 @@ import type { AuthSession } from "lib/auth/types";
 import { createModuleLogger } from "lib/logger";
 import {
     applyFetchedSessionSnapshot,
+    applyLocalAuditStartChange,
     applyLocalExecutionModeChange,
+    applyLocalFinalCommentsChange,
     applyLocalPreAuditChange,
     applyLocalQuestionAnswerChange,
     applyLocalSectionNoteChange,
@@ -129,6 +131,7 @@ interface PlayspaceAuditStoreState {
      */
     refreshCachedAuditSessions: (session: AuthSession) => Promise<void>;
     applyLocalExecutionMode: (pairKey: string, executionMode: ExecutionMode) => void;
+    applyLocalFinalComments: (pairKey: string, finalComments: string) => void;
     applyLocalQuestionAnswer: (
         pairKey: string,
         sectionKey: string,
@@ -664,8 +667,15 @@ async function ensurePlaceAudit(
             dirtyPreAudit: data.dirty_pre_audit,
             dirtySections: data.dirty_sections,
         }).session;
+        const locallyStartedSession =
+            currentSession === null
+                ? applyLocalAuditStartChange({
+                      session: merged,
+                      startedAt: new Date().toISOString(),
+                  }).session
+                : merged;
         const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
-            session: merged,
+            session: locallyStartedSession,
             dirtyMeta: data.dirty_meta,
             dirtyPreAudit: data.dirty_pre_audit,
             dirtySections: data.dirty_sections,
@@ -674,7 +684,7 @@ async function ensurePlaceAudit(
         const nextSessionMaps = upsertAuditSessionMaps({
             sessionsByAuditId: data.sessions_by_audit_id,
             sessionsByPairKey: data.sessions_by_pair_key,
-            nextSession: merged,
+            nextSession: locallyStartedSession,
         });
         const nextPrunedAuditState = pruneAuditStateForAudit({
             auditId: nextSessionMaps.displacedAuditId,
@@ -684,7 +694,7 @@ async function ensurePlaceAudit(
             syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
         });
         batch(() => {
-            auditData$.instrument.set(merged.instrument);
+            auditData$.instrument.set(locallyStartedSession.instrument);
             auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
             auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
             auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
@@ -695,7 +705,7 @@ async function ensurePlaceAudit(
             auditUI$.errorMessage.set(null);
         });
         saveNow();
-        return merged;
+        return locallyStartedSession;
     } catch (error) {
         const message = formatAuditErrorMessage(error, t("audit:errors.openFallback"));
         batch(() => {
@@ -818,6 +828,65 @@ function applyLocalExecutionMode(pairKey: string, executionMode: ExecutionMode):
     const result = applyLocalExecutionModeChange({
         session,
         executionMode,
+        nextVersion,
+        dirtyMeta: auditData$.dirty_meta.peek(),
+    });
+    if (!result.didChange) {
+        return;
+    }
+
+    const updatedAt = new Date().toISOString();
+    const nextSyncStateByAuditId =
+        currentPhase === "saving" ||
+        currentPhase === "submitting" ||
+        currentPhase === "resolving_submit" ||
+        currentPhase === "submitted"
+            ? auditData$.sync_state_by_audit_id.peek()
+            : writeAuditSyncState(
+                  auditData$.sync_state_by_audit_id.peek(),
+                  session.audit_id,
+                  transitionPhaseOnLocalEdit({
+                      currentPhase,
+                      updatedAt,
+                  }).phase,
+                  updatedAt,
+              );
+
+    batch(() => {
+        auditData$.sessions_by_audit_id[session.audit_id]?.set(result.session);
+        auditData$.sessions_by_pair_key[pairKey]?.set(result.session);
+        auditData$.dirty_meta.set(result.dirtyMeta);
+        auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
+        auditData$.local_change_counter.set(nextVersion);
+    });
+}
+
+function applyLocalFinalComments(pairKey: string, finalComments: string): void {
+    const session: AuditSession | undefined = auditData$.sessions_by_pair_key[pairKey]?.peek();
+    if (session === undefined) {
+        return;
+    }
+
+    const currentPhase = readEffectiveAuditSyncPhase(
+        session.audit_id,
+        auditData$.sync_state_by_audit_id.peek(),
+        auditData$.dirty_meta.peek(),
+        auditData$.dirty_pre_audit.peek(),
+        auditData$.dirty_sections.peek(),
+    );
+    if (
+        !canEditAuditInputs({
+            session,
+            phase: currentPhase,
+        })
+    ) {
+        return;
+    }
+
+    const nextVersion = auditData$.local_change_counter.peek() + 1;
+    const result = applyLocalFinalCommentsChange({
+        session,
+        finalComments,
         nextVersion,
         dirtyMeta: auditData$.dirty_meta.peek(),
     });
@@ -1885,6 +1954,7 @@ const actions = {
     refreshAudit,
     refreshCachedAuditSessions,
     applyLocalExecutionMode,
+    applyLocalFinalComments,
     applyLocalQuestionAnswer,
     applyLocalSectionNote,
     applyLocalPreAudit,

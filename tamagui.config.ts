@@ -132,6 +132,8 @@ export const config = createTamagui({
     },
 });
 
+export default config;
+
 type OurConfig = typeof config;
 
 declare module "tamagui" {

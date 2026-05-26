@@ -26,11 +26,23 @@ export interface DomainQuestionRow {
     readonly questionKey: string;
     readonly questionText: string;
     readonly provisionLabel: string | null;
+    readonly provisionApplicable: boolean;
+    readonly provisionAnswered: boolean;
+    readonly provisionIsNotApplicable: boolean;
     readonly diversityLabel: string | null;
+    readonly diversityApplicable: boolean;
+    readonly diversityAnswered: boolean;
+    readonly diversityIsNotApplicable: boolean;
     /** When `false`, the challenge column must show N/A (scale not present on question). */
     readonly challengeApplicable: boolean;
     readonly challengeLabel: string | null;
+    readonly challengeAnswered: boolean;
+    readonly challengeIsNotApplicable: boolean;
     readonly sociabilityLabel: string | null;
+    readonly sociabilityApplicable: boolean;
+    readonly sociabilityAnswered: boolean;
+    readonly sociabilityIsNotApplicable: boolean;
+    readonly followUpScalesAsked: boolean;
     readonly playValueScore: number | null;
     readonly playValueMax: number | null;
     readonly usabilityScore: number | null;
@@ -59,6 +71,10 @@ type ConstructAccessor = {
     readonly value: (totals: AuditScoreTotals) => number;
     readonly max: (totals: AuditScoreTotals) => number;
 };
+
+type InstrumentSectionDefinition = PlayspaceInstrument["sections"][number];
+type InstrumentScaleDefinition = InstrumentQuestion["scales"][number];
+type InstrumentScaleOptionDefinition = InstrumentScaleDefinition["options"][number];
 
 const CONSTRUCT_ACCESSORS: readonly ConstructAccessor[] = [
     { key: "provision", value: (t) => t.provision_total, max: (t) => t.provision_total_max },
@@ -108,27 +124,31 @@ function countTokenOverlap(a: Set<string>, b: Set<string>): number {
 }
 
 /**
- * Resolve the human label for a selected scale option.
+ * Resolve the human label and state for a selected scale option.
  *
  * @param question Instrument question.
  * @param scaleKey Scale key (provision, diversity, etc.).
  * @param answerKey Selected option key from responses.
- * @returns Option label or null when not applicable.
+ * @returns Label and answer-state metadata for report rendering.
  */
-export function resolveScaleOptionLabel(
+export function resolveScaleOptionInfo(
     question: InstrumentQuestion,
     scaleKey: string,
     answerKey: string | undefined,
-): string | null {
+): { label: string | null; answered: boolean; isNotApplicable: boolean } {
     if (answerKey === undefined || answerKey.length === 0) {
-        return null;
+        return { label: null, answered: false, isNotApplicable: false };
     }
-    const scale = question.scales.find((candidate) => candidate.key === scaleKey);
+    const scale = question.scales.find((candidate: InstrumentScaleDefinition) => candidate.key === scaleKey);
     if (scale === undefined) {
-        return null;
+        return { label: null, answered: false, isNotApplicable: false };
     }
-    const option = scale.options.find((candidate) => candidate.key === answerKey);
-    return option?.label ?? null;
+    const option = scale.options.find((candidate: InstrumentScaleOptionDefinition) => candidate.key === answerKey);
+    return {
+        label: option?.label ?? null,
+        answered: option !== undefined,
+        isNotApplicable: option?.is_not_applicable === true,
+    };
 }
 
 function readStringAnswer(answers: QuestionResponsePayload, key: string): string | undefined {
@@ -143,7 +163,7 @@ function readStringAnswer(answers: QuestionResponsePayload, key: string): string
 export function getQuestionDomainKeys(question: InstrumentQuestion): string[] {
     const ordered: string[] = [];
     const seen = new Set<string>();
-    question.domains.forEach((domainKey) => {
+    question.domains.forEach((domainKey: string) => {
         const normalized = normalizeDomainKey(domainKey);
         if (normalized.length === 0) {
             return;
@@ -163,8 +183,8 @@ export function getQuestionDomainKeys(question: InstrumentQuestion): string[] {
  */
 export function countUniqueScaledQuestionsWithDomains(instrument: PlayspaceInstrument): number {
     const questionKeys = new Set<string>();
-    instrument.sections.forEach((section) => {
-        section.questions.forEach((question) => {
+    instrument.sections.forEach((section: InstrumentSectionDefinition) => {
+        section.questions.forEach((question: InstrumentQuestion) => {
             if (question.question_type !== "scaled") {
                 return;
             }
@@ -179,14 +199,25 @@ export function countUniqueScaledQuestionsWithDomains(instrument: PlayspaceInstr
 
 function buildDomainQuestionRow(question: InstrumentQuestion, answers: QuestionResponsePayload): DomainQuestionRow {
     const scores = calculateQuestionScores(question, answers);
-    const provisionLabel = resolveScaleOptionLabel(question, "provision", readStringAnswer(answers, "provision"));
-    const diversityLabel = resolveScaleOptionLabel(question, "diversity", readStringAnswer(answers, "diversity"));
-    const challengeScale = question.scales.find((scale) => scale.key === "challenge");
-    const challengeApplicable = challengeScale !== undefined;
-    const challengeLabel = challengeApplicable
-        ? resolveScaleOptionLabel(question, "challenge", readStringAnswer(answers, "challenge"))
-        : null;
-    const sociabilityLabel = resolveScaleOptionLabel(question, "sociability", readStringAnswer(answers, "sociability"));
+    const provisionAnswerKey = readStringAnswer(answers, "provision");
+    const provisionInfo = resolveScaleOptionInfo(question, "provision", provisionAnswerKey);
+    const provisionScale = question.scales.find((scale: InstrumentScaleDefinition) => scale.key === "provision");
+    const provisionApplicable = provisionScale !== undefined;
+    const provisionOption =
+        provisionScale === undefined || provisionAnswerKey === undefined
+            ? undefined
+            : provisionScale.options.find(
+                  (option: InstrumentScaleOptionDefinition) => option.key === provisionAnswerKey,
+              );
+    const followUpScalesAsked = provisionOption?.allows_follow_up_scales === true;
+    const diversityInfo = resolveScaleOptionInfo(question, "diversity", readStringAnswer(answers, "diversity"));
+    const diversityApplicable = question.scales.some((scale: InstrumentScaleDefinition) => scale.key === "diversity");
+    const challengeInfo = resolveScaleOptionInfo(question, "challenge", readStringAnswer(answers, "challenge"));
+    const challengeApplicable = question.scales.some((scale: InstrumentScaleDefinition) => scale.key === "challenge");
+    const sociabilityInfo = resolveScaleOptionInfo(question, "sociability", readStringAnswer(answers, "sociability"));
+    const sociabilityApplicable = question.scales.some(
+        (scale: InstrumentScaleDefinition) => scale.key === "sociability",
+    );
 
     const playValueMax = scores.play_value_total_max;
     const usabilityMax = scores.usability_total_max;
@@ -194,11 +225,23 @@ function buildDomainQuestionRow(question: InstrumentQuestion, answers: QuestionR
     return {
         questionKey: question.question_key,
         questionText: question.prompt,
-        provisionLabel,
-        diversityLabel,
+        provisionLabel: provisionInfo.label,
+        provisionApplicable,
+        provisionAnswered: provisionInfo.answered,
+        provisionIsNotApplicable: provisionInfo.isNotApplicable,
+        diversityLabel: diversityInfo.label,
+        diversityApplicable,
+        diversityAnswered: diversityInfo.answered,
+        diversityIsNotApplicable: diversityInfo.isNotApplicable,
         challengeApplicable,
-        challengeLabel,
-        sociabilityLabel,
+        challengeLabel: challengeInfo.label,
+        challengeAnswered: challengeInfo.answered,
+        challengeIsNotApplicable: challengeInfo.isNotApplicable,
+        sociabilityLabel: sociabilityInfo.label,
+        sociabilityApplicable,
+        sociabilityAnswered: sociabilityInfo.answered,
+        sociabilityIsNotApplicable: sociabilityInfo.isNotApplicable,
+        followUpScalesAsked,
         playValueScore: playValueMax <= 0 ? null : scores.play_value_total,
         playValueMax: playValueMax <= 0 ? null : playValueMax,
         usabilityScore: usabilityMax <= 0 ? null : scores.usability_total,
@@ -306,12 +349,12 @@ export function buildDomainReportRows(auditSession: AuditSession, instrument: Pl
     const dominantDomainOrder: string[] = [];
     const dominantSet = new Set<string>();
 
-    instrument.sections.forEach((section) => {
+    instrument.sections.forEach((section: InstrumentSectionDefinition) => {
         const sectionDomainCounts = new Map<string, number>();
         const sectionFirstSeenIndex = new Map<string, number>();
         let sectionOrderCounter = 0;
 
-        section.questions.forEach((question) => {
+        section.questions.forEach((question: InstrumentQuestion) => {
             getQuestionDomainKeys(question).forEach((domainKey) => {
                 sectionDomainCounts.set(domainKey, (sectionDomainCounts.get(domainKey) ?? 0) + 1);
                 if (!sectionFirstSeenIndex.has(domainKey)) {
@@ -387,9 +430,9 @@ export function buildDomainReportRows(auditSession: AuditSession, instrument: Pl
         const questions: DomainQuestionRow[] = [];
         const sectionNotes: string[] = [];
 
-        instrument.sections.forEach((section, sectionIndex) => {
+        instrument.sections.forEach((section: InstrumentSectionDefinition, sectionIndex: number) => {
             let sectionTouchesDomain = false;
-            section.questions.forEach((question) => {
+            section.questions.forEach((question: InstrumentQuestion) => {
                 const domainKeysForQuestion = getQuestionDomainKeys(question);
                 if (!domainKeysForQuestion.includes(domainKey)) {
                     return;

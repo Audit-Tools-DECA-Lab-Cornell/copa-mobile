@@ -5,6 +5,12 @@ appId: com.pratyush.sudhakar.audittoolsplayspacemobile
 ---
 # Scaffold for the full auditor completion journey.
 # Keep this flow out of smoke CI until section-level accessibility labels are stable.
+# The completion path now includes a dedicated "Final comments" step before the
+# destructive submit confirmation. When this scaffold is expanded into a full
+# executable flow, the last assertions should verify:
+# - "Final comments"
+# - "Any final comments before you submit this completed audit?"
+# - "Submit audit"
 - runFlow: create-audit.yaml
 - assertVisible:
       text: ".*Audit.*|.*Pre-audit.*|.*Execution mode.*"

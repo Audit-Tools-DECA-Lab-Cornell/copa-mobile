@@ -22,6 +22,7 @@ import {
     getVisibleSections,
     isRequiredPreAuditComplete,
 } from "lib/audit/selectors";
+import type { ExecutionMode } from "lib/audit/types";
 import { getExecutionModeShortLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -305,19 +306,7 @@ export default function ExecuteSectionOverviewScreen() {
         />
     );
 
-    const setupSummaryCard = (
-        <SetupSummaryCard
-            selectedModeLabel={getExecutionModeShortLabel(selectedMode, t)}
-            spaceAuditStatus={
-                requiresSpaceAudit
-                    ? t("preAudit.complete", { ns: "audit" })
-                    : t("overview.notRequired", { ns: "audit", defaultValue: "Not required" })
-            }
-            onBackToSetup={() => {
-                router.push(`/execute/${placeId}?projectId=${encodeURIComponent(projectId)}` as Href);
-            }}
-        />
-    );
+    const setupSummaryCard = <SetupSummaryCard selectedMode={selectedMode} />;
 
     return (
         <ScrollView
@@ -354,7 +343,7 @@ export default function ExecuteSectionOverviewScreen() {
                 >
                     {t("overview.sectionOverviewTitle", {
                         ns: "audit",
-                        defaultValue: "Section overview",
+                        defaultValue: "COPA Tool section overview",
                     })}
                 </Text>
                 <Paragraph
@@ -594,18 +583,17 @@ function SectionReviewMetric({ label, isSelected, onPress }: Readonly<SectionRev
 }
 
 interface SetupSummaryCardProps {
-    readonly selectedModeLabel: string;
-    readonly spaceAuditStatus: string;
-    readonly onBackToSetup: () => void;
+    readonly selectedMode: ExecutionMode;
 }
 
 /**
  * Small setup recap and an escape hatch back to the pre-section flow.
  */
-function SetupSummaryCard({ selectedModeLabel, spaceAuditStatus, onBackToSetup }: Readonly<SetupSummaryCardProps>) {
+function SetupSummaryCard({ selectedMode }: Readonly<SetupSummaryCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
+    const modeLabel = getSetupCompleteModeLabel(selectedMode);
 
     return (
         <YStack
@@ -634,60 +622,26 @@ function SetupSummaryCard({ selectedModeLabel, spaceAuditStatus, onBackToSetup }
                     lineHeight={ds.typography.bodySm.lineHeight}
                 >
                     {t("overview.setupCompleteDescription", {
-                        defaultValue:
-                            "Audit details and required setup questions are complete. You can now work through the sections.",
+                        modeLabel,
+                        defaultValue: "You are completing {{modeLabel}}.",
                     })}
                 </Paragraph>
             </YStack>
-            <SummaryRow label={t("auditInfo.selectedModeLabel")} value={selectedModeLabel} />
-            <SummaryRow label={t("spaceAudit.title")} value={spaceAuditStatus} />
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                rounded={ds.radii.sm}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={onBackToSetup}
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.1}
-                >
-                    {t("overview.backToSetup", {
-                        defaultValue: "Back to setup",
-                    })}
-                </Text>
-            </Button>
         </YStack>
     );
 }
 
-interface SummaryRowProps {
-    readonly label: string;
-    readonly value: string;
-}
-
-function SummaryRow({ label, value }: Readonly<SummaryRowProps>) {
-    const ds = useDesignSystem();
-
-    return (
-        <YStack gap="$1">
-            <Text
-                color={ds.colors.mutedForeground}
-                fontFamily={ds.fonts.bodySemiBold}
-                fontSize={ds.typography.bodySm.fontSize}
-            >
-                {label}
-            </Text>
-            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.bodyMd.fontSize}>
-                {value}
-            </Text>
-        </YStack>
-    );
+function getSetupCompleteModeLabel(mode: ExecutionMode): string {
+    switch (mode) {
+        case "audit":
+            return "Onsite Audit";
+        case "survey":
+            return "Survey";
+        case "both":
+            return "On-Site Audit and Survey";
+        default:
+            return "COPA Tool";
+    }
 }
 
 interface AuditSyncStatusCardProps {

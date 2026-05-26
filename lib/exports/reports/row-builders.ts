@@ -102,6 +102,7 @@ export function buildOverviewRows(
 ): readonly SpreadsheetRow[] {
     const { auditSession, context, auditorProfile } = exportableAudit;
     const overallScores = auditSession.scores.overall;
+    const finalComments = auditSession.meta.final_comments?.trim() ?? "";
 
     return [
         ["Field", "Value"],
@@ -115,6 +116,7 @@ export function buildOverviewRows(
         ["Started At", formatTimestampForDisplay(auditSession.started_at)],
         ["Submitted At", formatTimestampForDisplay(auditSession.submitted_at)],
         ["Total Minutes", auditSession.total_minutes ?? "Pending"],
+        ...(finalComments.length > 0 ? ([["Final Comments", finalComments]] as SpreadsheetRow[]) : []),
         ["Summary Score", deriveSummaryScore(auditSession)],
         ["Play Value Total", overallScores?.play_value_total ?? "Pending"],
         ["Usability Total", overallScores?.usability_total ?? "Pending"],

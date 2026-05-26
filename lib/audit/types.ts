@@ -148,6 +148,7 @@ export const auditProgressSchema = z.object({
 
 export const auditMetaSchema = z.object({
     execution_mode: executionModeSchema.nullable(),
+    final_comments: z.string().nullable().optional().default(null),
 });
 
 export const preAuditValuesSchema = z.object({
@@ -279,6 +280,7 @@ export const auditAggregateWriteSchema = z.object({
     meta: z
         .object({
             execution_mode: executionModeSchema.nullable().optional(),
+            final_comments: z.string().nullable().optional(),
         })
         .nullable()
         .optional(),
@@ -292,6 +294,7 @@ export const auditDraftPatchSchema = z.object({
     meta: z
         .object({
             execution_mode: executionModeSchema.nullable().optional(),
+            final_comments: z.string().nullable().optional(),
         })
         .nullable()
         .optional(),

@@ -32,7 +32,6 @@ import {
     formatChecklistAnswer,
     formatConstructLabel,
     formatExecutionModeLabel,
-    formatLocality,
     formatQuestionAnswer,
     formatQuestionKeyForDisplay,
     formatQuestionModeLabel,
@@ -46,19 +45,9 @@ const palette = WEB_AUDIT_EXPORT_PALETTE;
 
 /** Build the web-styled single-audit PDF HTML used by Expo Print. */
 export function buildSingleAuditPdfHtml(exportableAudit: ExportableAudit, instrument: PlayspaceInstrument): string {
-    const { auditSession, context, auditorProfile } = exportableAudit;
+    const { auditSession, auditorProfile } = exportableAudit;
     const overallScores = auditSession.scores.overall;
-    const location = formatLocality(context);
-
-    const detailsRows: readonly (readonly [string, SpreadsheetCell])[] = [
-        ["Place", auditSession.place_name],
-        ["Project", auditSession.project_name],
-        ["Status", formatAuditStatusLabel(auditSession.status)],
-        ["Mode", formatExecutionModeLabel(auditSession, instrument)],
-        ["Started", formatTimestampForDisplay(auditSession.started_at)],
-        ["Submitted", formatTimestampForDisplay(auditSession.submitted_at)],
-        ...(location.length > 0 ? ([["Location", location]] as const) : []),
-    ];
+    const detailsRows = buildAuditDetailsRows(exportableAudit, instrument);
 
     const profileRows: readonly (readonly [string, SpreadsheetCell])[] = auditorProfile
         ? [
@@ -221,6 +210,29 @@ function renderPdfResponseMatrix(exportableAudit: ExportableAudit, instrument: P
         `<tbody>${rows}</tbody>`,
         "</table>",
     ].join("");
+}
+
+function buildAuditDetailsRows(exportableAudit: ExportableAudit, instrument: PlayspaceInstrument): [string, string][] {
+    const { auditSession, context } = exportableAudit;
+    const finalComments = auditSession.meta.final_comments?.trim() ?? "";
+    const rows: [string, string][] = [
+        ["Place", auditSession.place_name],
+        ["Project", auditSession.project_name],
+        ["Status", formatAuditStatusLabel(auditSession.status)],
+        ["Mode", formatExecutionModeLabel(auditSession, instrument)],
+        ["Started", formatTimestampForDisplay(auditSession.started_at)],
+        ["Submitted", formatTimestampForDisplay(auditSession.submitted_at)],
+    ];
+
+    if (context?.city || context?.province || context?.country) {
+        const locationParts = [context?.city, context?.province, context?.country].filter(Boolean);
+        rows.push(["Location", locationParts.join(", ")]);
+    }
+    if (finalComments.length > 0) {
+        rows.push(["Final Comments", finalComments]);
+    }
+
+    return rows;
 }
 
 function buildPdfResponseRows(exportableAudit: ExportableAudit, instrument: PlayspaceInstrument): string[] {
