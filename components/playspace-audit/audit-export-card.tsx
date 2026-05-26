@@ -40,7 +40,7 @@ export function AuditExportCard({ auditSession, place }: Readonly<AuditExportCar
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["audit", "common"]);
     const toast = useToastController();
-    const instrument = useLocalizedInstrument();
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
     const session = useAuthStore((state) => state.session);
     const [activeFormat, setActiveFormat] = useState<InProgressAuditExportFormat | null>(null);
 

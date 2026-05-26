@@ -28,7 +28,6 @@ export default function PreAuditScreen() {
     const router = useRouter();
     const navigation = useNavigation();
     const { t, i18n } = useTranslation(["audit", "common"]);
-    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -45,6 +44,7 @@ export default function PreAuditScreen() {
     const projectId = readSingleParam(params.projectId);
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
     const scrollViewRef = useRef<ScrollView | null>(null);
     const [auditorProfile, setAuditorProfile] = useState<MyAuditorProfile | null>(null);
 

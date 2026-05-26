@@ -64,6 +64,7 @@ import type {
 import { persistedAuditStateSchema } from "lib/audit/types";
 import { t } from "lib/i18n";
 import { getBundledInstrument } from "lib/audit/bundled-instrument";
+import { resolveActiveInstrumentSource } from "lib/audit/instrument-resolution";
 import { syncInstrument } from "lib/services/instrument-sync";
 import { mmkvStorage } from "lib/storage/mmkv";
 
@@ -590,11 +591,13 @@ async function hydrate(accountId?: string | null): Promise<void> {
 
     if (requestId !== hydrateRequestCounter) return;
 
-    if (auditData$.instrument.peek() === null) {
-        const bundled = getBundledInstrument();
-        if (bundled !== null) {
-            auditData$.instrument.set(bundled);
-        }
+    const resolvedHydratedInstrument = resolveActiveInstrumentSource({
+        fetchedInstrument: null,
+        cachedInstrument: auditData$.instrument.peek(),
+        bundledInstrument: getBundledInstrument(),
+    });
+    if (resolvedHydratedInstrument !== null) {
+        auditData$.instrument.set(resolvedHydratedInstrument);
     }
 
     setupAutoSave(targetUserId);
@@ -694,7 +697,6 @@ async function ensurePlaceAudit(
             syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
         });
         batch(() => {
-            auditData$.instrument.set(locallyStartedSession.instrument);
             auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
             auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
             auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
@@ -754,7 +756,6 @@ async function syncAuditSessionFromServer(session: AuthSession, auditId: string)
         syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
     });
     batch(() => {
-        auditData$.instrument.set(merged.instrument);
         auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
         auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
         auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
@@ -1310,7 +1311,6 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
             });
 
             batch(() => {
-                auditData$.instrument.set(resolved.session.instrument);
                 auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
                 auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
                 auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
@@ -1383,7 +1383,6 @@ function acknowledgeSave(saveResult: AuditDraftSave, snapshot: PendingAuditPatch
     );
 
     batch(() => {
-        auditData$.instrument.set(acknowledgedSession.instrument);
         auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
         auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
         auditData$.dirty_meta.set(nextDirtyState.dirtyMeta);
@@ -1515,7 +1514,6 @@ async function flushSingleAuditPendingChangesInternal(
                 });
 
                 batch(() => {
-                    auditData$.instrument.set(resolution.rebasedSession.instrument);
                     auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
                     auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
                     auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
@@ -1751,7 +1749,6 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
             syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
         });
         batch(() => {
-            auditData$.instrument.set(nextSession.instrument);
             auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
             auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
             auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
@@ -1810,7 +1807,6 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
                 });
 
                 batch(() => {
-                    auditData$.instrument.set(resolution.rebasedSession.instrument);
                     auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
                     auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
                     auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);

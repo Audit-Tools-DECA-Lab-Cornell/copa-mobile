@@ -19,6 +19,7 @@ import {
     matchesPlaceSearch,
 } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
+import { resolveAuditScopedInstrument } from "lib/audit/instrument-resolution";
 import {
     formatColumnSummary,
     formatScorePair,
@@ -253,7 +254,15 @@ export default function ReportsScreen() {
                 if (isCancelled) {
                     return;
                 }
-                setPreviewData(buildAuditExportPreview(exportableAudit, instrument!));
+                const previewInstrument = resolveAuditScopedInstrument({
+                    activeInstrument: instrument,
+                    auditSession: exportableAudit.auditSession,
+                });
+                if (previewInstrument === null) {
+                    setPreviewData(null);
+                    return;
+                }
+                setPreviewData(buildAuditExportPreview(exportableAudit, previewInstrument));
             })
             .catch(() => {
                 if (isCancelled) {

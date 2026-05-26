@@ -57,7 +57,6 @@ export default function ExecuteSectionScreen() {
     const navigation = useNavigation();
     const router = useRouter();
     const { t } = useTranslation(["audit", "common"]);
-    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -81,6 +80,7 @@ export default function ExecuteSectionScreen() {
     const sectionKey = readSingleParam(params.sectionKey);
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
 
     const visibleSections = getVisibleSectionsStable(instrument!, auditSession);
 

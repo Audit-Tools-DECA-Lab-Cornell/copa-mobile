@@ -10,7 +10,6 @@ import {
     buildExecuteOverviewSummary,
     doesExecutionModeRequireSpaceAudit,
     filterExecuteOverviewRows,
-    getExecuteFlowSubject,
     type ExecuteOverviewSectionFilter,
     type ExecuteOverviewSectionInput,
 } from "lib/audit/execute-flow";
@@ -46,7 +45,6 @@ export default function ExecuteSectionOverviewScreen() {
     const router = useRouter();
     const navigation = useNavigation();
     const { t } = useTranslation(["audit", "common"]);
-    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -69,6 +67,7 @@ export default function ExecuteSectionOverviewScreen() {
     const projectId = readSingleParam(params.projectId);
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
     const isCurrentAuditUserReady = authSession !== null && currentUserId === authSession.user.id;
     const places = useLocalFirstPlaces();
     const currentPlace = useMemo(() => {
@@ -282,13 +281,12 @@ export default function ExecuteSectionOverviewScreen() {
     const pendingSectionCount = Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
     const hasPendingPreAudit = dirtyPreAudit[auditSession.audit_id] !== undefined;
     const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
-    const flowSubject = t(`subjects.${getExecuteFlowSubject(selectedMode)}`, { ns: "audit" });
     const firstIncompleteSectionKey = sectionOverviewSummary.firstIncompleteSectionKey;
 
     const sectionReviewCard = (
         <SectionReviewCard
             summary={sectionOverviewSummary}
-            continueLabel={t("copy.continueToSubject", { ns: "audit", subject: flowSubject })}
+            continueLabel={t("copy.continueToCOPATool", { ns: "audit" })}
             onOpenSection={(sectionSummary) => {
                 router.push(
                     `/execute/${placeId}/section/${sectionSummary.sectionKey}?projectId=${encodeURIComponent(projectId)}` as Href,
@@ -434,16 +432,6 @@ function SectionReviewCard({
                 >
                     {t("overview.sections", { ns: "audit" })}
                 </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                >
-                    {t("overview.sectionOverviewHelper", {
-                        ns: "audit",
-                        defaultValue: "Use this page as the hub for the section-by-section audit.",
-                    })}
-                </Paragraph>
             </YStack>
 
             <XStack gap="$2" flexWrap="wrap">

@@ -154,7 +154,7 @@ function PlaceDetailContent({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["places", "common", "reports"]);
-    const instrument = useLocalizedInstrument();
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
     const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));

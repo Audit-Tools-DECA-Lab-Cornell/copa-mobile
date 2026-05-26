@@ -531,7 +531,6 @@ export default function AuditReportDetailScreen() {
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["reports", "common", "places"]);
     const toast = useToastController();
-    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{ auditId?: string | string[] }>();
     const session = useAuthStore((state) => state.session);
     const places = useLocalFirstPlaces();
@@ -548,6 +547,7 @@ export default function AuditReportDetailScreen() {
     const sectionOffsetsRef = useRef<Record<string, number>>({});
 
     const cachedAudit = auditId === null ? undefined : sessionsByAuditId[auditId];
+    const instrument = useLocalizedInstrument(auditSession?.instrument ?? cachedAudit?.instrument);
     const place = useMemo(() => {
         if (auditId === null) {
             return undefined;

@@ -32,6 +32,7 @@
         "queuedSubmitFailedMessage": "Your offline submission for {{placeName}} could not be delivered. Please resubmit or contact support."
     },
     "copy": {
+        "continueToCOPATool": "Continue with the COPA Tool",
         "continueToSubject": "Continue with {{subject}}",
         "continueToSubjectInfo": "Continue to {{subject}} details",
         "submitSubject": "Submit {{subject}}"

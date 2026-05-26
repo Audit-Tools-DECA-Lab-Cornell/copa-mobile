@@ -48,7 +48,6 @@ export default function ExecutePlaceScreen() {
     const router = useRouter();
     const navigation = useNavigation();
     const { t } = useTranslation(["audit", "common"]);
-    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -73,6 +72,7 @@ export default function ExecutePlaceScreen() {
     const projectId = readSingleParam(params.projectId);
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
     const isCurrentAuditUserReady = authSession !== null && currentUserId === authSession.user.id;
     const places = useLocalFirstPlaces();
     const currentPlace = useMemo(() => {
@@ -207,6 +207,7 @@ export default function ExecutePlaceScreen() {
 
     const roleCard = (
         <ExecutionModeCard
+            instrument={instrument}
             selectedMode={selectedMode}
             allowedModes={auditSession.allowed_execution_modes}
             projectName={auditSession.project_name}
@@ -474,6 +475,7 @@ function SetupFlowHintCard({ requiresSpaceAudit, isSetupFlowComplete }: Readonly
 }
 
 interface ExecutionModeCardProps {
+    readonly instrument: ReturnType<typeof useLocalizedInstrument>;
     readonly selectedMode: ExecutionMode | null;
     readonly allowedModes: readonly ExecutionMode[];
     readonly projectName: string;
@@ -486,6 +488,7 @@ interface ExecutionModeCardProps {
  * Render the execution-mode prompt that now sits at the bottom of the preamble flow.
  */
 function ExecutionModeCard({
+    instrument,
     selectedMode,
     allowedModes,
     projectName,
@@ -496,8 +499,6 @@ function ExecutionModeCard({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
-    const instrument = useLocalizedInstrument();
-
     return (
         <YStack
             rounded={ds.radii.md}

@@ -52,7 +52,7 @@ export default function ExecuteFinalCommentsScreen() {
     const lastSectionKey = readSingleParam(params.lastSectionKey);
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
-    const instrument = useLocalizedInstrument();
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
 
     const [localComments, setLocalComments] = useState("");
     const [isFocused, setIsFocused] = useState(false);

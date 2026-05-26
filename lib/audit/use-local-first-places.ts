@@ -98,9 +98,14 @@ export function getLocalProgressPercent(auditSession: AuditSession, instrument: 
 export function overlayLocalSessionOntoPlace(
     place: AuditorPlace,
     auditSession: AuditSession | undefined,
-    instrument: PlayspaceInstrument,
+    instrument: PlayspaceInstrument | null | undefined,
 ): AuditorPlace {
     if (auditSession === undefined) {
+        return place;
+    }
+
+    const resolvedInstrument = auditSession.instrument ?? instrument;
+    if (resolvedInstrument === null || resolvedInstrument === undefined) {
         return place;
     }
 
@@ -123,7 +128,7 @@ export function overlayLocalSessionOntoPlace(
         audit_id: auditSession.audit_id,
         started_at: auditSession.started_at,
         submitted_at: auditSession.submitted_at,
-        progress_percent: getLocalProgressPercent(auditSession, instrument),
+        progress_percent: getLocalProgressPercent(auditSession, resolvedInstrument),
         score_totals: auditSession.scores.overall,
         summary_score: place.summary_score,
         selected_execution_mode: executionMode,

@@ -367,10 +367,13 @@ export function localizeInstrument(
  *
  * @returns The localized playspace instrument for the active language.
  */
-export function useLocalizedInstrument(): PlayspaceInstrument | null {
+export function useLocalizedInstrument(
+    baseInstrumentOverride?: PlayspaceInstrument | null | undefined,
+): PlayspaceInstrument | null {
     const { i18n } = useTranslation(["instrument"]);
     const activeLanguage = i18n.resolvedLanguage ?? i18n.language;
-    const baseInstrument = usePlayspaceAuditStore((state) => state.instrument);
+    const activeInstrument = usePlayspaceAuditStore((state) => state.instrument);
+    const baseInstrument = baseInstrumentOverride ?? activeInstrument;
 
     return useMemo(() => {
         if (!baseInstrument) {

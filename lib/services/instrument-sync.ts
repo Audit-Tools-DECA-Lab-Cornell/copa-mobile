@@ -10,6 +10,7 @@ import * as Network from "expo-network";
 
 import { getApiBaseUrl } from "lib/api-base-url";
 import { getBundledInstrument } from "lib/audit/bundled-instrument";
+import { compareInstrumentVersions, resolveActiveInstrumentSource } from "lib/audit/instrument-resolution";
 import { createModuleLogger } from "lib/logger";
 import { mmkvStorage } from "lib/storage/mmkv";
 import { playspaceInstrumentSchema, type PlayspaceInstrument } from "lib/audit/types";
@@ -73,6 +74,7 @@ export function getCachedInstrument(): PlayspaceInstrument | null {
         const parsed = playspaceInstrumentSchema.safeParse(JSON.parse(raw));
         if (!parsed.success) {
             mmkvStorage.remove(INSTRUMENT_CACHE_KEY);
+            mmkvStorage.remove(INSTRUMENT_CACHE_TIMESTAMP_KEY);
             return null;
         }
         return parsed.data;
@@ -133,15 +135,27 @@ export async function syncInstrument(
     }
 
     const cached = getCachedInstrument();
-    if (cached !== null) {
-        log.info("using cached instrument");
-        return cached;
-    }
-
     const bundled = getBundledInstrument();
-    if (bundled !== null) {
-        log.info("using bundled fallback instrument");
-        return bundled;
+    const resolved = resolveActiveInstrumentSource({
+        fetchedInstrument: null,
+        cachedInstrument: cached,
+        bundledInstrument: bundled,
+    });
+
+    if (resolved !== null) {
+        if (cached === null || compareInstrumentVersions(resolved.instrument_version, cached.instrument_version) > 0) {
+            cacheInstrument(resolved);
+        }
+
+        if (cached !== null && resolved.instrument_version === cached.instrument_version) {
+            log.info("using cached instrument");
+        } else if (bundled !== null && resolved.instrument_version === bundled.instrument_version) {
+            log.info("using bundled fallback instrument");
+        } else {
+            log.info("using locally resolved instrument");
+        }
+
+        return resolved;
     }
 
     log.warn("no instrument available (offline, no cache, bundled validation failed)");

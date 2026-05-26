@@ -58,7 +58,6 @@ export default function SpaceAuditScreen() {
     const router = useRouter();
     const navigation = useNavigation();
     const { t } = useTranslation(["audit", "common"]);
-    const instrument = useLocalizedInstrument();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -77,6 +76,7 @@ export default function SpaceAuditScreen() {
     const projectId = readSingleParam(params.projectId);
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
     const auditSession = pairKey === null ? undefined : sessionsByPairKey[pairKey];
+    const instrument = useLocalizedInstrument(auditSession?.instrument);
     const [formValues, setFormValues] = useState<Record<string, string | string[]>>({});
     const formValuesRef = useRef<Record<string, string | string[]>>({});
     const formInitializedRef = useRef(false);
