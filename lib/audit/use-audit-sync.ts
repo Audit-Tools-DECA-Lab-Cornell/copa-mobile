@@ -8,7 +8,14 @@ import {
     shouldRetrySubmitResolution,
     type AutomaticSyncTrigger,
 } from "lib/audit/store-sync-core";
-import type { AuditSession, AuditSyncStateByAuditId, DirtyMeta, DirtyPreAudit, DirtySections } from "lib/audit/types";
+import type {
+    AuditSession,
+    AuditSyncStateByAuditId,
+    DirtyMeta,
+    DirtyPreAudit,
+    DirtySections,
+    DirtyStartedAt,
+} from "lib/audit/types";
 import type { AuthSession } from "lib/auth/types";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -24,6 +31,7 @@ interface AutomaticSyncSnapshot {
     readonly dirtySections: DirtySections;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtyMeta: DirtyMeta;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 }
 
@@ -39,6 +47,7 @@ function buildAutomaticSyncAuditIds(snapshot: AutomaticSyncSnapshot): string[] {
         dirtySections: snapshot.dirtySections,
         dirtyPreAudit: snapshot.dirtyPreAudit,
         dirtyMeta: snapshot.dirtyMeta,
+        dirtyStartedAt: snapshot.dirtyStartedAt,
     }).filter((auditId) => shouldAttemptAutomaticSync(snapshot.syncStateByAuditId[auditId]?.phase ?? "dirty"));
 }
 
@@ -56,7 +65,8 @@ function hasPendingSubmitResolutionRetry(snapshot: AutomaticSyncSnapshot): boole
             hasDirtyFragments:
                 snapshot.dirtyMeta[auditId] !== undefined ||
                 snapshot.dirtyPreAudit[auditId] !== undefined ||
-                Object.keys(snapshot.dirtySections[auditId] ?? {}).length > 0,
+                Object.keys(snapshot.dirtySections[auditId] ?? {}).length > 0 ||
+                snapshot.dirtyStartedAt[auditId] === true,
         }),
     );
 }
@@ -88,6 +98,7 @@ function runImmediateForegroundSync(session: AuthSession, trigger: AutomaticSync
             dirtySections: currentState.dirtySections,
             dirtyPreAudit: currentState.dirtyPreAudit,
             dirtyMeta: currentState.dirtyMeta,
+            dirtyStartedAt: currentState.dirtyStartedAt,
             syncStateByAuditId: currentState.syncStateByAuditId,
         })
     ) {
@@ -132,6 +143,7 @@ export function useAuditSync(): void {
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
     const dirtyPreAudit = usePlayspaceAuditStore((state) => state.dirtyPreAudit);
     const dirtyMeta = usePlayspaceAuditStore((state) => state.dirtyMeta);
+    const dirtyStartedAt = usePlayspaceAuditStore((state) => state.dirtyStartedAt);
     const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const isSyncing = usePlayspaceAuditStore((state) => state.isSyncing);
     const localChangeCounter = usePlayspaceAuditStore((state) => state.localChangeCounter);
@@ -143,9 +155,10 @@ export function useAuditSync(): void {
                 dirtySections,
                 dirtyPreAudit,
                 dirtyMeta,
+                dirtyStartedAt,
                 syncStateByAuditId,
             }),
-        [dirtyMeta, dirtyPreAudit, dirtySections, sessionsByAuditId, syncStateByAuditId],
+        [dirtyMeta, dirtyPreAudit, dirtySections, dirtyStartedAt, sessionsByAuditId, syncStateByAuditId],
     );
 
     const sessionRef = useRef(session);

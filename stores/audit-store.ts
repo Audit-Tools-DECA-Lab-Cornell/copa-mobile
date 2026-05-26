@@ -24,6 +24,7 @@ import {
     listPendingSubmitResolutionAuditIds,
     phaseForSaveConflictRecovery,
     phaseForSubmitConflictAction,
+    preserveLaterLocalStartTime,
     pruneCanonicalSubmittedAuditState,
     pruneAuditStateForAudit,
     resolveSaveConflict,
@@ -56,6 +57,7 @@ import type {
     DirtyMeta,
     DirtyPreAudit,
     DirtySections,
+    DirtyStartedAt,
     ExecutionMode,
     PlayspaceInstrument,
     PersistedAuditState,
@@ -112,6 +114,7 @@ interface PlayspaceAuditStoreState {
     readonly dirtySections: DirtySections;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtyMeta: DirtyMeta;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 
     hydrate: (accountId?: string | null) => Promise<void>;
@@ -163,6 +166,7 @@ type PersistedAuditDataSnapshot = Pick<
     | "dirty_sections"
     | "dirty_pre_audit"
     | "dirty_meta"
+    | "dirty_started_at"
     | "sync_state_by_audit_id"
     | "local_change_counter"
     | "last_successful_sync_at"
@@ -180,6 +184,7 @@ const auditData$ = observable({
     dirty_sections: {} as DirtySections,
     dirty_pre_audit: {} as DirtyPreAudit,
     dirty_meta: {} as DirtyMeta,
+    dirty_started_at: {} as DirtyStartedAt,
     sync_state_by_audit_id: {} as AuditSyncStateByAuditId,
     local_change_counter: 0,
     last_successful_sync_at: null as string | null,
@@ -295,6 +300,7 @@ function applyPersistedDataBatch(data: PersistedAuditDataSnapshot): void {
         auditData$.dirty_sections.set(data.dirty_sections);
         auditData$.dirty_pre_audit.set(data.dirty_pre_audit);
         auditData$.dirty_meta.set(data.dirty_meta);
+        auditData$.dirty_started_at.set(data.dirty_started_at);
         auditData$.sync_state_by_audit_id.set(data.sync_state_by_audit_id);
         auditData$.local_change_counter.set(data.local_change_counter);
         auditData$.last_successful_sync_at.set(data.last_successful_sync_at);
@@ -327,11 +333,13 @@ function hasDirtyFragmentsForAudit(
     dirtyMeta: DirtyMeta,
     dirtyPreAudit: DirtyPreAudit,
     dirtySections: DirtySections,
+    dirtyStartedAt: DirtyStartedAt,
 ): boolean {
     return (
         dirtyMeta[auditId] !== undefined ||
         dirtyPreAudit[auditId] !== undefined ||
-        Object.keys(dirtySections[auditId] ?? {}).length > 0
+        Object.keys(dirtySections[auditId] ?? {}).length > 0 ||
+        dirtyStartedAt[auditId] === true
     );
 }
 
@@ -352,13 +360,16 @@ function readEffectiveAuditSyncPhase(
     dirtyMeta: DirtyMeta,
     dirtyPreAudit: DirtyPreAudit,
     dirtySections: DirtySections,
+    dirtyStartedAt: DirtyStartedAt,
 ): "idle" | "dirty" | (typeof syncStateByAuditId)[string]["phase"] {
     const syncState = syncStateByAuditId[auditId];
     if (syncState !== undefined) {
         return syncState.phase;
     }
 
-    return hasDirtyFragmentsForAudit(auditId, dirtyMeta, dirtyPreAudit, dirtySections) ? "dirty" : "idle";
+    return hasDirtyFragmentsForAudit(auditId, dirtyMeta, dirtyPreAudit, dirtySections, dirtyStartedAt)
+        ? "dirty"
+        : "idle";
 }
 
 /**
@@ -373,6 +384,7 @@ function buildCurrentAutomaticSyncAuditIds(): string[] {
         dirtySections: data.dirty_sections,
         dirtyPreAudit: data.dirty_pre_audit,
         dirtyMeta: data.dirty_meta,
+        dirtyStartedAt: data.dirty_started_at,
     }).filter((auditId) =>
         shouldAttemptAutomaticSync(
             readEffectiveAuditSyncPhase(
@@ -381,6 +393,7 @@ function buildCurrentAutomaticSyncAuditIds(): string[] {
                 data.dirty_meta,
                 data.dirty_pre_audit,
                 data.dirty_sections,
+                data.dirty_started_at,
             ),
         ),
     );
@@ -536,6 +549,7 @@ async function hydrate(accountId?: string | null): Promise<void> {
             dirty_sections: {},
             dirty_pre_audit: {},
             dirty_meta: {},
+            dirty_started_at: {},
             sync_state_by_audit_id: {},
             local_change_counter: 0,
             last_successful_sync_at: null,
@@ -575,6 +589,7 @@ async function hydrate(accountId?: string | null): Promise<void> {
                 dirtyMeta: data.dirty_meta,
                 dirtyPreAudit: data.dirty_pre_audit,
                 dirtySections: data.dirty_sections,
+                dirtyStartedAt: data.dirty_started_at,
                 syncStateByAuditId: data.sync_state_by_audit_id,
             });
             applyPersistedDataBatch({
@@ -583,6 +598,7 @@ async function hydrate(accountId?: string | null): Promise<void> {
                 dirty_meta: restoredPersistedSyncState.dirtyMeta,
                 dirty_pre_audit: restoredPersistedSyncState.dirtyPreAudit,
                 dirty_sections: restoredPersistedSyncState.dirtySections,
+                dirty_started_at: restoredPersistedSyncState.dirtyStartedAt,
                 sync_state_by_audit_id: restoredPersistedSyncState.syncStateByAuditId,
             });
             saveNow();
@@ -629,6 +645,7 @@ async function clearStoredState(accountId?: string | null): Promise<void> {
             dirty_sections: {},
             dirty_pre_audit: {},
             dirty_meta: {},
+            dirty_started_at: {},
             sync_state_by_audit_id: {},
             local_change_counter: 0,
             last_successful_sync_at: null,
@@ -669,19 +686,24 @@ async function ensurePlaceAudit(
             dirtyMeta: data.dirty_meta,
             dirtyPreAudit: data.dirty_pre_audit,
             dirtySections: data.dirty_sections,
+            dirtyStartedAt: data.dirty_started_at,
         }).session;
-        const locallyStartedSession =
+        const stampResult =
             currentSession === null
                 ? applyLocalAuditStartChange({
                       session: merged,
                       startedAt: new Date().toISOString(),
-                  }).session
-                : merged;
+                      dirtyStartedAt: data.dirty_started_at,
+                  })
+                : null;
+        const locallyStartedSession = stampResult?.session ?? merged;
+        const nextDirtyStartedAt = stampResult?.dirtyStartedAt ?? data.dirty_started_at;
         const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
             session: locallyStartedSession,
             dirtyMeta: data.dirty_meta,
             dirtyPreAudit: data.dirty_pre_audit,
             dirtySections: data.dirty_sections,
+            dirtyStartedAt: nextDirtyStartedAt,
             syncStateByAuditId: data.sync_state_by_audit_id,
         });
         const nextSessionMaps = upsertAuditSessionMaps({
@@ -694,15 +716,26 @@ async function ensurePlaceAudit(
             dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
             dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
             dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+            dirtyStartedAt: nextPrunedSubmittedAuditState.dirtyStartedAt,
             syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
         });
+        const stampedAudit =
+            stampResult?.didChange === true
+                ? writeAuditSyncState(
+                      nextPrunedAuditState.syncStateByAuditId,
+                      locallyStartedSession.audit_id,
+                      "dirty",
+                      new Date().toISOString(),
+                  )
+                : nextPrunedAuditState.syncStateByAuditId;
         batch(() => {
             auditData$.sessions_by_audit_id.set(nextSessionMaps.sessionsByAuditId);
             auditData$.sessions_by_pair_key.set(nextSessionMaps.sessionsByPairKey);
             auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
             auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
             auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
-            auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
+            auditData$.dirty_started_at.set(nextPrunedAuditState.dirtyStartedAt);
+            auditData$.sync_state_by_audit_id.set(stampedAudit);
             auditUI$.isLoadingAudit.set(false);
             auditUI$.errorMessage.set(null);
         });
@@ -735,12 +768,14 @@ async function syncAuditSessionFromServer(session: AuthSession, auditId: string)
         dirtyMeta: data.dirty_meta,
         dirtyPreAudit: data.dirty_pre_audit,
         dirtySections: data.dirty_sections,
+        dirtyStartedAt: data.dirty_started_at,
     }).session;
     const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
         session: merged,
         dirtyMeta: data.dirty_meta,
         dirtyPreAudit: data.dirty_pre_audit,
         dirtySections: data.dirty_sections,
+        dirtyStartedAt: data.dirty_started_at,
         syncStateByAuditId: data.sync_state_by_audit_id,
     });
     const nextSessionMaps = upsertAuditSessionMaps({
@@ -753,6 +788,7 @@ async function syncAuditSessionFromServer(session: AuthSession, auditId: string)
         dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
         dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
         dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+        dirtyStartedAt: nextPrunedSubmittedAuditState.dirtyStartedAt,
         syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
     });
     batch(() => {
@@ -761,6 +797,7 @@ async function syncAuditSessionFromServer(session: AuthSession, auditId: string)
         auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
         auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
         auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+        auditData$.dirty_started_at.set(nextPrunedAuditState.dirtyStartedAt);
         auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
     });
     saveNow();
@@ -815,6 +852,7 @@ function applyLocalExecutionMode(pairKey: string, executionMode: ExecutionMode):
         auditData$.dirty_meta.peek(),
         auditData$.dirty_pre_audit.peek(),
         auditData$.dirty_sections.peek(),
+        auditData$.dirty_started_at.peek(),
     );
     if (
         !canEditAuditInputs({
@@ -874,6 +912,7 @@ function applyLocalFinalComments(pairKey: string, finalComments: string): void {
         auditData$.dirty_meta.peek(),
         auditData$.dirty_pre_audit.peek(),
         auditData$.dirty_sections.peek(),
+        auditData$.dirty_started_at.peek(),
     );
     if (
         !canEditAuditInputs({
@@ -938,6 +977,7 @@ function applyLocalQuestionAnswer(
         auditData$.dirty_meta.peek(),
         auditData$.dirty_pre_audit.peek(),
         auditData$.dirty_sections.peek(),
+        auditData$.dirty_started_at.peek(),
     );
     if (
         !canEditAuditInputs({
@@ -999,6 +1039,7 @@ function applyLocalSectionNote(pairKey: string, sectionKey: string, note: string
         auditData$.dirty_meta.peek(),
         auditData$.dirty_pre_audit.peek(),
         auditData$.dirty_sections.peek(),
+        auditData$.dirty_started_at.peek(),
     );
     if (
         !canEditAuditInputs({
@@ -1059,6 +1100,7 @@ function applyLocalPreAudit(pairKey: string, values: Record<string, string | str
         auditData$.dirty_meta.peek(),
         auditData$.dirty_pre_audit.peek(),
         auditData$.dirty_sections.peek(),
+        auditData$.dirty_started_at.peek(),
     );
     if (
         !canEditAuditInputs({
@@ -1120,6 +1162,7 @@ function prepareAutomaticSyncAudits(trigger: AutomaticSyncTrigger): string[] {
         dirtySections: data.dirty_sections,
         dirtyPreAudit: data.dirty_pre_audit,
         dirtyMeta: data.dirty_meta,
+        dirtyStartedAt: data.dirty_started_at,
     });
     const candidateAuditIds = new Set<string>([...syncableAuditIds, ...Object.keys(data.sync_state_by_audit_id)]);
     const updatedAt = new Date().toISOString();
@@ -1137,6 +1180,7 @@ function prepareAutomaticSyncAudits(trigger: AutomaticSyncTrigger): string[] {
             data.dirty_meta,
             data.dirty_pre_audit,
             data.dirty_sections,
+            data.dirty_started_at,
         );
 
         if (
@@ -1222,6 +1266,7 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
         dirtyMeta: data.dirty_meta,
         dirtyPreAudit: data.dirty_pre_audit,
         dirtySections: data.dirty_sections,
+        dirtyStartedAt: data.dirty_started_at,
         ...(requestedAuditIds === undefined ? {} : { requestedAuditIds }),
     })) {
         const data = auditData$.peek();
@@ -1235,6 +1280,7 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
                     data.dirty_meta,
                     data.dirty_pre_audit,
                     data.dirty_sections,
+                    data.dirty_started_at,
                 ),
             })
         ) {
@@ -1262,6 +1308,7 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
                         latestData.dirty_meta,
                         latestData.dirty_pre_audit,
                         latestData.dirty_sections,
+                        latestData.dirty_started_at,
                     ),
                 })
             ) {
@@ -1278,12 +1325,14 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
                 dirtyMeta: latestData.dirty_meta,
                 dirtyPreAudit: latestData.dirty_pre_audit,
                 dirtySections: latestData.dirty_sections,
+                dirtyStartedAt: latestData.dirty_started_at,
             }).session;
             const resolved = finishSubmitResolution({
                 latestSession: rebasedSession,
                 currentDirtyMeta: latestData.dirty_meta,
                 currentDirtyPreAudit: latestData.dirty_pre_audit,
                 currentDirtySections: latestData.dirty_sections,
+                currentDirtyStartedAt: latestData.dirty_started_at,
             });
             const updatedAt = new Date().toISOString();
             const nextSessionMaps = upsertAuditSessionMaps({
@@ -1300,6 +1349,7 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
                 dirtyMeta: resolved.dirtyMeta,
                 dirtyPreAudit: resolved.dirtyPreAudit,
                 dirtySections: resolved.dirtySections,
+                dirtyStartedAt: resolved.dirtyStartedAt,
                 syncStateByAuditId: nextSyncStateByAuditId,
             });
             const nextPrunedAuditState = pruneAuditStateForAudit({
@@ -1307,6 +1357,7 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
                 dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
                 dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
                 dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+                dirtyStartedAt: nextPrunedSubmittedAuditState.dirtyStartedAt,
                 syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
             });
 
@@ -1316,6 +1367,7 @@ async function resolvePendingSubmitStates(session: AuthSession, requestedAuditId
                 auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
                 auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
                 auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+                auditData$.dirty_started_at.set(nextPrunedAuditState.dirtyStartedAt);
                 auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
                 if (resolved.phase !== "dirty") {
                     auditData$.last_successful_sync_at.set(updatedAt);
@@ -1364,6 +1416,7 @@ function acknowledgeSave(saveResult: AuditDraftSave, snapshot: PendingAuditPatch
         currentDirtySections: auditData$.dirty_sections.peek(),
         currentDirtyPreAudit: auditData$.dirty_pre_audit.peek(),
         currentDirtyMeta: auditData$.dirty_meta.peek(),
+        currentDirtyStartedAt: auditData$.dirty_started_at.peek(),
         snapshot,
     });
     const updatedAt = new Date().toISOString();
@@ -1372,6 +1425,7 @@ function acknowledgeSave(saveResult: AuditDraftSave, snapshot: PendingAuditPatch
         nextDirtyState.dirtyMeta,
         nextDirtyState.dirtyPreAudit,
         nextDirtyState.dirtySections,
+        nextDirtyState.dirtyStartedAt,
     )
         ? "dirty"
         : "idle";
@@ -1388,6 +1442,7 @@ function acknowledgeSave(saveResult: AuditDraftSave, snapshot: PendingAuditPatch
         auditData$.dirty_meta.set(nextDirtyState.dirtyMeta);
         auditData$.dirty_sections.set(nextDirtyState.dirtySections);
         auditData$.dirty_pre_audit.set(nextDirtyState.dirtyPreAudit);
+        auditData$.dirty_started_at.set(nextDirtyState.dirtyStartedAt);
         auditData$.sync_state_by_audit_id.set(nextSyncStateByAuditId);
         auditData$.last_successful_sync_at.set(updatedAt);
     });
@@ -1404,6 +1459,7 @@ async function flushSingleAuditPendingChangesInternal(
         data.dirty_meta,
         data.dirty_pre_audit,
         data.dirty_sections,
+        data.dirty_started_at,
     );
     if (currentPhase !== "dirty") {
         return {
@@ -1426,6 +1482,7 @@ async function flushSingleAuditPendingChangesInternal(
         dirtyMeta: data.dirty_meta,
         dirtyPreAudit: data.dirty_pre_audit,
         dirtySections: data.dirty_sections,
+        dirtyStartedAt: data.dirty_started_at,
     });
     if (patchSnapshot === null) {
         auditData$.sync_state_by_audit_id.set(
@@ -1466,6 +1523,7 @@ async function flushSingleAuditPendingChangesInternal(
                     dirtyMeta: currentData.dirty_meta,
                     dirtyPreAudit: currentData.dirty_pre_audit,
                     dirtySections: currentData.dirty_sections,
+                    dirtyStartedAt: currentData.dirty_started_at,
                 });
                 if (
                     getOwnedAuditSessionForResponse({
@@ -1491,6 +1549,7 @@ async function flushSingleAuditPendingChangesInternal(
                     dirtyMeta: resolution.dirtyMeta,
                     dirtyPreAudit: resolution.dirtyPreAudit,
                     dirtySections: resolution.dirtySections,
+                    dirtyStartedAt: resolution.dirtyStartedAt,
                     recoveredWithoutRetry: resolution.recoveredWithoutRetry,
                 });
                 const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
@@ -1498,6 +1557,7 @@ async function flushSingleAuditPendingChangesInternal(
                     dirtyMeta: resolution.dirtyMeta,
                     dirtyPreAudit: resolution.dirtyPreAudit,
                     dirtySections: resolution.dirtySections,
+                    dirtyStartedAt: resolution.dirtyStartedAt,
                     syncStateByAuditId: writeAuditSyncState(
                         currentData.sync_state_by_audit_id,
                         auditId,
@@ -1510,6 +1570,7 @@ async function flushSingleAuditPendingChangesInternal(
                     dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
                     dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
                     dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+                    dirtyStartedAt: nextPrunedSubmittedAuditState.dirtyStartedAt,
                     syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
                 });
 
@@ -1519,6 +1580,7 @@ async function flushSingleAuditPendingChangesInternal(
                     auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
                     auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
                     auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+                    auditData$.dirty_started_at.set(nextPrunedAuditState.dirtyStartedAt);
                     auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
                     if (resolution.action === "terminalize_submitted" || resolution.recoveredWithoutRetry) {
                         auditData$.last_successful_sync_at.set(updatedAt);
@@ -1620,6 +1682,7 @@ function buildTargetAutomaticSyncAuditIds(requestedAuditIds?: readonly string[])
             data.dirty_meta,
             data.dirty_pre_audit,
             data.dirty_sections,
+            data.dirty_started_at,
         );
         return currentPhase === "dirty" || currentPhase === "saving";
     });
@@ -1728,17 +1791,22 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
                 data.sessions_by_pair_key[getProjectPlaceKey(nextSession.project_id, nextSession.place_id)];
             return currentPairOwner ?? nextSession;
         }
+        // Belt-and-suspenders: preserve a later local execute-time stamp when the
+        // submitted server response reports an earlier started_at.
+        const mergedNextSession =
+            latestSession === undefined ? nextSession : preserveLaterLocalStartTime(latestSession, nextSession);
         const updatedAt = new Date().toISOString();
         const nextSessionMaps = upsertAuditSessionMaps({
             sessionsByAuditId: data.sessions_by_audit_id,
             sessionsByPairKey: data.sessions_by_pair_key,
-            nextSession,
+            nextSession: mergedNextSession,
         });
         const nextPrunedSubmittedAuditState = pruneCanonicalSubmittedAuditState({
-            session: nextSession,
+            session: mergedNextSession,
             dirtyMeta: data.dirty_meta,
             dirtyPreAudit: data.dirty_pre_audit,
             dirtySections: data.dirty_sections,
+            dirtyStartedAt: data.dirty_started_at,
             syncStateByAuditId: writeAuditSyncState(data.sync_state_by_audit_id, auditId, "submitted", updatedAt),
         });
         const nextPrunedAuditState = pruneAuditStateForAudit({
@@ -1746,6 +1814,7 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
             dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
             dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
             dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+            dirtyStartedAt: nextPrunedSubmittedAuditState.dirtyStartedAt,
             syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
         });
         batch(() => {
@@ -1754,12 +1823,13 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
             auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
             auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
             auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+            auditData$.dirty_started_at.set(nextPrunedAuditState.dirtyStartedAt);
             auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
             auditUI$.errorMessage.set(null);
             auditData$.last_successful_sync_at.set(updatedAt);
         });
         saveNow();
-        return nextSession;
+        return mergedNextSession;
     } catch (error) {
         if (error instanceof PlayspaceAuditApiError && error.statusCode === 409) {
             let requiresExplicitResubmit = false;
@@ -1777,6 +1847,7 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
                     dirtyMeta: data.dirty_meta,
                     dirtyPreAudit: data.dirty_pre_audit,
                     dirtySections: data.dirty_sections,
+                    dirtyStartedAt: data.dirty_started_at,
                 });
                 const updatedAt = new Date().toISOString();
                 const conflictMessage = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
@@ -1790,6 +1861,7 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
                     dirtyMeta: resolution.dirtyMeta,
                     dirtyPreAudit: resolution.dirtyPreAudit,
                     dirtySections: resolution.dirtySections,
+                    dirtyStartedAt: resolution.dirtyStartedAt,
                     syncStateByAuditId: writeAuditSyncState(
                         data.sync_state_by_audit_id,
                         auditId,
@@ -1803,6 +1875,7 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
                     dirtyMeta: nextPrunedSubmittedAuditState.dirtyMeta,
                     dirtyPreAudit: nextPrunedSubmittedAuditState.dirtyPreAudit,
                     dirtySections: nextPrunedSubmittedAuditState.dirtySections,
+                    dirtyStartedAt: nextPrunedSubmittedAuditState.dirtyStartedAt,
                     syncStateByAuditId: nextPrunedSubmittedAuditState.syncStateByAuditId,
                 });
 
@@ -1812,6 +1885,7 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
                     auditData$.dirty_meta.set(nextPrunedAuditState.dirtyMeta);
                     auditData$.dirty_sections.set(nextPrunedAuditState.dirtySections);
                     auditData$.dirty_pre_audit.set(nextPrunedAuditState.dirtyPreAudit);
+                    auditData$.dirty_started_at.set(nextPrunedAuditState.dirtyStartedAt);
                     auditData$.sync_state_by_audit_id.set(nextPrunedAuditState.syncStateByAuditId);
                     auditUI$.errorMessage.set(resolution.action === "terminalize_submitted" ? null : conflictMessage);
                     if (resolution.action === "terminalize_submitted") {
@@ -1889,6 +1963,7 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
             latestData.dirty_meta,
             latestData.dirty_pre_audit,
             latestData.dirty_sections,
+            latestData.dirty_started_at,
         );
         auditData$.sync_state_by_audit_id.set(
             writeAuditSyncState(
@@ -1995,6 +2070,7 @@ const dataGetters: Record<string, () => unknown> = {
     dirtySections: () => auditData$.dirty_sections.get(),
     dirtyPreAudit: () => auditData$.dirty_pre_audit.get(),
     dirtyMeta: () => auditData$.dirty_meta.get(),
+    dirtyStartedAt: () => auditData$.dirty_started_at.get(),
     syncStateByAuditId: () => auditData$.sync_state_by_audit_id.get(),
 };
 
@@ -2047,6 +2123,7 @@ function buildEagerState(): PlayspaceAuditStoreState {
         dirtySections: auditData$.dirty_sections.peek(),
         dirtyPreAudit: auditData$.dirty_pre_audit.peek(),
         dirtyMeta: auditData$.dirty_meta.peek(),
+        dirtyStartedAt: auditData$.dirty_started_at.peek(),
         syncStateByAuditId: auditData$.sync_state_by_audit_id.peek(),
         ...actions,
     };

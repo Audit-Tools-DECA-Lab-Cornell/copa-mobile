@@ -3,6 +3,9 @@ import { z } from "zod";
 export type DirtySections = Record<string, Record<string, number>>;
 export type DirtyPreAudit = Record<string, number>;
 export type DirtyMeta = Record<string, number>;
+// One-shot flag per audit: set when the execute-time started_at stamp lands
+// locally on a pristine draft and must be pushed to the backend on next sync.
+export type DirtyStartedAt = Record<string, boolean>;
 
 export const executionModeSchema = z.enum(["audit", "survey", "both"]);
 export const auditStatusSchema = z.enum(["IN_PROGRESS", "PAUSED", "SUBMITTED"]);
@@ -300,6 +303,9 @@ export const auditDraftPatchSchema = z.object({
         .optional(),
     pre_audit: preAuditDraftSchema.nullable().optional(),
     sections: z.record(z.string(), sectionDraftPatchSchema).default({}),
+    // Execute-time started_at correction (FEAT-01). Sent on the first sync after
+    // the auditor opens the execute screen on a pristine audit.
+    started_at: z.iso.datetime().optional(),
 });
 
 export const auditDraftSaveSchema = z.object({
@@ -322,6 +328,8 @@ const dirtyPreAuditSchema = z
     .transform<DirtyPreAudit>((value) => normalizeDirtyPreAudit(value));
 
 const dirtyMetaSchema = z.record(z.string(), z.number().int().nonnegative());
+
+const dirtyStartedAtSchema = z.record(z.string(), z.boolean());
 
 export const auditSyncPhaseSchema = z.enum([
     "idle",
@@ -354,6 +362,7 @@ export const persistedAuditStateSchema = z.object({
     dirty_sections: dirtySectionsSchema.default({}),
     dirty_pre_audit: dirtyPreAuditSchema.default({}),
     dirty_meta: dirtyMetaSchema.default({}),
+    dirty_started_at: dirtyStartedAtSchema.default({}),
     sync_state_by_audit_id: auditSyncStateByAuditIdSchema.default({}),
     local_change_counter: z.number().int().nonnegative().default(0),
     last_successful_sync_at: z.string().nullable().default(null),

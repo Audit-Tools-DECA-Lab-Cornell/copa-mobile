@@ -197,6 +197,7 @@ describe("audit meta final comments", () => {
             dirtyMeta: { [session.audit_id]: 4 },
             dirtyPreAudit: {},
             dirtySections: {},
+            dirtyStartedAt: {},
         });
 
         expect(snapshot?.patch.meta).toEqual({
@@ -228,6 +229,7 @@ describe("audit meta final comments", () => {
         const result = applyLocalAuditStartChange({
             session,
             startedAt: "2026-05-10T08:30:00.000Z",
+            dirtyStartedAt: {},
         });
 
         expect(result.didChange).toBe(true);
@@ -240,6 +242,7 @@ describe("audit meta final comments", () => {
         const result = applyLocalAuditStartChange({
             session,
             startedAt: "2026-05-10T08:30:00.000Z",
+            dirtyStartedAt: {},
         });
 
         expect(result.didChange).toBe(false);
@@ -267,8 +270,62 @@ describe("audit meta final comments", () => {
             dirtyMeta: {},
             dirtyPreAudit: {},
             dirtySections: {},
+            dirtyStartedAt: {},
         });
 
         expect(result.session.started_at).toBe("2026-05-10T08:30:00.000Z");
+    });
+
+    it("flags dirty_started_at when a pristine audit is stamped locally", () => {
+        const session = buildPristineSession();
+
+        const result = applyLocalAuditStartChange({
+            session,
+            startedAt: "2026-05-10T08:30:00.000Z",
+            dirtyStartedAt: {},
+        });
+
+        expect(result.didChange).toBe(true);
+        expect(result.dirtyStartedAt[session.audit_id]).toBe(true);
+    });
+
+    it("emits started_at in the draft patch snapshot when only the started_at flag is dirty", () => {
+        const session = auditSessionSchema.parse({
+            ...buildPristineSession(),
+            started_at: "2026-05-10T08:30:00.000Z",
+        });
+
+        const snapshot = buildDraftPatchSnapshot({
+            auditId: session.audit_id,
+            session,
+            dirtyMeta: {},
+            dirtyPreAudit: {},
+            dirtySections: {},
+            dirtyStartedAt: { [session.audit_id]: true },
+        });
+
+        expect(snapshot).not.toBeNull();
+        expect(snapshot?.startedAtFlagged).toBe(true);
+        expect(snapshot?.patch.started_at).toBe("2026-05-10T08:30:00.000Z");
+        expect(snapshot?.patch.meta).toBeUndefined();
+        expect(snapshot?.patch.pre_audit).toBeUndefined();
+        expect(snapshot?.patch.sections).toEqual({});
+    });
+
+    it("omits started_at from the draft patch snapshot when the flag is not set", () => {
+        const session = buildSession();
+
+        const snapshot = buildDraftPatchSnapshot({
+            auditId: session.audit_id,
+            session,
+            dirtyMeta: { [session.audit_id]: 7 },
+            dirtyPreAudit: {},
+            dirtySections: {},
+            dirtyStartedAt: {},
+        });
+
+        expect(snapshot).not.toBeNull();
+        expect(snapshot?.startedAtFlagged).toBe(false);
+        expect(snapshot?.patch.started_at).toBeUndefined();
     });
 });

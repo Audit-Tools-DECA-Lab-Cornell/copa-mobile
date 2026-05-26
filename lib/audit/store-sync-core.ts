@@ -18,6 +18,7 @@ import type {
     DirtyMeta,
     DirtyPreAudit,
     DirtySections,
+    DirtyStartedAt,
     ExecutionMode,
     QuestionResponsePayload,
     QuestionResponseValue,
@@ -28,6 +29,7 @@ interface BuildSyncableAuditIdsArgs {
     readonly dirtySections: DirtySections;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtyMeta: DirtyMeta;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface RestorePersistedSyncStateArgs {
@@ -36,6 +38,7 @@ interface RestorePersistedSyncStateArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 }
 
@@ -45,6 +48,7 @@ interface BuildDraftPatchSnapshotArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface ApplyLocalQuestionAnswerChangeArgs {
@@ -81,6 +85,7 @@ interface ApplyLocalExecutionModeChangeArgs {
 interface ApplyLocalAuditStartChangeArgs {
     readonly session: AuditSession;
     readonly startedAt: string;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface ApplyLocalFinalCommentsChangeArgs {
@@ -107,12 +112,14 @@ interface ClearAcknowledgedDirtyStateArgs {
     readonly currentDirtySections: DirtySections;
     readonly currentDirtyPreAudit: DirtyPreAudit;
     readonly currentDirtyMeta: DirtyMeta;
+    readonly currentDirtyStartedAt: DirtyStartedAt;
     readonly snapshot: {
         readonly auditId: string;
         readonly expectedRevision: number;
         readonly metaVersion: number | null;
         readonly preAuditVersion: number | null;
         readonly sectionVersions: Record<string, number>;
+        readonly startedAtFlagged: boolean;
     };
 }
 
@@ -122,6 +129,7 @@ interface ApplyFetchedSessionSnapshotArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface PrepareConflictRecoverySnapshotArgs {
@@ -131,6 +139,7 @@ interface PrepareConflictRecoverySnapshotArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface ApplyLocalQuestionAnswerChangeResult {
@@ -159,6 +168,7 @@ interface ApplyLocalExecutionModeChangeResult {
 
 interface ApplyLocalAuditStartChangeResult {
     readonly session: AuditSession;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly didChange: boolean;
 }
 
@@ -177,6 +187,7 @@ interface PrepareConflictRecoverySnapshotResult {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly retrySnapshot: PendingAuditPatchSnapshot | null;
     readonly recoveredWithoutRetry: boolean;
 }
@@ -185,6 +196,7 @@ interface ClearAcknowledgedDirtyStateResult {
     readonly dirtySections: DirtySections;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtyMeta: DirtyMeta;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface UpsertAuditSessionMapsArgs {
@@ -223,6 +235,7 @@ interface ListPendingSubmitResolutionAuditIdsArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly requestedAuditIds?: readonly string[];
 }
 
@@ -232,6 +245,7 @@ interface ResolveSaveConflictArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface ResolveSubmitConflictArgs {
@@ -240,6 +254,7 @@ interface ResolveSubmitConflictArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface FinishSubmitResolutionArgs {
@@ -247,6 +262,7 @@ interface FinishSubmitResolutionArgs {
     readonly currentDirtyMeta: DirtyMeta;
     readonly currentDirtyPreAudit: DirtyPreAudit;
     readonly currentDirtySections: DirtySections;
+    readonly currentDirtyStartedAt: DirtyStartedAt;
 }
 
 interface DeriveGlobalSyncFeedbackArgs {
@@ -264,6 +280,7 @@ interface ResolveSaveConflictResult {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly retrySnapshot: PendingAuditPatchSnapshot | null;
     readonly recoveredWithoutRetry: boolean;
 }
@@ -274,6 +291,7 @@ interface ResolveSubmitConflictResult {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 }
 
 interface GlobalSyncFeedback {
@@ -289,6 +307,7 @@ interface PruneAuditStateForAuditArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 }
 
@@ -297,6 +316,7 @@ interface PruneCanonicalSubmittedAuditStateArgs {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 }
 
@@ -307,6 +327,7 @@ export interface PendingAuditPatchSnapshot {
     readonly metaVersion: number | null;
     readonly preAuditVersion: number | null;
     readonly sectionVersions: Record<string, number>;
+    readonly startedAtFlagged: boolean;
 }
 
 /** Why automatic sync ran: connectivity/foreground, auth, checkpoints, or app lifecycle. */
@@ -353,6 +374,7 @@ export function buildSyncableAuditIds(args: BuildSyncableAuditIdsArgs): string[]
         ...Object.keys(args.dirtySections),
         ...Object.keys(args.dirtyPreAudit),
         ...Object.keys(args.dirtyMeta),
+        ...Object.keys(args.dirtyStartedAt),
     ]);
 
     return [...candidateIds].filter((auditId) => {
@@ -364,7 +386,8 @@ export function buildSyncableAuditIds(args: BuildSyncableAuditIdsArgs): string[]
         return (
             args.dirtyMeta[auditId] !== undefined ||
             args.dirtyPreAudit[auditId] !== undefined ||
-            Object.keys(args.dirtySections[auditId] ?? {}).length > 0
+            Object.keys(args.dirtySections[auditId] ?? {}).length > 0 ||
+            args.dirtyStartedAt[auditId] === true
         );
     });
 }
@@ -505,6 +528,7 @@ export function listPendingSubmitResolutionAuditIds(args: ListPendingSubmitResol
                 args.dirtyMeta,
                 args.dirtyPreAudit,
                 args.dirtySections,
+                args.dirtyStartedAt,
             ),
         });
     });
@@ -676,6 +700,7 @@ export function resolveSaveConflict(args: ResolveSaveConflictArgs): ResolveSaveC
         dirtyMeta: args.dirtyMeta,
         dirtyPreAudit: args.dirtyPreAudit,
         dirtySections: args.dirtySections,
+        dirtyStartedAt: args.dirtyStartedAt,
     });
 
     if (!isAuditSessionEditable(recovery.session)) {
@@ -685,6 +710,7 @@ export function resolveSaveConflict(args: ResolveSaveConflictArgs): ResolveSaveC
             dirtyMeta: recovery.dirtyMeta,
             dirtyPreAudit: recovery.dirtyPreAudit,
             dirtySections: recovery.dirtySections,
+            dirtyStartedAt: recovery.dirtyStartedAt,
             retrySnapshot: null,
             recoveredWithoutRetry: true,
         };
@@ -696,6 +722,7 @@ export function resolveSaveConflict(args: ResolveSaveConflictArgs): ResolveSaveC
         dirtyMeta: recovery.dirtyMeta,
         dirtyPreAudit: recovery.dirtyPreAudit,
         dirtySections: recovery.dirtySections,
+        dirtyStartedAt: recovery.dirtyStartedAt,
         retrySnapshot: recovery.retrySnapshot,
         recoveredWithoutRetry: recovery.recoveredWithoutRetry,
     };
@@ -716,6 +743,7 @@ export function resolveSubmitConflict(args: ResolveSubmitConflictArgs): ResolveS
         dirtyMeta: args.dirtyMeta,
         dirtyPreAudit: args.dirtyPreAudit,
         dirtySections: args.dirtySections,
+        dirtyStartedAt: args.dirtyStartedAt,
     });
 
     if (!isAuditSessionEditable(recovery.session)) {
@@ -725,6 +753,7 @@ export function resolveSubmitConflict(args: ResolveSubmitConflictArgs): ResolveS
             dirtyMeta: recovery.dirtyMeta,
             dirtyPreAudit: recovery.dirtyPreAudit,
             dirtySections: recovery.dirtySections,
+            dirtyStartedAt: recovery.dirtyStartedAt,
         };
     }
 
@@ -734,6 +763,7 @@ export function resolveSubmitConflict(args: ResolveSubmitConflictArgs): ResolveS
         dirtyMeta: recovery.dirtyMeta,
         dirtyPreAudit: recovery.dirtyPreAudit,
         dirtySections: recovery.dirtySections,
+        dirtyStartedAt: recovery.dirtyStartedAt,
     };
 }
 
@@ -761,6 +791,7 @@ export function phaseForSaveConflictRecovery(args: {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly recoveredWithoutRetry: boolean;
 }): AuditSyncPhase {
     if (args.action === "terminalize_submitted" || !isAuditSessionEditable(args.rebasedSession)) {
@@ -776,6 +807,7 @@ export function phaseForSaveConflictRecovery(args: {
         args.dirtyMeta,
         args.dirtyPreAudit,
         args.dirtySections,
+        args.dirtyStartedAt,
     )
         ? "dirty"
         : "idle";
@@ -794,6 +826,7 @@ export function finishSubmitResolution(args: FinishSubmitResolutionArgs): {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 } {
     if (!isAuditSessionEditable(args.latestSession)) {
         const clearedDirtyState = clearDirtyStateForAudit(
@@ -801,6 +834,7 @@ export function finishSubmitResolution(args: FinishSubmitResolutionArgs): {
             args.currentDirtyMeta,
             args.currentDirtyPreAudit,
             args.currentDirtySections,
+            args.currentDirtyStartedAt,
         );
         return {
             phase: "submitted",
@@ -808,6 +842,7 @@ export function finishSubmitResolution(args: FinishSubmitResolutionArgs): {
             dirtyMeta: clearedDirtyState.dirtyMeta,
             dirtyPreAudit: clearedDirtyState.dirtyPreAudit,
             dirtySections: clearedDirtyState.dirtySections,
+            dirtyStartedAt: clearedDirtyState.dirtyStartedAt,
         };
     }
 
@@ -817,6 +852,7 @@ export function finishSubmitResolution(args: FinishSubmitResolutionArgs): {
             args.currentDirtyMeta,
             args.currentDirtyPreAudit,
             args.currentDirtySections,
+            args.currentDirtyStartedAt,
         )
             ? "dirty"
             : "idle",
@@ -824,6 +860,7 @@ export function finishSubmitResolution(args: FinishSubmitResolutionArgs): {
         dirtyMeta: args.currentDirtyMeta,
         dirtyPreAudit: args.currentDirtyPreAudit,
         dirtySections: args.currentDirtySections,
+        dirtyStartedAt: args.currentDirtyStartedAt,
     };
 }
 
@@ -913,11 +950,13 @@ export function restorePersistedSyncState(args: RestorePersistedSyncStateArgs): 
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 } {
     const nextDirtyMeta: DirtyMeta = {};
     const nextDirtyPreAudit: DirtyPreAudit = {};
     const nextDirtySections: DirtySections = {};
+    const nextDirtyStartedAt: DirtyStartedAt = {};
     const nextSyncStateByAuditId: AuditSyncStateByAuditId = {};
 
     for (const auditId of listRestorableHydratedAuditIds(args.sessionsByAuditId, args.sessionsByPairKey)) {
@@ -926,9 +965,11 @@ export function restorePersistedSyncState(args: RestorePersistedSyncStateArgs): 
             args.dirtyMeta,
             args.dirtyPreAudit,
             args.dirtySections,
+            args.dirtyStartedAt,
             nextDirtyMeta,
             nextDirtyPreAudit,
             nextDirtySections,
+            nextDirtyStartedAt,
         );
         restoreHydratedSyncStateForAudit(auditId, args.syncStateByAuditId, hasDirtyFragments, nextSyncStateByAuditId);
     }
@@ -937,6 +978,7 @@ export function restorePersistedSyncState(args: RestorePersistedSyncStateArgs): 
         dirtyMeta: nextDirtyMeta,
         dirtyPreAudit: nextDirtyPreAudit,
         dirtySections: nextDirtySections,
+        dirtyStartedAt: nextDirtyStartedAt,
         syncStateByAuditId: nextSyncStateByAuditId,
     };
 }
@@ -1058,9 +1100,11 @@ function copyHydratedDirtyFragmentsForAudit(
     sourceDirtyMeta: DirtyMeta,
     sourceDirtyPreAudit: DirtyPreAudit,
     sourceDirtySections: DirtySections,
+    sourceDirtyStartedAt: DirtyStartedAt,
     targetDirtyMeta: DirtyMeta,
     targetDirtyPreAudit: DirtyPreAudit,
     targetDirtySections: DirtySections,
+    targetDirtyStartedAt: DirtyStartedAt,
 ): boolean {
     const dirtyMetaVersion = sourceDirtyMeta[auditId];
     if (dirtyMetaVersion !== undefined) {
@@ -1077,7 +1121,17 @@ function copyHydratedDirtyFragmentsForAudit(
         targetDirtySections[auditId] = { ...dirtySectionVersions };
     }
 
-    return hasDirtyFragmentsForAudit(auditId, targetDirtyMeta, targetDirtyPreAudit, targetDirtySections);
+    if (sourceDirtyStartedAt[auditId] === true) {
+        targetDirtyStartedAt[auditId] = true;
+    }
+
+    return hasDirtyFragmentsForAudit(
+        auditId,
+        targetDirtyMeta,
+        targetDirtyPreAudit,
+        targetDirtySections,
+        targetDirtyStartedAt,
+    );
 }
 
 /**
@@ -1124,11 +1178,13 @@ function hasDirtyFragmentsForAudit(
     dirtyMeta: DirtyMeta,
     dirtyPreAudit: DirtyPreAudit,
     dirtySections: DirtySections,
+    dirtyStartedAt: DirtyStartedAt,
 ): boolean {
     return (
         dirtyMeta[auditId] !== undefined ||
         dirtyPreAudit[auditId] !== undefined ||
-        Object.keys(dirtySections[auditId] ?? {}).length > 0
+        Object.keys(dirtySections[auditId] ?? {}).length > 0 ||
+        dirtyStartedAt[auditId] === true
     );
 }
 
@@ -1143,8 +1199,9 @@ export function buildDraftPatchSnapshot(args: BuildDraftPatchSnapshotArgs): Pend
     const preAuditVersion = args.dirtyPreAudit[args.auditId] ?? null;
     const currentSectionVersions = args.dirtySections[args.auditId] ?? {};
     const dirtySectionKeys = Object.keys(currentSectionVersions);
+    const startedAtFlagged = args.dirtyStartedAt[args.auditId] === true;
 
-    if (metaVersion === null && preAuditVersion === null && dirtySectionKeys.length === 0) {
+    if (metaVersion === null && preAuditVersion === null && dirtySectionKeys.length === 0 && !startedAtFlagged) {
         return null;
     }
 
@@ -1168,6 +1225,10 @@ export function buildDraftPatchSnapshot(args: BuildDraftPatchSnapshotArgs): Pend
         patch.sections[sectionKey] = cloneSectionState(args.session.sections[sectionKey], sectionKey);
     }
 
+    if (startedAtFlagged) {
+        patch.started_at = args.session.started_at;
+    }
+
     return {
         auditId: args.auditId,
         patch,
@@ -1175,6 +1236,7 @@ export function buildDraftPatchSnapshot(args: BuildDraftPatchSnapshotArgs): Pend
         metaVersion,
         preAuditVersion,
         sectionVersions: { ...currentSectionVersions },
+        startedAtFlagged,
     };
 }
 
@@ -1256,20 +1318,29 @@ export function prepareConflictRecoverySnapshot(
         dirtyMeta: args.dirtyMeta,
         dirtyPreAudit: args.dirtyPreAudit,
         dirtySections: args.dirtySections,
+        dirtyStartedAt: args.dirtyStartedAt,
     }).session;
     const nextDirtyState = isAuditSessionEditable(session)
         ? {
               dirtyMeta: args.dirtyMeta,
               dirtyPreAudit: args.dirtyPreAudit,
               dirtySections: args.dirtySections,
+              dirtyStartedAt: args.dirtyStartedAt,
           }
-        : clearDirtyStateForAudit(args.auditId, args.dirtyMeta, args.dirtyPreAudit, args.dirtySections);
+        : clearDirtyStateForAudit(
+              args.auditId,
+              args.dirtyMeta,
+              args.dirtyPreAudit,
+              args.dirtySections,
+              args.dirtyStartedAt,
+          );
     const retrySnapshot = buildDraftPatchSnapshot({
         auditId: args.auditId,
         session,
         dirtyMeta: nextDirtyState.dirtyMeta,
         dirtyPreAudit: nextDirtyState.dirtyPreAudit,
         dirtySections: nextDirtyState.dirtySections,
+        dirtyStartedAt: nextDirtyState.dirtyStartedAt,
     });
 
     return {
@@ -1277,6 +1348,7 @@ export function prepareConflictRecoverySnapshot(
         dirtyMeta: nextDirtyState.dirtyMeta,
         dirtyPreAudit: nextDirtyState.dirtyPreAudit,
         dirtySections: nextDirtyState.dirtySections,
+        dirtyStartedAt: nextDirtyState.dirtyStartedAt,
         retrySnapshot,
         recoveredWithoutRetry: retrySnapshot === null,
     };
@@ -1325,6 +1397,7 @@ export function pruneAuditStateForAudit(args: PruneAuditStateForAuditArgs): {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 } {
     if (args.auditId === null) {
@@ -1332,6 +1405,7 @@ export function pruneAuditStateForAudit(args: PruneAuditStateForAuditArgs): {
             dirtyMeta: args.dirtyMeta,
             dirtyPreAudit: args.dirtyPreAudit,
             dirtySections: args.dirtySections,
+            dirtyStartedAt: args.dirtyStartedAt,
             syncStateByAuditId: args.syncStateByAuditId,
         };
     }
@@ -1345,6 +1419,9 @@ export function pruneAuditStateForAudit(args: PruneAuditStateForAuditArgs): {
     const nextDirtySections = { ...args.dirtySections };
     delete nextDirtySections[args.auditId];
 
+    const nextDirtyStartedAt = { ...args.dirtyStartedAt };
+    delete nextDirtyStartedAt[args.auditId];
+
     const nextSyncStateByAuditId = { ...args.syncStateByAuditId };
     delete nextSyncStateByAuditId[args.auditId];
 
@@ -1352,6 +1429,7 @@ export function pruneAuditStateForAudit(args: PruneAuditStateForAuditArgs): {
         dirtyMeta: nextDirtyMeta,
         dirtyPreAudit: nextDirtyPreAudit,
         dirtySections: nextDirtySections,
+        dirtyStartedAt: nextDirtyStartedAt,
         syncStateByAuditId: nextSyncStateByAuditId,
     };
 }
@@ -1367,6 +1445,7 @@ export function pruneCanonicalSubmittedAuditState(args: PruneCanonicalSubmittedA
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
     readonly syncStateByAuditId: AuditSyncStateByAuditId;
 } {
     return args.session.status === "SUBMITTED"
@@ -1375,12 +1454,14 @@ export function pruneCanonicalSubmittedAuditState(args: PruneCanonicalSubmittedA
               dirtyMeta: args.dirtyMeta,
               dirtyPreAudit: args.dirtyPreAudit,
               dirtySections: args.dirtySections,
+              dirtyStartedAt: args.dirtyStartedAt,
               syncStateByAuditId: args.syncStateByAuditId,
           })
         : {
               dirtyMeta: args.dirtyMeta,
               dirtyPreAudit: args.dirtyPreAudit,
               dirtySections: args.dirtySections,
+              dirtyStartedAt: args.dirtyStartedAt,
               syncStateByAuditId: args.syncStateByAuditId,
           };
 }
@@ -1517,6 +1598,7 @@ export function applyLocalAuditStartChange(args: ApplyLocalAuditStartChangeArgs)
     if (!isAuditSessionEditable(args.session) || !canStampLocalAuditStart(args.session)) {
         return {
             session: args.session,
+            dirtyStartedAt: args.dirtyStartedAt,
             didChange: false,
         };
     }
@@ -1525,6 +1607,7 @@ export function applyLocalAuditStartChange(args: ApplyLocalAuditStartChangeArgs)
     if (Number.isNaN(nextStartedAtMs) || args.session.started_at === args.startedAt) {
         return {
             session: args.session,
+            dirtyStartedAt: args.dirtyStartedAt,
             didChange: false,
         };
     }
@@ -1533,6 +1616,10 @@ export function applyLocalAuditStartChange(args: ApplyLocalAuditStartChangeArgs)
         session: {
             ...args.session,
             started_at: args.startedAt,
+        },
+        dirtyStartedAt: {
+            ...args.dirtyStartedAt,
+            [args.session.audit_id]: true,
         },
         didChange: true,
     };
@@ -1754,6 +1841,9 @@ export function clearAcknowledgedDirtyState(args: ClearAcknowledgedDirtyStateArg
             args.snapshot.preAuditVersion,
         ),
         dirtyMeta: clearAcknowledgedVersionMap(args.currentDirtyMeta, targetAuditId, args.snapshot.metaVersion),
+        dirtyStartedAt: args.snapshot.startedAtFlagged
+            ? clearAcknowledgedStartedAtFlag(args.currentDirtyStartedAt, targetAuditId)
+            : args.currentDirtyStartedAt,
     };
 }
 
@@ -2095,7 +2185,7 @@ function copyMetaDraftFromSession(source: AuditSession, target: AuditSession): A
     };
 }
 
-function preserveLaterLocalStartTime(source: AuditSession, target: AuditSession): AuditSession {
+export function preserveLaterLocalStartTime(source: AuditSession, target: AuditSession): AuditSession {
     const sourceStartedAtMs = Date.parse(source.started_at);
     const targetStartedAtMs = Date.parse(target.started_at);
     if (Number.isNaN(sourceStartedAtMs) || Number.isNaN(targetStartedAtMs) || sourceStartedAtMs <= targetStartedAtMs) {
@@ -2174,10 +2264,12 @@ function clearDirtyStateForAudit(
     dirtyMeta: DirtyMeta,
     dirtyPreAudit: DirtyPreAudit,
     dirtySections: DirtySections,
+    dirtyStartedAt: DirtyStartedAt,
 ): {
     readonly dirtyMeta: DirtyMeta;
     readonly dirtyPreAudit: DirtyPreAudit;
     readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
 } {
     const nextDirtyMeta = { ...dirtyMeta };
     delete nextDirtyMeta[auditId];
@@ -2188,10 +2280,14 @@ function clearDirtyStateForAudit(
     const nextDirtySections = { ...dirtySections };
     delete nextDirtySections[auditId];
 
+    const nextDirtyStartedAt = { ...dirtyStartedAt };
+    delete nextDirtyStartedAt[auditId];
+
     return {
         dirtyMeta: nextDirtyMeta,
         dirtyPreAudit: nextDirtyPreAudit,
         dirtySections: nextDirtySections,
+        dirtyStartedAt: nextDirtyStartedAt,
     };
 }
 
@@ -2247,4 +2343,14 @@ function clearAcknowledgedVersionMap(
     const nextVersionMap = { ...current };
     delete nextVersionMap[auditId];
     return nextVersionMap;
+}
+
+function clearAcknowledgedStartedAtFlag(current: DirtyStartedAt, auditId: string): DirtyStartedAt {
+    if (current[auditId] !== true) {
+        return current;
+    }
+
+    const nextDirtyStartedAt = { ...current };
+    delete nextDirtyStartedAt[auditId];
+    return nextDirtyStartedAt;
 }
