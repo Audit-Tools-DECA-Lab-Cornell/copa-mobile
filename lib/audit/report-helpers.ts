@@ -25,6 +25,7 @@ export interface DomainReportRow {
 export interface DomainQuestionRow {
     readonly questionKey: string;
     readonly questionText: string;
+    readonly checklistAnswerLabel: string | null;
     readonly provisionLabel: string | null;
     readonly provisionApplicable: boolean;
     readonly provisionAnswered: boolean;
@@ -156,25 +157,69 @@ function readStringAnswer(answers: QuestionResponsePayload, key: string): string
     return typeof raw === "string" ? raw : undefined;
 }
 
-/**
- * Return distinct non-empty domain keys for a question, preserving instrument order.
- * Questions may list multiple domains; each is included once.
- */
-export function getQuestionDomainKeys(question: InstrumentQuestion): string[] {
+function formatChecklistAnswerLabel(question: InstrumentQuestion, answers: QuestionResponsePayload): string | null {
+    const selectedOptionKeys = answers.selected_option_keys;
+    if (!Array.isArray(selectedOptionKeys) || selectedOptionKeys.length === 0) {
+        return null;
+    }
+
+    const labels = selectedOptionKeys
+        .filter((key): key is string => typeof key === "string")
+        .map((key) => question.options.find((option) => option.key === key)?.label ?? key);
+    const otherDetails = answers.other_details;
+    if (typeof otherDetails === "object" && otherDetails !== null && !Array.isArray(otherDetails)) {
+        const text = otherDetails.text;
+        if (typeof text === "string" && text.trim().length > 0) {
+            labels.push(`Other: ${text.trim()}`);
+        }
+    }
+
+    return labels.length > 0 ? labels.join(" | ") : null;
+}
+
+function resolveQuestionDomainKeys(
+    question: InstrumentQuestion,
+    questionLookup: Readonly<Record<string, InstrumentQuestion>> | undefined,
+    visitedQuestionKeys: Set<string>,
+): string[] {
     const ordered: string[] = [];
     const seen = new Set<string>();
     question.domains.forEach((domainKey: string) => {
         const normalized = normalizeDomainKey(domainKey);
-        if (normalized.length === 0) {
-            return;
-        }
-        if (seen.has(normalized)) {
+        if (normalized.length === 0 || seen.has(normalized)) {
             return;
         }
         seen.add(normalized);
         ordered.push(normalized);
     });
-    return ordered;
+    if (ordered.length > 0) {
+        return ordered;
+    }
+
+    const parentQuestionKey = question.display_if?.question_key;
+    if (questionLookup === undefined || parentQuestionKey === undefined || visitedQuestionKeys.has(parentQuestionKey)) {
+        return ordered;
+    }
+
+    const parentQuestion = questionLookup[parentQuestionKey];
+    if (parentQuestion === undefined) {
+        return ordered;
+    }
+
+    const nextVisitedQuestionKeys = new Set(visitedQuestionKeys);
+    nextVisitedQuestionKeys.add(parentQuestionKey);
+    return resolveQuestionDomainKeys(parentQuestion, questionLookup, nextVisitedQuestionKeys);
+}
+
+/**
+ * Return distinct non-empty domain keys for a question, preserving instrument order.
+ * Questions may list multiple domains; each is included once.
+ */
+export function getQuestionDomainKeys(
+    question: InstrumentQuestion,
+    questionLookup?: Readonly<Record<string, InstrumentQuestion>>,
+): string[] {
+    return resolveQuestionDomainKeys(question, questionLookup, new Set([question.question_key]));
 }
 
 /**
@@ -182,13 +227,18 @@ export function getQuestionDomainKeys(question: InstrumentQuestion): string[] {
  * Avoids double-counting questions that appear under multiple domain sections.
  */
 export function countUniqueScaledQuestionsWithDomains(instrument: PlayspaceInstrument): number {
+    const questionLookup = Object.fromEntries(
+        instrument.sections.flatMap((section: InstrumentSectionDefinition) =>
+            section.questions.map((question: InstrumentQuestion) => [question.question_key, question] as const),
+        ),
+    ) as Readonly<Record<string, InstrumentQuestion>>;
     const questionKeys = new Set<string>();
     instrument.sections.forEach((section: InstrumentSectionDefinition) => {
         section.questions.forEach((question: InstrumentQuestion) => {
             if (question.question_type !== "scaled") {
                 return;
             }
-            if (getQuestionDomainKeys(question).length === 0) {
+            if (getQuestionDomainKeys(question, questionLookup).length === 0) {
                 return;
             }
             questionKeys.add(question.question_key);
@@ -225,6 +275,8 @@ function buildDomainQuestionRow(question: InstrumentQuestion, answers: QuestionR
     return {
         questionKey: question.question_key,
         questionText: question.prompt,
+        checklistAnswerLabel:
+            question.question_type === "checklist" ? formatChecklistAnswerLabel(question, answers) : null,
         provisionLabel: provisionInfo.label,
         provisionApplicable,
         provisionAnswered: provisionInfo.answered,
@@ -327,6 +379,11 @@ function compareQuestionRowsByIdentifier(a: DomainQuestionRow, b: DomainQuestion
  * Questions may belong to multiple domains; each domain row lists every question that includes that domain.
  */
 export function buildDomainReportRows(auditSession: AuditSession, instrument: PlayspaceInstrument): DomainReportRow[] {
+    const questionLookup = Object.fromEntries(
+        instrument.sections.flatMap((section: InstrumentSectionDefinition) =>
+            section.questions.map((question: InstrumentQuestion) => [question.question_key, question] as const),
+        ),
+    ) as Readonly<Record<string, InstrumentQuestion>>;
     const byDomain = auditSession.scores.by_domain;
     const normalizedScoreByDomain = new Map<string, AuditScoreTotals | null>();
     Object.entries(byDomain).forEach(([rawDomainKey, totals]) => {
@@ -355,7 +412,7 @@ export function buildDomainReportRows(auditSession: AuditSession, instrument: Pl
         let sectionOrderCounter = 0;
 
         section.questions.forEach((question: InstrumentQuestion) => {
-            getQuestionDomainKeys(question).forEach((domainKey) => {
+            getQuestionDomainKeys(question, questionLookup).forEach((domainKey) => {
                 sectionDomainCounts.set(domainKey, (sectionDomainCounts.get(domainKey) ?? 0) + 1);
                 if (!sectionFirstSeenIndex.has(domainKey)) {
                     sectionFirstSeenIndex.set(domainKey, sectionOrderCounter);
@@ -433,7 +490,7 @@ export function buildDomainReportRows(auditSession: AuditSession, instrument: Pl
         instrument.sections.forEach((section: InstrumentSectionDefinition, sectionIndex: number) => {
             let sectionTouchesDomain = false;
             section.questions.forEach((question: InstrumentQuestion) => {
-                const domainKeysForQuestion = getQuestionDomainKeys(question);
+                const domainKeysForQuestion = getQuestionDomainKeys(question, questionLookup);
                 if (!domainKeysForQuestion.includes(domainKey)) {
                     return;
                 }
@@ -441,7 +498,7 @@ export function buildDomainReportRows(auditSession: AuditSession, instrument: Pl
                 itemCount += 1;
                 const responses =
                     auditSession.aggregate.sections[section.section_key]?.responses[question.question_key] ?? {};
-                if (question.question_type === "scaled") {
+                if (question.question_type === "scaled" || question.question_type === "checklist") {
                     questions.push(buildDomainQuestionRow(question, responses));
                 }
                 const questionNote = collectQuestionNote(question, responses, sectionIndex + 1);

@@ -237,7 +237,38 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
 
                             {/* Prompt text */}
                             <CellWrapper width={cols.itemColWidth} align="flex-start">
-                                <PromptRichText raw={question.questionText} fontSize={cellFont} lineHeight={cellLine} />
+                                <YStack gap="$1.5" width="100%">
+                                    <PromptRichText
+                                        raw={question.questionText}
+                                        fontSize={cellFont}
+                                        lineHeight={cellLine}
+                                    />
+                                    {question.checklistAnswerLabel !== null ? (
+                                        <YStack
+                                            rounded={ds.radii.sm}
+                                            borderWidth={1}
+                                            borderColor={ds.colors.border}
+                                            bg={ds.colors.mutedSurface}
+                                            px="$2"
+                                            py="$1"
+                                        >
+                                            <Text
+                                                color={ds.colors.mutedForeground}
+                                                fontFamily={ds.fonts.bodyMedium}
+                                                fontSize={ds.typography.bodyXs.fontSize}
+                                                lineHeight={ds.typography.bodyXs.lineHeight}
+                                            >
+                                                <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold}>
+                                                    {t("extendedTable.selectedLabel", {
+                                                        ns: "reports",
+                                                        defaultValue: "Selected: ",
+                                                    })}
+                                                </Text>
+                                                {question.checklistAnswerLabel}
+                                            </Text>
+                                        </YStack>
+                                    ) : null}
+                                </YStack>
                             </CellWrapper>
 
                             {/* Provision */}

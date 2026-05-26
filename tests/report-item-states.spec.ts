@@ -150,6 +150,40 @@ function buildInstrument() {
                             },
                         ],
                     },
+                    {
+                        question_key: "q_1_1_1",
+                        mode: "audit",
+                        constructs: [],
+                        domains: [],
+                        section_key: "section_play",
+                        prompt: "Checklist follow-up for the first play item.",
+                        question_type: "checklist",
+                        required: false,
+                        display_if: {
+                            question_key: "q_1_1",
+                            response_key: "provision",
+                            any_of_option_keys: ["a_lot"],
+                        },
+                        notes_prompt: null,
+                        scales: [],
+                        options: [
+                            {
+                                key: "swing",
+                                label: "Swing",
+                                description: null,
+                            },
+                            {
+                                key: "slide",
+                                label: "Slide",
+                                description: null,
+                            },
+                            {
+                                key: "other",
+                                label: "Other",
+                                description: null,
+                            },
+                        ],
+                    },
                 ],
             },
         ],
@@ -216,6 +250,9 @@ function buildAuditSession() {
                         provision: "a_lot",
                         diversity: "not_applicable",
                     },
+                    q_1_1_1: {
+                        selected_option_keys: ["swing", "slide"],
+                    },
                     q_1_2: {
                         provision: "no",
                     },
@@ -239,15 +276,15 @@ function buildAuditSession() {
             required_pre_audit_complete: true,
             visible_section_count: 1,
             completed_section_count: 1,
-            total_visible_questions: 2,
-            answered_visible_questions: 2,
+            total_visible_questions: 3,
+            answered_visible_questions: 3,
             ready_to_submit: true,
             sections: [
                 {
                     section_key: "section_play",
                     title: "Play",
-                    visible_question_count: 2,
-                    answered_question_count: 2,
+                    visible_question_count: 3,
+                    answered_question_count: 3,
                     is_complete: true,
                 },
             ],
@@ -277,5 +314,17 @@ describe("report item states", () => {
         expect(hiddenFollowUpRow?.diversityAnswered).toBe(false);
         expect(hiddenFollowUpRow?.diversityIsNotApplicable).toBe(false);
         expect(hiddenFollowUpRow?.followUpScalesAsked).toBe(false);
+    });
+
+    it("includes checklist follow-up rows that inherit the parent domain", () => {
+        const instrument = buildInstrument();
+        const auditSession = buildAuditSession();
+
+        const movementDomain = buildDomainReportRows(auditSession, instrument).find(
+            (row) => row.domainKey === "movement",
+        );
+
+        expect(movementDomain).toBeDefined();
+        expect(movementDomain?.questions.map((question) => question.questionKey)).toContain("q_1_1_1");
     });
 });
