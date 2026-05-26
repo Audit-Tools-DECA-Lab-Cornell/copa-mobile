@@ -529,6 +529,9 @@ export default function ExecuteSectionScreen() {
         <ScrollView
             ref={scrollViewRef}
             contentInsetAdjustmentBehavior="automatic"
+            automaticallyAdjustKeyboardInsets
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 144,

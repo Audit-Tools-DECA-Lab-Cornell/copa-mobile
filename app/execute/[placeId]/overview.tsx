@@ -286,7 +286,7 @@ export default function ExecuteSectionOverviewScreen() {
     const sectionReviewCard = (
         <SectionReviewCard
             summary={sectionOverviewSummary}
-            continueLabel={t("copy.continueToCOPATool", { ns: "audit" })}
+            continueLabel={t("copy.resumeNextSection", { ns: "audit" })}
             onOpenSection={(sectionSummary) => {
                 router.push(
                     `/execute/${placeId}/section/${sectionSummary.sectionKey}?projectId=${encodeURIComponent(projectId)}` as Href,
@@ -398,6 +398,12 @@ interface SectionReviewCardProps {
 
 /**
  * Progress filters and section entry points for the standalone overview page.
+ *
+ * Layout: a context-aware hint explains the two interaction modes, then the
+ * primary "Continue" CTA (only while incomplete sections remain) sits above a
+ * labelled divider that introduces the section-jump list. This separation makes
+ * the linear-continue path and the non-linear jump path visually distinct so
+ * auditors are never confused about which button to tap first.
  */
 function SectionReviewCard({
     summary,
@@ -414,6 +420,11 @@ function SectionReviewCard({
     }, [sectionFilter, summary.rows]);
     const allFilterLabel = `${t("filters.all", { ns: "common" })} (${summary.rows.length.toString()})`;
 
+    const hintText =
+        onResumeFirstIncomplete !== null
+            ? t("overview.sectionCardHintContinue", { ns: "audit" })
+            : t("overview.sectionCardHintAllDone", { ns: "audit" });
+
     return (
         <YStack
             rounded={ds.radii.md}
@@ -424,6 +435,7 @@ function SectionReviewCard({
             gap="$3"
             style={{ boxShadow: ds.shadows.card }}
         >
+            {/* Card title + contextual hint explaining the two interaction modes */}
             <YStack gap="$1.5">
                 <Text
                     color={ds.colors.foreground}
@@ -432,8 +444,63 @@ function SectionReviewCard({
                 >
                     {t("overview.sections", { ns: "audit" })}
                 </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    lineHeight={ds.typography.bodySm.lineHeight}
+                >
+                    {hintText}
+                </Paragraph>
             </YStack>
 
+            {/* Primary CTA — only shown while at least one section is incomplete */}
+            {onResumeFirstIncomplete !== null ? (
+                <Button
+                    height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
+                    rounded={ds.radii.sm}
+                    borderWidth={0}
+                    bg={ds.colors.primary}
+                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    onPress={onResumeFirstIncomplete}
+                >
+                    <XStack items="center" gap="$2">
+                        <Text
+                            color={ds.colors.primaryForeground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelLg.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.1}
+                        >
+                            {continueLabel}
+                        </Text>
+                        <ArrowRight size={16} color={ds.colors.primaryForeground} />
+                    </XStack>
+                </Button>
+            ) : null}
+
+            {/*
+             * Divider that separates the primary "continue" action from the
+             * section-jump navigation list. Only rendered when the CTA is
+             * present so the divider is never an orphan.
+             */}
+            {onResumeFirstIncomplete !== null ? (
+                <XStack items="center" gap="$2.5">
+                    <YStack flex={1} height={1} bg={ds.colors.border} />
+                    <Text
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1}
+                    >
+                        {t("overview.sectionJumpDivider", { ns: "audit" })}
+                    </Text>
+                    <YStack flex={1} height={1} bg={ds.colors.border} />
+                </XStack>
+            ) : null}
+
+            {/* Filter chips — always present, filter the section list below */}
             <XStack gap="$2" flexWrap="wrap">
                 <SectionReviewMetric
                     label={allFilterLabel}
@@ -464,30 +531,7 @@ function SectionReviewCard({
                 />
             </XStack>
 
-            {onResumeFirstIncomplete === null ? null : (
-                <Button
-                    height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-                    rounded={ds.radii.sm}
-                    borderWidth={0}
-                    bg={ds.colors.primary}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={onResumeFirstIncomplete}
-                >
-                    <XStack items="center" gap="$2">
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelLg.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.1}
-                        >
-                            {continueLabel}
-                        </Text>
-                        <ArrowRight size={16} color={ds.colors.primaryForeground} />
-                    </XStack>
-                </Button>
-            )}
-
+            {/* Section navigation list */}
             {visibleRows.length === 0 ? (
                 <Paragraph
                     color={ds.colors.mutedForeground}

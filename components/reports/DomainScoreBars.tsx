@@ -17,7 +17,6 @@ type MetricKey = "provision" | "diversity" | "challenge" | "sociability" | "play
 interface MetricConfig {
     readonly key: MetricKey;
     readonly labelKey: string;
-    readonly shortLabelKey?: string;
     readonly value: (totals: AuditScoreTotals) => number;
     readonly max: (totals: AuditScoreTotals) => number;
 }
@@ -26,28 +25,24 @@ const METRICS: readonly MetricConfig[] = [
     {
         key: "provision",
         labelKey: "domain.barProvision",
-        shortLabelKey: "domain.barProvisionShort",
         value: (t) => t.provision_total,
         max: (t) => t.provision_total_max,
     },
     {
         key: "diversity",
         labelKey: "domain.barDiversity",
-        shortLabelKey: "domain.barDiversityShort",
         value: (t) => t.diversity_total,
         max: (t) => t.diversity_total_max,
     },
     {
         key: "challenge",
         labelKey: "domain.barChallenge",
-        shortLabelKey: "domain.barChallengeShort",
         value: (t) => t.challenge_total,
         max: (t) => t.challenge_total_max,
     },
     {
         key: "sociability",
         labelKey: "domain.barSociability",
-        shortLabelKey: "domain.barSociabilityShort",
         value: (t) => t.sociability_total,
         max: (t) => t.sociability_total_max,
     },
@@ -69,8 +64,7 @@ const SCALE_BAR_METRICS = METRICS.slice(0, 4);
 const PVU_BAR_METRICS = METRICS.slice(4, 6);
 
 interface LegendItem {
-    readonly shortLabel: string;
-    readonly fullLabel: string;
+    readonly label: string;
     readonly color: string;
 }
 
@@ -111,8 +105,7 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
             (["provision", "diversity", "challenge", "sociability"] as const).map((key) => {
                 const metric = METRICS.find((m) => m.key === key)!;
                 return {
-                    shortLabel: t(metric.shortLabelKey ?? metric.labelKey, { ns: "reports" }),
-                    fullLabel: t(metric.labelKey, { ns: "reports" }),
+                    label: t(metric.labelKey, { ns: "reports" }),
                     color: getTierBarColor(
                         reportBarScoreTier(
                             scoreTotals === null
@@ -131,8 +124,7 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
             (["play_value", "usability"] as const).map((key) => {
                 const metric = METRICS.find((m) => m.key === key)!;
                 return {
-                    shortLabel: t(metric.labelKey, { ns: "reports" }),
-                    fullLabel: t(metric.labelKey, { ns: "reports" }),
+                    label: t(metric.labelKey, { ns: "reports" }),
                     color: getTierBarColor(
                         reportBarScoreTier(
                             scoreTotals === null
@@ -156,10 +148,7 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
         const fillHeight = Math.round(fillRatio * trackHeight * 100) / 100;
         const barColor = getTierBarColor(tier, ds);
         const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${pctRounded}%`;
-        const shortLabel =
-            metric.shortLabelKey !== undefined
-                ? t(metric.shortLabelKey, { ns: "reports" })
-                : t(metric.labelKey, { ns: "reports" });
+        const label = t(metric.labelKey, { ns: "reports" });
         const a11yLabel = isNa ? t("detail.metricNotAssessed", { ns: "reports" }) : formatPercentage(value, maximum);
 
         return (
@@ -222,11 +211,11 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
                     color={ds.colors.mutedForeground}
                     fontSize={ds.typography.bodyXs.fontSize}
                     lineHeight={ds.typography.bodyXs.lineHeight}
-                    numberOfLines={layout.isTablet ? 1 : 2}
+                    numberOfLines={3}
                     width="100%"
                     style={{ textAlign: "center" }}
                 >
-                    {shortLabel}
+                    {label}
                 </Text>
             </YStack>
         );
@@ -235,7 +224,7 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
     const renderLegend = (items: readonly LegendItem[]) => (
         <YStack width={tableLayout.labelColWidth} justify="flex-end" pb="$1" gap="$1.5">
             {items.map((item) => (
-                <XStack key={item.shortLabel} items="center" gap="$1.5">
+                <XStack key={item.label} items="center" gap="$1.5">
                     <YStack
                         width={8}
                         height={8}
@@ -249,7 +238,7 @@ export const DomainScoreBars = memo(function DomainScoreBars({ scoreTotals, comp
                         numberOfLines={1}
                         style={{ flexShrink: 1 }}
                     >
-                        {`${item.shortLabel} = ${item.fullLabel}`}
+                        {item.label}
                     </Text>
                 </XStack>
             ))}

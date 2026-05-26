@@ -23,7 +23,6 @@ type MetricKey = "provision" | "diversity" | "challenge" | "sociability" | "play
 interface MetricConfig {
     readonly key: MetricKey;
     readonly labelKey: string;
-    readonly shortLabelKey?: string;
     readonly value: (t: AuditScoreTotals) => number;
     readonly max: (t: AuditScoreTotals) => number;
 }
@@ -32,28 +31,24 @@ const SCALE_METRICS: readonly MetricConfig[] = [
     {
         key: "provision",
         labelKey: "domain.barProvision",
-        shortLabelKey: "domain.barProvisionShort",
         value: (t) => t.provision_total,
         max: (t) => t.provision_total_max,
     },
     {
         key: "diversity",
         labelKey: "domain.barDiversity",
-        shortLabelKey: "domain.barDiversityShort",
         value: (t) => t.diversity_total,
         max: (t) => t.diversity_total_max,
     },
     {
         key: "challenge",
         labelKey: "domain.barChallenge",
-        shortLabelKey: "domain.barChallengeShort",
         value: (t) => t.challenge_total,
         max: (t) => t.challenge_total_max,
     },
     {
         key: "sociability",
         labelKey: "domain.barSociability",
-        shortLabelKey: "domain.barSociabilityShort",
         value: (t) => t.sociability_total,
         max: (t) => t.sociability_total_max,
     },
@@ -63,14 +58,12 @@ const CONSTRUCT_METRICS: readonly MetricConfig[] = [
     {
         key: "play_value",
         labelKey: "domain.barPlayValue",
-        shortLabelKey: "playValueShort",
         value: (t) => t.play_value_total,
         max: (t) => t.play_value_total_max,
     },
     {
         key: "usability",
         labelKey: "domain.barUsability",
-        shortLabelKey: "usabilityShort",
         value: (t) => t.usability_total,
         max: (t) => t.usability_total_max,
     },
@@ -100,7 +93,6 @@ interface AlignedBarCellProps {
     readonly barWidth: number; // visual bar width (≤ colWidth)
     readonly trackHeight: number;
     readonly ds: ReturnType<typeof useDesignSystem>;
-    readonly useShortLabel: boolean;
     readonly t: TFunction<"reports", undefined>;
 }
 
@@ -108,16 +100,7 @@ interface AlignedBarCellProps {
  * One vertical bar cell sized to exactly match a table data column.
  * The bar is centered within `colWidth` so it aligns with the column below.
  */
-function AlignedBarCell({
-    metric,
-    scoreTotals,
-    colWidth,
-    barWidth,
-    trackHeight,
-    ds,
-    useShortLabel,
-    t,
-}: AlignedBarCellProps) {
+function AlignedBarCell({ metric, scoreTotals, colWidth, barWidth, trackHeight, ds, t }: AlignedBarCellProps) {
     const value = scoreTotals === null ? 0 : metric.value(scoreTotals);
     const maximum = scoreTotals === null ? 0 : metric.max(scoreTotals);
     const isNa = scoreTotals === null || maximum <= 0;
@@ -128,10 +111,7 @@ function AlignedBarCell({
     const barColor = barColorForTier(tier, ds);
 
     const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${pctRounded}%`;
-    const shortLabel =
-        useShortLabel && metric.shortLabelKey !== undefined
-            ? t(metric.shortLabelKey, { ns: "reports" })
-            : t(metric.labelKey, { ns: "reports" });
+    const label = t(metric.labelKey, { ns: "reports" });
     const a11yPct = isNa ? t("detail.metricNotAssessed", { ns: "reports" }) : formatPercentage(value, maximum);
 
     return (
@@ -186,11 +166,11 @@ function AlignedBarCell({
                 color={ds.colors.mutedForeground}
                 fontSize={ds.typography.bodyXs.fontSize}
                 lineHeight={ds.typography.bodyXs.lineHeight}
-                numberOfLines={2}
+                numberOfLines={3}
                 width={colWidth - 4}
                 style={{ textAlign: "center" }}
             >
-                {shortLabel}
+                {label}
             </Text>
         </YStack>
     );
@@ -208,7 +188,7 @@ function AlignedBarCell({
  * scrollable groups (scale scores, then construct scores):
  *
  *   ┌────────────────────────────────────────── scroll ──┐
- *   │ [spacer] │ Prov │ Div │ Chal │ Soc │              │
+ *   │ [spacer] │ Provision │ Diversity │ Challenge │ Sociability │
  *   │ Achieved │  12  │  8  │  6   │  3  │  ← table     │
  *   │ Max      │  18  │  10 │  8   │  6  │              │
  *   └────────────────────────────────────────────────────┘
@@ -255,7 +235,6 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
                                     barWidth={barWidth}
                                     trackHeight={trackHeight}
                                     ds={ds}
-                                    useShortLabel={m.shortLabelKey !== undefined}
                                     t={t}
                                 />
                             );
@@ -316,7 +295,6 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
                                 barWidth={phoneBarWidth}
                                 trackHeight={trackHeight}
                                 ds={ds}
-                                useShortLabel={m.shortLabelKey !== undefined}
                                 t={t}
                             />
                         ))}
@@ -381,25 +359,25 @@ interface ColDef {
 const SCALE_COLDEFS: readonly ColDef[] = [
     {
         key: "provision",
-        headerKey: "domain.barProvisionShort",
+        headerKey: "extendedTable.columnProvision",
         value: (r) => r.provision_total,
         max: (r) => r.provision_total_max,
     },
     {
         key: "diversity",
-        headerKey: "domain.barDiversityShort",
+        headerKey: "extendedTable.columnDiversity",
         value: (r) => r.diversity_total,
         max: (r) => r.diversity_total_max,
     },
     {
         key: "challenge",
-        headerKey: "domain.barChallengeShort",
+        headerKey: "extendedTable.columnChallenge",
         value: (r) => r.challenge_total,
         max: (r) => r.challenge_total_max,
     },
     {
         key: "sociability",
-        headerKey: "domain.barSociabilityShort",
+        headerKey: "extendedTable.columnSociability",
         value: (r) => r.sociability_total,
         max: (r) => r.sociability_total_max,
     },
@@ -496,7 +474,7 @@ function PhoneSubTable({
                             color={ds.colors.primaryForeground}
                             fontFamily={ds.fonts.bodyBold}
                             fontSize={ds.typography.bodyXs.fontSize}
-                            numberOfLines={1}
+                            numberOfLines={2}
                             width="100%"
                             style={{ textAlign: "center" }}
                         >

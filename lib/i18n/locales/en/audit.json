@@ -33,6 +33,7 @@
     },
     "copy": {
         "continueToCOPATool": "Continue with the COPA Tool",
+        "resumeNextSection": "Continue — resume next section",
         "continueToSubject": "Continue with {{subject}}",
         "continueToSubjectInfo": "Continue to {{subject}} details",
         "submitSubject": "Submit {{subject}}"
@@ -99,7 +100,10 @@
         "tapToExpand": "Tap to expand",
         "preparingAudit": "Preparing the COPA audit flow...",
         "preparingAuditTitle": "Preparing Audit",
+        "sectionCardHintContinue": "Tap Continue to pick up where you left off, or jump to any section below.",
+        "sectionCardHintAllDone": "All sections complete. Tap a section to review your answers.",
         "sectionEmpty": "No sections match the current filter.",
+        "sectionJumpDivider": "Or jump to a section",
         "sectionOverviewTitle": "COPA Tool section overview",
         "sections": "Sections",
         "roleFixesSubset": "Your role already fixes the visible subset of questions for this place.",

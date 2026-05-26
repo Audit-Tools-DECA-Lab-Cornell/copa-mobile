@@ -38,7 +38,6 @@ interface ColumnDef {
     readonly value: (row: AuditScoreTotals) => number;
     readonly max: (row: AuditScoreTotals) => number;
     readonly headerKey: string;
-    readonly shortHeaderKey?: string;
 }
 
 const LEFT_COLUMNS: readonly ColumnDef[] = [
@@ -47,28 +46,24 @@ const LEFT_COLUMNS: readonly ColumnDef[] = [
         value: (r) => r.provision_total,
         max: (r) => r.provision_total_max,
         headerKey: "extendedTable.columnProvision",
-        shortHeaderKey: "domain.barProvisionShort",
     },
     {
         key: "diversity",
         value: (r) => r.diversity_total,
         max: (r) => r.diversity_total_max,
         headerKey: "extendedTable.columnDiversity",
-        shortHeaderKey: "domain.barDiversityShort",
     },
     {
         key: "challenge",
         value: (r) => r.challenge_total,
         max: (r) => r.challenge_total_max,
         headerKey: "extendedTable.columnChallenge",
-        shortHeaderKey: "domain.barChallengeShort",
     },
     {
         key: "sociability",
         value: (r) => r.sociability_total,
         max: (r) => r.sociability_total_max,
         headerKey: "extendedTable.columnSociability",
-        shortHeaderKey: "domain.barSociabilityShort",
     },
 ];
 
@@ -78,14 +73,12 @@ const RIGHT_COLUMNS: readonly ColumnDef[] = [
         value: (r) => r.play_value_total,
         max: (r) => r.play_value_total_max,
         headerKey: "extendedTable.columnPlayValue",
-        shortHeaderKey: "playValueShort",
     },
     {
         key: "usability",
         value: (r) => r.usability_total,
         max: (r) => r.usability_total_max,
         headerKey: "extendedTable.columnUsability",
-        shortHeaderKey: "usabilityShort",
     },
 ];
 
@@ -147,7 +140,6 @@ function ScoreSubTable({
     labelColWidth,
 }: SubTableProps) {
     const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
     const { t } = useTranslation("reports");
 
     const LabelCell = ({ text }: { text: string }) => (
@@ -191,11 +183,6 @@ function ScoreSubTable({
                 />
                 {columns.map((col, i) => {
                     const w = getColumnWidth(col);
-                    const shortKey = col.shortHeaderKey;
-                    const headerText =
-                        layout.isTablet && shortKey !== undefined
-                            ? t(shortKey, { ns: "reports" })
-                            : t(col.headerKey, { ns: "reports" });
                     return (
                         <YStack
                             key={col.key}
@@ -210,11 +197,11 @@ function ScoreSubTable({
                                 color={ds.colors.primaryForeground}
                                 fontFamily={ds.fonts.bodyBold}
                                 fontSize={ds.typography.bodyXs.fontSize}
-                                numberOfLines={1}
+                                numberOfLines={2}
                                 width="100%"
                                 style={{ textAlign: "center" }}
                             >
-                                {headerText}
+                                {t(col.headerKey, { ns: "reports" })}
                             </Text>
                         </YStack>
                     );
