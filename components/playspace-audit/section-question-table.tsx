@@ -295,9 +295,9 @@ function QuestionPromptCell({ question, width }: Readonly<QuestionPromptCellProp
                     <Fragment key={`${question.question_key}-${index.toString()}`}>
                         <Text
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
-                            fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
+                            fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodySemiBold}
                             fontSize={ds.typography.bodyMd.fontSize}
-                            style={{ fontWeight: segment.bold ? "800" : "400" }}
+                            style={{ fontWeight: segment.bold ? "800" : "600" }}
                         >
                             {segment.text}
                         </Text>

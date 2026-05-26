@@ -89,7 +89,7 @@ export function QuestionCard({
                 {promptSegments.map((segment, index) => (
                     <Fragment key={`${question.question_key}-seg-${index.toString()}`}>
                         <Text
-                            fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
+                            fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodySemiBold}
                             fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize}
                             color={segment.bold ? ds.colors.primary : ds.colors.foreground}
                         >
@@ -243,8 +243,8 @@ function ScaleSelector({
                 </Text>
                 <Paragraph
                     color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize}
+                    fontFamily={ds.fonts.bodyRegular}
+                    fontSize={ds.typography.bodySm.fontSize}
                 >
                     {scale.prompt}
                 </Paragraph>
