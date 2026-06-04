@@ -3,7 +3,7 @@ import { ScrollView } from "react-native";
 import { Text, XStack, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
 import type { AuditScoreTotals } from "lib/audit/types";
-import { formatPercentage, formatScoreValue, reportBarScoreTier, roundedPercentOfMax } from "lib/audit/score-helpers";
+import { formatPercentage, formatScoreValue, roundedPercentOfMax } from "lib/audit/score-helpers";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
@@ -71,70 +71,76 @@ const CONSTRUCT_METRICS: readonly MetricConfig[] = [
 
 const ALL_BAR_METRICS: readonly MetricConfig[] = [...SCALE_METRICS, ...CONSTRUCT_METRICS];
 
-function barColorForTier(tier: ReturnType<typeof reportBarScoreTier>, ds: ReturnType<typeof useDesignSystem>): string {
-    if (tier === "na") {
+// The two headline constructs use a balanced teal/gold pair — co-equal peers,
+// distinct from the scale colors and the brand clay.
+const PVU_BAR_COLORS: Record<"play_value" | "usability", string> = {
+    play_value: "#2E7D78",
+    usability: "#C7972F",
+};
+
+// Percentage cutoffs where the legacy bar color used to change. Now rendered as
+// horizontal dotted lines across each bar, labeled at the start of each group.
+const BAR_THRESHOLDS = [40, 70] as const;
+
+/**
+ * Bar color by metric identity (not score): the four PVUA scale bars use the
+ * shared design-system scale colors; Play Value & Usability use the brand clay
+ * family. Not-assessed bars fall back to the muted foreground.
+ */
+function barColorForMetric(key: MetricKey, isNa: boolean, ds: ReturnType<typeof useDesignSystem>): string {
+    if (isNa) {
         return ds.colors.mutedForeground;
     }
-    if (tier === "high") {
-        return ds.colors.success;
+    switch (key) {
+        case "provision":
+            return ds.colors.provision;
+        case "diversity":
+            return ds.colors.diversity;
+        case "challenge":
+            return ds.colors.challenge;
+        case "sociability":
+            return ds.colors.sociability;
+        case "play_value":
+            return PVU_BAR_COLORS.play_value;
+        case "usability":
+            return PVU_BAR_COLORS.usability;
     }
-    if (tier === "mid") {
-        return ds.colors.warning;
-    }
-    return ds.colors.danger;
 }
 
 // ── Bar rendering ─────────────────────────────────────────────────────────────
 
-interface AlignedBarCellProps {
+/**
+ * One vertical bar track (no labels), centered within its data column so it sits
+ * directly above the matching table column. Labels and the threshold lines are
+ * rendered by `BarBlock` so the lines can run continuously across the whole group.
+ */
+function BarTrackCell({
+    metric,
+    scoreTotals,
+    colWidth,
+    barWidth,
+    trackHeight,
+    ds,
+    t,
+}: {
     readonly metric: MetricConfig;
     readonly scoreTotals: AuditScoreTotals | null;
-    readonly colWidth: number; // matches the data column width in the sub-table below
-    readonly barWidth: number; // visual bar width (≤ colWidth)
+    readonly colWidth: number;
+    readonly barWidth: number;
     readonly trackHeight: number;
     readonly ds: ReturnType<typeof useDesignSystem>;
     readonly t: TFunction<"reports", undefined>;
-}
-
-/**
- * One vertical bar cell sized to exactly match a table data column.
- * The bar is centered within `colWidth` so it aligns with the column below.
- */
-function AlignedBarCell({ metric, scoreTotals, colWidth, barWidth, trackHeight, ds, t }: AlignedBarCellProps) {
+}) {
     const value = scoreTotals === null ? 0 : metric.value(scoreTotals);
     const maximum = scoreTotals === null ? 0 : metric.max(scoreTotals);
     const isNa = scoreTotals === null || maximum <= 0;
-    const pctRounded = roundedPercentOfMax(value, maximum);
-    const tier = reportBarScoreTier(pctRounded);
     const fillRatio = isNa ? 0 : Math.min(1, value / maximum);
     const fillHeight = Math.round(fillRatio * trackHeight * 100) / 100;
-    const barColor = barColorForTier(tier, ds);
-
-    const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${pctRounded}%`;
-    const label = t(metric.labelKey, { ns: "reports" });
+    const barColor = barColorForMetric(metric.key, isNa, ds);
     const a11yPct = isNa ? t("detail.metricNotAssessed", { ns: "reports" }) : formatPercentage(value, maximum);
 
     return (
-        <YStack
-            width={colWidth}
-            items="center"
-            gap="$1"
-            pb="$1"
-            accessibilityRole="none"
-            accessibilityLabel={`${t(metric.labelKey, { ns: "reports" })}: ${a11yPct}`}
-        >
-            {/* Percentage above bar — always visible regardless of fill */}
-            <Text
-                color={isNa ? ds.colors.mutedForeground : ds.colors.foreground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.bodyXs.fontSize}
-                style={{ textAlign: "center" }}
-                numberOfLines={1}
-            >
-                {pctLabel}
-            </Text>
-
-            {/* Bar track */}
+        <YStack width={colWidth} height={trackHeight} items="center" justify="flex-end">
             <YStack
                 height={trackHeight}
                 width={barWidth}
@@ -144,6 +150,7 @@ function AlignedBarCell({ metric, scoreTotals, colWidth, barWidth, trackHeight, 
                 overflow="hidden"
                 justify="flex-end"
                 accessibilityRole="progressbar"
+                accessibilityLabel={`${t(metric.labelKey, { ns: "reports" })}: ${a11yPct}`}
                 style={{ backgroundColor: ds.colors.input }}
             >
                 {!isNa && fillHeight > 0 ? (
@@ -160,18 +167,135 @@ function AlignedBarCell({ metric, scoreTotals, colWidth, barWidth, trackHeight, 
                     </YStack>
                 ) : null}
             </YStack>
+        </YStack>
+    );
+}
 
-            {/* Metric label below bar */}
-            <Text
-                color={ds.colors.mutedForeground}
-                fontSize={ds.typography.bodyXs.fontSize}
-                lineHeight={ds.typography.bodyXs.lineHeight}
-                numberOfLines={3}
-                width={colWidth - 4}
-                style={{ textAlign: "center" }}
-            >
-                {label}
-            </Text>
+/**
+ * A group of bars rendered as three aligned rows — percentage labels, a fixed-height
+ * track row, and metric labels — so each column lines up with the table below. The
+ * two threshold cutoffs are drawn as single dotted lines running continuously across
+ * the whole track row, with their values labeled once on the left axis.
+ */
+function BarBlock({
+    metrics,
+    scoreTotals,
+    getColWidth,
+    barWidth,
+    trackHeight,
+    labelColWidth,
+    ds,
+    t,
+}: {
+    readonly metrics: readonly MetricConfig[];
+    readonly scoreTotals: AuditScoreTotals | null;
+    readonly getColWidth: (metric: MetricConfig) => number;
+    readonly barWidth: number;
+    readonly trackHeight: number;
+    readonly labelColWidth: number;
+    readonly ds: ReturnType<typeof useDesignSystem>;
+    readonly t: TFunction<"reports", undefined>;
+}) {
+    const totalWidth = labelColWidth + metrics.reduce((sum, m) => sum + getColWidth(m), 0);
+
+    return (
+        <YStack width={totalWidth}>
+            {/* Percentage labels */}
+            <XStack pb="$1">
+                <YStack width={labelColWidth} />
+                {metrics.map((m) => {
+                    const value = scoreTotals === null ? 0 : m.value(scoreTotals);
+                    const maximum = scoreTotals === null ? 0 : m.max(scoreTotals);
+                    const isNa = scoreTotals === null || maximum <= 0;
+                    const pctRounded = roundedPercentOfMax(value, maximum);
+                    const pctLabel = isNa ? t("extendedTable.notApplicable", { ns: "reports" }) : `${pctRounded}%`;
+                    return (
+                        <YStack key={m.key} width={getColWidth(m)} items="center">
+                            <Text
+                                color={isNa ? ds.colors.mutedForeground : ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.bodyXs.fontSize}
+                                numberOfLines={1}
+                                style={{ textAlign: "center" }}
+                            >
+                                {pctLabel}
+                            </Text>
+                        </YStack>
+                    );
+                })}
+            </XStack>
+
+            {/* Track row with continuous threshold lines */}
+            <YStack width={totalWidth} height={trackHeight}>
+                <XStack height={trackHeight} items="flex-end">
+                    {/* Left axis — threshold values labeled once */}
+                    <YStack width={labelColWidth} height={trackHeight}>
+                        {BAR_THRESHOLDS.map((th) => (
+                            <Text
+                                key={th}
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={10}
+                                lineHeight={12}
+                                style={{
+                                    position: "absolute",
+                                    right: 6,
+                                    bottom: (th / 100) * trackHeight - 6,
+                                }}
+                            >
+                                {th}%
+                            </Text>
+                        ))}
+                    </YStack>
+                    {metrics.map((m) => (
+                        <BarTrackCell
+                            key={m.key}
+                            metric={m}
+                            scoreTotals={scoreTotals}
+                            colWidth={getColWidth(m)}
+                            barWidth={barWidth}
+                            trackHeight={trackHeight}
+                            ds={ds}
+                            t={t}
+                        />
+                    ))}
+                </XStack>
+                {/* Continuous dotted cutoff lines spanning the data columns */}
+                {BAR_THRESHOLDS.map((th) => (
+                    <YStack
+                        key={`line-${th}`}
+                        borderTopWidth={1}
+                        borderColor={ds.colors.foreground}
+                        style={{
+                            position: "absolute",
+                            left: labelColWidth,
+                            right: 0,
+                            bottom: (th / 100) * trackHeight,
+                            borderStyle: "dashed",
+                            opacity: 0.45,
+                            pointerEvents: "none",
+                        }}
+                    />
+                ))}
+            </YStack>
+
+            {/* Metric labels */}
+            <XStack pt="$1">
+                <YStack width={labelColWidth} />
+                {metrics.map((m) => (
+                    <YStack key={m.key} width={getColWidth(m)} items="center">
+                        <Text
+                            color={ds.colors.mutedForeground}
+                            fontSize={ds.typography.bodyXs.fontSize}
+                            lineHeight={ds.typography.bodyXs.lineHeight}
+                            numberOfLines={3}
+                            style={{ textAlign: "center" }}
+                        >
+                            {t(m.labelKey, { ns: "reports" })}
+                        </Text>
+                    </YStack>
+                ))}
+            </XStack>
         </YStack>
     );
 }
@@ -187,21 +311,21 @@ function AlignedBarCell({ metric, scoreTotals, colWidth, barWidth, trackHeight, 
  * so every bar sits directly above its matching column — two separate
  * scrollable groups (scale scores, then construct scores):
  *
- *   ┌────────────────────────────────────────── scroll ──┐
- *   │ [spacer] │ Provision │ Diversity │ Challenge │ Sociability │
- *   │ Achieved │  12  │  8  │  6   │  3  │  ← table     │
- *   │ Max      │  18  │  10 │  8   │  6  │              │
- *   └────────────────────────────────────────────────────┘
- *   ┌──────────────────────────── scroll ──┐
- *   │ [spacer] │ Play Value │ Usability │  │
- *   │ Achieved │     24     │    18     │  │
- *   │ Max      │     36     │    28     │  │
- *   └──────────────────────────────────────┘
+ *   ┌────────────────────────────────────────── scroll ───────────┐
+ *   │ [spacer] │ Provision │ Diversity │ Challenge │ Sociability  │
+ *   │  Achieved │  12  │  8  │  6   │  3  │  ← table              │
+ *   │  Max      │  18  │  10 │  8   │  6  │                       │
+ *   └─────────────────────────────────────────────────────────────┘
+ *   ┌──────────────────────────── scroll ───┐
+ *   │ [spacer]  │ Play Value │ Usability │  │
+ *   │  Achieved │     24     │    18     │  │
+ *   │  Max      │     36     │    28     │  │
+ *   └───────────────────────────────────────┘
  *
  * Tablet
  * ──────
- * One row of six bars (label-column spacer + scale + construct columns) with tier-colored fills,
- * then one joined score table (matches web `AlignedScoreDisplay`).
+ * One row of six bars (label-column spacer + scale + construct columns) colored by metric
+ * identity, then one joined score table (matches web `AlignedScoreDisplay`).
  */
 export const DomainScoreDisplay = memo(function DomainScoreDisplay({
     scoreTotals,
@@ -221,25 +345,20 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
         return (
             <YStack gap="$3" width="100%">
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <XStack items="flex-end" style={{ minWidth: tableLayout.joinedTableWidth }}>
-                        <YStack width={tableLayout.labelColWidth} />
-                        {ALL_BAR_METRICS.map((m) => {
-                            const isScale = SCALE_METRICS.some((s) => s.key === m.key);
-                            const colW = isScale ? tableLayout.leftDataColWidth : tableLayout.rightDataColWidth;
-                            return (
-                                <AlignedBarCell
-                                    key={m.key}
-                                    metric={m}
-                                    scoreTotals={scoreTotals}
-                                    colWidth={colW}
-                                    barWidth={barWidth}
-                                    trackHeight={trackHeight}
-                                    ds={ds}
-                                    t={t}
-                                />
-                            );
-                        })}
-                    </XStack>
+                    <BarBlock
+                        metrics={ALL_BAR_METRICS}
+                        scoreTotals={scoreTotals}
+                        getColWidth={(m) =>
+                            SCALE_METRICS.some((s) => s.key === m.key)
+                                ? tableLayout.leftDataColWidth
+                                : tableLayout.rightDataColWidth
+                        }
+                        barWidth={barWidth}
+                        trackHeight={trackHeight}
+                        labelColWidth={tableLayout.labelColWidth}
+                        ds={ds}
+                        t={t}
+                    />
                 </ScrollView>
 
                 <DomainScoreTable scoreTotals={scoreTotals} itemCount={itemCount} />
@@ -282,23 +401,17 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
             {/* Bars + table in one shared horizontal scroll */}
             <ScrollView horizontal showsHorizontalScrollIndicator>
                 <YStack gap="$0">
-                    {/* Bar row — label-width spacer keeps bars above columns */}
-                    <XStack items="flex-end" pb="$1">
-                        {/* Spacer matching the label column */}
-                        <YStack width={phoneLabelColWidth} />
-                        {metrics.map((m) => (
-                            <AlignedBarCell
-                                key={m.key}
-                                metric={m}
-                                scoreTotals={scoreTotals}
-                                colWidth={dataColWidth}
-                                barWidth={phoneBarWidth}
-                                trackHeight={trackHeight}
-                                ds={ds}
-                                t={t}
-                            />
-                        ))}
-                    </XStack>
+                    {/* Bars as three aligned rows with continuous threshold lines */}
+                    <BarBlock
+                        metrics={metrics}
+                        scoreTotals={scoreTotals}
+                        getColWidth={() => dataColWidth}
+                        barWidth={phoneBarWidth}
+                        trackHeight={trackHeight}
+                        labelColWidth={phoneLabelColWidth}
+                        ds={ds}
+                        t={t}
+                    />
 
                     {/* Sub-table — same column widths, so bars are perfectly aligned */}
                     <PhoneSubTable
