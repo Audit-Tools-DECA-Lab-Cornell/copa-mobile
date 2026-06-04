@@ -358,14 +358,14 @@
                 "description": "**Playspace Character & Community:** considers aspects of a playspace that offers opportunities for users to be involved with or identify with the playspace. These aspects relate to involvement in design and maintenance, local history/heritage/art/stories, unique characteristics, use for community events",
                 "instruction": "Read each statement and answer the questions. This playspace...",
                 "section_key": "section_1_playspace_character_community",
-                "notes_prompt": "Any comments? Describe one or more recommendations to improve the character and community involvment of this playspace:"
+                "notes_prompt": "Any comments? Describe one or more recommendations to improve the character and community involvement of this playspace:"
             },
             {
                 "title": "Playspace Location & Connectivity",
                 "questions": [
                     {
                         "mode": "survey",
-                        "prompt": "has **walking or biking paths leading to the playsapce entrance(s)**",
+                        "prompt": "has **walking or biking paths leading to the playspace entrance(s)**",
                         "scales": [
                             {
                                 "key": "provision",
@@ -1654,7 +1654,7 @@
                                 "options": [
                                     {
                                         "key": "not_applicable",
-                                        "label": "Not applicable/expected for playsapce size/type",
+                                        "label": "Not applicable/expected for playspace size/type",
                                         "boost_value": 1,
                                         "addition_value": 0,
                                         "is_not_applicable": true,
