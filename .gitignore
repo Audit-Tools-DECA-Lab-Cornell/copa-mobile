@@ -84,6 +84,10 @@ docs/superpowers/
 .superpowers/
 .claude/
 .cline/
+.caliber/
+.caliber/.caliber-state.json
+.caliber/cache/fingerprint.json
+
 
 # Scripts
 scripts/screenshots/*
