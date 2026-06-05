@@ -52,10 +52,10 @@ export function buildSingleAuditPdfHtml(exportableAudit: ExportableAudit, instru
     const profileRows: readonly (readonly [string, SpreadsheetCell])[] = auditorProfile
         ? [
               ["Auditor Code", auditorProfile.auditorCode],
-              ["Age Range", auditorProfile.ageRange ?? "—"],
-              ["Gender", auditorProfile.gender ?? "—"],
-              ["Country", auditorProfile.country ?? "—"],
-              ["Role", auditorProfile.role ?? "—"],
+              ["Age Range", auditorProfile.ageRange ?? "-"],
+              ["Gender", auditorProfile.gender ?? "-"],
+              ["Country", auditorProfile.country ?? "-"],
+              ["Role", auditorProfile.role ?? "-"],
           ]
         : [["Auditor", "Not available"]];
 
@@ -122,7 +122,7 @@ export function buildSingleAuditPdfHtml(exportableAudit: ExportableAudit, instru
         renderScoreSummary(scoreRows),
         "</section>",
         '<section class="response-page">',
-        `<h2>${escapeHtml(`${auditSession.audit_code} — ${auditSession.place_name} — PVUA Response Matrix`)}</h2>`,
+        `<h2>${escapeHtml(`${auditSession.audit_code} - ${auditSession.place_name} - PVUA Response Matrix`)}</h2>`,
         renderPdfResponseMatrix(exportableAudit, instrument),
         "</section>",
         "</body>",

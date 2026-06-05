@@ -55,7 +55,7 @@
         "subtitle": "セクションごとの COPA 監査フローを開始または再開する場所を選択してください。",
         "title": "監査の実行"
     },
-    "mode": "— {{mode}}",
+    "mode": "- {{mode}}",
     "modeShort": {
         "audit": "現地のみ",
         "both": "調査と現地",

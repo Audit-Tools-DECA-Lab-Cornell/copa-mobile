@@ -1,4 +1,4 @@
-import type { InstrumentTranslations } from "../../instrument-translations";
+import type { InstrumentTranslations } from "lib/i18n/instrument-translations";
 
 /**
  * Auto-generated translation overrides for the fr instrument locale.
@@ -854,7 +854,7 @@ export const frInstrumentTranslations = {
                     prompt: "propose des éléments qui offrent** des possibilités de jeu évolutives selon les changements saisonniers locaux** (p. ex., des arbres feuillus qui changent de couleur; des arbres qui perdent leurs feuilles/graines (p. ex. glands); des arbres fruitiers comme les châtaigniers/pommiers; des plantes à fleurs; des étangs qui gèlent en hiver; des jardins avec des fruits et herbes de saison)",
                 },
                 q_19_3: {
-                    prompt: "propose des éléments qui **tirent parti du soleil, de la lumière naturelle changeante et/ou de l’éclairage électronique** — créant des expériences sensorielles et des possibilités de jeu grâce à des éléments réactifs à la lumière (p. ex., panneaux en vitrail; éléments illuminés; éléments créant des ombres à motifs ou en mouvement)",
+                    prompt: "propose des éléments qui **tirent parti du soleil, de la lumière naturelle changeante et/ou de l’éclairage électronique** - créant des expériences sensorielles et des possibilités de jeu grâce à des éléments réactifs à la lumière (p. ex., panneaux en vitrail; éléments illuminés; éléments créant des ombres à motifs ou en mouvement)",
                 },
                 q_19_4: {
                     prompt: "propose** des éléments interactifs et/ou basés sur des capteurs** que les enfants peuvent activer pour modifier ou façonner l’environnement de jeu (p. ex., des éléments de mélange de matériaux comme des pompes à eau; des éléments sonores/lumineux/aquatiques activés par le mouvement ou une minuterie)",
@@ -876,7 +876,7 @@ export const frInstrumentTranslations = {
         section_20_sensory_qualities_regulation: {
             title: "Qualités sensorielles et autorégulation",
             description:
-                "Qualités sensorielles et autorégulation évalue dans quelle mesure un espace soutient diverses expériences sensorielles qui favorisent l’engagement, le confort et le bien‑être. Elle tient compte de la présence d’éléments visuels, auditifs, olfactifs et tactiles qui créent de l’intérêt et de la stimulation — comme des touches de couleur, des textures variées, des sons, des odeurs agréables et des éléments interactifs. Elle évalue aussi si l’environnement offre des options de retrait sensoriel ou de stimulation réduite, ainsi que toute pollution sonore persistante (codage inversé), afin de garantir que l’espace convienne aux personnes ayant des besoins sensoriels variés.",
+                "Qualités sensorielles et autorégulation évalue dans quelle mesure un espace soutient diverses expériences sensorielles qui favorisent l’engagement, le confort et le bien‑être. Elle tient compte de la présence d’éléments visuels, auditifs, olfactifs et tactiles qui créent de l’intérêt et de la stimulation - comme des touches de couleur, des textures variées, des sons, des odeurs agréables et des éléments interactifs. Elle évalue aussi si l’environnement offre des options de retrait sensoriel ou de stimulation réduite, ainsi que toute pollution sonore persistante (codage inversé), afin de garantir que l’espace convienne aux personnes ayant des besoins sensoriels variés.",
             instruction: "Lisez chaque énoncé et répondez aux questions. Cet espace de jeu...",
             notesPrompt:
                 "Des commentaires? Décrivez une ou plusieurs recommandations pour améliorer les qualités sensorielles de cet espace de jeu :",

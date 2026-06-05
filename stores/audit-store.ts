@@ -176,7 +176,7 @@ type PersistedAuditDataSnapshot = Pick<
 // Observable state
 // ---------------------------------------------------------------------------
 
-/** Persistent audit data — auto-saved to MMKV via an observer. */
+/** Persistent audit data - auto-saved to MMKV via an observer. */
 const auditData$ = observable({
     instrument: null as PlayspaceInstrument | null,
     sessions_by_audit_id: {} as Record<string, AuditSession>,
@@ -190,7 +190,7 @@ const auditData$ = observable({
     last_successful_sync_at: null as string | null,
 });
 
-/** Transient UI state — not persisted across restarts. */
+/** Transient UI state - not persisted across restarts. */
 const auditUI$ = observable({
     currentUserId: null as string | null,
     isHydrated: false,

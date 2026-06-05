@@ -22,14 +22,14 @@ export const REPORT_SCORE_RIGHT_TABLE_WIDTH =
     REPORT_SCORE_LABEL_COL_WIDTH + REPORT_SCORE_RIGHT_DATA_COL_WIDTH_TABLET * 2;
 
 function cellValue(totals: AuditScoreTotals | null, value: (row: AuditScoreTotals) => number): string {
-    if (totals === null) return "—";
+    if (totals === null) return "-";
     return formatScoreValue(value(totals));
 }
 
 function cellMax(totals: AuditScoreTotals | null, max: (row: AuditScoreTotals) => number): string {
-    if (totals === null) return "—";
+    if (totals === null) return "-";
     const raw = max(totals);
-    if (raw <= 0) return "—";
+    if (raw <= 0) return "-";
     return formatScoreValue(raw);
 }
 

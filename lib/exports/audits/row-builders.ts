@@ -110,7 +110,7 @@ export function buildInProgressOverviewRows(
  *
  * The visible section/question set is computed by `getVisibleSections`, the
  * same selector the audit-execution screens use, so the export mirrors what
- * the auditor sees in the app — including the `"both"` execution-mode case
+ * the auditor sees in the app - including the `"both"` execution-mode case
  * where mode filtering is bypassed.
  */
 export function buildInProgressAuditResponseRows(

@@ -168,7 +168,7 @@ export default function CompleteProfileScreen() {
             errorMessage={errorMessage}
             helperText={t(
                 "completeProfile.helperText",
-                "Only your full name is required — everything else is optional.",
+                "Only your full name is required - everything else is optional.",
             )}
             avoidKeyboard
         >

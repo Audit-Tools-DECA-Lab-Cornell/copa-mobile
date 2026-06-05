@@ -135,7 +135,7 @@ export async function submitAudit(
 
 /**
  * Request the backend to notify the auditor that their offline-queued submit
- * could not be processed. Best-effort — silently ignored if the endpoint is not
+ * could not be processed. Best-effort - silently ignored if the endpoint is not
  * yet implemented on the server.
  *
  * @param session Authenticated mobile session.

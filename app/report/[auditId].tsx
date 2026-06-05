@@ -342,7 +342,7 @@ function SectionBreakdownCard({
                                         style={{ textAlign: "right" }}
                                     >
                                         {sectionRow.scoreTotals === null
-                                            ? "—"
+                                            ? "-"
                                             : (() => {
                                                   const st = sectionRow.scoreTotals;
                                                   return `PV ${formatPercentage(st.play_value_total, st.play_value_total_max)} · U ${formatPercentage(st.usability_total, st.usability_total_max)}`;
@@ -481,7 +481,7 @@ function SectionNavigatorCard({ sectionRows, onSectionPress }: Readonly<SectionN
                                                         {(() => {
                                                             const st = sectionRow.scoreTotals;
                                                             if (st === null) {
-                                                                return "—";
+                                                                return "-";
                                                             }
                                                             return `PV ${formatScoreValue(st.play_value_total)}/${formatScoreValue(st.play_value_total_max)} · U ${formatScoreValue(st.usability_total)}/${formatScoreValue(st.usability_total_max)}`;
                                                         })()}

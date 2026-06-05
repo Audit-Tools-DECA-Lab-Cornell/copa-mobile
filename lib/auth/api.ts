@@ -72,7 +72,7 @@ export async function signupWithPassword(payload: SignupPayload): Promise<AuthSe
 /**
  * Submit a self-signup access request (Scenario A).
  *
- * No auth token is returned — the auditor waits until their manager
+ * No auth token is returned - the auditor waits until their manager
  * creates their account and shares credentials.
  *
  * @param payload Access request payload.

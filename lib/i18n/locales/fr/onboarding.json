@@ -74,13 +74,13 @@
         "termsHeading": "Conditions d'utilisation",
         "termsBody": "En utilisant l’outil Comprehensive Outdoor Playspace Audit (COPA), vous acceptez d'effectuer des audits honnêtement et conformément aux instructions de votre chef de projet. Vous ne partagerez pas vos identifiants d'accès. Toutes les données que vous soumettez font partie du dossier d'audit.",
         "privacyHeading": "Avis de confidentialité",
-        "privacyBody": "Vos données personnelles sont stockées en toute sécurité et utilisées uniquement pour identifier vos soumissions au sein de la plateforme. Votre code d'auditeur — pas votre nom personnel — est associé aux enregistrements d'audit visibles par les autres."
+        "privacyBody": "Vos données personnelles sont stockées en toute sécurité et utilisées uniquement pour identifier vos soumissions au sein de la plateforme. Votre code d'auditeur - pas votre nom personnel - est associé aux enregistrements d'audit visibles par les autres."
     },
     "auditorCode": {
         "title": "Votre code d'auditeur",
         "subtitle": "C'est ainsi que vous êtes identifié dans tous les dossiers d'audit.",
         "codeLabel": "Code d'auditeur",
-        "explanation": "Seul votre code d'auditeur — pas votre nom ni vos coordonnées — est stocké avec chaque audit que vous soumettez.",
+        "explanation": "Seul votre code d'auditeur - pas votre nom ni vos coordonnées - est stocké avec chaque audit que vous soumettez.",
         "submit": "Entrer dans COPA"
     }
 }

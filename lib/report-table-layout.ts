@@ -4,9 +4,9 @@ import { getContentTrackInnerWidth, useResponsiveLayout } from "lib/responsive-l
 const LEFT_COLUMN_COUNT = 4; // provision, diversity, challenge, sociability
 const RIGHT_COLUMN_COUNT = 2; // play_value, usability
 
-/** Former fixed phone sizes — only proportions matter; widths scale to the content track. */
+/** Former fixed phone sizes - only proportions matter; widths scale to the content track. */
 const NOMINAL_PHONE = { label: 160, leftData: 72, rightData: 108 } as const;
-/** Former fixed tablet sizes — proportions preserved on wide slates. */
+/** Former fixed tablet sizes - proportions preserved on wide slates. */
 const NOMINAL_TABLET = { label: 150, leftData: 88, rightData: 125 } as const;
 
 function nominalJoinedTotal(nominal: { label: number; leftData: number; rightData: number }): number {

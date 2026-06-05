@@ -7,7 +7,7 @@ import { usePreferencesStore } from "stores/preferences-store";
 import { NotificationsPanel } from "./NotificationsPanel";
 
 interface ProviderProps extends Omit<TamaguiProviderProps, "config" | "defaultTheme"> {
-    /** Tamagui theme name — typically "light" or "dark". */
+    /** Tamagui theme name - typically "light" or "dark". */
     readonly theme?: "light" | "dark";
 }
 

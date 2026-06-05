@@ -16,8 +16,8 @@ type StyledCell = XLSX.CellObject & { s?: Record<string, unknown> };
 /**
  * Build a styled XLSX workbook for an in-progress audit export.
  *
- * The styling is intentionally simpler than the submitted-report export — no
- * score totals, no scale-coloured columns — but it adds one important
+ * The styling is intentionally simpler than the submitted-report export - no
+ * score totals, no scale-coloured columns - but it adds one important
  * affordance: any cell whose value matches `UNANSWERED_PLACEHOLDER` gets a
  * pale red fill and italic muted text so the reader can spot incomplete
  * questions at a glance.

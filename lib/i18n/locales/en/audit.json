@@ -33,7 +33,7 @@
     },
     "copy": {
         "continueToCOPATool": "Continue with the COPA Tool",
-        "resumeNextSection": "Continue — resume next section",
+        "resumeNextSection": "Continue - resume next section",
         "continueToSubject": "Continue with {{subject}}",
         "continueToSubjectInfo": "Continue to {{subject}} details",
         "submitSubject": "Submit {{subject}}"
@@ -75,7 +75,7 @@
         "subtitle": "Choose a place to start or resume the section-by-section COPA audit flow.",
         "title": "Audit Execute"
     },
-    "mode": "— {{mode}}",
+    "mode": "- {{mode}}",
     "modeShort": {
         "audit": "Onsite auditor",
         "both": "Admin and onsite auditor",

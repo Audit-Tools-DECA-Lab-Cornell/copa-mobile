@@ -1,4 +1,4 @@
-# Comprehensive Outdoor Playspace Audit (COPA) Tool — Terms and Conditions and Privacy Notice
+# Comprehensive Outdoor Playspace Audit (COPA) Tool - Terms and Conditions and Privacy Notice
 
 **Last updated:** April 30, 2026  
 **Product:** Comprehensive Outdoor Playspace Audit (COPA) Tool

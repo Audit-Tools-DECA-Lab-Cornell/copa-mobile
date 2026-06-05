@@ -1,4 +1,4 @@
-import type { InstrumentTranslations } from "../../instrument-translations";
+import type { InstrumentTranslations } from "lib/i18n/instrument-translations";
 
 /**
  * Auto-generated translation overrides for the de instrument locale.

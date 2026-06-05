@@ -55,7 +55,7 @@ export async function savePersistedPreferences(prefs: PersistedPreferences): Pro
     try {
         mmkvStorage.set(PREFS_STORAGE_KEY, JSON.stringify(prefs));
     } catch {
-        /* non-critical — in-memory cache is already updated */
+        /* non-critical - in-memory cache is already updated */
     }
 }
 

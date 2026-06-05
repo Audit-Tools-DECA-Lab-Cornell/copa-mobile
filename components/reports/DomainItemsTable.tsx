@@ -140,7 +140,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         if (!applicable || !followUpScalesAsked) {
             return (
                 <DataText textAlign="center" muted opacity={mutedDashOpacity}>
-                    —
+                    -
                 </DataText>
             );
         }
@@ -151,7 +151,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                 </DataText>
             );
         }
-        return <DataText textAlign="center">{label ?? "—"}</DataText>;
+        return <DataText textAlign="center">{label ?? "-"}</DataText>;
     }
 
     return (

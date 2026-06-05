@@ -161,9 +161,9 @@ export default function SettingsScreen() {
         scrollToOffset: scrollSettingsToOffset,
     });
 
-    const userName = account?.name ?? session?.user.name ?? "—";
-    const userEmail = account?.email ?? session?.user.email ?? "—";
-    const accountType = session === null ? "—" : t("accountTypes.auditor", { ns: "common" });
+    const userName = account?.name ?? session?.user.name ?? "-";
+    const userEmail = account?.email ?? session?.user.email ?? "-";
+    const accountType = session === null ? "-" : t("accountTypes.auditor", { ns: "common" });
     const activeLanguage = resolveAppLanguage(i18n.resolvedLanguage ?? i18n.language);
 
     const getActiveLanguageTranslationKey = (language: ResolvedAppLanguage): string => {

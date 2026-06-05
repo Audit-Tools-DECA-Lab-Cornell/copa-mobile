@@ -64,7 +64,7 @@ export const DomainSectionHeader = memo(function DomainSectionHeader({
                 </Text>
 
                 <XStack items="center" gap="$2">
-                    {/* Score badge — visible only when collapsed and score available */}
+                    {/* Score badge - visible only when collapsed and score available */}
                     {!isExpanded && dualPctText !== null ? (
                         <YStack
                             px="$2"

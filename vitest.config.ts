@@ -17,7 +17,7 @@ export default defineConfig({
         include: ["tests/**/*.spec.ts"],
         setupFiles: ["tests/setup.ts"],
         exclude: ["**/tamagui.config*", "**/tamagui.build*"],
-        // ✅ Tell Vitest not to transform these — mock them instead
+        // ✅ Tell Vitest not to transform these - mock them instead
         server: {
             deps: {
                 inline: ["tamagui", "@tamagui/core", "@tamagui/config", "@tamagui/web", "@tamagui/themes"],

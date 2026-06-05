@@ -14,7 +14,7 @@ const logger = createModuleLogger("onboarding.auditor-code");
 
 /**
  * Step 4 (final) of onboarding: reveals the auditor code and explains its
- * purpose.  This is the celebratory step — the code is shown in a prominent
+ * purpose.  This is the celebratory step - the code is shown in a prominent
  * "trophy" card, with explanatory copy framed as a privacy guarantee.
  */
 export default function AuditorCodeScreen() {
@@ -157,7 +157,7 @@ function CodeRevealCard({ auditorCode, ds, hasError, isLoading, isTablet, codeLa
                     lineHeight={codeLineHeight}
                     selectable
                 >
-                    {auditorCode ?? "—"}
+                    {auditorCode ?? "-"}
                 </Text>
             )}
         </YStack>

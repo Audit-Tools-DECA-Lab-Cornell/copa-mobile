@@ -105,7 +105,7 @@ export default function ResetPasswordScreen() {
             title={t("resetPassword.title", "Set your password")}
             subtitle={t(
                 "resetPassword.headerSubtitle",
-                "Set a strong password — you will use this every time you sign in.",
+                "Set a strong password - you will use this every time you sign in.",
             )}
             ctaLabel={t("resetPassword.submit", "Set password")}
             ctaLoadingLabel={t("resetPassword.submitting", "Setting password...")}

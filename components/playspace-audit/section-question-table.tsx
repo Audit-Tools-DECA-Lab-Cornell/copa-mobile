@@ -24,7 +24,7 @@ interface SectionQuestionTableProps {
     readonly disabled: boolean;
     readonly onSelectAnswer: (questionKey: string, scaleKey: string, optionKey: string) => void;
     /**
-     * Persist per-question notes when {@link InstrumentQuestion.notes_prompt} is set —
+     * Persist per-question notes when {@link InstrumentQuestion.notes_prompt} is set -
      * mirrors {@link QuestionCard} so tablet matrix layout keeps the same fields as phone cards.
      */
     readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;

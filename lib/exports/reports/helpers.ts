@@ -59,7 +59,7 @@ export async function loadOptionalExportAuditorProfile(
  *
  * Always fetches the latest session from the server to guarantee the
  * responses_json snapshot is present and current.  The in-store cached
- * session is used only as an offline fallback when the fetch fails — the
+ * session is used only as an offline fallback when the fetch fails - the
  * store's copy can lag behind the server for audits submitted before the
  * responses_json snapshot was introduced, leading to an empty Responses
  * table in the export.

@@ -96,7 +96,7 @@ function ConstructCell({ constructKey, label, ds, best, worst }: ConstructCellPr
                 </XStack>
                 {best === null ? (
                     <Text color={ds.colors.mutedForeground} fontSize={ds.typography.bodyXs.fontSize}>
-                        —
+                        -
                     </Text>
                 ) : (
                     <>
@@ -129,7 +129,7 @@ function ConstructCell({ constructKey, label, ds, best, worst }: ConstructCellPr
                 </XStack>
                 {worst === null ? (
                     <Text color={ds.colors.mutedForeground} fontSize={ds.typography.bodyXs.fontSize}>
-                        —
+                        -
                     </Text>
                 ) : (
                     <>

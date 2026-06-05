@@ -65,11 +65,11 @@ export const SECTION_NOTE_RESPONSE_SENTINEL = "__section_note_response__" as con
 export const UNANSWERED_PLACEHOLDER = "Not answered" as const;
 
 /** Display value used when a value is not yet known (e.g. progress totals on a fresh audit). */
-export const PENDING_PLACEHOLDER = "—" as const;
+export const PENDING_PLACEHOLDER = "-" as const;
 
 /**
  * Soft warning palette applied to unanswered cells in the in-progress XLSX
- * and PDF exports. The fill is a pale red and the text is a muted red — clear
+ * and PDF exports. The fill is a pale red and the text is a muted red - clear
  * enough to spot from across a printed page without screaming "error".
  */
 export const UNANSWERED_CELL_PALETTE = {

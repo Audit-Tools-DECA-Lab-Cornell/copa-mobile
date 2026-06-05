@@ -71,7 +71,7 @@ const CONSTRUCT_METRICS: readonly MetricConfig[] = [
 
 const ALL_BAR_METRICS: readonly MetricConfig[] = [...SCALE_METRICS, ...CONSTRUCT_METRICS];
 
-// The two headline constructs use a balanced teal/gold pair — co-equal peers,
+// The two headline constructs use a balanced teal/gold pair - co-equal peers,
 // distinct from the scale colors and the brand clay.
 const PVU_BAR_COLORS: Record<"play_value" | "usability", string> = {
     play_value: "#2E7D78",
@@ -162,7 +162,7 @@ function BarTrackCell({
                             fontSize={ds.typography.bodyXs.fontSize}
                             style={{ textAlign: "center" }}
                         >
-                            —
+                            -
                         </Text>
                     </YStack>
                 ) : null}
@@ -172,8 +172,8 @@ function BarTrackCell({
 }
 
 /**
- * A group of bars rendered as three aligned rows — percentage labels, a fixed-height
- * track row, and metric labels — so each column lines up with the table below. The
+ * A group of bars rendered as three aligned rows - percentage labels, a fixed-height
+ * track row, and metric labels - so each column lines up with the table below. The
  * two threshold cutoffs are drawn as single dotted lines running continuously across
  * the whole track row, with their values labeled once on the left axis.
  */
@@ -228,7 +228,7 @@ function BarBlock({
             {/* Track row with continuous threshold lines */}
             <YStack width={totalWidth} height={trackHeight}>
                 <XStack height={trackHeight} items="flex-end">
-                    {/* Left axis — threshold values labeled once */}
+                    {/* Left axis - threshold values labeled once */}
                     <YStack width={labelColWidth} height={trackHeight}>
                         {BAR_THRESHOLDS.map((th) => (
                             <Text
@@ -308,7 +308,7 @@ function BarBlock({
  * Phone
  * ─────
  * Bars and their corresponding table scroll together horizontally
- * so every bar sits directly above its matching column — two separate
+ * so every bar sits directly above its matching column - two separate
  * scrollable groups (scale scores, then construct scores):
  *
  *   ┌────────────────────────────────────────── scroll ───────────┐
@@ -336,11 +336,11 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
     const tableLayout = useReportScoreTableLayout();
     const { t } = useTranslation("reports");
 
-    // Bar visual dimensions — scale with viewport tier
+    // Bar visual dimensions - scale with viewport tier
     const trackHeight = layout.isTablet ? 180 : 144;
     const barWidth = layout.isTablet ? 50 : 38;
 
-    // ── Tablet layout — single bar row + joined table (web parity) ─────────────────
+    // ── Tablet layout - single bar row + joined table (web parity) ─────────────────
     if (layout.isTablet) {
         return (
             <YStack gap="$3" width="100%">
@@ -413,7 +413,7 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
                         t={t}
                     />
 
-                    {/* Sub-table — same column widths, so bars are perfectly aligned */}
+                    {/* Sub-table - same column widths, so bars are perfectly aligned */}
                     <PhoneSubTable
                         group={tableGroup}
                         scoreTotals={scoreTotals}
@@ -512,14 +512,14 @@ const CONSTRUCT_COLDEFS: readonly ColDef[] = [
 ];
 
 function cellVal(totals: AuditScoreTotals | null, fn: (r: AuditScoreTotals) => number): string {
-    if (totals === null) return "—";
+    if (totals === null) return "-";
     return formatScoreValue(fn(totals));
 }
 
 function cellMx(totals: AuditScoreTotals | null, fn: (r: AuditScoreTotals) => number): string {
-    if (totals === null) return "—";
+    if (totals === null) return "-";
     const v = fn(totals);
-    return v <= 0 ? "—" : formatScoreValue(v);
+    return v <= 0 ? "-" : formatScoreValue(v);
 }
 
 /**

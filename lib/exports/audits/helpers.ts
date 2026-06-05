@@ -17,7 +17,7 @@ interface BuildInProgressExportableAuditParams {
  * (`sessionsByPairKey[pairKey]`), which is the same source the section UI
  * reads from. Local-only edits made via `applyLocalQuestionAnswer` are written
  * back into that session before any sync happens, so the exported file always
- * reflects what the auditor currently sees in the app — even when the device
+ * reflects what the auditor currently sees in the app - even when the device
  * is offline or a submit attempt has failed.
  */
 export function buildInProgressExportableAudit({

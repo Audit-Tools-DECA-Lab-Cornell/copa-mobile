@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 
 /**
- * Onboarding route group — intentionally linear, with no header back affordance.
+ * Onboarding route group - intentionally linear, with no header back affordance.
  * Navigation is controlled by each completed onboarding step.
  */
 export default function OnboardingLayout() {

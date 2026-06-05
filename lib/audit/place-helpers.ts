@@ -26,7 +26,7 @@ function resolveAxisStatus(
         if (hasSubmitted) {
             return "submitted";
         }
-        // Terminal place-wide status but this auditor has not submitted —
+        // Terminal place-wide status but this auditor has not submitted -
         // likely driven by a different auditor's submission.
         return hasStarted ? "in_progress" : "not_started";
     }

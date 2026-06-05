@@ -454,7 +454,7 @@ function SectionReviewCard({
                 </Paragraph>
             </YStack>
 
-            {/* Primary CTA — only shown while at least one section is incomplete */}
+            {/* Primary CTA - only shown while at least one section is incomplete */}
             {onResumeFirstIncomplete !== null ? (
                 <Button
                     height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
@@ -500,7 +500,7 @@ function SectionReviewCard({
                 </XStack>
             ) : null}
 
-            {/* Filter chips — always present, filter the section list below */}
+            {/* Filter chips - always present, filter the section list below */}
             <XStack gap="$2" flexWrap="wrap">
                 <SectionReviewMetric
                     label={allFilterLabel}

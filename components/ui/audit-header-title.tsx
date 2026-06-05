@@ -7,25 +7,25 @@ import { useResponsiveLayout } from "lib/responsive-layout";
  * Responsive navigation header title shared across audit execution, place, and
  * report screens.
  *
- * `size="md"` — dual-label screens (place name + mode / section subtitle).
+ * `size="md"` - dual-label screens (place name + mode / section subtitle).
  *   - Tablet:  `Primary  |  Secondary` on one row at `titleMd` size.
  *   - Mobile:  `Primary` (bold `titleMd`) stacked above `Secondary` (regular `labelLg`).
  *
- * `size="lg"` — single-label screens (place name or report title, no subtitle).
+ * `size="lg"` - single-label screens (place name or report title, no subtitle).
  *   - Both:    single row at `titleLg` / `bodySemiBold`.
  */
 export interface AuditHeaderTitleProps {
-    /** Primary label — place name, report title, etc. */
+    /** Primary label - place name, report title, etc. */
     readonly primary: string;
     /**
-     * Optional secondary label — execution mode, section title, etc.
+     * Optional secondary label - execution mode, section title, etc.
      * On tablet this renders inline with a `|` separator; on mobile it
      * stacks below the primary. Ignored when `size="lg"`.
      */
     readonly secondary?: string | undefined;
     /**
-     * `"md"` (default) — dual-label header for screens that show a sub-context.
-     * `"lg"` — single-label header for place / report title screens.
+     * `"md"` (default) - dual-label header for screens that show a sub-context.
+     * `"lg"` - single-label header for place / report title screens.
      */
     readonly size?: "md" | "lg";
 }

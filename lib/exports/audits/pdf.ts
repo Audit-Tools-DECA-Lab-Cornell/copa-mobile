@@ -84,7 +84,7 @@ export function buildInProgressAuditPdfHtml(
         '<section class="summary-page">',
         '<header class="audit-header">',
         "<div>",
-        "<h1>Playspace Audit — In Progress</h1>",
+        "<h1>Playspace Audit - In Progress</h1>",
         `<p>${escapeHtml(auditSession.audit_code)}</p>`,
         "</div>",
         "</header>",

@@ -626,5 +626,5 @@ export function formatExecutionModeLabel(
     if (mode === "both") {
         return t("detail.auditTypeFullAssessment", { ns: "reports" });
     }
-    return "—";
+    return "-";
 }

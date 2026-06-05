@@ -306,7 +306,7 @@ function RootLayoutNav() {
             return;
         }
 
-        // Authenticated — route based on the backend's next_step signal.
+        // Authenticated - route based on the backend's next_step signal.
         const nextStep = authSession?.user.nextStep ?? "DASHBOARD";
 
         if (nextStep === "WAITING_APPROVAL") {
@@ -324,7 +324,7 @@ function RootLayoutNav() {
             return;
         }
 
-        // nextStep === "DASHBOARD" — the main app. Valid authenticated destinations include
+        // nextStep === "DASHBOARD" - the main app. Valid authenticated destinations include
         // the (tabs) group and all root-level stack screens (execute, place, report, settings/*).
         // Only redirect if the user is stranded in an auth or onboarding screen.
         if (inAuthGroup || inOnboardingGroup) {

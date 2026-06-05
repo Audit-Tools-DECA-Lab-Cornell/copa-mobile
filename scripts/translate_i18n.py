@@ -584,7 +584,7 @@ def write_instrument_typescript(path: Path, locale: str, value: JsonValue) -> No
     serialized_object = json.dumps(value, ensure_ascii=False, indent=4)
     file_contents = "\n".join(
         [
-            'import type { InstrumentTranslations } from "../../instrument-translations";',
+            'import type { InstrumentTranslations } from "lib/i18n/instrument-translations";',
             "",
             "/**",
             f" * Auto-generated translation overrides for the {locale} instrument locale.",

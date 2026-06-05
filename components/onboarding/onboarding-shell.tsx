@@ -58,9 +58,9 @@ interface OnboardingShellProps {
  * Shared chrome for every screen in the onboarding flow.
  *
  * Renders three regions:
- *   1. Sticky header — progress segments, eyebrow, icon badge, title, subtitle.
- *   2. Scrollable body — the unique content for each step.
- *   3. Sticky footer — primary CTA, optional helper text, optional inline error.
+ *   1. Sticky header - progress segments, eyebrow, icon badge, title, subtitle.
+ *   2. Scrollable body - the unique content for each step.
+ *   3. Sticky footer - primary CTA, optional helper text, optional inline error.
  *
  * The shell is fully responsive: phone widths use a single-column compact
  * header; tablet widths gain larger typography, generous padding, and a wider

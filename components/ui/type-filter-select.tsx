@@ -14,7 +14,7 @@ export interface TypeFilterOption {
 export interface TypeFilterSelectProps {
     /** Short label for the filter category, e.g. "Status", "Sort", "Audit Type". */
     readonly label: string;
-    /** Ordered list of options — the first option is treated as the default/all value. */
+    /** Ordered list of options - the first option is treated as the default/all value. */
     readonly options: readonly TypeFilterOption[];
     /** Currently selected option id. */
     readonly value: string;
@@ -29,7 +29,7 @@ export interface TypeFilterSelectProps {
  *
  * IMPORTANT: `onPress` lives directly on the outer XStack (not in a wrapping Pressable) because
  * Tamagui 2.x activates its own internal gesture handler whenever `pressStyle` is present on a
- * Stack — a nested Pressable would lose touches to that handler before its `onPress` fires.
+ * Stack - a nested Pressable would lose touches to that handler before its `onPress` fires.
  *
  * @param props Filter label, options, current value, and change handler.
  * @returns A pressable pill button backed by a fit-height Sheet option list.
@@ -46,7 +46,7 @@ export function TypeFilterSelect({ label, options, value, onChange }: Readonly<T
 
     return (
         <>
-            {/* Trigger: onPress lives on the XStack itself — see JSDoc above */}
+            {/* Trigger: onPress lives on the XStack itself - see JSDoc above */}
             <XStack
                 items="center"
                 gap="$1.5"
@@ -64,7 +64,7 @@ export function TypeFilterSelect({ label, options, value, onChange }: Readonly<T
                 accessibilityLabel={`${label}: ${selectedLabel}`}
                 cursor="pointer"
             >
-                {/* Filter type prefix — always dim */}
+                {/* Filter type prefix - always dim */}
                 <Text
                     color={isActive ? ds.colors.primary : ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -73,7 +73,7 @@ export function TypeFilterSelect({ label, options, value, onChange }: Readonly<T
                 >
                     {`${label}:`}
                 </Text>
-                {/* Selected value — bold */}
+                {/* Selected value - bold */}
                 <Text
                     color={isActive ? ds.colors.primary : ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}

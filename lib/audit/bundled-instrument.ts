@@ -10,7 +10,7 @@
  *   2. The dedicated instrument MMKV cache is empty.
  *   3. The network is unreachable.
  *
- * The file is validated once at import time — if the embedded JSON somehow
+ * The file is validated once at import time - if the embedded JSON somehow
  * fails schema validation (e.g. a bad build), the fallback gracefully
  * returns null instead of crashing the app.
  */
@@ -39,7 +39,7 @@ export function getBundledInstrument(): PlayspaceInstrument | null {
 
     const parsed = playspaceInstrumentSchema.safeParse(rawBundledInstrument);
     if (!parsed.success) {
-        log.warn("bundled instrument failed schema validation — offline fallback unavailable");
+        log.warn("bundled instrument failed schema validation - offline fallback unavailable");
         validatedInstrument = null;
         return null;
     }
