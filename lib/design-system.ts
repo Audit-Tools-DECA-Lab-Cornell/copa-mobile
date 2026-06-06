@@ -1,3 +1,4 @@
+import { buildScaleColorFields, type ScaleColorFields } from "lib/audit/scale-colors";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import { TABLET_BREAKPOINT, TABLET_TYPOGRAPHY_BASE_SCALE } from "lib/responsive-layout-tokens";
 import { useMemo } from "react";
@@ -35,6 +36,10 @@ function createTypographyToken(fontSize: number, lineHeight: number): Typography
  */
 function createColorToken(value: string): ColorTokens {
     return value as ColorTokens;
+}
+
+function assembleColorPalette<T extends Record<string, ColorTokens>>(base: T): T & ScaleColorFields {
+    return { ...base, ...buildScaleColorFields() };
 }
 
 /** Color palette shape shared across light and dark themes. */
@@ -88,7 +93,7 @@ interface GlassPalette {
     readonly tabBarBorder: ColorTokens;
 }
 
-const DARK_COLORS = {
+const DARK_COLORS = assembleColorPalette({
     background: createColorToken("#161311"),
     foreground: createColorToken("#E7DED3"),
     primary: createColorToken("#C58A5C"),
@@ -115,15 +120,7 @@ const DARK_COLORS = {
     amber: createColorToken("rgba(255, 180, 0, 0.1)"),
     amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
     placeholderColor: createColorToken("#B8AEA3"),
-    provision: createColorToken("#566E3D"),
-    provisionSoft: createColorToken("#AEC596"),
-    diversity: createColorToken("#BD4926"),
-    diversitySoft: createColorToken("#EBAC99"),
-    challenge: createColorToken("#0C4767"),
-    challengeSoft: createColorToken("#B1D4E0"),
-    sociability: createColorToken("#754170"),
-    sociabilitySoft: createColorToken("#C596C0"),
-} as const satisfies ColorPalette;
+}) satisfies ColorPalette;
 
 const DARK_SHADOWS = {
     card: `0 10px 24px ${createColorToken("rgba(0, 0, 0, 0.14)")}` as ColorTokens,
@@ -138,7 +135,7 @@ const DARK_GLASS = {
     tabBarBorder: createColorToken("rgba(231, 222, 211, 0.14)"),
 } as const satisfies GlassPalette;
 
-const LIGHT_COLORS = {
+const LIGHT_COLORS = assembleColorPalette({
     background: createColorToken("#FDFAF7"),
     foreground: createColorToken("#2A231E"),
     primary: createColorToken("#A66334"),
@@ -165,17 +162,9 @@ const LIGHT_COLORS = {
     violetSoft: createColorToken("rgba(107, 90, 138, 0.12)"),
     amberSoft: createColorToken("rgba(204, 136, 0, 0.1)"),
     placeholderColor: createColorToken("#645A52"),
-    provision: createColorToken("#566E3D"),
-    provisionSoft: createColorToken("#AEC596"),
-    diversity: createColorToken("#BD4926"),
-    diversitySoft: createColorToken("#EBAC99"),
-    challenge: createColorToken("#0C4767"),
-    challengeSoft: createColorToken("#B1D4E0"),
-    sociability: createColorToken("#754170"),
-    sociabilitySoft: createColorToken("#C596C0"),
-} as const satisfies ColorPalette;
+}) satisfies ColorPalette;
 
-const LIGHT_FIELD_COLORS = {
+const LIGHT_FIELD_COLORS = assembleColorPalette({
     background: createColorToken("#FAFAF8"),
     foreground: createColorToken("#1F1A16"),
     primary: createColorToken("#965424"),
@@ -202,15 +191,7 @@ const LIGHT_FIELD_COLORS = {
     amber: createColorToken("rgba(255, 180, 0, 0.1)"),
     amberSoft: createColorToken("rgba(204, 136, 0, 0.1)"),
     placeholderColor: createColorToken("#413A34"),
-    provision: createColorToken("#566E3D"),
-    provisionSoft: createColorToken("#AEC596"),
-    diversity: createColorToken("#BD4926"),
-    diversitySoft: createColorToken("#EBAC99"),
-    challenge: createColorToken("#0C4767"),
-    challengeSoft: createColorToken("#B1D4E0"),
-    sociability: createColorToken("#754170"),
-    sociabilitySoft: createColorToken("#C596C0"),
-} as const satisfies ColorPalette;
+}) satisfies ColorPalette;
 
 const LIGHT_SHADOWS = {
     card: `0 10px 24px ${createColorToken("rgba(60, 48, 42, 0.08)")}` as ColorTokens,
@@ -225,7 +206,7 @@ const LIGHT_GLASS = {
     tabBarBorder: createColorToken("rgba(42, 35, 30, 0.1)"),
 } as const satisfies GlassPalette;
 
-const DARK_HIGH_CONTRAST_COLORS = {
+const DARK_HIGH_CONTRAST_COLORS = assembleColorPalette({
     background: createColorToken("#000000"),
     foreground: createColorToken("#FFFFFF"),
     primary: createColorToken("#FFD0A8"),
@@ -252,17 +233,9 @@ const DARK_HIGH_CONTRAST_COLORS = {
     amber: createColorToken("rgba(255, 180, 0, 0.1)"),
     amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
     placeholderColor: createColorToken("#8E8E8E"),
-    provision: createColorToken("#566E3D"),
-    provisionSoft: createColorToken("#AEC596"),
-    diversity: createColorToken("#BD4926"),
-    diversitySoft: createColorToken("#EBAC99"),
-    challenge: createColorToken("#0C4767"),
-    challengeSoft: createColorToken("#B1D4E0"),
-    sociability: createColorToken("#754170"),
-    sociabilitySoft: createColorToken("#C596C0"),
-} as const satisfies ColorPalette;
+}) satisfies ColorPalette;
 
-const LIGHT_HIGH_CONTRAST_COLORS = {
+const LIGHT_HIGH_CONTRAST_COLORS = assembleColorPalette({
     background: createColorToken("#FFFFFF"),
     foreground: createColorToken("#111111"),
     primary: createColorToken("#8A4A1B"),
@@ -289,15 +262,7 @@ const LIGHT_HIGH_CONTRAST_COLORS = {
     amber: createColorToken("rgba(255, 180, 0, 0.1)"),
     amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
     placeholderColor: createColorToken("#D1C4B6"),
-    provision: createColorToken("#566E3D"),
-    provisionSoft: createColorToken("#AEC596"),
-    diversity: createColorToken("#BD4926"),
-    diversitySoft: createColorToken("#EBAC99"),
-    challenge: createColorToken("#0C4767"),
-    challengeSoft: createColorToken("#B1D4E0"),
-    sociability: createColorToken("#754170"),
-    sociabilitySoft: createColorToken("#C596C0"),
-} as const satisfies ColorPalette;
+}) satisfies ColorPalette;
 
 interface FontTokenScale {
     readonly bodyRegular: string;
@@ -563,8 +528,8 @@ type PaletteColorValue = ActiveColorPalette[keyof ColorPalette];
 /**
  * Resolve the accent color for a given audit scale key.
  *
- * Each of the four instrument scales has a dedicated hue so auditors can
- * recognise the scale by color without re-reading the description.
+ * Scale hues come from the fixed PV palette in `lib/audit/scale-colors`
+ * (provision green, diversity terracotta, challenge blue, sociability violet).
  *
  * @param scaleKey Instrument scale key.
  * @param colors Active semantic color palette.

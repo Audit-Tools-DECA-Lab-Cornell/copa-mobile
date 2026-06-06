@@ -1,3 +1,4 @@
+import { SCALE_ACCENT_COLORS, SCALE_SOFT_COLORS } from "lib/audit/scale-colors";
 import type { ScaleKey } from "lib/audit/types";
 
 /** File formats supported by the mobile export flow. */
@@ -149,18 +150,8 @@ export const WEB_AUDIT_EXPORT_PALETTE = {
     summaryText: "#FFFFFF",
     summaryNeutralFill: "#F1F5F9",
     scoreAccentText: "#1F2937",
-    scaleFill: {
-        provision: "#AEC596",
-        diversity: "#EBAC99",
-        sociability: "#C596C0",
-        challenge: "#B1D4E0",
-    },
-    scaleAccent: {
-        provision: "#566E3D",
-        diversity: "#BD4926",
-        sociability: "#754170",
-        challenge: "#0C4767",
-    },
+    scaleFill: SCALE_SOFT_COLORS,
+    scaleAccent: SCALE_ACCENT_COLORS,
 } as const;
 
 export type ExportScaleKey = Extract<ScaleKey, "provision" | "diversity" | "sociability" | "challenge">;

@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx-js-style";
 
+import { SCALE_ACCENT_COLORS, SCALE_SOFT_COLORS, hexToXlsxRgb, type PvScaleKey } from "lib/audit/scale-colors";
 import {
     COMMENT_ROW_SENTINEL,
     SCALE_COLUMN_MAP,
@@ -7,8 +8,6 @@ import {
     SCORE_ROW_SENTINEL,
     SECTION_NOTE_RESPONSE_SENTINEL,
     SECTION_NOTE_SENTINEL,
-    WEB_AUDIT_EXPORT_PALETTE,
-    type ExportScaleKey,
     type SpreadsheetRow,
     type WorkbookPayload,
     type WorkbookTable,
@@ -17,18 +16,18 @@ import { sanitizeSheetName, stringifyCell } from "./format-utils";
 
 type StyledCell = XLSX.CellObject & { s?: Record<string, unknown> };
 
-const SCALE_SOFT_HEX: Record<ExportScaleKey, string> = {
-    provision: WEB_AUDIT_EXPORT_PALETTE.scaleFill.provision.slice(1),
-    diversity: WEB_AUDIT_EXPORT_PALETTE.scaleFill.diversity.slice(1),
-    sociability: WEB_AUDIT_EXPORT_PALETTE.scaleFill.sociability.slice(1),
-    challenge: WEB_AUDIT_EXPORT_PALETTE.scaleFill.challenge.slice(1),
+const SCALE_SOFT_HEX: Record<PvScaleKey, string> = {
+    provision: hexToXlsxRgb(SCALE_SOFT_COLORS.provision),
+    diversity: hexToXlsxRgb(SCALE_SOFT_COLORS.diversity),
+    sociability: hexToXlsxRgb(SCALE_SOFT_COLORS.sociability),
+    challenge: hexToXlsxRgb(SCALE_SOFT_COLORS.challenge),
 };
 
-const SCALE_ACCENT_HEX: Record<ExportScaleKey, string> = {
-    provision: WEB_AUDIT_EXPORT_PALETTE.scaleAccent.provision.slice(1),
-    diversity: WEB_AUDIT_EXPORT_PALETTE.scaleAccent.diversity.slice(1),
-    sociability: WEB_AUDIT_EXPORT_PALETTE.scaleAccent.sociability.slice(1),
-    challenge: WEB_AUDIT_EXPORT_PALETTE.scaleAccent.challenge.slice(1),
+const SCALE_ACCENT_HEX: Record<PvScaleKey, string> = {
+    provision: hexToXlsxRgb(SCALE_ACCENT_COLORS.provision),
+    diversity: hexToXlsxRgb(SCALE_ACCENT_COLORS.diversity),
+    sociability: hexToXlsxRgb(SCALE_ACCENT_COLORS.sociability),
+    challenge: hexToXlsxRgb(SCALE_ACCENT_COLORS.challenge),
 };
 
 /** Converts CSS-style color strings to 6-character SheetJS hex strings. */
