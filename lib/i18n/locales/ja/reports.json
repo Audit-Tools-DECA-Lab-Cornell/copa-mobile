@@ -118,6 +118,8 @@
         "columnUsability": "使いやすさ",
         "scoreAchieved": "達成スコア: {{score}}",
         "maxScore": "最大スコア: {{max}}",
+        "notApplicableFull": "該当なし",
+        "unsure": "不明",
         "notApplicable": "該当なし"
     },
     "bestWorst": {
@@ -133,5 +135,21 @@
     },
     "filtersLabel": "フィルター",
     "modeFilterLabel": "監査タイプ",
-    "sortByLabel": "並び替え"
+    "sortByLabel": "並び替え",
+    "scoreVariants": {
+        "title": "スコアの解釈",
+        "description": "この監査には {{count}} 件の不明回答があります。不明の扱いを変えた場合のスコアを比較できます。",
+        "canonical": {
+            "label": "レポートスコアを使用",
+            "helper": "不明回答はスコアと最大値から除外されます。"
+        },
+        "unsure_as_zero": {
+            "label": "不明を 0 点として計算",
+            "helper": "不明回答は最大値に含め、得点は 0 点にします。"
+        },
+        "unsure_as_max": {
+            "label": "不明を最大点として計算",
+            "helper": "不明回答は利用可能な最高点として計算します。"
+        }
+    }
 }

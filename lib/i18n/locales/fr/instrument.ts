@@ -286,6 +286,9 @@ export const frInstrumentTranslations = {
                 not_applicable: {
                     label: "Non applicable",
                 },
+                unsure: {
+                    label: "Incertain / Je ne sais pas",
+                },
             },
         },
         variety: {
@@ -306,6 +309,9 @@ export const frInstrumentTranslations = {
                 a_lot_of_variety: {
                     label: "Beaucoup de variété",
                 },
+                unsure: {
+                    label: "Incertain / Je ne sais pas",
+                },
             },
         },
         challenge: {
@@ -324,6 +330,9 @@ export const frInstrumentTranslations = {
                 },
                 a_lot_of_challenge: {
                     label: "Beaucoup de défi",
+                },
+                unsure: {
+                    label: "Incertain / Je ne sais pas",
                 },
             },
         },
@@ -344,6 +353,9 @@ export const frInstrumentTranslations = {
                 },
                 yes_more_than_two_children: {
                     label: "Oui - plus de deux enfants",
+                },
+                unsure: {
+                    label: "Incertain / Je ne sais pas",
                 },
             },
         },

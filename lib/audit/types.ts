@@ -37,7 +37,8 @@ export const scaleOptionSchema = z.object({
     addition_value: z.number(),
     boost_value: z.number(),
     allows_follow_up_scales: z.boolean(),
-    is_not_applicable: z.boolean(),
+    is_not_applicable: z.boolean().optional().default(false),
+    is_unsure: z.boolean().optional().default(false),
 });
 
 export const scaleDefinitionSchema = z.object({
@@ -199,14 +200,30 @@ export const auditScoreTotalsSchema = z.object({
     usability_total_max: z.number(),
 });
 
+export const auditScoreVariantBucketsSchema = z.object({
+    execution_mode: executionModeSchema.nullable().optional().default(null),
+    audit: auditScoreTotalsSchema.nullable().optional().default(null),
+    survey: auditScoreTotalsSchema.nullable().optional().default(null),
+    overall: auditScoreTotalsSchema.nullable(),
+    by_section: z.record(z.string(), auditScoreTotalsSchema).default({}),
+    by_domain: z.record(z.string(), auditScoreTotalsSchema).default({}),
+});
+
+export const auditUnsureVariantsSchema = z.object({
+    unsure_as_zero: auditScoreVariantBucketsSchema.nullable().optional().default(null),
+    unsure_as_max: auditScoreVariantBucketsSchema.nullable().optional().default(null),
+});
+
 export const auditScoresSchema = z.object({
     draft_progress_percent: z.number().nullable(),
     execution_mode: executionModeSchema.nullable(),
-    audit: auditScoreTotalsSchema.nullable().optional(),
-    survey: auditScoreTotalsSchema.nullable().optional(),
+    audit: auditScoreTotalsSchema.nullable().optional().default(null),
+    survey: auditScoreTotalsSchema.nullable().optional().default(null),
     overall: auditScoreTotalsSchema.nullable(),
     by_section: z.record(z.string(), auditScoreTotalsSchema),
     by_domain: z.record(z.string(), auditScoreTotalsSchema),
+    unsure_answer_count: z.number().int().nonnegative().optional().default(0),
+    unsure_variants: auditUnsureVariantsSchema.nullable().optional().default(null),
 });
 
 export const auditAggregateSchema = z.object({
@@ -420,6 +437,8 @@ export type QuestionResponseValue = z.infer<typeof questionResponseValueSchema>;
 export type QuestionResponsePayload = z.infer<typeof questionResponsePayloadSchema>;
 export type AuditSectionState = z.infer<typeof auditSectionStateSchema>;
 export type AuditScoreTotals = z.infer<typeof auditScoreTotalsSchema>;
+export type AuditScoreVariantBuckets = z.infer<typeof auditScoreVariantBucketsSchema>;
+export type AuditUnsureVariants = z.infer<typeof auditUnsureVariantsSchema>;
 export type AuditScores = z.infer<typeof auditScoresSchema>;
 export type AuditAggregate = z.infer<typeof auditAggregateSchema>;
 export type AuditSession = z.infer<typeof auditSessionSchema>;

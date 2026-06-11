@@ -309,6 +309,9 @@ export const deInstrumentTranslations = {
                 not_applicable: {
                     label: "Nicht zutreffend",
                 },
+                unsure: {
+                    label: "Unsicher / Ich weiß es nicht",
+                },
             },
         },
         variety: {
@@ -328,6 +331,9 @@ export const deInstrumentTranslations = {
                 },
                 a_lot_of_variety: {
                     label: "Viel Vielfalt",
+                },
+                unsure: {
+                    label: "Unsicher / Ich weiß es nicht",
                 },
             },
         },
@@ -349,6 +355,9 @@ export const deInstrumentTranslations = {
                 a_lot_of_challenge: {
                     label: "Viel Herausforderung",
                 },
+                unsure: {
+                    label: "Unsicher / Ich weiß es nicht",
+                },
             },
         },
         sociability: {
@@ -368,6 +377,9 @@ export const deInstrumentTranslations = {
                 },
                 yes_more_than_two_children: {
                     label: "Ja - mit mehr als zwei Kindern",
+                },
+                unsure: {
+                    label: "Unsicher / Ich weiß es nicht",
                 },
             },
         },

@@ -75,9 +75,13 @@ const { auditDraftSaveSchema, auditScoreTotalsSchema, auditSessionSchema } = loa
 const { getActiveScaleKeysForQuestion, getVisibleSections, getInstrumentSectionLocalProgress } = loadTsModule(
     path.resolve(REPO_ROOT, "lib/audit/selectors.ts"),
 );
-const { calculateQuestionScores, formatPercentage, getCombinedConstructScore } = loadTsModule(
-    path.resolve(REPO_ROOT, "lib/audit/score-helpers.ts"),
-);
+const {
+    calculateQuestionScores,
+    formatPercentage,
+    getCombinedConstructScore,
+    getEffectiveAuditScoreTotals,
+    hasUnsureVariants,
+} = loadTsModule(path.resolve(REPO_ROOT, "lib/audit/score-helpers.ts"));
 
 const instrumentFixture = {
     instrument_key: "pvua_demo",
@@ -288,9 +292,56 @@ const sessionFixture = {
     scores: {
         draft_progress_percent: 12.5,
         execution_mode: "survey",
+        audit: null,
+        survey: null,
         overall: null,
         by_section: {},
         by_domain: {},
+        unsure_answer_count: 1,
+        unsure_variants: {
+            unsure_as_zero: {
+                execution_mode: "survey",
+                audit: null,
+                survey: {
+                    provision_total: 0,
+                    provision_total_max: 2,
+                    variety_total: 0,
+                    variety_total_max: 1,
+                    challenge_total: 0,
+                    challenge_total_max: 0,
+                    sociability_total: 0,
+                    sociability_total_max: 0,
+                    play_value_total: 0,
+                    play_value_total_max: 2,
+                    usability_total: 0,
+                    usability_total_max: 0,
+                },
+                overall: null,
+                by_section: {},
+                by_domain: {},
+            },
+            unsure_as_max: {
+                execution_mode: "survey",
+                audit: null,
+                survey: {
+                    provision_total: 2,
+                    provision_total_max: 2,
+                    variety_total: 1,
+                    variety_total_max: 1,
+                    challenge_total: 0,
+                    challenge_total_max: 0,
+                    sociability_total: 0,
+                    sociability_total_max: 0,
+                    play_value_total: 2,
+                    play_value_total_max: 2,
+                    usability_total: 0,
+                    usability_total_max: 0,
+                },
+                overall: null,
+                by_section: {},
+                by_domain: {},
+            },
+        },
     },
     progress: {
         required_pre_audit_complete: true,
@@ -313,6 +364,11 @@ const sessionFixture = {
 
 const parsedSession = auditSessionSchema.parse(sessionFixture);
 assert(parsedSession.aggregate.revision === 3, "Expected aggregate revision to parse.");
+assert(hasUnsureVariants(parsedSession.scores), "Expected unsure variants to parse.");
+assert(
+    getEffectiveAuditScoreTotals(parsedSession.scores, "unsure_as_max")?.play_value_total === 2,
+    "Expected unsure-as-max totals to parse.",
+);
 assert(parsedSession.sections[targetSection.section_key] !== undefined, "Expected section payload.");
 
 const visibleSections = getVisibleSections(
@@ -436,6 +492,15 @@ const scoreFixtureQuestion = {
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
                 },
+                {
+                    key: "unsure",
+                    label: "Unsure",
+                    addition_value: 0,
+                    boost_value: 1,
+                    allows_follow_up_scales: false,
+                    is_not_applicable: false,
+                    is_unsure: true,
+                },
             ],
         },
         {
@@ -514,6 +579,11 @@ assert(
     calculatedQuestionScores.play_value_total_max === 18,
     "Expected question score helper to return construct max.",
 );
+const excludedUnsureScores = calculateQuestionScores(scoreFixtureQuestion, {
+    provision: "some",
+    variety: "unsure",
+});
+assert(excludedUnsureScores.variety_total_max === 0, "Expected unsure answers to be excluded by default.");
 assert(formatPercentage(6, 18) === "33.3%", "Expected percentage formatter to use compact percent text.");
 
 console.log("Mobile audit contract verification passed.");

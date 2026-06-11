@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildDomainReportRows } from "lib/audit/report-helpers";
+import { calculateQuestionScores } from "lib/audit/score-helpers";
 import { auditSessionSchema, playspaceInstrumentSchema } from "lib/audit/types";
 
 function buildInstrument() {
@@ -84,6 +85,15 @@ function buildInstrument() {
                                         boost_value: 1,
                                         allows_follow_up_scales: false,
                                         is_not_applicable: true,
+                                    },
+                                    {
+                                        key: "unsure",
+                                        label: "Unsure",
+                                        addition_value: 0,
+                                        boost_value: 1,
+                                        allows_follow_up_scales: false,
+                                        is_not_applicable: false,
+                                        is_unsure: true,
                                     },
                                 ],
                             },
@@ -308,12 +318,82 @@ describe("report item states", () => {
         expect(explicitNotApplicableRow?.varietyApplicable).toBe(true);
         expect(explicitNotApplicableRow?.varietyAnswered).toBe(true);
         expect(explicitNotApplicableRow?.varietyIsNotApplicable).toBe(true);
+        expect(explicitNotApplicableRow?.varietyIsUnsure).toBe(false);
         expect(explicitNotApplicableRow?.followUpScalesAsked).toBe(true);
 
         expect(hiddenFollowUpRow?.varietyApplicable).toBe(true);
         expect(hiddenFollowUpRow?.varietyAnswered).toBe(false);
         expect(hiddenFollowUpRow?.varietyIsNotApplicable).toBe(false);
+        expect(hiddenFollowUpRow?.varietyIsUnsure).toBe(false);
         expect(hiddenFollowUpRow?.followUpScalesAsked).toBe(false);
+    });
+
+    it("distinguishes unsure answers from not-applicable answers", () => {
+        const instrument = buildInstrument();
+        const auditSession = buildAuditSession();
+        const aggregateSection = auditSession.aggregate.sections.section_play;
+        const sessionSection = auditSession.sections.section_play;
+        expect(aggregateSection).toBeDefined();
+        expect(sessionSection).toBeDefined();
+        if (aggregateSection === undefined || sessionSection === undefined) {
+            return;
+        }
+        aggregateSection.responses.q_1_1 = {
+            provision: "a_lot",
+            variety: "unsure",
+        };
+        sessionSection.responses.q_1_1 = {
+            provision: "a_lot",
+            variety: "unsure",
+        };
+
+        const movementDomain = buildDomainReportRows(auditSession, instrument).find(
+            (row) => row.domainKey === "movement",
+        );
+        const unsureRow = movementDomain?.questions.find((question) => question.questionKey === "q_1_1");
+
+        expect(unsureRow?.varietyApplicable).toBe(true);
+        expect(unsureRow?.varietyAnswered).toBe(true);
+        expect(unsureRow?.varietyIsNotApplicable).toBe(false);
+        expect(unsureRow?.varietyIsUnsure).toBe(true);
+        expect(unsureRow?.followUpScalesAsked).toBe(true);
+    });
+
+    it("matches backend unsure scoring policies for local report rows", () => {
+        const instrument = buildInstrument();
+        const question = instrument.sections[0]?.questions.find((candidate) => candidate.question_key === "q_1_1");
+
+        expect(question).toBeDefined();
+        if (question === undefined) {
+            return;
+        }
+
+        const canonical = calculateQuestionScores(question, { provision: "a_lot", variety: "unsure" });
+        const unsureAsZero = calculateQuestionScores(
+            question,
+            { provision: "a_lot", variety: "unsure" },
+            "unsure_as_zero",
+        );
+        const unsureAsMax = calculateQuestionScores(
+            question,
+            { provision: "a_lot", variety: "unsure" },
+            "unsure_as_max",
+        );
+
+        expect(canonical.variety_total).toBe(0);
+        expect(canonical.variety_total_max).toBe(0);
+        expect(canonical.play_value_total).toBe(2);
+        expect(canonical.play_value_total_max).toBe(2);
+
+        expect(unsureAsZero.variety_total).toBe(0);
+        expect(unsureAsZero.variety_total_max).toBe(1);
+        expect(unsureAsZero.play_value_total).toBe(2);
+        expect(unsureAsZero.play_value_total_max).toBe(4);
+
+        expect(unsureAsMax.variety_total).toBe(1);
+        expect(unsureAsMax.variety_total_max).toBe(1);
+        expect(unsureAsMax.play_value_total).toBe(4);
+        expect(unsureAsMax.play_value_total_max).toBe(4);
     });
 
     it("includes checklist follow-up rows that inherit the parent domain", () => {

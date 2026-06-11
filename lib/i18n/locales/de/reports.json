@@ -118,6 +118,8 @@
         "columnUsability": "Nutzerfreundlichkeit",
         "scoreAchieved": "Erreichte Punktzahl: {{score}}",
         "maxScore": "Maximalpunktzahl: {{max}}",
+        "notApplicableFull": "Nicht zutreffend",
+        "unsure": "Unsicher",
         "notApplicable": "k. A."
     },
     "bestWorst": {
@@ -133,5 +135,21 @@
     },
     "filtersLabel": "Filter",
     "modeFilterLabel": "Audit-Typ",
-    "sortByLabel": "Sortieren nach"
+    "sortByLabel": "Sortieren nach",
+    "scoreVariants": {
+        "title": "Score-Interpretation",
+        "description": "Dieses Audit enthält {{count}} Unsicher-Antwort. Vergleichen Sie, wie sich die Bewertung ändert, wenn Unsicher anders interpretiert wird.",
+        "canonical": {
+            "label": "Berichtswert verwenden",
+            "helper": "Unsicher-Antworten werden aus Wertung und Maximum ausgeschlossen."
+        },
+        "unsure_as_zero": {
+            "label": "Unsicher als null zählen",
+            "helper": "Unsicher-Antworten bleiben im Maximum und zählen null Punkte."
+        },
+        "unsure_as_max": {
+            "label": "Unsicher als Maximum zählen",
+            "helper": "Unsicher-Antworten zählen mit der höchstmöglichen Punktzahl."
+        }
+    }
 }

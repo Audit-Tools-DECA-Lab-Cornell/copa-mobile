@@ -123,6 +123,8 @@
         "columnUsability": "Usability",
         "scoreAchieved": "Score achieved: {{score}}",
         "maxScore": "Max Score: {{max}}",
+        "notApplicableFull": "Not applicable",
+        "unsure": "Unsure",
         "notApplicable": "N/A"
     },
     "bestWorst": {
@@ -135,5 +137,21 @@
         "constructSociability": "Social Support",
         "constructPlayValue": "Play Value",
         "constructUsability": "Usability"
+    },
+    "scoreVariants": {
+        "title": "Score interpretation",
+        "description": "This audit includes {{count}} Unsure answer. Compare how the score changes when Unsure is interpreted differently.",
+        "canonical": {
+            "label": "Use report score",
+            "helper": "Unsure answers are excluded from the score and maximum."
+        },
+        "unsure_as_zero": {
+            "label": "Count Unsure as zero",
+            "helper": "Unsure answers stay in the maximum and contribute zero points."
+        },
+        "unsure_as_max": {
+            "label": "Count Unsure as maximum",
+            "helper": "Unsure answers contribute the highest available points."
+        }
     }
 }

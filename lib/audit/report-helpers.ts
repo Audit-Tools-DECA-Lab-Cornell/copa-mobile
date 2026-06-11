@@ -1,6 +1,7 @@
 import { calculateQuestionScores, formatScoreValue } from "lib/audit/score-helpers";
 import type {
     AuditScoreTotals,
+    AuditScoreVariantBuckets,
     AuditSession,
     InstrumentQuestion,
     PlayspaceInstrument,
@@ -30,19 +31,23 @@ export interface DomainQuestionRow {
     readonly provisionApplicable: boolean;
     readonly provisionAnswered: boolean;
     readonly provisionIsNotApplicable: boolean;
+    readonly provisionIsUnsure: boolean;
     readonly varietyLabel: string | null;
     readonly varietyApplicable: boolean;
     readonly varietyAnswered: boolean;
     readonly varietyIsNotApplicable: boolean;
+    readonly varietyIsUnsure: boolean;
     /** When `false`, the challenge column must show N/A (scale not present on question). */
     readonly challengeApplicable: boolean;
     readonly challengeLabel: string | null;
     readonly challengeAnswered: boolean;
     readonly challengeIsNotApplicable: boolean;
+    readonly challengeIsUnsure: boolean;
     readonly sociabilityLabel: string | null;
     readonly sociabilityApplicable: boolean;
     readonly sociabilityAnswered: boolean;
     readonly sociabilityIsNotApplicable: boolean;
+    readonly sociabilityIsUnsure: boolean;
     readonly followUpScalesAsked: boolean;
     readonly playValueScore: number | null;
     readonly playValueMax: number | null;
@@ -136,19 +141,20 @@ export function resolveScaleOptionInfo(
     question: InstrumentQuestion,
     scaleKey: string,
     answerKey: string | undefined,
-): { label: string | null; answered: boolean; isNotApplicable: boolean } {
+): { label: string | null; answered: boolean; isNotApplicable: boolean; isUnsure: boolean } {
     if (answerKey === undefined || answerKey.length === 0) {
-        return { label: null, answered: false, isNotApplicable: false };
+        return { label: null, answered: false, isNotApplicable: false, isUnsure: false };
     }
     const scale = question.scales.find((candidate: InstrumentScaleDefinition) => candidate.key === scaleKey);
     if (scale === undefined) {
-        return { label: null, answered: false, isNotApplicable: false };
+        return { label: null, answered: false, isNotApplicable: false, isUnsure: false };
     }
     const option = scale.options.find((candidate: InstrumentScaleOptionDefinition) => candidate.key === answerKey);
     return {
         label: option?.label ?? null,
         answered: option !== undefined,
         isNotApplicable: option?.is_not_applicable === true,
+        isUnsure: option?.is_unsure === true,
     };
 }
 
@@ -281,18 +287,22 @@ function buildDomainQuestionRow(question: InstrumentQuestion, answers: QuestionR
         provisionApplicable,
         provisionAnswered: provisionInfo.answered,
         provisionIsNotApplicable: provisionInfo.isNotApplicable,
+        provisionIsUnsure: provisionInfo.isUnsure,
         varietyLabel: varietyInfo.label,
         varietyApplicable,
         varietyAnswered: varietyInfo.answered,
         varietyIsNotApplicable: varietyInfo.isNotApplicable,
+        varietyIsUnsure: varietyInfo.isUnsure,
         challengeApplicable,
         challengeLabel: challengeInfo.label,
         challengeAnswered: challengeInfo.answered,
         challengeIsNotApplicable: challengeInfo.isNotApplicable,
+        challengeIsUnsure: challengeInfo.isUnsure,
         sociabilityLabel: sociabilityInfo.label,
         sociabilityApplicable,
         sociabilityAnswered: sociabilityInfo.answered,
         sociabilityIsNotApplicable: sociabilityInfo.isNotApplicable,
+        sociabilityIsUnsure: sociabilityInfo.isUnsure,
         followUpScalesAsked,
         playValueScore: playValueMax <= 0 ? null : scores.play_value_total,
         playValueMax: playValueMax <= 0 ? null : playValueMax,
@@ -378,13 +388,17 @@ function compareQuestionRowsByIdentifier(a: DomainQuestionRow, b: DomainQuestion
  * @returns One row per domain in first-seen instrument order, plus orphan `by_domain` keys.
  * Questions may belong to multiple domains; each domain row lists every question that includes that domain.
  */
-export function buildDomainReportRows(auditSession: AuditSession, instrument: PlayspaceInstrument): DomainReportRow[] {
+export function buildDomainReportRows(
+    auditSession: AuditSession,
+    instrument: PlayspaceInstrument,
+    scoreBuckets: AuditSession["scores"] | AuditScoreVariantBuckets = auditSession.scores,
+): DomainReportRow[] {
     const questionLookup = Object.fromEntries(
         instrument.sections.flatMap((section: InstrumentSectionDefinition) =>
             section.questions.map((question: InstrumentQuestion) => [question.question_key, question] as const),
         ),
     ) as Readonly<Record<string, InstrumentQuestion>>;
-    const byDomain = auditSession.scores.by_domain;
+    const byDomain = scoreBuckets.by_domain;
     const normalizedScoreByDomain = new Map<string, AuditScoreTotals | null>();
     Object.entries(byDomain).forEach(([rawDomainKey, totals]) => {
         const normalizedKey = normalizeDomainKey(rawDomainKey);

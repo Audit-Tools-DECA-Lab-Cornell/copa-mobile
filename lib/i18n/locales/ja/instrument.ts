@@ -282,6 +282,9 @@ export const jaInstrumentTranslations = {
                 not_applicable: {
                     label: "該当なし",
                 },
+                unsure: {
+                    label: "わからない",
+                },
             },
         },
         variety: {
@@ -300,6 +303,9 @@ export const jaInstrumentTranslations = {
                 },
                 a_lot_of_variety: {
                     label: "非常に多様",
+                },
+                unsure: {
+                    label: "わからない",
                 },
             },
         },
@@ -320,6 +326,9 @@ export const jaInstrumentTranslations = {
                 a_lot_of_challenge: {
                     label: "非常に高い挑戦",
                 },
+                unsure: {
+                    label: "わからない",
+                },
             },
         },
         sociability: {
@@ -339,6 +348,9 @@ export const jaInstrumentTranslations = {
                 },
                 yes_more_than_two_children: {
                     label: "はい - 3人以上の子ども",
+                },
+                unsure: {
+                    label: "わからない",
                 },
             },
         },

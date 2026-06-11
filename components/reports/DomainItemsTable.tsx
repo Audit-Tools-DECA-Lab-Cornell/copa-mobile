@@ -134,9 +134,10 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         label: string | null;
         applicable: boolean;
         isNotApplicable: boolean;
+        isUnsure: boolean;
         followUpScalesAsked?: boolean;
     }): ReactNode {
-        const { label, applicable, isNotApplicable, followUpScalesAsked = true } = options;
+        const { label, applicable, isNotApplicable, isUnsure, followUpScalesAsked = true } = options;
         if (!applicable || !followUpScalesAsked) {
             return (
                 <DataText textAlign="center" muted opacity={mutedDashOpacity}>
@@ -147,7 +148,14 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         if (isNotApplicable) {
             return (
                 <DataText textAlign="center" bold>
-                    Not applicable
+                    {t("extendedTable.notApplicableFull", { ns: "reports" })}
+                </DataText>
+            );
+        }
+        if (isUnsure) {
+            return (
+                <DataText textAlign="center" bold>
+                    {t("extendedTable.unsure", { ns: "reports" })}
                 </DataText>
             );
         }
@@ -277,6 +285,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                                     label: question.provisionLabel,
                                     applicable: question.provisionApplicable,
                                     isNotApplicable: question.provisionIsNotApplicable,
+                                    isUnsure: question.provisionIsUnsure,
                                 })}
                             </CellWrapper>
 
@@ -286,6 +295,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                                     label: question.varietyLabel,
                                     applicable: question.varietyApplicable,
                                     isNotApplicable: question.varietyIsNotApplicable,
+                                    isUnsure: question.varietyIsUnsure,
                                     followUpScalesAsked: question.followUpScalesAsked,
                                 })}
                             </CellWrapper>
@@ -296,6 +306,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                                     label: question.challengeLabel,
                                     applicable: question.challengeApplicable,
                                     isNotApplicable: question.challengeIsNotApplicable,
+                                    isUnsure: question.challengeIsUnsure,
                                     followUpScalesAsked: question.followUpScalesAsked,
                                 })}
                             </CellWrapper>
@@ -306,6 +317,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                                     label: question.sociabilityLabel,
                                     applicable: question.sociabilityApplicable,
                                     isNotApplicable: question.sociabilityIsNotApplicable,
+                                    isUnsure: question.sociabilityIsUnsure,
                                     followUpScalesAsked: question.followUpScalesAsked,
                                 })}
                             </CellWrapper>

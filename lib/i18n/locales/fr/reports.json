@@ -118,6 +118,8 @@
         "columnUsability": "Utilisabilité",
         "scoreAchieved": "Score obtenu : {{score}}",
         "maxScore": "Score maximal : {{max}}",
+        "notApplicableFull": "Non applicable",
+        "unsure": "Incertain",
         "notApplicable": "N/D"
     },
     "bestWorst": {
@@ -133,5 +135,21 @@
     },
     "filtersLabel": "Filtres",
     "modeFilterLabel": "Type d'audit",
-    "sortByLabel": "Trier par"
+    "sortByLabel": "Trier par",
+    "scoreVariants": {
+        "title": "Interprétation du score",
+        "description": "Cet audit comprend {{count}} réponse Incertain. Comparez le score lorsque Incertain est interprété différemment.",
+        "canonical": {
+            "label": "Utiliser le score du rapport",
+            "helper": "Les réponses Incertain sont exclues du score et du maximum."
+        },
+        "unsure_as_zero": {
+            "label": "Compter Incertain comme zéro",
+            "helper": "Les réponses Incertain restent dans le maximum et valent zéro point."
+        },
+        "unsure_as_max": {
+            "label": "Compter Incertain comme maximum",
+            "helper": "Les réponses Incertain valent le maximum de points disponible."
+        }
+    }
 }

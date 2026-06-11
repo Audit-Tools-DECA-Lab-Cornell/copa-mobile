@@ -283,6 +283,9 @@ export const hiInstrumentTranslations = {
                 not_applicable: {
                     label: "लागू नहीं",
                 },
+                unsure: {
+                    label: "अनिश्चित / मुझे नहीं पता",
+                },
             },
         },
         variety: {
@@ -301,6 +304,9 @@ export const hiInstrumentTranslations = {
                 },
                 a_lot_of_variety: {
                     label: "बहुत अधिक विविधता",
+                },
+                unsure: {
+                    label: "अनिश्चित / मुझे नहीं पता",
                 },
             },
         },
@@ -321,6 +327,9 @@ export const hiInstrumentTranslations = {
                 a_lot_of_challenge: {
                     label: "बहुत अधिक चुनौती",
                 },
+                unsure: {
+                    label: "अनिश्चित / मुझे नहीं पता",
+                },
             },
         },
         sociability: {
@@ -340,6 +349,9 @@ export const hiInstrumentTranslations = {
                 },
                 yes_more_than_two_children: {
                     label: "हाँ - दो से अधिक बच्चे",
+                },
+                unsure: {
+                    label: "अनिश्चित / मुझे नहीं पता",
                 },
             },
         },

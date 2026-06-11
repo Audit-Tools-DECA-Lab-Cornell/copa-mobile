@@ -4,6 +4,7 @@ import {
     calculateQuestionScores,
     createEmptyScoreTotals,
     formatPercentage,
+    getEffectiveAuditScoreTotals,
 } from "lib/audit/score-helpers";
 import type {
     AuditScoreTotals,
@@ -95,6 +96,7 @@ export function buildSingleAuditPdfHtml(exportableAudit: ExportableAudit, instru
             value: formatScoreValue(overallScores?.challenge_total ?? 0),
             className: "score-row scale-challenge",
         },
+        ...buildUnsureScoreRows(auditSession),
     ];
 
     return [
@@ -166,6 +168,41 @@ export function buildWorkbookPdfHtml(workbook: WorkbookPayload): string {
         "</body>",
         "</html>",
     ].join("");
+}
+
+function formatPvUVariantSummaryForPdf(
+    auditSession: ExportableAudit["auditSession"],
+    variant: "unsure_as_zero" | "unsure_as_max",
+): string {
+    const totals = getEffectiveAuditScoreTotals(auditSession.scores, variant);
+    if (totals === null) {
+        return "Pending";
+    }
+    return `PV ${formatScoreValue(totals.play_value_total)} / ${formatScoreValue(totals.play_value_total_max)} | U ${formatScoreValue(totals.usability_total)} / ${formatScoreValue(totals.usability_total_max)}`;
+}
+
+function buildUnsureScoreRows(auditSession: ExportableAudit["auditSession"]): readonly ScoreSummaryDisplayRow[] {
+    if (auditSession.scores.unsure_answer_count <= 0) {
+        return [];
+    }
+
+    return [
+        {
+            label: "Unsure Answers",
+            value: auditSession.scores.unsure_answer_count.toString(),
+            className: "score-row score-row-neutral",
+        },
+        {
+            label: "Unsure as Zero",
+            value: formatPvUVariantSummaryForPdf(auditSession, "unsure_as_zero"),
+            className: "score-row score-row-neutral",
+        },
+        {
+            label: "Unsure as Maximum",
+            value: formatPvUVariantSummaryForPdf(auditSession, "unsure_as_max"),
+            className: "score-row score-row-neutral",
+        },
+    ];
 }
 
 interface ScoreSummaryDisplayRow {

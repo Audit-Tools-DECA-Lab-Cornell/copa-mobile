@@ -25,7 +25,10 @@ import {
     formatScoreValue,
     formatScoreWithPercentage,
     getEffectiveAuditScoreTotals,
+    getScoreVariantBuckets,
+    hasUnsureVariants,
     type ScoreSummaryLabels,
+    type ScoreVariantKey,
 } from "lib/audit/score-helpers";
 import type { AuditScoreTotals, AuditSession } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
@@ -254,6 +257,88 @@ function SurfaceCard({ children, padding }: Readonly<SurfaceCardProps>) {
         >
             {children}
         </YStack>
+    );
+}
+
+interface ScoreVariantSelectorProps {
+    readonly selectedVariant: ScoreVariantKey;
+    readonly unsureAnswerCount: number;
+    readonly onSelectVariant: (variant: ScoreVariantKey) => void;
+}
+
+const SCORE_VARIANTS: readonly ScoreVariantKey[] = ["canonical", "unsure_as_zero", "unsure_as_max"];
+
+function ScoreVariantSelector({
+    selectedVariant,
+    unsureAnswerCount,
+    onSelectVariant,
+}: Readonly<ScoreVariantSelectorProps>) {
+    const ds = useDesignSystem();
+    const { t } = useTranslation("reports");
+
+    return (
+        <SurfaceCard>
+            <YStack gap="$1">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
+                >
+                    {t("scoreVariants.title", { ns: "reports" })}
+                </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                >
+                    {t("scoreVariants.description", { ns: "reports", count: unsureAnswerCount })}
+                </Paragraph>
+            </YStack>
+            <YStack gap="$2">
+                {SCORE_VARIANTS.map((variant) => {
+                    const isSelected = selectedVariant === variant;
+                    return (
+                        <Pressable
+                            key={variant}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isSelected }}
+                            accessibilityLabel={t(`scoreVariants.${variant}.label`, { ns: "reports" })}
+                            onPress={() => {
+                                onSelectVariant(variant);
+                            }}
+                        >
+                            {({ pressed }) => (
+                                <YStack
+                                    rounded={ds.radii.md}
+                                    borderWidth={1}
+                                    borderColor={isSelected ? ds.colors.primary : ds.colors.border}
+                                    bg={isSelected ? ds.colors.surfaceMuted : ds.colors.input}
+                                    px="$3"
+                                    py="$3"
+                                    gap="$1"
+                                    opacity={pressed ? 0.85 : 1}
+                                >
+                                    <Text
+                                        color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.bodySm.fontSize}
+                                    >
+                                        {t(`scoreVariants.${variant}.label`, { ns: "reports" })}
+                                    </Text>
+                                    <Paragraph
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={ds.typography.bodyXs.fontSize}
+                                    >
+                                        {t(`scoreVariants.${variant}.helper`, { ns: "reports" })}
+                                    </Paragraph>
+                                </YStack>
+                            )}
+                        </Pressable>
+                    );
+                })}
+            </YStack>
+        </SurfaceCard>
     );
 }
 
@@ -542,6 +627,7 @@ export default function AuditReportDetailScreen() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [activeExportKey, setActiveExportKey] = useState<string | null>(null);
     const [reportScrollY, setReportScrollY] = useState(0);
+    const [selectedScoreVariant, setSelectedScoreVariant] = useState<ScoreVariantKey>("canonical");
     const auditId = readSingleParam(params.auditId);
     const scrollViewRef = useRef<ScrollView | null>(null);
     const sectionOffsetsRef = useRef<Record<string, number>>({});
@@ -611,6 +697,16 @@ export default function AuditReportDetailScreen() {
         };
     }, [auditId, cachedAudit, session, t]);
 
+    useEffect(() => {
+        if (auditSession !== null && !hasUnsureVariants(auditSession.scores)) {
+            setSelectedScoreVariant("canonical");
+        }
+    }, [auditSession]);
+
+    const selectedScoreBuckets = useMemo(() => {
+        return auditSession === null ? null : getScoreVariantBuckets(auditSession.scores, selectedScoreVariant);
+    }, [auditSession, selectedScoreVariant]);
+
     const scoreSummaryLabels: ScoreSummaryLabels = {
         playValueShort: t("playValueShort", { ns: "reports" }),
         usabilityShort: t("usabilityShort", { ns: "reports" }),
@@ -628,7 +724,7 @@ export default function AuditReportDetailScreen() {
         const progressByKey = new Map(
             auditSession.progress.sections.map((section) => [section.section_key, section] as const),
         );
-        const scoresByKey = auditSession.scores.by_section;
+        const scoresByKey = selectedScoreBuckets?.by_section ?? auditSession.scores.by_section;
 
         return instrument!.sections.reduce<SectionReportRow[]>((rows, section) => {
             const progress = progressByKey.get(section.section_key);
@@ -648,7 +744,7 @@ export default function AuditReportDetailScreen() {
             });
             return rows;
         }, []);
-    }, [auditSession, instrument]);
+    }, [auditSession, instrument, selectedScoreBuckets]);
 
     const isSubmitted = auditSession?.status === "SUBMITTED";
 
@@ -656,8 +752,8 @@ export default function AuditReportDetailScreen() {
         if (auditSession === null || instrument === null) {
             return [];
         }
-        return buildDomainReportRows(auditSession, instrument);
-    }, [auditSession, instrument]);
+        return buildDomainReportRows(auditSession, instrument, selectedScoreBuckets ?? auditSession.scores);
+    }, [auditSession, instrument, selectedScoreBuckets]);
 
     const overallItemCount = useMemo(() => {
         if (instrument === null) {
@@ -927,10 +1023,20 @@ export default function AuditReportDetailScreen() {
                             )}
 
                             <AuditMetrics auditSession={auditSession} />
+                            {isSubmitted && hasUnsureVariants(auditSession.scores) ? (
+                                <ScoreVariantSelector
+                                    selectedVariant={selectedScoreVariant}
+                                    unsureAnswerCount={auditSession.scores.unsure_answer_count}
+                                    onSelectVariant={setSelectedScoreVariant}
+                                />
+                            ) : null}
                             {isSubmitted ? (
                                 <SubmittedReportContent
                                     domainRows={domainRows}
-                                    overallScores={getEffectiveAuditScoreTotals(auditSession.scores)}
+                                    overallScores={getEffectiveAuditScoreTotals(
+                                        auditSession.scores,
+                                        selectedScoreVariant,
+                                    )}
                                     overallItemCount={overallItemCount}
                                 />
                             ) : (

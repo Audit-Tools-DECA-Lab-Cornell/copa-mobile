@@ -3,6 +3,8 @@ import {
     calculateQuestionScores,
     createEmptyScoreTotals,
     formatPercentage,
+    formatScoreValue,
+    getEffectiveAuditScoreTotals,
 } from "lib/audit/score-helpers";
 import type {
     AuditScoreTotals,
@@ -124,11 +126,33 @@ export function buildOverviewRows(
         ["Variety Total", overallScores?.variety_total ?? "Pending"],
         ["Sociability Total", overallScores?.sociability_total ?? "Pending"],
         ["Challenge Total", overallScores?.challenge_total ?? "Pending"],
+        ...buildUnsureOverviewRows(auditSession),
         ["Auditor Code", auditorProfile?.auditorCode ?? ""],
         ["Auditor Country", auditorProfile?.country ?? ""],
         ["Auditor Gender", auditorProfile?.gender ?? ""],
         ["Auditor Age", auditorProfile?.ageRange ?? ""],
         ["Auditor Role", auditorProfile?.role ?? ""],
+    ];
+}
+
+function formatPvUVariantSummary(auditSession: AuditSession, variant: "unsure_as_zero" | "unsure_as_max"): string {
+    const totals = getEffectiveAuditScoreTotals(auditSession.scores, variant);
+    if (totals === null) {
+        return "Pending";
+    }
+    return `PV ${formatScoreValue(totals.play_value_total)} / ${formatScoreValue(totals.play_value_total_max)} | U ${formatScoreValue(totals.usability_total)} / ${formatScoreValue(totals.usability_total_max)}`;
+}
+
+function buildUnsureOverviewRows(auditSession: AuditSession): readonly SpreadsheetRow[] {
+    if (auditSession.scores.unsure_answer_count <= 0) {
+        return [];
+    }
+
+    return [
+        ["Unsure Answers", auditSession.scores.unsure_answer_count],
+        ["Unsure Interpretation", "Report score excludes Unsure answers from score and maximum."],
+        ["Unsure as Zero", formatPvUVariantSummary(auditSession, "unsure_as_zero")],
+        ["Unsure as Maximum", formatPvUVariantSummary(auditSession, "unsure_as_max")],
     ];
 }
 

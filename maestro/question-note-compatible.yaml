@@ -10,7 +10,13 @@ appId: com.pratyush.sudhakar.audittoolsplayspacemobile
 - extendedWaitUntil:
       visible: ".*Provision.*|.*This playspace.*|.*Question.*|.*of.*"
       timeout: 30000
-- scrollDown
+
+- scrollUntilVisible:
+      element:
+          text: ".*Provision.*|.*This playspace.*|.*Question.*|.*of.*"
+      direction: DOWN
+      timeout: 10000
+
 - extendedWaitUntil:
       visible: ".*Provision.*|.*This playspace.*|.*Question.*"
       timeout: 10000
