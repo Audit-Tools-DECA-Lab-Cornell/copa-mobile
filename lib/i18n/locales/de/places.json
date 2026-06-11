@@ -18,7 +18,7 @@
         "waitingForSurveyCompletion": "Es wird darauf gewartet, dass der Umfrageteil abgeschlossen wird, bevor eine Punktzahl angezeigt werden kann.",
         "waitingForSurveySubmission": "Es wird darauf gewartet, dass die Umfrage eingereicht wird, bevor eine Punktzahl angezeigt werden kann."
     },
-    "diversityShort": "D",
+    "varietyShort": "D",
     "emptyMessage": "Versuchen Sie eine andere Such- oder Filterkombination.",
     "emptyTitle": "Keine Orte gefunden",
     "loadingPlaces": "Ihre Orte werden geladen...",

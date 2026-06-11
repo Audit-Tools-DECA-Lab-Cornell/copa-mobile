@@ -76,7 +76,7 @@ export const SINGLE_RESPONSE_HEADERS = [
     "Instructions",
     "Prompt",
     "Provision",
-    "Diversity",
+    "Variety",
     "Sociability",
     "Challenge",
     "PV Score",
@@ -89,7 +89,7 @@ export const PDF_RESPONSE_HEADERS = [
     "Constructs",
     "Prompt",
     "Provision",
-    "Diversity",
+    "Variety",
     "Sociability",
     "Challenge",
     "PV Score",
@@ -154,12 +154,12 @@ export const WEB_AUDIT_EXPORT_PALETTE = {
     scaleAccent: SCALE_ACCENT_COLORS,
 } as const;
 
-export type ExportScaleKey = Extract<ScaleKey, "provision" | "diversity" | "sociability" | "challenge">;
+export type ExportScaleKey = Extract<ScaleKey, "provision" | "variety" | "sociability" | "challenge">;
 
 /** Responses-sheet scale column indexes, matching `SINGLE_RESPONSE_HEADERS`. */
 export const SCALE_COLUMN_MAP: Partial<Record<number, ExportScaleKey>> = {
     7: "provision",
-    8: "diversity",
+    8: "variety",
     9: "sociability",
     10: "challenge",
 };
@@ -167,7 +167,7 @@ export const SCALE_COLUMN_MAP: Partial<Record<number, ExportScaleKey>> = {
 /** PDF response matrix scale column indexes, matching `PDF_RESPONSE_HEADERS`. */
 export const PDF_SCALE_COLUMN_MAP: Partial<Record<number, ExportScaleKey>> = {
     4: "provision",
-    5: "diversity",
+    5: "variety",
     6: "sociability",
     7: "challenge",
 };

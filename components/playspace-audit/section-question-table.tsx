@@ -30,7 +30,7 @@ interface SectionQuestionTableProps {
     readonly onChangeAnswers: (questionKey: string, nextAnswers: QuestionResponsePayload) => void;
 }
 
-const SCALE_COLUMN_ORDER: readonly ScaleKey[] = ["provision", "diversity", "challenge", "sociability"];
+const SCALE_COLUMN_ORDER: readonly ScaleKey[] = ["provision", "variety", "challenge", "sociability"];
 
 /**
  * Tablet-first section matrix that lays out prompts on the left and scale

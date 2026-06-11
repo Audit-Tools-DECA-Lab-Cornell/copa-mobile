@@ -33,18 +33,17 @@
         "helper": "This is optional. Add any closing observations, recommendations, or context you want attached to the completed audit.",
         "incompleteMessage": "All required setup questions and sections must be complete before you can add final comments and submit.",
         "incompleteTitle": "Audit Not Ready",
-        "placeholder": "Add any final comments or recommendations...",
+        "placeholder": "Add any closing notes or recommendations...",
         "preparingMessage": "Loading the latest audit state before final submission...",
         "preparingTitle": "Preparing Final Comments",
-        "prompt": "Any final comments before you submit this completed audit?",
-        "promptTitle": "Final comments",
         "stepEyebrow": "Final step",
         "submit": "Submit audit",
         "submitConfirmCancel": "Review",
         "submitConfirmMessage": "Once submitted, this audit cannot be edited. Make sure your final comments and answers are ready before continuing.",
         "submitConfirmSubmit": "Submit",
         "submitConfirmTitle": "Submit Audit?",
-        "subtitle": "Leave any final comments you want saved with this completed audit before submitting."
+        "subtitle": "Leave any closing notes you want saved with this completed audit before submitting.",
+        "title": "Final comments"
     },
     "executeLanding": {
         "continueSelectedPlace": "Ausgewaehlten Ort fortsetzen",
@@ -55,6 +54,7 @@
         "subtitle": "Wählen Sie einen Ort, um den COPA-Audit-Ablauf abschnittsweise zu starten oder fortzusetzen.",
         "title": "Audit durchfuehren"
     },
+    "loggedInAs": "Sie sind angemeldet als {{name}}",
     "mode": "- {{mode}}",
     "modeShort": {
         "audit": "Nur vor Ort",
@@ -174,7 +174,7 @@
             "notAvailable": "Für diesen Punkt nicht verwendet.",
             "scaleColumns": {
                 "challenge": "Herausforderung",
-                "diversity": "Vielfalt",
+                "variety": "Vielfalt",
                 "provision": "Bereitstellung / Menge",
                 "sociability": "Kontaktfreudigkeit"
             }

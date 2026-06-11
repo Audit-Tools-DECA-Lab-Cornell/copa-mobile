@@ -284,7 +284,7 @@ export const jaInstrumentTranslations = {
                 },
             },
         },
-        diversity: {
+        variety: {
             title: "多様性",
             prompt: "この特徴または環境特性は、どの程度多様性が考慮されていますか？",
             description: "多様性は、提供される項目がすべて同じではなく、バリエーションがあるかどうかを評価します。",
@@ -292,13 +292,13 @@ export const jaInstrumentTranslations = {
                 not_applicable: {
                     label: "該当なし",
                 },
-                no_diversity: {
+                no_variety: {
                     label: "多様性なし",
                 },
-                some_diversity: {
+                some_variety: {
                     label: "ある程度の多様性",
                 },
-                a_lot_of_diversity: {
+                a_lot_of_variety: {
                     label: "非常に多様",
                 },
             },

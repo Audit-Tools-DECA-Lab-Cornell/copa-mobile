@@ -210,7 +210,7 @@ export function getQuestionAnswers(
 
 /**
  * List scale keys the user must answer for one question, given current selections.
- * Follow-up scales (diversity, etc.) apply only when the provision option allows them.
+ * Follow-up scales (variety, etc.) apply only when the provision option allows them.
  *
  * @param question Instrument question including scales and options.
  * @param selectedAnswers Current scale key → option key map for the question.

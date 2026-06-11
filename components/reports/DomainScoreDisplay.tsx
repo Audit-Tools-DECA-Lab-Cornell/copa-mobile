@@ -18,7 +18,7 @@ export interface DomainScoreDisplayProps {
 
 // ── Metric definitions ───────────────────────────────────────────────────────
 
-type MetricKey = "provision" | "diversity" | "challenge" | "sociability" | "play_value" | "usability";
+type MetricKey = "provision" | "variety" | "challenge" | "sociability" | "play_value" | "usability";
 
 interface MetricConfig {
     readonly key: MetricKey;
@@ -35,10 +35,10 @@ const SCALE_METRICS: readonly MetricConfig[] = [
         max: (t) => t.provision_total_max,
     },
     {
-        key: "diversity",
-        labelKey: "domain.barDiversity",
-        value: (t) => t.diversity_total,
-        max: (t) => t.diversity_total_max,
+        key: "variety",
+        labelKey: "domain.barVariety",
+        value: (t) => t.variety_total,
+        max: (t) => t.variety_total_max,
     },
     {
         key: "challenge",
@@ -80,7 +80,7 @@ const PVU_BAR_COLORS: Record<"play_value" | "usability", string> = {
 
 // Percentage cutoffs where the legacy bar color used to change. Now rendered as
 // horizontal dotted lines across each bar, labeled at the start of each group.
-const BAR_THRESHOLDS = [40, 70] as const;
+const BAR_THRESHOLDS = [33.3, 66.6] as const;
 
 /**
  * Bar color by metric identity (not score): the four PVUA scale bars use the
@@ -94,8 +94,8 @@ function barColorForMetric(key: MetricKey, isNa: boolean, ds: ReturnType<typeof 
     switch (key) {
         case "provision":
             return ds.colors.provision;
-        case "diversity":
-            return ds.colors.diversity;
+        case "variety":
+            return ds.colors.variety;
         case "challenge":
             return ds.colors.challenge;
         case "sociability":
@@ -312,7 +312,7 @@ function BarBlock({
  * scrollable groups (scale scores, then construct scores):
  *
  *   ┌────────────────────────────────────────── scroll ───────────┐
- *   │ [spacer] │ Provision │ Diversity │ Challenge │ Sociability  │
+ *   │ [spacer] │ Provision │ Variety │ Challenge │ Sociability  │
  *   │  Achieved │  12  │  8  │  6   │  3  │  ← table              │
  *   │  Max      │  18  │  10 │  8   │  6  │                       │
  *   └─────────────────────────────────────────────────────────────┘
@@ -477,10 +477,10 @@ const SCALE_COLDEFS: readonly ColDef[] = [
         max: (r) => r.provision_total_max,
     },
     {
-        key: "diversity",
-        headerKey: "extendedTable.columnDiversity",
-        value: (r) => r.diversity_total,
-        max: (r) => r.diversity_total_max,
+        key: "variety",
+        headerKey: "extendedTable.columnVariety",
+        value: (r) => r.variety_total,
+        max: (r) => r.variety_total_max,
     },
     {
         key: "challenge",

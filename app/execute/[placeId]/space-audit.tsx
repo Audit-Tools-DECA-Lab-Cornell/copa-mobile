@@ -13,6 +13,7 @@ import { getPreAuditValues, getVisiblePreAuditQuestions, isRequiredPreAuditCompl
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
+import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { getResponsiveContentContainerStyle, type ResponsiveLayout, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
@@ -410,6 +411,7 @@ export default function SpaceAuditScreen() {
                 includeTopPadding: false,
             })}
         >
+            <LoggedInAsNotice />
             <YStack gap="$3">
                 <XStack items="center" gap="$2">
                     <ClipboardList size={16} color={ds.colors.primary} />

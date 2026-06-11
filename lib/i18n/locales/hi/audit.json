@@ -33,18 +33,17 @@
         "helper": "This is optional. Add any closing observations, recommendations, or context you want attached to the completed audit.",
         "incompleteMessage": "All required setup questions and sections must be complete before you can add final comments and submit.",
         "incompleteTitle": "Audit Not Ready",
-        "placeholder": "Add any final comments or recommendations...",
+        "placeholder": "Add any closing notes or recommendations...",
         "preparingMessage": "Loading the latest audit state before final submission...",
         "preparingTitle": "Preparing Final Comments",
-        "prompt": "Any final comments before you submit this completed audit?",
-        "promptTitle": "Final comments",
         "stepEyebrow": "Final step",
         "submit": "Submit audit",
         "submitConfirmCancel": "Review",
         "submitConfirmMessage": "Once submitted, this audit cannot be edited. Make sure your final comments and answers are ready before continuing.",
         "submitConfirmSubmit": "Submit",
         "submitConfirmTitle": "Submit Audit?",
-        "subtitle": "Leave any final comments you want saved with this completed audit before submitting."
+        "subtitle": "Leave any closing notes you want saved with this completed audit before submitting.",
+        "title": "Final comments"
     },
     "executeLanding": {
         "continueSelectedPlace": "चयनित स्थान जारी रखें",
@@ -55,6 +54,7 @@
         "subtitle": "सेक्शन-दर-सेक्शन COPA ऑडिट फ़्लो शुरू करने या फिर से जारी करने के लिए एक स्थान चुनें।",
         "title": "ऑडिट निष्पादन"
     },
+    "loggedInAs": "आप {{name}} के रूप में लॉग इन हैं",
     "mode": "- {{mode}}",
     "modeShort": {
         "audit": "केवल ऑनसाइट",
@@ -174,7 +174,7 @@
             "notAvailable": "इस आइटम के लिए उपयोग नहीं किया जाता।",
             "scaleColumns": {
                 "challenge": "चुनौती",
-                "diversity": "विविधता",
+                "variety": "विविधता",
                 "provision": "उपलब्धता / मात्रा",
                 "sociability": "सामाजिकता"
             }

@@ -5,6 +5,7 @@ import { LayoutDashboard } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
+import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
 import {
@@ -540,6 +541,7 @@ export default function ExecuteSectionScreen() {
                 includeTopPadding: false,
             })}
         >
+            <LoggedInAsNotice />
             <YStack gap="$3">
                 <Text
                     color={ds.colors.foreground}

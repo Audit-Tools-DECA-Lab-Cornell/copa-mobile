@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { getContentTrackInnerWidth, useResponsiveLayout } from "lib/responsive-layout";
 
-const LEFT_COLUMN_COUNT = 4; // provision, diversity, challenge, sociability
+const LEFT_COLUMN_COUNT = 4; // provision, variety, challenge, sociability
 const RIGHT_COLUMN_COUNT = 2; // play_value, usability
 
 /** Former fixed phone sizes - only proportions matter; widths scale to the content track. */

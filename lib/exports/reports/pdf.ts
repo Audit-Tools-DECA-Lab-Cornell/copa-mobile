@@ -81,9 +81,9 @@ export function buildSingleAuditPdfHtml(exportableAudit: ExportableAudit, instru
             className: "score-row scale-provision",
         },
         {
-            label: "Diversity Total",
-            value: formatScoreValue(overallScores?.diversity_total ?? 0),
-            className: "score-row scale-diversity",
+            label: "Variety Total",
+            value: formatScoreValue(overallScores?.variety_total ?? 0),
+            className: "score-row scale-variety",
         },
         {
             label: "Sociability Total",
@@ -325,13 +325,9 @@ function renderPdfQuestionRow(
               "provision",
               typeof answers.provision === "string" ? answers.provision : undefined,
           );
-    const diversityAnswer = isChecklist
+    const varietyAnswer = isChecklist
         ? ""
-        : formatQuestionAnswer(
-              question,
-              "diversity",
-              typeof answers.diversity === "string" ? answers.diversity : undefined,
-          );
+        : formatQuestionAnswer(question, "variety", typeof answers.variety === "string" ? answers.variety : undefined);
     const sociabilityAnswer = isChecklist
         ? ""
         : formatQuestionAnswer(
@@ -353,7 +349,7 @@ function renderPdfQuestionRow(
         { value: formatConstructLabel(question.constructs), className: "muted-cell" },
         { value: stripPromptMarkup(question.prompt) },
         { value: provisionAnswer, className: "scale-provision" },
-        { value: diversityAnswer, className: "scale-diversity" },
+        { value: varietyAnswer, className: "scale-variety" },
         { value: sociabilityAnswer, className: "scale-sociability" },
         { value: challengeAnswer, className: "scale-challenge" },
         {
@@ -383,7 +379,7 @@ function renderPdfScoreRow(label: string, totals: AuditScoreTotals, kind: "raw" 
         '<tr class="pdf-score-row">',
         `<td colspan="4" class="score-label-cell">${escapeHtml(label)}</td>`,
         `<td class="scale-provision">${escapeHtml(format(totals.provision_total, totals.provision_total_max))}</td>`,
-        `<td class="scale-diversity">${escapeHtml(format(totals.diversity_total, totals.diversity_total_max))}</td>`,
+        `<td class="scale-variety">${escapeHtml(format(totals.variety_total, totals.variety_total_max))}</td>`,
         `<td class="scale-sociability">${escapeHtml(format(totals.sociability_total, totals.sociability_total_max))}</td>`,
         `<td class="scale-challenge">${escapeHtml(format(totals.challenge_total, totals.challenge_total_max))}</td>`,
         `<td class="score-cell neutral-score-cell">${escapeHtml(format(totals.play_value_total, totals.play_value_total_max))}</td>`,
@@ -450,11 +446,11 @@ function buildPdfCss(): string {
   --summary-text: ${palette.summaryText};
   --summary-neutral-fill: ${palette.summaryNeutralFill};
   --scale-provision-fill: ${palette.scaleFill.provision};
-  --scale-diversity-fill: ${palette.scaleFill.diversity};
+  --scale-variety-fill: ${palette.scaleFill.variety};
   --scale-sociability-fill: ${palette.scaleFill.sociability};
   --scale-challenge-fill: ${palette.scaleFill.challenge};
   --scale-provision-text: ${palette.scaleAccent.provision};
-  --scale-diversity-text: ${palette.scaleAccent.diversity};
+  --scale-variety-text: ${palette.scaleAccent.variety};
   --scale-sociability-text: ${palette.scaleAccent.sociability};
   --scale-challenge-text: ${palette.scaleAccent.challenge};
 }
@@ -496,7 +492,7 @@ thead th { background: var(--header-fill); color: var(--header-text); font-weigh
 .key-cell { font-weight: 700; }
 .muted-cell { color: var(--muted-text); }
 .scale-provision { background: var(--scale-provision-fill) !important; color: var(--scale-provision-text) !important; }
-.scale-diversity { background: var(--scale-diversity-fill) !important; color: var(--scale-diversity-text) !important; }
+.scale-variety { background: var(--scale-variety-fill) !important; color: var(--scale-variety-text) !important; }
 .scale-sociability { background: var(--scale-sociability-fill) !important; color: var(--scale-sociability-text) !important; }
 .scale-challenge { background: var(--scale-challenge-fill) !important; color: var(--scale-challenge-text) !important; }
 .score-cell { background: var(--summary-fill) !important; color: var(--summary-text) !important; font-weight: 700; text-align: right; }

@@ -803,7 +803,7 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
             usabilityShort: t("usabilityShort"),
             sociabilityShort: t("sociabilityShort"),
             provisionShort: t("provisionShort"),
-            diversityShort: t("diversityShort"),
+            varietyShort: t("varietyShort"),
             challengeShort: t("challengeShort"),
         }),
         [t],

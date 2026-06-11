@@ -8,6 +8,7 @@ import { doesExecutionModeRequireSpaceAudit, getExecuteFlowSubject } from "lib/a
 import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getPreAuditValues, getVisiblePreAuditQuestions, isRequiredPreAuditComplete } from "lib/audit/selectors";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
+import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { CollapsibleCard } from "components/ui/collapsible-card";
 import { AuditExportCard } from "components/playspace-audit/audit-export-card";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
@@ -346,6 +347,7 @@ export default function ExecutePlaceScreen() {
                 includeTopPadding: false,
             })}
         >
+            <LoggedInAsNotice />
             <YStack gap="$3">
                 <XStack items="center" gap="$2">
                     <Shapes size={16} color={ds.colors.primary} />
@@ -656,8 +658,8 @@ function PreambleBlockCard({ block }: Readonly<PreambleBlockCardProps>) {
     let scaleKey = "provision";
     if (isScaleBlock && block.heading) {
         const headingLower = block.heading.toLowerCase();
-        if (headingLower.includes("diversity")) {
-            scaleKey = "diversity";
+        if (headingLower.includes("variety")) {
+            scaleKey = "variety";
         } else if (headingLower.includes("challenge")) {
             scaleKey = "challenge";
         } else if (headingLower.includes("sociability")) {

@@ -189,7 +189,7 @@ Score displays use **raw total buckets**, not percent summaries:
 | Type             | Fields                                                       |
 | ---------------- | ------------------------------------------------------------ |
 | Construct totals | `play_value_total` · `usability_total` · `sociability_total` |
-| Column totals    | `provision_total` · `diversity_total` · `challenge_total`    |
+| Column totals    | `provision_total` · `variety_total` · `challenge_total`      |
 | Compact labels   | `PV` · `U` · `S` · `Q` · `D` · `C`                           |
 
 Place-level summary surfaces now render explicit `PV` / `U` pairs from `audit_scores`, `survey_scores`, and `overall_scores` instead of collapsing the score into `PV + U`.

@@ -30,10 +30,10 @@ export interface DomainQuestionRow {
     readonly provisionApplicable: boolean;
     readonly provisionAnswered: boolean;
     readonly provisionIsNotApplicable: boolean;
-    readonly diversityLabel: string | null;
-    readonly diversityApplicable: boolean;
-    readonly diversityAnswered: boolean;
-    readonly diversityIsNotApplicable: boolean;
+    readonly varietyLabel: string | null;
+    readonly varietyApplicable: boolean;
+    readonly varietyAnswered: boolean;
+    readonly varietyIsNotApplicable: boolean;
     /** When `false`, the challenge column must show N/A (scale not present on question). */
     readonly challengeApplicable: boolean;
     readonly challengeLabel: string | null;
@@ -54,7 +54,7 @@ export interface DomainQuestionRow {
  * Best/worst domain ranking for one scoring construct.
  */
 export interface ConstructRanking {
-    readonly constructKey: "provision" | "diversity" | "challenge" | "sociability" | "play_value" | "usability";
+    readonly constructKey: "provision" | "variety" | "challenge" | "sociability" | "play_value" | "usability";
     readonly bestDomain: {
         domainTitle: string;
         score: number;
@@ -79,7 +79,7 @@ type InstrumentScaleOptionDefinition = InstrumentScaleDefinition["options"][numb
 
 const CONSTRUCT_ACCESSORS: readonly ConstructAccessor[] = [
     { key: "provision", value: (t) => t.provision_total, max: (t) => t.provision_total_max },
-    { key: "diversity", value: (t) => t.diversity_total, max: (t) => t.diversity_total_max },
+    { key: "variety", value: (t) => t.variety_total, max: (t) => t.variety_total_max },
     { key: "challenge", value: (t) => t.challenge_total, max: (t) => t.challenge_total_max },
     { key: "sociability", value: (t) => t.sociability_total, max: (t) => t.sociability_total_max },
     { key: "play_value", value: (t) => t.play_value_total, max: (t) => t.play_value_total_max },
@@ -128,7 +128,7 @@ function countTokenOverlap(a: Set<string>, b: Set<string>): number {
  * Resolve the human label and state for a selected scale option.
  *
  * @param question Instrument question.
- * @param scaleKey Scale key (provision, diversity, etc.).
+ * @param scaleKey Scale key (provision, variety, etc.).
  * @param answerKey Selected option key from responses.
  * @returns Label and answer-state metadata for report rendering.
  */
@@ -260,8 +260,8 @@ function buildDomainQuestionRow(question: InstrumentQuestion, answers: QuestionR
                   (option: InstrumentScaleOptionDefinition) => option.key === provisionAnswerKey,
               );
     const followUpScalesAsked = provisionOption?.allows_follow_up_scales === true;
-    const diversityInfo = resolveScaleOptionInfo(question, "diversity", readStringAnswer(answers, "diversity"));
-    const diversityApplicable = question.scales.some((scale: InstrumentScaleDefinition) => scale.key === "diversity");
+    const varietyInfo = resolveScaleOptionInfo(question, "variety", readStringAnswer(answers, "variety"));
+    const varietyApplicable = question.scales.some((scale: InstrumentScaleDefinition) => scale.key === "variety");
     const challengeInfo = resolveScaleOptionInfo(question, "challenge", readStringAnswer(answers, "challenge"));
     const challengeApplicable = question.scales.some((scale: InstrumentScaleDefinition) => scale.key === "challenge");
     const sociabilityInfo = resolveScaleOptionInfo(question, "sociability", readStringAnswer(answers, "sociability"));
@@ -281,10 +281,10 @@ function buildDomainQuestionRow(question: InstrumentQuestion, answers: QuestionR
         provisionApplicable,
         provisionAnswered: provisionInfo.answered,
         provisionIsNotApplicable: provisionInfo.isNotApplicable,
-        diversityLabel: diversityInfo.label,
-        diversityApplicable,
-        diversityAnswered: diversityInfo.answered,
-        diversityIsNotApplicable: diversityInfo.isNotApplicable,
+        varietyLabel: varietyInfo.label,
+        varietyApplicable,
+        varietyAnswered: varietyInfo.answered,
+        varietyIsNotApplicable: varietyInfo.isNotApplicable,
         challengeApplicable,
         challengeLabel: challengeInfo.label,
         challengeAnswered: challengeInfo.answered,

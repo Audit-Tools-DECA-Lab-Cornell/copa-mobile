@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
+import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { getQuestionAnswers, getVisibleSections, isInstrumentQuestionComplete } from "lib/audit/selectors";
 import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -325,6 +326,7 @@ export default function ExecuteFinalCommentsScreen() {
                 includeTopPadding: false,
             })}
         >
+            <LoggedInAsNotice />
             <YStack gap="$3">
                 <Text
                     color={ds.colors.primary}
@@ -364,22 +366,6 @@ export default function ExecuteFinalCommentsScreen() {
                 gap="$3"
                 style={{ boxShadow: ds.shadows.card }}
             >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleMd.fontSize}
-                    lineHeight={ds.typography.titleMd.lineHeight}
-                >
-                    {t("finalComments.promptTitle", { ns: "audit" })}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                    lineHeight={ds.typography.bodyLg.lineHeight}
-                >
-                    {t("finalComments.prompt", { ns: "audit" })}
-                </Paragraph>
                 <TextInput
                     multiline
                     value={localComments}

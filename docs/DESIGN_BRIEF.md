@@ -161,7 +161,7 @@ Current implementation notes:
 
 - the screen shows audit-only raw score totals today
 - construct summaries are based on play value, usability, and sociability
-- column summaries are based on quantity, diversity, and challenge
+- column summaries are based on quantity, variety, and challenge
 - combined scoring that includes manager input is still future work
 - the newest compact score labels currently fall back to English outside the English locale
 

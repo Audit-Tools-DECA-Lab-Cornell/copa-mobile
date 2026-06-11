@@ -286,7 +286,7 @@ function buildQuestionResponseRow(
         ];
     }
 
-    const readScale = (scaleKey: "provision" | "diversity" | "sociability" | "challenge"): string => {
+    const readScale = (scaleKey: "provision" | "variety" | "sociability" | "challenge"): string => {
         const rawValue = answers[scaleKey];
         return orUnanswered(
             formatQuestionAnswer(question, scaleKey, typeof rawValue === "string" ? rawValue : undefined),
@@ -300,7 +300,7 @@ function buildQuestionResponseRow(
         domain,
         prompt,
         readScale("provision"),
-        readScale("diversity"),
+        readScale("variety"),
         readScale("sociability"),
         readScale("challenge"),
     ];

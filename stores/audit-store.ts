@@ -274,11 +274,44 @@ function saveNow(): void {
 }
 
 /**
+ * Rewrite persisted offline drafts written before the Diversity→Variety scale
+ * rename. A draft blob can embed the previous instrument (whose scale key is
+ * validated against the strict scale enum) and score totals keyed by the old
+ * name, so without this rewrite an older draft would fail schema validation on
+ * hydrate and be discarded - losing un-synced field work. Only structural
+ * tokens are rewritten (instrument scale key/title, score-total keys, scale
+ * answer keys, and the scale's option keys); auditor free-text notes are never
+ * touched. The blob is compact JSON (`JSON.stringify` with no spacing), so the
+ * patterns match the canonical `"key":"value"` form. Required until every field
+ * device has re-synced past the rename release.
+ */
+function migrateLegacyScaleTokens(raw: string): string {
+    if (!raw.includes("diversity") && !raw.includes("Diversity")) {
+        return raw;
+    }
+    return raw
+        .split('"key":"diversity"')
+        .join('"key":"variety"')
+        .split('"title":"Diversity"')
+        .join('"title":"Variety"')
+        .split('"diversity":')
+        .join('"variety":')
+        .split('"no_diversity"')
+        .join('"no_variety"')
+        .split('"some_diversity"')
+        .join('"some_variety"')
+        .split('"a_lot_of_diversity"')
+        .join('"a_lot_of_variety"')
+        .split('"diversity_total')
+        .join('"variety_total');
+}
+
+/**
  * Attempt to parse a raw MMKV string into validated audit data.
  */
 function parseStoredAuditData(raw: string): PersistedAuditDataSnapshot | null {
     try {
-        const parsed = persistedAuditStateSchema.safeParse(JSON.parse(raw));
+        const parsed = persistedAuditStateSchema.safeParse(JSON.parse(migrateLegacyScaleTokens(raw)));
         if (!parsed.success) {
             return null;
         }

@@ -33,7 +33,7 @@ export const IN_PROGRESS_RESPONSE_HEADERS = [
     "Domain",
     "Prompt",
     "Provision",
-    "Diversity",
+    "Variety",
     "Sociability",
     "Challenge",
 ] as const;

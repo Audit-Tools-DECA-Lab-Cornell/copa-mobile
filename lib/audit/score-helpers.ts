@@ -16,7 +16,7 @@ export interface ScoreSummaryLabels {
     readonly usabilityShort: string;
     readonly sociabilityShort: string;
     readonly provisionShort: string;
-    readonly diversityShort: string;
+    readonly varietyShort: string;
     readonly challengeShort: string;
 }
 
@@ -33,8 +33,8 @@ interface MultiplierScaleScore {
 const EMPTY_SCORE_TOTALS: AuditScoreTotals = {
     provision_total: 0,
     provision_total_max: 0,
-    diversity_total: 0,
-    diversity_total_max: 0,
+    variety_total: 0,
+    variety_total_max: 0,
     challenge_total: 0,
     challenge_total_max: 0,
     sociability_total: 0,
@@ -119,8 +119,8 @@ export function addScoreTotals(left: AuditScoreTotals, right: AuditScoreTotals):
     return {
         provision_total: left.provision_total + right.provision_total,
         provision_total_max: left.provision_total_max + right.provision_total_max,
-        diversity_total: left.diversity_total + right.diversity_total,
-        diversity_total_max: left.diversity_total_max + right.diversity_total_max,
+        variety_total: left.variety_total + right.variety_total,
+        variety_total_max: left.variety_total_max + right.variety_total_max,
         challenge_total: left.challenge_total + right.challenge_total,
         challenge_total_max: left.challenge_total_max + right.challenge_total_max,
         sociability_total: left.sociability_total + right.sociability_total,
@@ -157,24 +157,24 @@ export function calculateQuestionScores(
     const provisionTotal = provisionOption?.addition_value ?? 0;
     const provisionTotalMax = readProvisionScaleMaximum(question);
     const shouldReadFollowUpScales = provisionOption?.allows_follow_up_scales === true;
-    const diversityScore = shouldReadFollowUpScales
-        ? readMultiplierScaleScore(question, answers, "diversity")
+    const varietyScore = shouldReadFollowUpScales
+        ? readMultiplierScaleScore(question, answers, "variety")
         : { columnTotal: 0, boostValue: 1 };
     const challengeScore = shouldReadFollowUpScales
         ? readMultiplierScaleScore(question, answers, "challenge")
         : { columnTotal: 0, boostValue: 1 };
     const sociabilityTotal = shouldReadFollowUpScales ? readSociabilityScaleScore(question, answers) : 0;
-    const diversityMaximum = readMultiplierScaleMaximum(question, "diversity");
+    const varietyMaximum = readMultiplierScaleMaximum(question, "variety");
     const challengeMaximum = readMultiplierScaleMaximum(question, "challenge");
     const sociabilityTotalMax = readSociabilityScaleMaximum(question);
-    const constructTotal = provisionTotal * diversityScore.boostValue * challengeScore.boostValue;
-    const constructTotalMax = provisionTotalMax * diversityMaximum.boostValue * challengeMaximum.boostValue;
+    const constructTotal = provisionTotal * varietyScore.boostValue * challengeScore.boostValue;
+    const constructTotalMax = provisionTotalMax * varietyMaximum.boostValue * challengeMaximum.boostValue;
 
     return {
         provision_total: provisionTotal,
         provision_total_max: provisionTotalMax,
-        diversity_total: diversityScore.columnTotal,
-        diversity_total_max: diversityMaximum.columnTotal,
+        variety_total: varietyScore.columnTotal,
+        variety_total_max: varietyMaximum.columnTotal,
         challenge_total: challengeScore.columnTotal,
         challenge_total_max: challengeMaximum.columnTotal,
         sociability_total: sociabilityTotal,
@@ -305,7 +305,7 @@ export function formatConstructSummary(
  *
  * @param scoreTotals Optional overall score totals.
  * @param labels Localized score labels.
- * @returns Compact provision/diversity/challenge summary or a placeholder.
+ * @returns Compact provision/variety/challenge summary or a placeholder.
  */
 export function formatColumnSummary(
     scoreTotals: AuditScoreTotals | null | undefined,
@@ -317,7 +317,7 @@ export function formatColumnSummary(
 
     return [
         `${labels.provisionShort} ${formatScoreValue(scoreTotals.provision_total)}`,
-        `${labels.diversityShort} ${formatScoreValue(scoreTotals.diversity_total)}`,
+        `${labels.varietyShort} ${formatScoreValue(scoreTotals.variety_total)}`,
         `${labels.challengeShort} ${formatScoreValue(scoreTotals.challenge_total)}`,
     ].join(" | ");
 }
@@ -345,7 +345,7 @@ function findScaleOption(scale: QuestionScale, optionKey: string): ScaleOption |
 }
 
 /**
- * Read one diversity/challenge answer as both a column total and a construct multiplier.
+ * Read one variety/challenge answer as both a column total and a construct multiplier.
  *
  * @param question Instrument question definition.
  * @param answers Stored answer payload.
@@ -355,7 +355,7 @@ function findScaleOption(scale: QuestionScale, optionKey: string): ScaleOption |
 function readMultiplierScaleScore(
     question: InstrumentQuestion,
     answers: QuestionResponsePayload,
-    scaleKey: "diversity" | "challenge",
+    scaleKey: "variety" | "challenge",
 ): MultiplierScaleScore {
     const scale = findScale(question, scaleKey);
     const answerKey = typeof answers[scaleKey] === "string" ? answers[scaleKey] : undefined;
@@ -377,7 +377,7 @@ function readMultiplierScaleScore(
 }
 
 /**
- * Read the highest possible diversity/challenge total and multiplier for one question.
+ * Read the highest possible variety/challenge total and multiplier for one question.
  *
  * @param question Instrument question definition.
  * @param scaleKey Scale to inspect.
@@ -385,7 +385,7 @@ function readMultiplierScaleScore(
  */
 function readMultiplierScaleMaximum(
     question: InstrumentQuestion,
-    scaleKey: "diversity" | "challenge",
+    scaleKey: "variety" | "challenge",
 ): MultiplierScaleScore {
     const scale = findScale(question, scaleKey);
     if (scale === undefined) {

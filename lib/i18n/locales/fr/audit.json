@@ -33,18 +33,17 @@
         "helper": "This is optional. Add any closing observations, recommendations, or context you want attached to the completed audit.",
         "incompleteMessage": "All required setup questions and sections must be complete before you can add final comments and submit.",
         "incompleteTitle": "Audit Not Ready",
-        "placeholder": "Add any final comments or recommendations...",
+        "placeholder": "Add any closing notes or recommendations...",
         "preparingMessage": "Loading the latest audit state before final submission...",
         "preparingTitle": "Preparing Final Comments",
-        "prompt": "Any final comments before you submit this completed audit?",
-        "promptTitle": "Final comments",
         "stepEyebrow": "Final step",
         "submit": "Submit audit",
         "submitConfirmCancel": "Review",
         "submitConfirmMessage": "Once submitted, this audit cannot be edited. Make sure your final comments and answers are ready before continuing.",
         "submitConfirmSubmit": "Submit",
         "submitConfirmTitle": "Submit Audit?",
-        "subtitle": "Leave any final comments you want saved with this completed audit before submitting."
+        "subtitle": "Leave any closing notes you want saved with this completed audit before submitting.",
+        "title": "Final comments"
     },
     "executeLanding": {
         "continueSelectedPlace": "Continuer le lieu sélectionné",
@@ -55,6 +54,7 @@
         "subtitle": "Choisissez un lieu pour démarrer ou reprendre le flux d’audit COPA section par section.",
         "title": "Exécution de l’audit"
     },
+    "loggedInAs": "Vous êtes connecté en tant que {{name}}",
     "mode": "- {{mode}}",
     "modeShort": {
         "audit": "Sur site uniquement",
@@ -156,7 +156,7 @@
     "section": {
         "answeredCount": "{{answered}} / {{total}} répondues",
         "backToOverview": "Retour à l’aperçu",
-        "followUpHidden": "Diversité, sociabilité et défi n’apparaissent qu’après une réponse positive à la question sur la quantité.",
+        "followUpHidden": "Variété, sociabilité et défi n’apparaissent qu’après une réponse positive à la question sur la quantité.",
         "notesDefault": "Ajoutez des réflexions ou des recommandations pour cette section.",
         "notesPlaceholder": "Ajouter des notes ou des recommandations pour cette section...",
         "openSection": "Ouvrir la section",
@@ -174,7 +174,7 @@
             "notAvailable": "Non utilisé pour cet élément.",
             "scaleColumns": {
                 "challenge": "Défi",
-                "diversity": "Diversité",
+                "variety": "Variété",
                 "provision": "Disponibilité / Quantité",
                 "sociability": "Sociabilité"
             }

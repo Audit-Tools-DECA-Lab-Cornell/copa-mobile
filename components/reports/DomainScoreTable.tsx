@@ -48,10 +48,10 @@ const LEFT_COLUMNS: readonly ColumnDef[] = [
         headerKey: "extendedTable.columnProvision",
     },
     {
-        key: "diversity",
-        value: (r) => r.diversity_total,
-        max: (r) => r.diversity_total_max,
-        headerKey: "extendedTable.columnDiversity",
+        key: "variety",
+        value: (r) => r.variety_total,
+        max: (r) => r.variety_total_max,
+        headerKey: "extendedTable.columnVariety",
     },
     {
         key: "challenge",

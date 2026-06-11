@@ -27,6 +27,7 @@ import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
+import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { FilterChip } from "components/ui/filter-chip";
 import { AuditExportCard } from "components/playspace-audit/audit-export-card";
 import { useDesignSystem } from "lib/design-system";
@@ -318,6 +319,7 @@ export default function ExecuteSectionOverviewScreen() {
                 includeTopPadding: false,
             })}
         >
+            <LoggedInAsNotice />
             <YStack gap="$3">
                 <XStack items="center" gap="$2">
                     <ClipboardList size={16} color={ds.colors.primary} />

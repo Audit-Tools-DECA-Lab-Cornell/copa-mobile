@@ -53,18 +53,17 @@
         "incompleteTitle": "Audit Not Ready",
         "missingItemsDescription": "Sections with no answers are listed by section. Partially complete sections list each missing question key.",
         "missingItemsTitle": "Missing responses",
-        "placeholder": "Add any final comments or recommendations...",
+        "placeholder": "Add any closing notes or recommendations...",
         "preparingMessage": "Loading the latest audit state before final submission...",
         "preparingTitle": "Preparing Final Comments",
-        "prompt": "Any final comments before you submit this completed audit?",
-        "promptTitle": "Final comments",
         "stepEyebrow": "Final step",
         "submit": "Submit audit",
         "submitConfirmCancel": "Review",
         "submitConfirmMessage": "Once submitted, this audit cannot be edited. Make sure your final comments and answers are ready before continuing.",
         "submitConfirmSubmit": "Submit",
         "submitConfirmTitle": "Submit Audit?",
-        "subtitle": "Leave any final comments you want saved with this completed audit before submitting."
+        "subtitle": "Leave any closing notes you want saved with this completed audit before submitting.",
+        "title": "Final comments"
     },
     "executeLanding": {
         "continueSelectedPlace": "Continue Selected Place",
@@ -75,6 +74,7 @@
         "subtitle": "Choose a place to start or resume the section-by-section COPA audit flow.",
         "title": "Audit Execute"
     },
+    "loggedInAs": "You are logged in as {{name}}",
     "mode": "- {{mode}}",
     "modeShort": {
         "audit": "Onsite auditor",
@@ -182,7 +182,7 @@
     "section": {
         "answeredCount": "{{answered}} / {{total}} answered",
         "backToOverview": "Back to overview",
-        "followUpHidden": "Diversity, Sociability, and Challenge appear only after a positive Provision answer.",
+        "followUpHidden": "Variety, Sociability, and Challenge appear only after a positive Provision answer.",
         "incompleteConfirmContinue": "Continue anyway",
         "incompleteGoBack": "Go back",
         "incompleteListLabel": "Unanswered questions:",
@@ -214,7 +214,7 @@
             "notAvailable": "Not used for this item.",
             "scaleColumns": {
                 "challenge": "Challenge",
-                "diversity": "Diversity",
+                "variety": "Variety",
                 "provision": "Provision",
                 "sociability": "Sociability"
             }

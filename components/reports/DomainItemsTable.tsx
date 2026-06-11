@@ -177,7 +177,7 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                         {t("extendedTable.columnProvision", { ns: "reports" })}
                     </HeaderCell>
                     <HeaderCell width={cols.scaleColWidth}>
-                        {t("extendedTable.columnDiversity", { ns: "reports" })}
+                        {t("extendedTable.columnVariety", { ns: "reports" })}
                     </HeaderCell>
                     <HeaderCell width={cols.scaleColWidth}>
                         {t("extendedTable.columnChallenge", { ns: "reports" })}
@@ -280,12 +280,12 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
                                 })}
                             </CellWrapper>
 
-                            {/* Diversity */}
+                            {/* Variety */}
                             <CellWrapper width={cols.scaleColWidth}>
                                 {renderScaleCellState({
-                                    label: question.diversityLabel,
-                                    applicable: question.diversityApplicable,
-                                    isNotApplicable: question.diversityIsNotApplicable,
+                                    label: question.varietyLabel,
+                                    applicable: question.varietyApplicable,
+                                    isNotApplicable: question.varietyIsNotApplicable,
                                     followUpScalesAsked: question.followUpScalesAsked,
                                 })}
                             </CellWrapper>

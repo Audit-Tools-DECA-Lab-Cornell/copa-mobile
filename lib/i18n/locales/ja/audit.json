@@ -33,18 +33,17 @@
         "helper": "This is optional. Add any closing observations, recommendations, or context you want attached to the completed audit.",
         "incompleteMessage": "All required setup questions and sections must be complete before you can add final comments and submit.",
         "incompleteTitle": "Audit Not Ready",
-        "placeholder": "Add any final comments or recommendations...",
+        "placeholder": "Add any closing notes or recommendations...",
         "preparingMessage": "Loading the latest audit state before final submission...",
         "preparingTitle": "Preparing Final Comments",
-        "prompt": "Any final comments before you submit this completed audit?",
-        "promptTitle": "Final comments",
         "stepEyebrow": "Final step",
         "submit": "Submit audit",
         "submitConfirmCancel": "Review",
         "submitConfirmMessage": "Once submitted, this audit cannot be edited. Make sure your final comments and answers are ready before continuing.",
         "submitConfirmSubmit": "Submit",
         "submitConfirmTitle": "Submit Audit?",
-        "subtitle": "Leave any final comments you want saved with this completed audit before submitting."
+        "subtitle": "Leave any closing notes you want saved with this completed audit before submitting.",
+        "title": "Final comments"
     },
     "executeLanding": {
         "continueSelectedPlace": "選択した場所を続行",
@@ -55,6 +54,7 @@
         "subtitle": "セクションごとの COPA 監査フローを開始または再開する場所を選択してください。",
         "title": "監査の実行"
     },
+    "loggedInAs": "ログイン中: {{name}}",
     "mode": "- {{mode}}",
     "modeShort": {
         "audit": "現地のみ",
@@ -174,7 +174,7 @@
             "notAvailable": "この項目では使用しません。",
             "scaleColumns": {
                 "challenge": "チャレンジ",
-                "diversity": "多様性",
+                "variety": "多様性",
                 "provision": "提供 / 数量",
                 "sociability": "社交性"
             }

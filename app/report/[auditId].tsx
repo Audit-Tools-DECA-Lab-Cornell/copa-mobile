@@ -144,10 +144,10 @@ function SectionScoreDetail({ scoreTotals, scoreSummaryLabels }: Readonly<Sectio
         scoreTotals.provision_total_max === scoreTotals.usability_total_max;
     // Keep report scale colors in sync with the question-card selected background accents.
     const provisionScaleAccent = getScaleAccentColor("provision", ds.colors);
-    const diversityScaleAccent = getScaleAccentColor("diversity", ds.colors);
+    const varietyScaleAccent = getScaleAccentColor("variety", ds.colors);
     const challengeScaleAccent = getScaleAccentColor("challenge", ds.colors);
     const provisionScaleSoft = getScaleSoftColor("provision", ds.colors) as ColorTokens;
-    const diversityScaleSoft = getScaleSoftColor("diversity", ds.colors) as ColorTokens;
+    const varietyScaleSoft = getScaleSoftColor("variety", ds.colors) as ColorTokens;
     const challengeScaleSoft = getScaleSoftColor("challenge", ds.colors) as ColorTokens;
     return (
         <YStack gap="$4" pt="$2">
@@ -203,11 +203,11 @@ function SectionScoreDetail({ scoreTotals, scoreSummaryLabels }: Readonly<Sectio
                         />
                     )}
                     <ScoreMetricRow
-                        label={`${t("detail.metricDiversity", { ns: "reports" })} (${scoreSummaryLabels.diversityShort})`}
-                        value={scoreTotals.diversity_total}
-                        maximum={scoreTotals.diversity_total_max}
-                        barColor={diversityScaleAccent}
-                        scaleColor={diversityScaleSoft}
+                        label={`${t("detail.metricVariety", { ns: "reports" })} (${scoreSummaryLabels.varietyShort})`}
+                        value={scoreTotals.variety_total}
+                        maximum={scoreTotals.variety_total_max}
+                        barColor={varietyScaleAccent}
+                        scaleColor={varietyScaleSoft}
                     />
                     <ScoreMetricRow
                         label={`${t("detail.metricChallenge", { ns: "reports" })} (${scoreSummaryLabels.challengeShort})`}
@@ -616,7 +616,7 @@ export default function AuditReportDetailScreen() {
         usabilityShort: t("usabilityShort", { ns: "reports" }),
         sociabilityShort: t("sociabilityShort", { ns: "reports" }),
         provisionShort: t("provisionShort", { ns: "reports" }),
-        diversityShort: t("diversityShort", { ns: "reports" }),
+        varietyShort: t("varietyShort", { ns: "reports" }),
         challengeShort: t("challengeShort", { ns: "reports" }),
     };
 

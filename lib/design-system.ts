@@ -72,8 +72,8 @@ interface ColorPalette {
     readonly amberSoft: ColorTokens;
     readonly provision: ColorTokens;
     readonly provisionSoft: ColorTokens;
-    readonly diversity: ColorTokens;
-    readonly diversitySoft: ColorTokens;
+    readonly variety: ColorTokens;
+    readonly varietySoft: ColorTokens;
     readonly challenge: ColorTokens;
     readonly challengeSoft: ColorTokens;
     readonly sociability: ColorTokens;
@@ -529,7 +529,7 @@ type PaletteColorValue = ActiveColorPalette[keyof ColorPalette];
  * Resolve the accent color for a given audit scale key.
  *
  * Scale hues come from the fixed PV palette in `lib/audit/scale-colors`
- * (provision green, diversity terracotta, challenge blue, sociability violet).
+ * (provision green, variety orange, challenge blue, sociability violet).
  *
  * @param scaleKey Instrument scale key.
  * @param colors Active semantic color palette.
@@ -539,8 +539,8 @@ export function getScaleAccentColor(scaleKey: string, colors: ActiveColorPalette
     switch (scaleKey) {
         case "provision":
             return colors.provision;
-        case "diversity":
-            return colors.diversity;
+        case "variety":
+            return colors.variety;
         case "challenge":
             return colors.challenge;
         case "sociability":
@@ -561,8 +561,8 @@ export function getScaleSoftColor(scaleKey: string, colors: ActiveColorPalette):
     switch (scaleKey) {
         case "provision":
             return colors.provisionSoft;
-        case "diversity":
-            return colors.diversitySoft;
+        case "variety":
+            return colors.varietySoft;
         case "challenge":
             return colors.challengeSoft;
         case "sociability":

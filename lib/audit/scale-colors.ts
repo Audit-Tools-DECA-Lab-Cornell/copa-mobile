@@ -7,14 +7,14 @@
 
 import type { ColorTokens } from "tamagui";
 
-export const PV_SCALE_KEYS = ["provision", "diversity", "challenge", "sociability"] as const;
+export const PV_SCALE_KEYS = ["provision", "variety", "challenge", "sociability"] as const;
 
 export type PvScaleKey = (typeof PV_SCALE_KEYS)[number];
 
 /** Canonical accent hex colours for each PV scale (aligned with web). */
 export const SCALE_ACCENT_COLORS: Record<PvScaleKey, string> = {
     provision: "#566E3D",
-    diversity: "#BD4926",
+    variety: "#D2691E",
     challenge: "#0C4767",
     sociability: "#754170",
 };
@@ -28,8 +28,8 @@ const SCALE_SOFT_BLEND_WEIGHT = 0.2;
 export interface ScaleColorFields {
     readonly provision: ColorTokens;
     readonly provisionSoft: ColorTokens;
-    readonly diversity: ColorTokens;
-    readonly diversitySoft: ColorTokens;
+    readonly variety: ColorTokens;
+    readonly varietySoft: ColorTokens;
     readonly challenge: ColorTokens;
     readonly challengeSoft: ColorTokens;
     readonly sociability: ColorTokens;
@@ -71,7 +71,7 @@ function blendHexWithWhite(hex: string, accentWeight: number): string {
 /** Canonical soft background hex colours for scale columns and badge fills. */
 export const SCALE_SOFT_COLORS: Record<PvScaleKey, string> = {
     provision: blendHexWithWhite(SCALE_ACCENT_COLORS.provision, SCALE_SOFT_BLEND_WEIGHT),
-    diversity: blendHexWithWhite(SCALE_ACCENT_COLORS.diversity, SCALE_SOFT_BLEND_WEIGHT),
+    variety: blendHexWithWhite(SCALE_ACCENT_COLORS.variety, SCALE_SOFT_BLEND_WEIGHT),
     challenge: blendHexWithWhite(SCALE_ACCENT_COLORS.challenge, SCALE_SOFT_BLEND_WEIGHT),
     sociability: blendHexWithWhite(SCALE_ACCENT_COLORS.sociability, SCALE_SOFT_BLEND_WEIGHT),
 };
@@ -79,7 +79,7 @@ export const SCALE_SOFT_COLORS: Record<PvScaleKey, string> = {
 /** Fixed accent and soft-fill hex values per PV scale. */
 export const PV_SCALE_PALETTE: Record<PvScaleKey, { readonly accent: string; readonly soft: string }> = {
     provision: { accent: SCALE_ACCENT_COLORS.provision, soft: SCALE_SOFT_COLORS.provision },
-    diversity: { accent: SCALE_ACCENT_COLORS.diversity, soft: SCALE_SOFT_COLORS.diversity },
+    variety: { accent: SCALE_ACCENT_COLORS.variety, soft: SCALE_SOFT_COLORS.variety },
     challenge: { accent: SCALE_ACCENT_COLORS.challenge, soft: SCALE_SOFT_COLORS.challenge },
     sociability: { accent: SCALE_ACCENT_COLORS.sociability, soft: SCALE_SOFT_COLORS.sociability },
 };
@@ -89,8 +89,8 @@ export function buildScaleColorFields(): ScaleColorFields {
     return {
         provision: SCALE_ACCENT_COLORS.provision as ColorTokens,
         provisionSoft: SCALE_SOFT_COLORS.provision as ColorTokens,
-        diversity: SCALE_ACCENT_COLORS.diversity as ColorTokens,
-        diversitySoft: SCALE_SOFT_COLORS.diversity as ColorTokens,
+        variety: SCALE_ACCENT_COLORS.variety as ColorTokens,
+        varietySoft: SCALE_SOFT_COLORS.variety as ColorTokens,
         challenge: SCALE_ACCENT_COLORS.challenge as ColorTokens,
         challengeSoft: SCALE_SOFT_COLORS.challenge as ColorTokens,
         sociability: SCALE_ACCENT_COLORS.sociability as ColorTokens,

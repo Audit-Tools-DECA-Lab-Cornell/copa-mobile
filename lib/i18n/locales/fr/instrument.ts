@@ -12,9 +12,9 @@ export const frInstrumentTranslations = {
     },
     preamble: [
         "## Comment l’outil est structuré\nL’outil Comprehensive Outdoor Playspace Audit (COPA) est structuré en 22 domaines. Chaque domaine comporte entre 2 et 12 items. Tous les items représentent des caractéristiques ou des attributs spécifiques de l’environnement.",
-        "Chaque item est évalué au moyen de jusqu’à quatre échelles : Mise à disposition, Diversité, Possibilités de défi et Soutien à la sociabilité. Tous les items n’incluent pas chaque échelle.",
+        "Chaque item est évalué au moyen de jusqu’à quatre échelles : Mise à disposition, Variété, Possibilités de défi et Soutien à la sociabilité. Tous les items n’incluent pas chaque échelle.",
         "### 1. Mise à disposition\nLa mise à disposition est toujours évaluée en premier. Lorsque la réponse concernant la mise à disposition est une réponse de type zéro, telle que Non ou Sans objet, les autres échelles restent masquées, car elles ne s’appliquent pas.",
-        "### 2. Diversité\nLa diversité évalue si les éléments fournis offrent une variété de types, de formes ou de possibilités. Autrement dit, s’ils ne sont pas tous identiques.\n\n**Question directrice :** Dans quelle mesure la diversité de cette caractéristique de l’élément/de l’environnement est-elle prise en compte ?\n\nExemple : Pour 5 balançoires : sont-elles toutes de types différents (p. ex. grande balançoire, balançoire pour bébé, balançoire panier, balançoire à corde), ou sont-elles toutes identiques ?\n\n**C’est à vous de juger s’il n’y a pas de diversité, s’il y a un peu de diversité ou s’il y a beaucoup de diversité prise en compte. Vous ne pouvez choisir qu’une seule réponse !**",
+        "### 2. Variété\nLa variété évalue si les éléments fournis offrent une variété de types, de formes ou de possibilités. Autrement dit, s’ils ne sont pas tous identiques.\n\n**Question directrice :** Dans quelle mesure la variété de cette caractéristique de l’élément/de l’environnement est-elle prise en compte ?\n\nExemple : Pour 5 balançoires : sont-elles toutes de types différents (p. ex. grande balançoire, balançoire pour bébé, balançoire panier, balançoire à corde), ou sont-elles toutes identiques ?\n\n**C’est à vous de juger s’il n’y a pas de variété, s’il y a un peu de variété ou s’il y a beaucoup de variété prise en compte. Vous ne pouvez choisir qu’une seule réponse !**",
         "### 3. Possibilités de défi\nLes possibilités de défi évaluent si l’élément offre des possibilités avec différents niveaux de difficulté.\n\n**Question directrice :** Dans quelle mesure cette caractéristique de l’élément/de l’environnement offre-t-elle différents niveaux de défi ?\n\nExemple : Les balançoires fournies doivent être examinées et jugées pour déterminer si elles offrent des possibilités de défi croissantes.\n\n**C’est à vous de juger si les balançoires fournies offrent différents niveaux de difficulté. Vous ne pouvez choisir qu’une seule réponse !**",
         "### 4. Soutien à la sociabilité\nLe soutien à la sociabilité évalue si plus d’un enfant ou d’une personne peut utiliser cette caractéristique de l’élément/de l’environnement ensemble. Il prend en compte la possibilité d’utiliser l’élément à plusieurs en même temps, individuellement, en petits groupes ou en groupes plus importants.\n\n**Question directrice :** Plus d’un enfant (ou d’une personne) peut-il utiliser cette caractéristique ensemble ?\n\nExemple : Certaines balançoires peuvent-elles être utilisées seul(e) ? Certaines peuvent-elles être utilisées à deux ? Certaines peuvent-elles être utilisées par des groupes d’enfants ?\n\n**C’est à vous de juger si elles peuvent être utilisées seul(e), à deux ou en groupe.**",
         "## Réflexion ouverte\nLa question ouverte vous donne la possibilité de consigner કેટલીક réflexions. Une question directrice vous demandera de décrire un ou deux aspects que vous recommandez de modifier dans l’aire de jeu afin d’augmenter sa valeur ludique et son utilisabilité.",
@@ -288,23 +288,23 @@ export const frInstrumentTranslations = {
                 },
             },
         },
-        diversity: {
-            title: "Diversité",
-            prompt: "Dans quelle mesure la diversité de cette caractéristique ou de cet élément de l’environnement est-elle prise en compte ?",
+        variety: {
+            title: "Variété",
+            prompt: "Dans quelle mesure la variété de cette caractéristique ou de cet élément de l’environnement est-elle prise en compte ?",
             description:
-                "La diversité évalue si les éléments proposés offrent de la variété plutôt que d’être tous identiques.",
+                "La variété évalue si les éléments proposés offrent de la variété plutôt que d’être tous identiques.",
             options: {
                 not_applicable: {
                     label: "Non applicable",
                 },
-                no_diversity: {
-                    label: "Aucune diversité",
+                no_variety: {
+                    label: "Aucune variété",
                 },
-                some_diversity: {
-                    label: "Une certaine diversité",
+                some_variety: {
+                    label: "Une certaine variété",
                 },
-                a_lot_of_diversity: {
-                    label: "Beaucoup de diversité",
+                a_lot_of_variety: {
+                    label: "Beaucoup de variété",
                 },
             },
         },
@@ -564,7 +564,7 @@ export const frInstrumentTranslations = {
         section_9_open_space: {
             title: "Espace ouvert",
             description:
-                "Un espace ouvert est défini comme une zone intégrée dans ou autour de l’aire de jeux, sans éléments de jeu, autres structures construites ni plantations. Les espaces ouverts sont des zones polyvalentes utilisées de manière flexible, offrant une diversité de possibilités comme courir, marcher, jouer avec des éléments libres (ballons, cerceaux ou éléments naturels, entre autres), s’asseoir ou se détendre, pique-niquer, jouer en groupe, …",
+                "Un espace ouvert est défini comme une zone intégrée dans ou autour de l’aire de jeux, sans éléments de jeu, autres structures construites ni plantations. Les espaces ouverts sont des zones polyvalentes utilisées de manière flexible, offrant une variété de possibilités comme courir, marcher, jouer avec des éléments libres (ballons, cerceaux ou éléments naturels, entre autres), s’asseoir ou se détendre, pique-niquer, jouer en groupe, …",
             instruction: "Lisez chaque énoncé et répondez aux questions. Cette aire de jeux...",
             notesPrompt:
                 "Des commentaires ? Décrivez une ou plusieurs recommandations pour améliorer les espaces ouverts de cette aire de jeux :",

@@ -18,14 +18,14 @@ type StyledCell = XLSX.CellObject & { s?: Record<string, unknown> };
 
 const SCALE_SOFT_HEX: Record<PvScaleKey, string> = {
     provision: hexToXlsxRgb(SCALE_SOFT_COLORS.provision),
-    diversity: hexToXlsxRgb(SCALE_SOFT_COLORS.diversity),
+    variety: hexToXlsxRgb(SCALE_SOFT_COLORS.variety),
     sociability: hexToXlsxRgb(SCALE_SOFT_COLORS.sociability),
     challenge: hexToXlsxRgb(SCALE_SOFT_COLORS.challenge),
 };
 
 const SCALE_ACCENT_HEX: Record<PvScaleKey, string> = {
     provision: hexToXlsxRgb(SCALE_ACCENT_COLORS.provision),
-    diversity: hexToXlsxRgb(SCALE_ACCENT_COLORS.diversity),
+    variety: hexToXlsxRgb(SCALE_ACCENT_COLORS.variety),
     sociability: hexToXlsxRgb(SCALE_ACCENT_COLORS.sociability),
     challenge: hexToXlsxRgb(SCALE_ACCENT_COLORS.challenge),
 };

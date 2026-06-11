@@ -311,7 +311,7 @@ export const deInstrumentTranslations = {
                 },
             },
         },
-        diversity: {
+        variety: {
             title: "Vielfalt",
             prompt: "In welchem Maß ist Vielfalt bei diesem Merkmal oder dieser Umweltcharakteristik vorhanden?",
             description:
@@ -320,13 +320,13 @@ export const deInstrumentTranslations = {
                 not_applicable: {
                     label: "Nicht zutreffend",
                 },
-                no_diversity: {
+                no_variety: {
                     label: "Keine Vielfalt",
                 },
-                some_diversity: {
+                some_variety: {
                     label: "Etwas Vielfalt",
                 },
-                a_lot_of_diversity: {
+                a_lot_of_variety: {
                     label: "Viel Vielfalt",
                 },
             },

@@ -11,23 +11,23 @@ export interface BestWorstTableProps {
     readonly domainRows: DomainReportRow[];
 }
 
-type ConstructKey = "provision" | "diversity" | "challenge" | "sociability" | "play_value" | "usability";
+type ConstructKey = "provision" | "variety" | "challenge" | "sociability" | "play_value" | "usability";
 
 // Phone: 2 per row (3 rows). Tablet: 3 per row (2 rows).
 const PHONE_CONSTRUCT_ROWS: readonly (readonly [ConstructKey, ConstructKey])[] = [
-    ["provision", "diversity"],
+    ["provision", "variety"],
     ["challenge", "sociability"],
     ["play_value", "usability"],
 ];
 
 const TABLET_CONSTRUCT_ROWS: readonly (readonly [ConstructKey, ConstructKey, ConstructKey])[] = [
-    ["provision", "diversity", "challenge"],
+    ["provision", "variety", "challenge"],
     ["sociability", "play_value", "usability"],
 ];
 
 const CONSTRUCT_LABEL_KEYS: Record<ConstructKey, string> = {
     provision: "bestWorst.constructProvision",
-    diversity: "bestWorst.constructDiversity",
+    variety: "bestWorst.constructVariety",
     challenge: "bestWorst.constructChallenge",
     sociability: "bestWorst.constructSociability",
     play_value: "bestWorst.constructPlayValue",

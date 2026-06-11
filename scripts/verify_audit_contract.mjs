@@ -175,9 +175,9 @@ const instrumentFixture = {
                             ],
                         },
                         {
-                            key: "diversity",
-                            title: "Diversity",
-                            prompt: "Diversity prompt",
+                            key: "variety",
+                            title: "Variety",
+                            prompt: "Variety prompt",
                             options: [
                                 {
                                     key: "not_applicable",
@@ -188,8 +188,8 @@ const instrumentFixture = {
                                     is_not_applicable: true,
                                 },
                                 {
-                                    key: "some_diversity",
-                                    label: "Some diversity",
+                                    key: "some_variety",
+                                    label: "Some variety",
                                     addition_value: 2,
                                     boost_value: 2,
                                     allows_follow_up_scales: false,
@@ -350,8 +350,8 @@ assert(parsedSaveAck.revision === 4, "Expected draft save ack revision to parse.
 const parsedScoreTotals = auditScoreTotalsSchema.parse({
     provision_total: 1,
     provision_total_max: 2,
-    diversity_total: 1,
-    diversity_total_max: 2,
+    variety_total: 1,
+    variety_total_max: 2,
     challenge_total: 2,
     challenge_total_max: 2,
     sociability_total: 1,
@@ -408,9 +408,9 @@ const scoreFixtureQuestion = {
             ],
         },
         {
-            key: "diversity",
-            title: "Diversity",
-            prompt: "Diversity prompt",
+            key: "variety",
+            title: "Variety",
+            prompt: "Variety prompt",
             options: [
                 {
                     key: "not_applicable",
@@ -421,16 +421,16 @@ const scoreFixtureQuestion = {
                     is_not_applicable: true,
                 },
                 {
-                    key: "some_diversity",
-                    label: "Some diversity",
+                    key: "some_variety",
+                    label: "Some variety",
                     addition_value: 2,
                     boost_value: 2,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
                 },
                 {
-                    key: "a_lot_of_diversity",
-                    label: "A lot of diversity",
+                    key: "a_lot_of_variety",
+                    label: "A lot of variety",
                     addition_value: 3,
                     boost_value: 3,
                     allows_follow_up_scales: false,
@@ -505,7 +505,7 @@ const scoreFixtureQuestion = {
 
 const calculatedQuestionScores = calculateQuestionScores(scoreFixtureQuestion, {
     provision: "some",
-    diversity: "some_diversity",
+    variety: "some_variety",
     challenge: "a_lot_of_challenge",
     sociability: "pairs",
 });
