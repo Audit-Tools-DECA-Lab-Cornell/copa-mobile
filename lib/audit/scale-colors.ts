@@ -1,5 +1,5 @@
 /**
- * Canonical PV scale colour palette — fixed product tokens, independent of
+ * Canonical PV scale colour palette - fixed product tokens, independent of
  * theme accent colours (slate, moss, terracotta, violet).
  *
  * Used by in-app scale UI, report views, PDF, and Excel exports.
