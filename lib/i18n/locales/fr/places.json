@@ -18,7 +18,7 @@
         "waitingForSurveyCompletion": "En attente de la fin de la partie enquête avant qu’un score puisse apparaître.",
         "waitingForSurveySubmission": "En attente de la soumission de l’enquête avant qu’un score puisse apparaître."
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "Essayez une autre combinaison de recherche ou de filtre.",
     "emptyTitle": "Aucun lieu ne correspond",
     "loadingPlaces": "Chargement de vos sites...",

@@ -45,7 +45,7 @@
         "auditTypePlaceSurvey": "प्लेस सर्वेक्षण",
         "auditTypeFullAssessment": "पूर्ण मूल्यांकन"
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "कोई अलग खोज या फ़िल्टर संयोजन आज़माएँ।",
     "emptyTitle": "कोई रिपोर्ट मेल नहीं खाती",
     "exportAuditMissing": "यह ऑडिट अभी निर्यात के लिए उपलब्ध नहीं है।",
@@ -90,7 +90,7 @@
         "barProvision": "प्रावधान",
         "barProvisionShort": "Prov",
         "barVariety": "विविधता",
-        "barVarietyShort": "Div",
+        "barVarietyShort": "Var",
         "barChallenge": "चुनौती अवसर",
         "barChallengeShort": "Chal",
         "barSociability": "सामाजिकता सहायता",

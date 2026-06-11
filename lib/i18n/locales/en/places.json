@@ -18,7 +18,7 @@
         "waitingForSurveyCompletion": "Waiting for the survey portion to be completed before a score can appear.",
         "waitingForSurveySubmission": "Waiting for the survey to be submitted before a score can appear."
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "Try a different search or filter combination.",
     "emptyTitle": "No places match",
     "loadingPlaces": "Loading your places...",

@@ -47,7 +47,7 @@
         "unavailableTitle": "Audit not found",
         "usabilityCardLabel": "Usability"
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "Try a different search or filter combination.",
     "emptyTitle": "No reports match",
     "filtersLabel": "Filters",
@@ -95,7 +95,7 @@
         "barProvision": "Provision",
         "barProvisionShort": "Prov",
         "barVariety": "Variety",
-        "barVarietyShort": "Div",
+        "barVarietyShort": "Var",
         "barChallenge": "Challenge",
         "barChallengeShort": "Chal",
         "barSociability": "Sociability",

@@ -18,7 +18,7 @@
         "waitingForSurveyCompletion": "स्कोर दिखने से पहले सर्वेक्षण भाग के पूरा होने का इंतज़ार है।",
         "waitingForSurveySubmission": "स्कोर दिखने से पहले सर्वेक्षण के सबमिट होने का इंतज़ार है।"
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "कोई अलग खोज या फ़िल्टर संयोजन आज़माएँ।",
     "emptyTitle": "कोई स्थान मेल नहीं खाता",
     "loadingPlaces": "आपके स्थान लोड हो रहे हैं...",

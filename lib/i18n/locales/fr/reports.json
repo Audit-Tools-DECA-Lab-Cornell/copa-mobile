@@ -45,7 +45,7 @@
         "auditTypePlaceSurvey": "Enquête de site",
         "auditTypeFullAssessment": "Évaluation complète"
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "provisionShort": "Q",
     "emptyMessage": "Essayez une autre combinaison de recherche ou de filtre.",
     "emptyTitle": "Aucun rapport correspondant",

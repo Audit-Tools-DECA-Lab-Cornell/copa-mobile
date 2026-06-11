@@ -45,7 +45,7 @@
         "auditTypePlaceSurvey": "場所調査",
         "auditTypeFullAssessment": "総合評価"
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "別の検索条件またはフィルターの組み合わせをお試しください。",
     "emptyTitle": "一致するレポートはありません",
     "exportAuditMissing": "この監査はまだエクスポートできません。",
@@ -90,7 +90,7 @@
         "barProvision": "設備",
         "barProvisionShort": "Prov",
         "barVariety": "多様性",
-        "barVarietyShort": "Div",
+        "barVarietyShort": "Var",
         "barChallenge": "チャレンジ",
         "barChallengeShort": "Chal",
         "barSociability": "社会性サポート",

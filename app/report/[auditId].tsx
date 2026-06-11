@@ -134,7 +134,7 @@ interface SectionScoreDetailProps {
 }
 
 /**
- * Structured breakdown for one section: PV/U/S outcomes and Q/D/C scale columns.
+ * Structured breakdown for one section: PV/U/S outcomes and P/V/C scale columns.
  *
  * @param props Score totals and localized short labels for abbreviations.
  * @returns Grouped metrics with headings and ratio bars.

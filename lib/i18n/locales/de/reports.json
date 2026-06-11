@@ -45,7 +45,7 @@
         "unavailableTitle": "Audit nicht gefunden",
         "usabilityCardLabel": "Benutzerfreundlichkeit"
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "Versuchen Sie eine andere Such- oder Filterkombination.",
     "emptyTitle": "Keine Berichte gefunden",
     "exportAuditMissing": "Dieses Audit steht noch nicht zum Export bereit.",
@@ -90,7 +90,7 @@
         "barProvision": "Ausstattung",
         "barProvisionShort": "Ausst.",
         "barVariety": "Vielfalt",
-        "barVarietyShort": "Div",
+        "barVarietyShort": "Var",
         "barChallenge": "Herausforderung",
         "barChallengeShort": "Herausf.",
         "barSociability": "Soziale Unterstützung",

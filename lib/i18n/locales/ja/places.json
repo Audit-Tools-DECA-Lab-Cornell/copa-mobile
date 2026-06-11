@@ -18,7 +18,7 @@
         "waitingForSurveyCompletion": "スコアが表示されるまで、調査部分の完了をお待ちください。",
         "waitingForSurveySubmission": "スコアが表示されるまで、調査の送信をお待ちください。"
     },
-    "varietyShort": "D",
+    "varietyShort": "V",
     "emptyMessage": "別の検索条件またはフィルターの組み合わせをお試しください。",
     "emptyTitle": "一致する場所がありません",
     "loadingPlaces": "場所を読み込み中...",
