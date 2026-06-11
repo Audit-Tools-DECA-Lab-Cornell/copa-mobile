@@ -20,6 +20,8 @@
         "submit:ios": "eas submit --platform ios --profile production --latest",
         "release:android": "bun run eas:android && bun run submit:android",
         "release:ios": "bun run eas:ios && bun run submit:ios",
+        "badge:android": "bash scripts/update-badge.sh production android",
+        "badge:ios": "bash scripts/update-badge.sh production ios",
         "doctor": "npx expo-doctor",
         "test": "vitest run",
         "test:watch": "vitest",
