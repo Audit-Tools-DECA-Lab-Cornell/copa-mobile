@@ -125,10 +125,10 @@ Each export includes: audit overview, pre-audit answers, PVUA guidance / scale l
 
 ### Current Approach
 
-- Shared UI strings live in locale JSON files
-- `lib/instrument.ts` is the raw English structural source of truth
-- Locale-specific `instrument.ts` bundles provide translated display copy
-- `useLocalizedInstrument()` overlays translated copy onto the raw instrument
+- Shared UI strings (labels, buttons, messages) live in locale JSON files under `lib/i18n/locales/<lang>/`.
+- **Instrument copy is server-authoritative in every language** — there are no client-side instrument text overlays. The single client seam for other languages is the `lang` parameter on the language-aware fetch in `lib/services/instrument-sync.ts`.
+- `useLocalizedInstrument()` returns the synced (or audit-scoped) instrument **as-is** — no overlay.
+- For offline first launch the bundled instrument (`assets/bundled-instrument.json`, loaded via `lib/audit/bundled-instrument.ts`) is the fallback.
 
 ### Rule: i18n for user-facing copy only
 
@@ -276,6 +276,18 @@ bun run android    # run Android app
 | ---------------------- | ------------------------------------ |
 | `bun run i18n:extract` | Extract user-facing translation keys |
 | `bun run i18n:check`   | Inspect translation status           |
+
+### Versioning & Releases
+
+The app is **pre-1.0 beta** — the display version stays under `1.0` until public GA. Bump it with the scheme below (`scripts/bump-version.mjs`); EAS owns the Android `versionCode` (do not set it by hand).
+
+| Command                 | Description                                                 |
+| ----------------------- | ----------------------------------------------------------- |
+| `bun run version:show`  | Print the current app version                               |
+| `bun run version:minor` | "Major" change (e.g. `0.3.4 → 0.4.0`) — usually a new build |
+| `bun run version:patch` | "Small" change (e.g. `0.3.4 → 0.3.5`) — often OTA-able      |
+
+`runtimeVersion` is `fingerprint`, so a JS-only patch ships over-the-air (`eas update`) while a native/minor change needs `bun run eas:android` → `bun run submit:android`. The bump script prints which. Full policy: `.claude/memory/mobile-versioning.md`.
 
 ---
 
