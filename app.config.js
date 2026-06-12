@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "COPA",
         slug: "audit-tools-playspace-mobile",
-        version: "1.2.1",
+        version: "0.3.0",
         orientation: "portrait",
         icon: "./assets/icon-ios.png",
         scheme: "audit-tools-playspace-mobile",
@@ -74,8 +74,11 @@ export default {
                 projectId: "2e559376-25f3-44e1-88bf-00eeaf9fb763",
             },
         },
+        // Fingerprint policy: the OTA runtime version is derived from the native
+        // layer, so JS-only patch changes ship via `eas update` while native/major
+        // changes auto-require a new build — decoupled from the display version above.
         runtimeVersion: {
-            policy: "appVersion",
+            policy: "fingerprint",
         },
         owner: "audit-tools-deca-lab-cornell",
         githubUrl: "https://github.com/audit-tools-deca-lab-cornell/audit-tools-playspace-mobile",
