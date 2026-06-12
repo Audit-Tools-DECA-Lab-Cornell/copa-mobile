@@ -53,6 +53,13 @@ import {
 } from "lib/audit/api";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { quarantineUnreadableSnapshot } from "lib/audit/persistence-guards";
+import {
+    createSubmitOp,
+    isRetryableSubmitError,
+    registerAttempt,
+    selectDrainableOps,
+} from "lib/audit/outbox/outbox-core";
+import { submitOutbox } from "lib/audit/outbox/outbox-storage";
 import type {
     AuditDraftSave,
     AuditSession,
@@ -110,6 +117,12 @@ interface PlayspaceAuditStoreState {
     readonly isLoadingAudit: boolean;
     readonly isSavingDraft: boolean;
     readonly isSyncing: boolean;
+    /**
+     * Number of audits with a submission not yet confirmed by the server -
+     * queued/in-flight submit phases plus durable outbox ops. Drives the
+     * pending-uploads reminder so an auditor knows to reopen on wifi.
+     */
+    readonly pendingUploadCount: number;
     readonly errorMessage: string | null;
     readonly lastSyncError: string | null;
     readonly lastSuccessfulSyncAt: string | null;
@@ -1843,12 +1856,30 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
     // connectivity returns (the server stamps the intent timestamp only once).
     void recordSubmitIntentAsync(session, auditId, new Date().toISOString());
 
+    // A durable submit op decoupled from the editing store lets the submission
+    // survive sign-out, an editing-store reset, or a persisted-schema migration.
+    // It is recorded only once we commit to delivery (offline-queued or about to
+    // call the server) so a validation/flush early-exit never leaves a stuck op,
+    // and is pruned once the server accepts the submit. Idempotent per audit.
+    const outboxUserId = auditUI$.currentUserId.peek();
+    const enqueueDurableSubmitOp = (): void => {
+        if (outboxUserId !== null && submitOutbox.get(outboxUserId, auditId) === null) {
+            submitOutbox.put(outboxUserId, createSubmitOp(auditId, new Date().toISOString()));
+        }
+    };
+    const pruneDurableSubmitOp = (): void => {
+        if (outboxUserId !== null) {
+            submitOutbox.remove(outboxUserId, auditId);
+        }
+    };
+
     // Queue the submit for background delivery when offline.
     const netState = await Network.getNetworkStateAsync();
     const isOnline = netState.isConnected !== false && netState.isInternetReachable !== false;
     if (!isOnline) {
         const currentSession = auditData$.sessions_by_audit_id[auditId]?.peek();
         if (currentSession !== undefined && currentSession.status !== "SUBMITTED") {
+            enqueueDurableSubmitOp();
             const currentPhase = auditData$.sync_state_by_audit_id.peek()[auditId]?.phase;
             if (currentPhase !== "queued_submit") {
                 auditData$.sync_state_by_audit_id.set(
@@ -1889,10 +1920,14 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
     const latestPostFlushSyncState = auditData$.sync_state_by_audit_id.peek()[auditId];
     if (latestPostFlushSession?.status === "SUBMITTED" || latestPostFlushSyncState?.phase === "submitted") {
         if (latestPostFlushSession !== undefined) {
+            pruneDurableSubmitOp();
             return latestPostFlushSession;
         }
     }
 
+    // Committing to a server submit now: record the durable op so a crash or
+    // connectivity drop mid-request still leaves a record to drain later.
+    enqueueDurableSubmitOp();
     auditData$.sync_state_by_audit_id.set(
         writeAuditSyncState(auditData$.sync_state_by_audit_id.peek(), auditId, "submitting", new Date().toISOString()),
     );
@@ -1900,6 +1935,9 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
     try {
         const latestSession = auditData$.sessions_by_audit_id[auditId]?.peek();
         const nextSession = await submitAudit(session, auditId, latestSession?.revision);
+        // The server durably accepted (or idempotently confirmed) the submit, so
+        // the durable outbox op is no longer needed.
+        pruneDurableSubmitOp();
         const data = auditData$.peek();
         if (
             getOwnedAuditSessionForResponse({
@@ -2074,11 +2112,26 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
         .filter(([, state]) => state.phase === "queued_submit")
         .map(([auditId]) => auditId);
 
-    if (queuedAuditIds.length === 0) return;
+    // Also drain durable outbox submit ops whose phase was lost from the editing
+    // store (e.g. after a reset or quarantine) - the op is the durable record, so
+    // these submissions still complete. Server idempotency makes draining an
+    // audit that is both queued and in the outbox safe.
+    const drainUserId = auditUI$.currentUserId.peek();
+    const orphanOutboxAuditIds =
+        drainUserId !== null
+            ? selectDrainableOps(submitOutbox.list(drainUserId), new Date().toISOString())
+                  .map((op) => op.audit_id)
+                  .filter((auditId) => !queuedAuditIds.includes(auditId))
+            : [];
+    const auditIdsToDrain = [...queuedAuditIds, ...orphanOutboxAuditIds];
 
-    log.withMetadata({ queuedCount: queuedAuditIds.length }).info("draining queued submits");
+    if (auditIdsToDrain.length === 0) return;
 
-    for (const auditId of queuedAuditIds) {
+    log.withMetadata({ queuedCount: queuedAuditIds.length, outboxOrphanCount: orphanOutboxAuditIds.length }).info(
+        "draining queued submits",
+    );
+
+    for (const auditId of auditIdsToDrain) {
         // Restore phase to dirty/idle so the flush and submit paths pick it up normally.
         const latestData = auditData$.peek();
         const hasDirty = hasDirtyFragmentsForAudit(
@@ -2106,6 +2159,20 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
             const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
 
             log.withError(error).withMetadata({ auditId }).error("queued submit delivery failed");
+
+            // Update the durable outbox op: keep it (with backoff) for a
+            // retryable transient failure, or drop it for a terminal one that a
+            // retry cannot fix (the never-arrived email already covers the auditor).
+            if (drainUserId !== null) {
+                const existingOp = submitOutbox.get(drainUserId, auditId);
+                if (existingOp !== null) {
+                    if (isRetryableSubmitError(error)) {
+                        submitOutbox.put(drainUserId, registerAttempt(existingOp, new Date().toISOString(), message));
+                    } else {
+                        submitOutbox.remove(drainUserId, auditId);
+                    }
+                }
+            }
 
             // Ensure phase reflects a hard failure (submitAuditSessionInternal already sets it,
             // but we piggyback the notification write here regardless).
@@ -2167,6 +2234,28 @@ const actions = {
  * inside a `useSelector` callback. Each selector only accesses the
  * properties it actually reads, preserving fine-grained reactivity.
  */
+/**
+ * Count audits whose submission the server has not confirmed: queued/in-flight
+ * submit phases unioned with durable outbox ops for the current user. The
+ * union dedupes by audit id so an audit that is both queued and in the outbox
+ * counts once.
+ */
+function countPendingUploads(syncStateByAuditId: AuditSyncStateByAuditId): number {
+    const auditIds = new Set<string>();
+    for (const [auditId, state] of Object.entries(syncStateByAuditId)) {
+        if (state.phase === "queued_submit" || state.phase === "submitting" || state.phase === "resolving_submit") {
+            auditIds.add(auditId);
+        }
+    }
+    const userId = auditUI$.currentUserId.peek();
+    if (userId !== null) {
+        for (const op of submitOutbox.list(userId)) {
+            auditIds.add(op.audit_id);
+        }
+    }
+    return auditIds.size;
+}
+
 const dataGetters: Record<string, () => unknown> = {
     instrument: () => auditData$.instrument.get() ?? null,
     sessionsByAuditId: () => auditData$.sessions_by_audit_id.get(),
@@ -2187,6 +2276,7 @@ const dataGetters: Record<string, () => unknown> = {
         );
         return feedback.isSyncing || hasQueuedSubmit;
     },
+    pendingUploadCount: () => countPendingUploads(auditData$.sync_state_by_audit_id.get()),
     errorMessage: () => auditUI$.errorMessage.get(),
     lastSyncError: () =>
         deriveGlobalSyncFeedback({
@@ -2243,6 +2333,7 @@ function buildEagerState(): PlayspaceAuditStoreState {
         isSyncing:
             globalSyncFeedback.isSyncing ||
             Object.values(auditData$.sync_state_by_audit_id.peek()).some((s) => s.phase === "queued_submit"),
+        pendingUploadCount: countPendingUploads(auditData$.sync_state_by_audit_id.peek()),
         errorMessage: auditUI$.errorMessage.peek(),
         lastSyncError: globalSyncFeedback.message,
         lastSuccessfulSyncAt: auditData$.last_successful_sync_at.peek(),

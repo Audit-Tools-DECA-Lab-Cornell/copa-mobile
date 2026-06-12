@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getProjectPlaceKey } from "lib/audit/pair-key";
+import { createSubmitOp } from "lib/audit/outbox/outbox-core";
+import { submitOutbox } from "lib/audit/outbox/outbox-storage";
 import { auditSessionSchema, playspaceInstrumentSchema } from "lib/audit/types";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -17,6 +19,7 @@ vi.mock("react-native-mmkv", () => ({
         remove: (key: string) => {
             mmkvData.delete(key);
         },
+        getAllKeys: () => [...mmkvData.keys()],
     }),
 }));
 
@@ -272,5 +275,50 @@ describe("sign-out guard", () => {
 
         await usePlayspaceAuditStore.getState().clearStoredState("clean-logout-user");
         expect(mmkvData.get(storageKeyFor("clean-logout-user"))).toBeUndefined();
+    });
+});
+
+describe("durable submit outbox survives logout", () => {
+    beforeEach(async () => {
+        await usePlayspaceAuditStore.getState().detachStoredState();
+        mmkvData.clear();
+    });
+
+    it("keeps outbox ops across detach and clearStoredState (independent keyspace)", async () => {
+        const userId = "outbox-user";
+        submitOutbox.put(userId, createSubmitOp("audit-x", "2026-06-12T00:00:00.000Z"));
+        expect(submitOutbox.get(userId, "audit-x")).not.toBeNull();
+
+        // Detach (sign-out preserving unsynced work) must not touch the outbox.
+        await usePlayspaceAuditStore.getState().detachStoredState();
+        expect(submitOutbox.get(userId, "audit-x")).not.toBeNull();
+
+        // Even a full clearStoredState (which deletes the editing blob) leaves the
+        // durable submit op intact so the submission still completes on next login.
+        await usePlayspaceAuditStore.getState().clearStoredState(userId);
+        expect(submitOutbox.get(userId, "audit-x")).not.toBeNull();
+    });
+
+    it("counts pending uploads from queued phases and outbox ops, deduped", async () => {
+        const userId = "pending-user";
+        seedPersistedBlob(userId, {
+            syncStateByAuditId: {
+                [AUDIT_ID]: { phase: "queued_submit", detail: null, updated_at: "2026-06-12T00:00:00.000Z" },
+            },
+        });
+        await usePlayspaceAuditStore.getState().hydrate(userId);
+
+        // The queued audit alone counts once.
+        expect(usePlayspaceAuditStore.getState().pendingUploadCount).toBe(1);
+
+        // An outbox op for the same audit must not double-count.
+        submitOutbox.put(userId, createSubmitOp(AUDIT_ID, "2026-06-12T00:00:00.000Z"));
+        expect(usePlayspaceAuditStore.getState().pendingUploadCount).toBe(1);
+
+        // A second, outbox-only audit (phase lost) adds one.
+        submitOutbox.put(userId, createSubmitOp("audit-orphan", "2026-06-12T00:00:01.000Z"));
+        expect(usePlayspaceAuditStore.getState().pendingUploadCount).toBe(2);
+
+        await usePlayspaceAuditStore.getState().detachStoredState();
     });
 });
