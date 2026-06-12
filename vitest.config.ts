@@ -7,6 +7,7 @@ export default defineConfig({
         extensions: [".ts", ".tsx", ".js", ".jsx", ".json"], // ← no .native.js
         alias: {
             app: path.resolve(__dirname, "app"),
+            assets: path.resolve(__dirname, "assets"),
             components: path.resolve(__dirname, "components"),
             lib: path.resolve(__dirname, "lib"),
             stores: path.resolve(__dirname, "stores"),

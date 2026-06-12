@@ -15,6 +15,7 @@ import {
     WifiOff,
 } from "@tamagui/lucide-icons-2";
 import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
+import { PendingUploadsBanner } from "components/playspace-audit/pending-uploads-banner";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { formatScorePair } from "lib/audit/score-helpers";
@@ -684,6 +685,7 @@ export default function DashboardScreen() {
                 })}
             >
                 <YStack gap="$6">
+                    <PendingUploadsBanner />
                     <XStack justify="space-between" items="center" gap="$3">
                         <XStack items="center" gap="$3" flex={1}>
                             <YStack
@@ -899,6 +901,7 @@ export default function DashboardScreen() {
             })}
         >
             <YStack gap="$6">
+                <PendingUploadsBanner />
                 <XStack justify="space-between" items="center" gap="$3">
                     <XStack items="center" gap="$3" flex={1}>
                         <YStack

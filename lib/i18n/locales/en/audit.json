@@ -237,5 +237,10 @@
     },
     "startAudit": "Start audit",
     "submit": "Submit audit",
-    "thisPlayspace": "This playspace..."
+    "thisPlayspace": "This playspace...",
+    "pendingUploads": {
+        "titleOne": "1 audit waiting to upload",
+        "titleOther": "{{count}} audits waiting to upload",
+        "message": "Keep Playspace open on wifi to finish uploading. Your responses are saved on this device."
+    }
 }

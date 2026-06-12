@@ -37,7 +37,9 @@ export function getBundledInstrument(): PlayspaceInstrument | null {
         return validatedInstrument;
     }
 
-    const parsed = playspaceInstrumentSchema.safeParse(rawBundledInstrument);
+    // The bundled asset is the multi-locale wrapper ({ "en": { ...instrument } }),
+    // so validate the English payload, not the wrapper object.
+    const parsed = playspaceInstrumentSchema.safeParse(rawBundledInstrument.en);
     if (!parsed.success) {
         log.warn("bundled instrument failed schema validation - offline fallback unavailable");
         validatedInstrument = null;
