@@ -128,9 +128,43 @@ export async function submitAudit(
 ): Promise<AuditSession> {
     const payload = await requestJson(session, `/playspace/audits/${encodeURIComponent(auditId)}/submit`, {
         method: "POST",
-        body: JSON.stringify(expectedRevision === undefined ? {} : { expected_revision: expectedRevision }),
+        // The audit id is the idempotency key: a submit retried after an ambiguous
+        // network failure returns the already-submitted session instead of a 409,
+        // so the client never enters conflict recovery.
+        body: JSON.stringify({
+            idempotency_key: auditId,
+            ...(expectedRevision === undefined ? {} : { expected_revision: expectedRevision }),
+        }),
     });
     return parsePayload(payload, auditSessionSchema, "Audit session response shape is invalid.");
+}
+
+/**
+ * Record the auditor's intent to submit an audit (the submit-intent beacon).
+ *
+ * Sent when the auditor taps submit, ahead of and independently from the submit
+ * request, so the server's never-arrived detector can email the auditor even if
+ * the submission itself never completes. Best-effort - failures (e.g. offline)
+ * are swallowed because the next reconnect drain re-sends it.
+ *
+ * @param session Authenticated mobile session.
+ * @param auditId UUID of the audit the auditor intends to submit.
+ * @param clientIntendedAt ISO timestamp the auditor tapped submit on-device.
+ */
+export async function recordSubmitIntentAsync(
+    session: AuthSession,
+    auditId: string,
+    clientIntendedAt?: string,
+): Promise<void> {
+    try {
+        await requestJson(session, `/playspace/audits/${encodeURIComponent(auditId)}/submit-intent`, {
+            method: "POST",
+            body: JSON.stringify(clientIntendedAt === undefined ? {} : { client_intended_at: clientIntendedAt }),
+        });
+    } catch {
+        // Best-effort beacon; the reconnect drain re-sends and the server-side
+        // never-arrived detector is the ultimate backstop.
+    }
 }
 
 /**

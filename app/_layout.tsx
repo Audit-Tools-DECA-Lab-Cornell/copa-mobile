@@ -230,7 +230,11 @@ function RootLayoutNav() {
         };
     }, [authSession, authStatus, refreshUnreadCount]);
 
-    // Refresh instrument and drain queued submits when connectivity is restored.
+    // Refresh instrument and drain queued submits when connectivity is
+    // restored, when the app returns to the foreground, and once per hydrate.
+    // The hydrate-time drain covers signing in on an already-online device,
+    // where no network-change event ever fires (e.g. resuming work preserved
+    // across a sign-out).
     useEffect(() => {
         if (authStatus !== "authenticated" || authSession === null || !isAuditHydrated) {
             return;
@@ -239,15 +243,35 @@ function RootLayoutNav() {
         const refreshInstrument = usePlayspaceAuditStore.getState().refreshInstrument;
         const processQueuedSubmits = usePlayspaceAuditStore.getState().processQueuedSubmits;
 
-        const subscription = Network.addNetworkStateListener((state) => {
+        const drainWhenOnline = () => {
+            Network.getNetworkStateAsync()
+                .then((state) => {
+                    if (state.isConnected !== false && state.isInternetReachable !== false) {
+                        refreshInstrument().catch(() => undefined);
+                        processQueuedSubmits(authSession).catch(() => undefined);
+                    }
+                })
+                .catch(() => undefined);
+        };
+
+        drainWhenOnline();
+
+        const networkSubscription = Network.addNetworkStateListener((state) => {
             if (state.isConnected && state.isInternetReachable !== false) {
                 refreshInstrument().catch(() => undefined);
                 processQueuedSubmits(authSession).catch(() => undefined);
             }
         });
 
+        const appStateSubscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
+            if (nextAppState === "active") {
+                drainWhenOnline();
+            }
+        });
+
         return () => {
-            subscription.remove();
+            networkSubscription.remove();
+            appStateSubscription.remove();
         };
     }, [authSession, authStatus, isAuditHydrated]);
 

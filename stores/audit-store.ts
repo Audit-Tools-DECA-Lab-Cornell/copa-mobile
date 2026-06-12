@@ -21,6 +21,7 @@ import {
     deriveGlobalSyncFeedback,
     finishSubmitResolution,
     getOwnedAuditSessionForResponse,
+    hasUnsyncedLocalAuditWork,
     listPendingSubmitResolutionAuditIds,
     phaseForSaveConflictRecovery,
     phaseForSubmitConflictAction,
@@ -46,10 +47,12 @@ import {
     fetchAuditSession,
     notifySubmitFailureAsync,
     PlayspaceAuditApiError,
+    recordSubmitIntentAsync,
     saveAuditDraft,
     submitAudit,
 } from "lib/audit/api";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
+import { quarantineUnreadableSnapshot } from "lib/audit/persistence-guards";
 import type {
     AuditDraftSave,
     AuditSession,
@@ -122,6 +125,18 @@ interface PlayspaceAuditStoreState {
     processQueuedSubmits: (session: AuthSession) => Promise<void>;
     popSubmitFailureNotifications: () => SubmitFailureNotification[];
     clearStoredState: (accountId?: string | null) => Promise<void>;
+    /**
+     * Detaches the in-memory store from the active user while keeping the
+     * persisted MMKV snapshot intact, so un-synced audit work survives
+     * sign-out and resumes syncing on the next sign-in to the same account.
+     */
+    detachStoredState: () => Promise<void>;
+    /**
+     * Checks whether the given account (default: the active one) still holds
+     * audit work the server has not acknowledged. Destructive flows must call
+     * this before deleting stored state.
+     */
+    hasUnsyncedAuditWork: (accountId?: string | null) => boolean;
     ensurePlaceAudit: (
         session: AuthSession,
         projectId: string,
@@ -610,7 +625,12 @@ async function hydrate(accountId?: string | null): Promise<void> {
         if (requestId !== hydrateRequestCounter) return;
         const data = parseStoredAuditData(rawMmkv);
         if (data === null) {
-            mmkvStorage.remove(storageKey);
+            quarantineUnreadableSnapshot({
+                storage: mmkvStorage,
+                storageKey,
+                raw: rawMmkv,
+                quarantinedAtIso: new Date().toISOString(),
+            });
         } else {
             const canonicalSessionsByAuditId = canonicalizeSessionsByAuditIdForHydrate({
                 sessionsByAuditId: data.sessions_by_audit_id,
@@ -670,6 +690,67 @@ async function clearStoredState(accountId?: string | null): Promise<void> {
     if (targetUserId !== null) {
         mmkvStorage.remove(getStorageKey(targetUserId));
     }
+    resetInMemoryAuditState();
+}
+
+/**
+ * Detach the in-memory store from the active user while keeping the persisted
+ * MMKV snapshot intact. Sign-out uses this when un-synced audit work exists:
+ * the auth session ends, but locally captured field work stays durable and
+ * resumes syncing on the next sign-in to the same account.
+ */
+async function detachStoredState(): Promise<void> {
+    saveNow();
+    teardownAutoSave();
+    hydrateRequestCounter += 1;
+    resetInMemoryAuditState();
+}
+
+/**
+ * Check whether the given account (default: the active one) still holds audit
+ * work the server has not acknowledged - dirty fragments or sync phases that
+ * are neither `idle` nor `submitted`.
+ *
+ * Reads the live observables when the store is hydrated for that account and
+ * the persisted MMKV snapshot otherwise. An unreadable snapshot counts as
+ * un-synced work so callers never treat possibly-live field data as safe to
+ * delete.
+ */
+function hasUnsyncedAuditWork(accountId?: string | null): boolean {
+    const targetUserId = normalizeOptionalUserId(accountId) ?? auditUI$.currentUserId.peek();
+    if (targetUserId === null) {
+        return false;
+    }
+
+    if (auditUI$.isHydrated.peek() && auditUI$.currentUserId.peek() === targetUserId) {
+        const data = auditData$.peek();
+        return hasUnsyncedLocalAuditWork({
+            dirtyMeta: data.dirty_meta,
+            dirtyPreAudit: data.dirty_pre_audit,
+            dirtySections: data.dirty_sections,
+            dirtyStartedAt: data.dirty_started_at,
+            syncStateByAuditId: data.sync_state_by_audit_id,
+        });
+    }
+
+    const raw = mmkvStorage.getString(getStorageKey(targetUserId));
+    if (raw === undefined) {
+        return false;
+    }
+    const persisted = parseStoredAuditData(raw);
+    if (persisted === null) {
+        return true;
+    }
+    return hasUnsyncedLocalAuditWork({
+        dirtyMeta: persisted.dirty_meta,
+        dirtyPreAudit: persisted.dirty_pre_audit,
+        dirtySections: persisted.dirty_sections,
+        dirtyStartedAt: persisted.dirty_started_at,
+        syncStateByAuditId: persisted.sync_state_by_audit_id,
+    });
+}
+
+function resetInMemoryAuditState(): void {
     batch(() => {
         auditData$.set({
             instrument: null,
@@ -1756,6 +1837,12 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
     auditUI$.errorMessage.set(null);
     prepareAuditForExplicitSubmitRetry(auditId);
 
+    // Record submit intent so the server's never-arrived detector can alert the
+    // auditor even if this submission never completes. Best-effort and
+    // non-blocking: it no-ops offline, and the reconnect drain re-fires it once
+    // connectivity returns (the server stamps the intent timestamp only once).
+    void recordSubmitIntentAsync(session, auditId, new Date().toISOString());
+
     // Queue the submit for background delivery when offline.
     const netState = await Network.getNetworkStateAsync();
     const isOnline = netState.isConnected !== false && netState.isInternetReachable !== false;
@@ -1773,6 +1860,7 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
                     ),
                 );
                 saveNow();
+                log.withMetadata({ auditId }).info("offline submit queued for background delivery");
             }
             return currentSession;
         }
@@ -1988,6 +2076,8 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
 
     if (queuedAuditIds.length === 0) return;
 
+    log.withMetadata({ queuedCount: queuedAuditIds.length }).info("draining queued submits");
+
     for (const auditId of queuedAuditIds) {
         // Restore phase to dirty/idle so the flush and submit paths pick it up normally.
         const latestData = auditData$.peek();
@@ -2014,6 +2104,8 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
             const updatedSyncState = updatedData.sync_state_by_audit_id[auditId];
             const session_ = updatedData.sessions_by_audit_id[auditId];
             const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
+
+            log.withError(error).withMetadata({ auditId }).error("queued submit delivery failed");
 
             // Ensure phase reflects a hard failure (submitAuditSessionInternal already sets it,
             // but we piggyback the notification write here regardless).
@@ -2054,6 +2146,8 @@ const actions = {
     processQueuedSubmits,
     popSubmitFailureNotifications,
     clearStoredState,
+    detachStoredState,
+    hasUnsyncedAuditWork,
     ensurePlaceAudit,
     refreshAudit,
     refreshCachedAuditSessions,

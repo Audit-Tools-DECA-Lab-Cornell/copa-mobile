@@ -3,7 +3,9 @@
 
 This script is designed for the mobile app's current i18n setup:
 - JSON namespace files under ``lib/i18n/locales/<locale>/*.json``
-- Compact ``instrument.ts`` translation bundles under ``lib/i18n/locales/<locale>/``
+
+Instrument text is not translated on the client: the backend serves instrument
+copy (localized server-side), so there are no instrument bundles to translate.
 
 It translates only missing target strings by default:
 - absent keys
@@ -21,7 +23,6 @@ import copy
 import json
 import os
 import re
-import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -34,7 +35,7 @@ import dotenv
 
 dotenv.load_dotenv(override=True)
 
-FileKind: TypeAlias = Literal["json", "instrument"]
+FileKind: TypeAlias = Literal["json"]
 PathToken: TypeAlias = str | int
 TranslationPath: TypeAlias = tuple[PathToken, ...]
 JsonScalar: TypeAlias = str | int | float | bool | None
@@ -111,7 +112,6 @@ class ScriptConfig:
     overwrite: bool
     dry_run: bool
     file_filters: tuple[str, ...]
-    format_filter: Literal["all", "json", "instrument"]
     retries: int
     timeout_seconds: float
     batch_item_limit: int
@@ -203,7 +203,6 @@ def build_config() -> ScriptConfig:
         overwrite=args.overwrite,
         dry_run=args.dry_run,
         file_filters=tuple(args.file or []),
-        format_filter=args.format,
         retries=args.retries,
         timeout_seconds=args.timeout_seconds,
         batch_item_limit=args.batch_item_limit,
@@ -236,17 +235,11 @@ def build_argument_parser(locales_dir: Path) -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--format",
-        choices=("all", "json", "instrument"),
-        default="all",
-        help="Limit translation to JSON namespaces, instrument bundles, or both.",
-    )
-    parser.add_argument(
         "--file",
         action="append",
         help=(
-            "Optional file suffix filter, such as 'settings.json', 'de/settings.json', or "
-            "'instrument.ts'. Repeat this flag to include multiple files."
+            "Optional file suffix filter, such as 'settings.json' or 'de/settings.json'. "
+            "Repeat this flag to include multiple files."
         ),
     )
     parser.add_argument(
@@ -353,7 +346,6 @@ def translate_requested_files(
 ) -> list[FileTranslationResult]:
     """Translate all files selected by the current CLI configuration."""
 
-    source_instrument_bundle: JsonValue | None = None
     results: list[FileTranslationResult] = []
 
     for locale in config.target_locales:
@@ -363,25 +355,9 @@ def translate_requested_files(
             continue
 
         for file in locale_files:
-            if file.kind == "json":
-                result = translate_json_file(
-                    config=config, translator=translator, file=file
-                )
-            else:
-                if source_instrument_bundle is None:
-                    source_instrument_bundle = load_instrument_bundle(
-                        repo_root=config.repo_root,
-                        mode="source",
-                        locale=config.source_locale,
-                    )
-                result = translate_instrument_file(
-                    config=config,
-                    translator=translator,
-                    file=file,
-                    source_bundle=source_instrument_bundle,
-                )
-
-            results.append(result)
+            results.append(
+                translate_json_file(config=config, translator=translator, file=file)
+            )
 
     return results
 
@@ -395,24 +371,13 @@ def discover_translatable_files(
     target_locale_dir = config.locales_dir / locale
     files: list[TranslatableFile] = []
 
-    if config.format_filter in ("all", "json"):
-        for source_path in sorted(source_locale_dir.glob("*.json")):
-            files.append(
-                TranslatableFile(
-                    kind="json",
-                    locale=locale,
-                    source_path=source_path,
-                    target_path=target_locale_dir / source_path.name,
-                )
-            )
-
-    if config.format_filter in ("all", "instrument"):
+    for source_path in sorted(source_locale_dir.glob("*.json")):
         files.append(
             TranslatableFile(
-                kind="instrument",
+                kind="json",
                 locale=locale,
-                source_path=source_locale_dir / "instrument.ts",
-                target_path=target_locale_dir / "instrument.ts",
+                source_path=source_path,
+                target_path=target_locale_dir / source_path.name,
             )
         )
 
@@ -495,63 +460,6 @@ def translate_json_file(
     )
 
 
-def translate_instrument_file(
-    config: ScriptConfig,
-    translator: "OpenAITranslator",
-    file: TranslatableFile,
-    source_bundle: JsonValue,
-) -> FileTranslationResult:
-    """Translate one compact instrument bundle and write it back as TypeScript."""
-
-    current_target_bundle = load_instrument_bundle(
-        repo_root=config.repo_root,
-        mode="current",
-        locale=file.locale,
-    )
-    translation_entries = collect_translation_entries(
-        source_value=source_bundle,
-        current_value=current_target_bundle,
-        overwrite=config.overwrite,
-    )
-
-    if len(translation_entries) == 0:
-        print(
-            f"Skipping {file.target_path.relative_to(config.repo_root)} (no missing strings)."
-        )
-        return FileTranslationResult(file=file, translated_count=0, updated=False)
-
-    print(
-        f"Translating {len(translation_entries)} strings in "
-        f"{file.target_path.relative_to(config.repo_root)} ..."
-    )
-    translated_mapping = translator.translate_entries(
-        source_locale=config.source_locale,
-        target_locale=file.locale,
-        entries=translation_entries,
-    )
-    next_target_bundle = merge_translations_into_value(
-        source_value=source_bundle,
-        current_value=current_target_bundle,
-        translated_mapping=translated_mapping,
-    )
-    ordered_output = reorder_like_source(
-        source_value=source_bundle, target_value=next_target_bundle
-    )
-
-    if not config.dry_run:
-        write_instrument_typescript(
-            path=file.target_path,
-            locale=file.locale,
-            value=ordered_output,
-        )
-
-    return FileTranslationResult(
-        file=file,
-        translated_count=len(translation_entries),
-        updated=not config.dry_run,
-    )
-
-
 def read_json_file(path: Path) -> JsonValue:
     """Read and parse a JSON file from disk."""
 
@@ -573,71 +481,6 @@ def write_json_file(path: Path, value: JsonValue) -> None:
     with path.open("w", encoding="utf-8", newline="\n") as file_handle:
         json.dump(value, file_handle, ensure_ascii=False, indent=4)
         file_handle.write("\n")
-
-
-def write_instrument_typescript(path: Path, locale: str, value: JsonValue) -> None:
-    """Write a compact instrument translation bundle as a valid TypeScript module."""
-
-    export_name = f"{locale_to_export_prefix(locale)}InstrumentTranslations"
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    serialized_object = json.dumps(value, ensure_ascii=False, indent=4)
-    file_contents = "\n".join(
-        [
-            'import type { InstrumentTranslations } from "lib/i18n/instrument-translations";',
-            "",
-            "/**",
-            f" * Auto-generated translation overrides for the {locale} instrument locale.",
-            " *",
-            " * Regenerate with `python3 scripts/translate_i18n.py --format instrument`.",
-            " */",
-            f"export const {export_name} = {serialized_object} satisfies InstrumentTranslations;",
-            "",
-        ]
-    )
-
-    with path.open("w", encoding="utf-8", newline="\n") as file_handle:
-        file_handle.write(file_contents)
-
-
-def load_instrument_bundle(
-    repo_root: Path, mode: Literal["source", "current"], locale: str
-) -> JsonValue:
-    """Load instrument translation data through the Bun helper script."""
-
-    bun_executable = "bun"
-    try:
-        completed_process = subprocess.run(
-            [bun_executable, "scripts/export_instrument_bundle.mjs", mode, locale],
-            cwd=repo_root,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as error:
-        raise TranslationScriptError(
-            "The `bun` executable was not found. Install Bun or update PATH before running "
-            "the translation script."
-        ) from error
-
-    if completed_process.returncode != 0:
-        stderr = completed_process.stderr.strip()
-        raise TranslationScriptError(
-            f"Failed to export the instrument bundle for locale {locale}: {stderr}"
-        )
-
-    stdout_text = completed_process.stdout.strip()
-    if stdout_text == "":
-        raise TranslationScriptError(
-            f"The instrument export helper returned no output for locale {locale}."
-        )
-
-    try:
-        return cast(JsonValue, json.loads(stdout_text))
-    except json.JSONDecodeError as error:
-        raise TranslationScriptError(
-            f"Could not parse the instrument export helper output for locale {locale}: {error}"
-        ) from error
 
 
 def collect_translation_entries(
@@ -891,25 +734,6 @@ def identifier_to_translation_path(identifier: str) -> TranslationPath:
         path.append(buffer)
 
     return tuple(path)
-
-
-def locale_to_export_prefix(locale: str) -> str:
-    """Match the export naming scheme used by instrument locale modules."""
-
-    segments = [
-        segment.lower()
-        for segment in re.split(r"[^A-Za-z0-9]+", locale)
-        if segment != ""
-    ]
-    if len(segments) == 0:
-        raise TranslationScriptError(f"Invalid locale code: {locale}")
-
-    first_segment = segments[0]
-    remaining_segments = [
-        f"{segment[0].upper()}{segment[1:]}" if len(segment) > 0 else ""
-        for segment in segments[1:]
-    ]
-    return "".join([first_segment, *remaining_segments])
 
 
 def print_summary(results: list[FileTranslationResult], dry_run: bool) -> None:

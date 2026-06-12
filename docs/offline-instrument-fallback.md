@@ -64,7 +64,7 @@ Paths are relative to the **workspace root** (`playspace/`).
 | `audit-tools-playspace-mobile/lib/services/instrument-sync.ts`                | `syncInstrument()` - network fetch, MMKV keys `playspace.instrument_cache` / `playspace.instrument_cache_ts`, then bundled fallback.                                 |
 | `audit-tools-playspace-mobile/stores/audit-store.ts`                          | `hydrate()` applies MMKV snapshot then eagerly sets bundled instrument when `instrument` is still null; async `syncInstrument()` upgrades store state.               |
 | `audit-tools-playspace-mobile/lib/audit/types.ts`                             | `playspaceInstrumentSchema`, `persistedAuditStateSchema` (persisted `instrument`), session shapes carrying optional `instrument`.                                    |
-| `audit-tools-playspace-mobile/lib/i18n/instrument-translations.ts`            | `useLocalizedInstrument()` - merges i18n overlays onto store `instrument`; depends on non-null base instrument.                                                      |
+| `audit-tools-playspace-mobile/lib/i18n/instrument-translations.ts`            | `useLocalizedInstrument()` - returns the audit-scoped or store `instrument` as-is; instrument text has no client-side overlays (backend serves localized copy).      |
 | `audit-tools-playspace-mobile/lib/audit/api.ts`                               | `createOrResumeAudit` / `fetchAuditSession` - server responses can carry session-scoped `instrument` (does not replace bundled fallback for global store hydration). |
 | `audit-tools-playspace-mobile/app/execute/[placeId]/index.tsx`                | Execute entry / preamble / mode selection - typical first consumer of `useLocalizedInstrument()`.                                                                    |
 | `audit-tools-playspace-mobile/app/execute/[placeId]/overview.tsx`             | Section overview - uses instrument for visible sections and progress.                                                                                                |
@@ -91,7 +91,7 @@ Paths are relative to the **workspace root** (`playspace/`).
 - **`stores/audit-store.ts`** - `hydrate()` bundle injection + `syncInstrument().then(...)`.
 - **`lib/services/instrument-sync.ts`** - API → cache → bundled chain.
 - **`lib/audit/bundled-instrument.ts`** - validation + caching.
-- **`lib/i18n/instrument-translations.ts`** - `useLocalizedInstrument()` reads **store** `instrument`; **`null` still breaks UI**.
+- **`lib/i18n/instrument-translations.ts`** - `useLocalizedInstrument()` returns the audit-scoped or **store** `instrument` with no overlays; **`null` still breaks UI**.
 - **`MOBILE_OFFLINE_FLOW.mmd`** - intended lifecycle.
 
 ---

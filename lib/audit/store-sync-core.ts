@@ -402,6 +402,41 @@ export function shouldAttemptAutomaticSync(phase: AuditSyncPhase): boolean {
     return phase === "dirty";
 }
 
+interface HasUnsyncedLocalAuditWorkArgs {
+    readonly dirtyMeta: DirtyMeta;
+    readonly dirtyPreAudit: DirtyPreAudit;
+    readonly dirtySections: DirtySections;
+    readonly dirtyStartedAt: DirtyStartedAt;
+    readonly syncStateByAuditId: AuditSyncStateByAuditId;
+}
+
+/**
+ * Check whether any audit still holds local work the server has not durably
+ * acknowledged: a dirty fragment in any version map, or a sync phase other
+ * than `idle`/`submitted` (queued, in-flight, blocked, and conflict phases
+ * all represent answers that exist only on this device).
+ *
+ * Destructive flows (sign-out, storage cleanup) must call this first and
+ * preserve the persisted snapshot when it returns true.
+ *
+ * @param args Current dirty-state maps and per-audit sync states.
+ * @returns True when deleting local state would lose un-synced field work.
+ */
+export function hasUnsyncedLocalAuditWork(args: HasUnsyncedLocalAuditWorkArgs): boolean {
+    if (Object.keys(args.dirtyMeta).length > 0 || Object.keys(args.dirtyPreAudit).length > 0) {
+        return true;
+    }
+    if (Object.values(args.dirtyStartedAt).some((isFlagged) => isFlagged)) {
+        return true;
+    }
+    if (Object.values(args.dirtySections).some((sectionVersions) => Object.keys(sectionVersions).length > 0)) {
+        return true;
+    }
+    return Object.values(args.syncStateByAuditId).some(
+        (syncState) => syncState.phase !== "idle" && syncState.phase !== "submitted",
+    );
+}
+
 /**
  * Share one in-flight async execution across concurrent callers until it
  * settles, then allow the next caller to start a fresh run.

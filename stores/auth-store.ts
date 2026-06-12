@@ -209,7 +209,15 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     logout: async () => {
         const currentSession = get().session;
         if (currentSession !== null) {
-            await usePlayspaceAuditStore.getState().clearStoredState(currentSession.user.id);
+            const auditStore = usePlayspaceAuditStore.getState();
+            if (auditStore.hasUnsyncedAuditWork(currentSession.user.id)) {
+                // Sign-out must never delete audit work the server has not
+                // acknowledged; the persisted snapshot stays on-device and
+                // resumes syncing on the next sign-in to this account.
+                await auditStore.detachStoredState();
+            } else {
+                await auditStore.clearStoredState(currentSession.user.id);
+            }
         }
         await unregisterAuditBackgroundTaskAsync().catch(() => undefined);
         await clearNotificationsCache();

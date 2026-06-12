@@ -6,7 +6,6 @@ import deAudit from "./locales/de/audit.json";
 import deAuth from "./locales/de/auth.json";
 import deCommon from "./locales/de/common.json";
 import deDashboard from "./locales/de/dashboard.json";
-import { deInstrumentTranslations } from "./locales/de/instrument";
 import deNotFound from "./locales/de/not-found.json";
 import deOnboarding from "./locales/de/onboarding.json";
 import dePlaces from "./locales/de/places.json";
@@ -16,7 +15,6 @@ import enAudit from "./locales/en/audit.json";
 import enAuth from "./locales/en/auth.json";
 import enCommon from "./locales/en/common.json";
 import enDashboard from "./locales/en/dashboard.json";
-import { enInstrumentTranslations } from "./locales/en/instrument";
 import enNotFound from "./locales/en/not-found.json";
 import enOnboarding from "./locales/en/onboarding.json";
 import enPlaces from "./locales/en/places.json";
@@ -26,7 +24,6 @@ import frAudit from "./locales/fr/audit.json";
 import frAuth from "./locales/fr/auth.json";
 import frCommon from "./locales/fr/common.json";
 import frDashboard from "./locales/fr/dashboard.json";
-import { frInstrumentTranslations } from "./locales/fr/instrument";
 import frNotFound from "./locales/fr/not-found.json";
 import frOnboarding from "./locales/fr/onboarding.json";
 import frPlaces from "./locales/fr/places.json";
@@ -36,7 +33,6 @@ import hiAudit from "./locales/hi/audit.json";
 import hiAuth from "./locales/hi/auth.json";
 import hiCommon from "./locales/hi/common.json";
 import hiDashboard from "./locales/hi/dashboard.json";
-import { hiInstrumentTranslations } from "./locales/hi/instrument";
 import hiNotFound from "./locales/hi/not-found.json";
 import hiOnboarding from "./locales/hi/onboarding.json";
 import hiPlaces from "./locales/hi/places.json";
@@ -46,7 +42,6 @@ import jaAudit from "./locales/ja/audit.json";
 import jaAuth from "./locales/ja/auth.json";
 import jaCommon from "./locales/ja/common.json";
 import jaDashboard from "./locales/ja/dashboard.json";
-import { jaInstrumentTranslations } from "./locales/ja/instrument";
 import jaNotFound from "./locales/ja/not-found.json";
 import jaOnboarding from "./locales/ja/onboarding.json";
 import jaPlaces from "./locales/ja/places.json";
@@ -92,18 +87,7 @@ const i18nInstance = i18n;
 void i18nInstance.use(initReactI18next).init({
     lng: resolveLanguagePreference("system"),
     fallbackLng: FALLBACK_LANGUAGE,
-    ns: [
-        "common",
-        "auth",
-        "onboarding",
-        "settings",
-        "audit",
-        "dashboard",
-        "instrument",
-        "places",
-        "reports",
-        "not-found",
-    ],
+    ns: ["common", "auth", "onboarding", "settings", "audit", "dashboard", "places", "reports", "not-found"],
     defaultNS: "common",
     resources: {
         en: {
@@ -113,7 +97,6 @@ void i18nInstance.use(initReactI18next).init({
             settings: enSettings,
             audit: enAudit,
             dashboard: enDashboard,
-            instrument: enInstrumentTranslations,
             places: enPlaces,
             reports: enReports,
             "not-found": enNotFound,
@@ -125,7 +108,6 @@ void i18nInstance.use(initReactI18next).init({
             settings: deSettings,
             audit: deAudit,
             dashboard: deDashboard,
-            instrument: deInstrumentTranslations,
             places: dePlaces,
             reports: deReports,
             "not-found": deNotFound,
@@ -137,7 +119,6 @@ void i18nInstance.use(initReactI18next).init({
             settings: frSettings,
             audit: frAudit,
             dashboard: frDashboard,
-            instrument: frInstrumentTranslations,
             places: frPlaces,
             reports: frReports,
             "not-found": frNotFound,
@@ -149,7 +130,6 @@ void i18nInstance.use(initReactI18next).init({
             settings: hiSettings,
             audit: hiAudit,
             dashboard: hiDashboard,
-            instrument: hiInstrumentTranslations,
             places: hiPlaces,
             reports: hiReports,
             "not-found": hiNotFound,
@@ -161,7 +141,6 @@ void i18nInstance.use(initReactI18next).init({
             settings: jaSettings,
             audit: jaAudit,
             dashboard: jaDashboard,
-            instrument: jaInstrumentTranslations,
             places: jaPlaces,
             reports: jaReports,
             "not-found": jaNotFound,
