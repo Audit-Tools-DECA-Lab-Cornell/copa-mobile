@@ -74,9 +74,7 @@ export default {
                 projectId: "2e559376-25f3-44e1-88bf-00eeaf9fb763",
             },
         },
-        // Fingerprint policy: the OTA runtime version is derived from the native
-        // layer, so JS-only patch changes ship via `eas update` while native/major
-        // changes auto-require a new build — decoupled from the display version above.
+        // Fingerprint OTA runtime: JS-only patches via `eas update`; native changes need a new build.
         runtimeVersion: {
             policy: "fingerprint",
         },
