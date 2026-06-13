@@ -1,4 +1,4 @@
-/* eslint-env node */
+/* global */
 
 // Learn more https://docs.expo.io/guides/customizing-metro
 
