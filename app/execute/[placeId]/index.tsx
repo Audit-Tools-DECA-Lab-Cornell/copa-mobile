@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowRight, ClipboardList, Shapes, TriangleAlert } from "@tamagui/lucide-icons-2";
@@ -68,6 +68,7 @@ export default function ExecutePlaceScreen() {
     const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const scrollViewRef = useRef<ScrollView | null>(null);
+    const [scrollLayoutVersion, setScrollLayoutVersion] = useState(0);
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
@@ -161,10 +162,13 @@ export default function ExecutePlaceScreen() {
     const scrollExecutePlaceToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
     }, []);
+    const handleScreenshotContentSizeChange = useCallback(() => {
+        setScrollLayoutVersion((value) => value + 1);
+    }, []);
 
     useScreenshotScrollAutomation({
         contentReady: auditSession !== undefined,
-        rerunKey: auditSession?.audit_id ?? placeId ?? "execute-place",
+        rerunKey: `${auditSession?.audit_id ?? placeId ?? "execute-place"}:${scrollLayoutVersion}`,
         scrollToOffset: scrollExecutePlaceToOffset,
     });
 
@@ -338,6 +342,7 @@ export default function ExecutePlaceScreen() {
     return (
         <ScrollView
             ref={scrollViewRef}
+            onContentSizeChange={handleScreenshotContentSizeChange}
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {

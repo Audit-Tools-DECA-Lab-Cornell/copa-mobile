@@ -130,6 +130,7 @@ const instrumentFixture = {
                                     boost_value: 0,
                                     allows_follow_up_scales: false,
                                     is_not_applicable: false,
+                                    is_unsure: false,
                                 },
                                 {
                                     key: "a_little_bit",
@@ -138,6 +139,7 @@ const instrumentFixture = {
                                     boost_value: 1,
                                     allows_follow_up_scales: true,
                                     is_not_applicable: false,
+                                    is_unsure: false,
                                 },
                             ],
                         },
@@ -167,6 +169,7 @@ const instrumentFixture = {
                                     boost_value: 0,
                                     allows_follow_up_scales: false,
                                     is_not_applicable: false,
+                                    is_unsure: false,
                                 },
                                 {
                                     key: "a_lot",
@@ -175,6 +178,7 @@ const instrumentFixture = {
                                     boost_value: 2,
                                     allows_follow_up_scales: true,
                                     is_not_applicable: false,
+                                    is_unsure: false,
                                 },
                             ],
                         },
@@ -190,6 +194,7 @@ const instrumentFixture = {
                                     boost_value: 1,
                                     allows_follow_up_scales: false,
                                     is_not_applicable: true,
+                                    is_unsure: false,
                                 },
                                 {
                                     key: "some_variety",
@@ -198,6 +203,7 @@ const instrumentFixture = {
                                     boost_value: 2,
                                     allows_follow_up_scales: false,
                                     is_not_applicable: false,
+                                    is_unsure: false,
                                 },
                             ],
                         },
@@ -444,6 +450,7 @@ const scoreFixtureQuestion = {
                     boost_value: 0,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
                 {
                     key: "some",
@@ -452,6 +459,7 @@ const scoreFixtureQuestion = {
                     boost_value: 1,
                     allows_follow_up_scales: true,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
                 {
                     key: "a_lot",
@@ -460,6 +468,7 @@ const scoreFixtureQuestion = {
                     boost_value: 2,
                     allows_follow_up_scales: true,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
             ],
         },
@@ -475,6 +484,7 @@ const scoreFixtureQuestion = {
                     boost_value: 1,
                     allows_follow_up_scales: false,
                     is_not_applicable: true,
+                    is_unsure: false,
                 },
                 {
                     key: "some_variety",
@@ -483,6 +493,7 @@ const scoreFixtureQuestion = {
                     boost_value: 2,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
                 {
                     key: "a_lot_of_variety",
@@ -491,6 +502,7 @@ const scoreFixtureQuestion = {
                     boost_value: 3,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
                 {
                     key: "unsure",
@@ -515,6 +527,7 @@ const scoreFixtureQuestion = {
                     boost_value: 1,
                     allows_follow_up_scales: false,
                     is_not_applicable: true,
+                    is_unsure: false,
                 },
                 {
                     key: "some_challenge",
@@ -523,6 +536,7 @@ const scoreFixtureQuestion = {
                     boost_value: 2,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
                 {
                     key: "a_lot_of_challenge",
@@ -531,6 +545,7 @@ const scoreFixtureQuestion = {
                     boost_value: 3,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
             ],
         },
@@ -546,6 +561,7 @@ const scoreFixtureQuestion = {
                     boost_value: 1,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
                 {
                     key: "pairs",
@@ -554,6 +570,7 @@ const scoreFixtureQuestion = {
                     boost_value: 2,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
                 {
                     key: "groups",
@@ -562,6 +579,7 @@ const scoreFixtureQuestion = {
                     boost_value: 3,
                     allows_follow_up_scales: false,
                     is_not_applicable: false,
+                    is_unsure: false,
                 },
             ],
         },

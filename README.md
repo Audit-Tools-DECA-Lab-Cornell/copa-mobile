@@ -245,6 +245,33 @@ bun run android    # run Android app
 
 ---
 
+## Automated Screenshots
+
+The checked-in screenshot assets under `screenshots/<device>/<appearance>/` are generated from a booted iOS simulator through the dev-only `app/__screenshot-bootstrap.tsx` route. Public auth screens can be listed or captured without credentials; protected screens require a screenshot auditor account so the driver can resolve assigned place/report IDs before opening each route.
+
+```bash
+# List targets without capturing
+bun run screenshots:ios -- --list
+
+# Capture all screens — auto-detects device type, runs both light and dark
+bun run screenshots:ios -- --email <auditor-email> --password <auditor-password>
+
+# Target a specific device / appearance only
+bun run screenshots:ios -- --device iphone --appearance light --email <auditor-email> --password <auditor-password>
+bun run screenshots:ios -- --device ipad --appearance dark --email <auditor-email> --password <auditor-password>
+```
+
+Each capture is pinned to a concrete simulator UDID, so the output folder always matches the device captured and a simulator booted mid-run is ignored. When `--device` is omitted the script captures **every booted simulator** (one folder per device type) — boot an iPhone and an iPad and run once to capture both. When `--appearance` is omitted it captures light and dark in sequence. Output is written to `screenshots/<device>/<appearance>/`.
+
+Useful options:
+
+- `--api-base-url <url>` points the ID discovery step at a seeded Playspace backend.
+- `--login-wait-ms <ms>` overrides the wait used after the first login (default 7000 ms).
+- `--target public` captures only login/signup. Use a comma-separated list of PNG names for a smaller protected subset.
+- `--output-dir <path>` writes a one-off run outside the checked-in screenshot folders.
+
+Each run writes a `manifest.json` beside the generated PNG files with successes and skipped/failing targets.
+
 ## Scripts
 
 ### Development

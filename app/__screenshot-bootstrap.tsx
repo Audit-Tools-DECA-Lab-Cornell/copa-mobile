@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { Paragraph, Text, YStack } from "tamagui";
@@ -11,6 +11,8 @@ interface ScreenshotBootstrapParams {
     readonly password?: string | string[];
     readonly reset?: string | string[];
     readonly skipLogin?: string | string[];
+    readonly __screenshotScrollY?: string | string[];
+    readonly __screenshotScrollDelayMs?: string | string[];
 }
 
 const SCREENSHOT_AUTOMATION_ENABLED = __DEV__;
@@ -42,7 +44,7 @@ function EnabledScreenshotBootstrapScreen() {
     const clearError = useAuthStore((state) => state.clearError);
     const errorMessage = useAuthStore((state) => state.errorMessage);
 
-    const hasResetSessionRef = useRef<boolean>(false);
+    const hasRequestedLogoutRef = useRef<boolean>(false);
     const hasNavigatedRef = useRef<boolean>(false);
     const loginAttemptKeyRef = useRef<string | null>(null);
     const [phaseMessage, setPhaseMessage] = useState<string>("Preparing screenshot route.");
@@ -75,13 +77,37 @@ function EnabledScreenshotBootstrapScreen() {
     const shouldSkipLogin = useMemo(() => {
         return readBooleanParam(params.skipLogin);
     }, [params.skipLogin]);
+    const navigationHref = useMemo(() => {
+        return appendScreenshotAutomationParams(targetRoute, {
+            scrollY: readSingleParam(params.__screenshotScrollY),
+            scrollDelayMs: readSingleParam(params.__screenshotScrollDelayMs),
+        });
+    }, [params.__screenshotScrollDelayMs, params.__screenshotScrollY, targetRoute]);
+
+    /**
+     * Navigate to the target screen with a clean stack.
+     *
+     * Each screenshot target is opened by re-deep-linking into this bootstrap,
+     * which stacks on top of the previous target. Consecutive targets that share
+     * a path (e.g. the execute scroll variants) would otherwise land on a stale
+     * stack instance whose params never update, so the new __screenshotScrollY is
+     * ignored. Dismissing the stack first guarantees the target mounts fresh.
+     */
+    const navigateToScreenshotTarget = useCallback(() => {
+        try {
+            router.dismissAll();
+        } catch {
+            // No dismissable screens in the stack; replacing is enough.
+        }
+        router.replace(navigationHref as Href);
+    }, [navigationHref, router]);
 
     /**
      * Clear stale auth store errors whenever a new automation request starts.
      */
     useEffect(() => {
         clearError();
-        hasResetSessionRef.current = false;
+        hasRequestedLogoutRef.current = false;
         hasNavigatedRef.current = false;
         loginAttemptKeyRef.current = null;
         setPhaseMessage("Preparing screenshot route.");
@@ -89,20 +115,26 @@ function EnabledScreenshotBootstrapScreen() {
 
     /**
      * Reset persisted auth state when the deep link requests a clean session.
+     *
+     * Sign-out is fired at most once; the navigation effect waits for the auth
+     * store to actually reach "unauthenticated" before it proceeds, so a stale
+     * session can never be navigated with or captured.
      */
     useEffect(() => {
-        if (!shouldResetSession || hasResetSessionRef.current || authStatus === "loading") {
+        if (!shouldResetSession || authStatus === "loading") {
             return;
         }
 
-        hasResetSessionRef.current = true;
-        if (authStatus === "authenticated") {
+        if (authStatus === "authenticated" && !hasRequestedLogoutRef.current) {
+            hasRequestedLogoutRef.current = true;
             setPhaseMessage("Clearing persisted session.");
             logout().catch(() => undefined);
             return;
         }
 
-        setPhaseMessage("Using a clean signed-out session.");
+        if (authStatus === "unauthenticated") {
+            setPhaseMessage("Using a clean signed-out session.");
+        }
     }, [authStatus, logout, shouldResetSession]);
 
     /**
@@ -118,14 +150,14 @@ function EnabledScreenshotBootstrapScreen() {
             return;
         }
 
-        if (shouldResetSession && !hasResetSessionRef.current) {
+        if (shouldResetSession && authStatus === "authenticated") {
             return;
         }
 
         if (shouldSkipLogin) {
             hasNavigatedRef.current = true;
             setPhaseMessage(`Opening ${targetRoute}.`);
-            router.replace(targetRoute as Href);
+            navigateToScreenshotTarget();
             return;
         }
 
@@ -138,7 +170,7 @@ function EnabledScreenshotBootstrapScreen() {
         if (authStatus === "authenticated" && currentSessionEmail === email) {
             hasNavigatedRef.current = true;
             setPhaseMessage(`Opening ${targetRoute}.`);
-            router.replace(targetRoute as Href);
+            navigateToScreenshotTarget();
             return;
         }
 
@@ -161,8 +193,8 @@ function EnabledScreenshotBootstrapScreen() {
         clearError,
         email,
         login,
+        navigateToScreenshotTarget,
         password,
-        router,
         session,
         shouldResetSession,
         shouldSkipLogin,
@@ -232,6 +264,53 @@ function ScreenshotBootstrapUnavailableScreen() {
             </YStack>
         </>
     );
+}
+
+/**
+ * Forward screenshot automation params into the target route.
+ *
+ * Dynamic routes often already have their own query string, for example
+ * `/execute/:placeId/section/:sectionKey?projectId=...&__screenshotScrollY=...`.
+ * Depending on how the native deep link is parsed, nested query params can be
+ * split out onto the bootstrap route. Re-appending missing screenshot params
+ * here makes both parsing shapes work.
+ *
+ * @param route Target route path, possibly already carrying a query string.
+ * @param values Raw screenshot automation params from the bootstrap route.
+ * @returns Route with missing screenshot automation query parameters appended.
+ */
+function appendScreenshotAutomationParams(
+    route: string,
+    values: Readonly<{
+        scrollY: string | null;
+        scrollDelayMs: string | null;
+    }>,
+): string {
+    let nextRoute = route;
+
+    nextRoute = appendQueryParamIfMissing(nextRoute, "__screenshotScrollY", values.scrollY);
+    nextRoute = appendQueryParamIfMissing(nextRoute, "__screenshotScrollDelayMs", values.scrollDelayMs);
+
+    return nextRoute;
+}
+
+/**
+ * Append a query parameter without duplicating an existing value.
+ *
+ * @param route Target route path, possibly already carrying a query string.
+ * @param name Query parameter name.
+ * @param value Query parameter value.
+ * @returns Route with the query parameter appended when needed.
+ */
+function appendQueryParamIfMissing(route: string, name: string, value: string | null): string {
+    if (value === null || value.length === 0) {
+        return route;
+    }
+    if (route.includes(`${name}=`)) {
+        return route;
+    }
+    const separator = route.includes("?") ? "&" : "?";
+    return `${route}${separator}${name}=${encodeURIComponent(value)}`;
 }
 
 /**

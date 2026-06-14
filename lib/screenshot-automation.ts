@@ -39,12 +39,29 @@ export function useScreenshotScrollAutomation({
             return;
         }
 
-        const timeoutId = setTimeout(() => {
-            scrollToOffset(scrollOffset);
-        }, scrollDelayMs);
+        // Dynamic screens (place / execute / section / report) finish laying out
+        // their content over several frames after their data resolves, so a
+        // single scroll can run before the content is tall enough and get
+        // clamped near the top. Re-issue the scroll a few times so it settles on
+        // the requested offset once the full height has been measured.
+        const retryDelaysMs = [0, 100, 300, 700, 1200, 1900, 2800, 4200];
+        const animationFrameIds: number[] = [];
+        const timeoutIds = retryDelaysMs.map((extraDelayMs) =>
+            setTimeout(() => {
+                const animationFrameId = requestAnimationFrame(() => {
+                    scrollToOffset(scrollOffset);
+                });
+                animationFrameIds.push(animationFrameId);
+            }, scrollDelayMs + extraDelayMs),
+        );
 
         return () => {
-            clearTimeout(timeoutId);
+            for (const timeoutId of timeoutIds) {
+                clearTimeout(timeoutId);
+            }
+            for (const animationFrameId of animationFrameIds) {
+                cancelAnimationFrame(animationFrameId);
+            }
         };
     }, [contentReady, rerunKey, scrollDelayMs, scrollOffset, scrollToOffset]);
 }

@@ -95,6 +95,7 @@ export default function ExecuteSectionScreen() {
     const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
     const canEditInputsRef = useRef(false);
     const scrollViewRef = useRef<ScrollView | null>(null);
+    const [scrollLayoutVersion, setScrollLayoutVersion] = useState(0);
 
     const themedHeaderOptions = useMemo(
         () => ({
@@ -235,10 +236,13 @@ export default function ExecuteSectionScreen() {
     const scrollSectionToOffset = useCallback((offset: number) => {
         scrollViewRef.current?.scrollTo({ animated: false, x: 0, y: offset });
     }, []);
+    const handleScreenshotContentSizeChange = useCallback(() => {
+        setScrollLayoutVersion((value) => value + 1);
+    }, []);
 
     useScreenshotScrollAutomation({
         contentReady: auditSession !== undefined && activeSection !== undefined,
-        rerunKey: `${auditSession?.audit_id ?? "pending"}:${activeSection?.section_key ?? "none"}`,
+        rerunKey: `${auditSession?.audit_id ?? "pending"}:${activeSection?.section_key ?? "none"}:${scrollLayoutVersion}`,
         scrollToOffset: scrollSectionToOffset,
     });
 
@@ -529,6 +533,7 @@ export default function ExecuteSectionScreen() {
     return (
         <ScrollView
             ref={scrollViewRef}
+            onContentSizeChange={handleScreenshotContentSizeChange}
             contentInsetAdjustmentBehavior="automatic"
             automaticallyAdjustKeyboardInsets
             keyboardShouldPersistTaps="handled"
