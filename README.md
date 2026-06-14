@@ -247,7 +247,7 @@ bun run android    # run Android app
 
 ## Automated Screenshots
 
-The checked-in screenshot assets under `screenshots/<device>/<appearance>/` are generated from a booted iOS simulator through the dev-only `app/__screenshot-bootstrap.tsx` route. Public auth screens can be listed or captured without credentials; protected screens require a screenshot auditor account so the driver can resolve assigned place/report IDs before opening each route.
+Screenshot assets under `screenshots/<device>/<appearance>/` are generated locally from a booted iOS simulator through the dev-only `app/__screenshot-bootstrap.tsx` route. They are gitignored and not shipped with the app. Public auth screens can be listed or captured without credentials; protected screens require a screenshot auditor account so the driver can resolve assigned place/report IDs before opening each route.
 
 ```bash
 # List targets without capturing
@@ -268,7 +268,7 @@ Useful options:
 - `--api-base-url <url>` points the ID discovery step at a seeded Playspace backend.
 - `--login-wait-ms <ms>` overrides the wait used after the first login (default 7000 ms).
 - `--target public` captures only login/signup. Use a comma-separated list of PNG names for a smaller protected subset.
-- `--output-dir <path>` writes a one-off run outside the checked-in screenshot folders.
+- `--output-dir <path>` writes a one-off run outside the default screenshot folders.
 
 Each run writes a `manifest.json` beside the generated PNG files with successes and skipped/failing targets. The per-device target list and scroll offsets are documented in `screenshots/TARGETS.md`.
 

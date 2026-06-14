@@ -91,3 +91,7 @@ docs/superpowers/
 
 # Scripts
 scripts/screenshots/*
+
+# Generated App Store / marketing screenshots (regenerate with bun run screenshots:ios)
+screenshots/iphone/
+screenshots/ipad/
