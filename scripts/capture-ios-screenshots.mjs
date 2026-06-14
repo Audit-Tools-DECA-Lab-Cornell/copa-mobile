@@ -6,26 +6,27 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const DEFAULT_SCHEME = "audit-tools-playspace-mobile";
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
-const DEFAULT_WAIT_MS = 25000;
-const DEFAULT_LOGIN_WAIT_MS = 25000;
-const DEFAULT_SCROLL_DELAY_MS = 800;
+const DEFAULT_WAIT_MS = 6000;
+const DEFAULT_LOGIN_WAIT_MS = 8000;
+const DEFAULT_SCROLL_DELAY_MS = 200;
 const DEFAULT_SIMULATOR = "booted";
 const FIRST_SECTION_FALLBACK = "section_1_playspace_character_community";
 
-const STATIC_TARGETS = [
-	{ file: "01-login.png", route: "/(auth)/login", skipLogin: true },
-	{ file: "02-signup.png", route: "/(auth)/signup", skipLogin: true },
-	{ file: "03-home.png", route: "/", requiresAuth: true },
-	{ file: "04-home-queue.png", route: "/?__screenshotScrollY=780", requiresAuth: true },
-	{ file: "05-places.png", route: "/places", requiresAuth: true },
-	{ file: "07-execute.png", route: "/execute", requiresAuth: true },
-	{ file: "17-reports.png", route: "/reports", requiresAuth: true },
-	{ file: "18-reports-list.png", route: "/reports?__screenshotScrollY=700", requiresAuth: true },
-	{ file: "19-reports-preview.png", route: "/reports?__screenshotScrollY=1180", requiresAuth: true },
-	{ file: "21-settings.png", route: "/settings", requiresAuth: true },
-	{ file: "22-settings-preferences.png", route: "/settings?__screenshotScrollY=700", requiresAuth: true },
-	{ file: "23-settings-about.png", route: "/settings?__screenshotScrollY=1250", requiresAuth: true }
-];
+const TARGET_DEVICE_TYPES = ["iphone", "ipad"];
+
+// Device-specific scroll positions. These are intentionally not shared because
+// iPhone and iPad layouts expose different amounts of content at rest.
+const IPHONE_EXECUTE_PLACE_SCROLL_Y = 170;
+const IPHONE_SETTINGS_SCROLL_Y = 950;
+const IPAD_PRE_AUDIT_SCROLL_Y = 360;
+
+// Report detail is long on both devices. The early frame is slightly above the
+// old 700px shot to avoid repeated content; tail frames are first-pass values
+// and should be tuned after a fresh capture run if the report content changes.
+const REPORT_DETAIL_SCROLLS = {
+	iphone: { early: 600, nearEnd: 2600, end: 3600 },
+	ipad: { early: 600, nearEnd: 2200, end: 3200 }
+};
 
 function parseArgs(argv) {
 	const options = {
@@ -265,11 +266,12 @@ async function main() {
 	const options = parseArgs(process.argv.slice(2));
 	const sectionKey = await readFirstSectionKey();
 	const discovery = await discoverBackendData(options);
-	const targets = selectTargets(buildTargets(discovery, sectionKey), options.target);
 
 	if (options.list) {
-		for (const target of targets) {
-			console.log(`${target.file}\t${target.route}${target.skipLogin ? "\tpublic" : "\tprotected"}`);
+		const deviceTypes = options.device !== null ? [options.device] : TARGET_DEVICE_TYPES;
+		for (const deviceType of deviceTypes) {
+			const targets = selectTargets(buildTargets(discovery, sectionKey, deviceType), options.target);
+			printTargetList(deviceType, targets);
 		}
 		return;
 	}
@@ -297,6 +299,11 @@ async function main() {
 
 	for (const simulator of simulators) {
 		for (const appearance of appearances) {
+			const targets = selectTargets(buildTargets(discovery, sectionKey, simulator.deviceType), options.target);
+			if (targets.length === 0) {
+				console.warn(`No targets matched --target "${options.target}" for ${simulator.deviceType}; skipping.`);
+				continue;
+			}
 			const failed = await captureSimulatorRun({ options, simulator, appearance, targets });
 			if (failed) {
 				anyFailures = true;
@@ -306,6 +313,19 @@ async function main() {
 
 	if (anyFailures) {
 		process.exitCode = 1;
+	}
+}
+
+function printTargetList(deviceType, targets) {
+	console.log(`\n# ${deviceType}`);
+	if (targets.length === 0) {
+		console.log("No targets matched.");
+		return;
+	}
+	for (const target of targets) {
+		const access = target.skipLogin ? "public" : "protected";
+		const route = target.route.length > 0 ? target.route : "(unresolved dynamic route)";
+		console.log(`${target.file}	${route}	${access}`);
 	}
 }
 
@@ -429,44 +449,180 @@ async function discoverBackendData(options) {
 	}
 }
 
-function buildTargets(discovery, sectionKey) {
-	const dynamicTargets = [];
-	const place = discovery.firstPlace;
-	if (isResolvedPlace(place)) {
-		const placeRoute = `/place/${encodeURIComponent(place.place_id)}?projectId=${encodeURIComponent(place.project_id)}`;
-		const executeRoute = `/execute/${encodeURIComponent(place.place_id)}?projectId=${encodeURIComponent(place.project_id)}`;
-		const preAuditRoute = `/execute/${encodeURIComponent(place.place_id)}/pre-audit?projectId=${encodeURIComponent(place.project_id)}`;
-		const sectionRoute = `/execute/${encodeURIComponent(place.place_id)}/section/${encodeURIComponent(sectionKey)}?projectId=${encodeURIComponent(place.project_id)}`;
-		dynamicTargets.push(
-			{ file: "06-place-detail.png", route: placeRoute, requiresAuth: true },
-			{ file: "08-execute-place.png", route: executeRoute, requiresAuth: true },
-			{ file: "09-execute-place-sections.png", route: `${executeRoute}&__screenshotScrollY=680`, requiresAuth: true },
-			{ file: "10-execute-place-footer.png", route: `${executeRoute}&__screenshotScrollY=1200`, requiresAuth: true },
-			{ file: "11-execute-pre-audit.png", route: preAuditRoute, requiresAuth: true },
-			{ file: "12-execute-pre-audit-questions.png", route: `${preAuditRoute}&__screenshotScrollY=700`, requiresAuth: true },
-			{ file: "13-execute-pre-audit-footer.png", route: `${preAuditRoute}&__screenshotScrollY=1300`, requiresAuth: true },
-			{ file: "14-execute-section.png", route: sectionRoute, requiresAuth: true },
-			{ file: "15-execute-section-questions.png", route: `${sectionRoute}&__screenshotScrollY=780`, requiresAuth: true },
-			{ file: "16-execute-section-notes.png", route: `${sectionRoute}&__screenshotScrollY=4000`, requiresAuth: true }
-		);
-	} else {
-		dynamicTargets.push(unresolved("06-place-detail.png"), unresolved("08-execute-place.png"), unresolved("09-execute-place-sections.png"), unresolved("10-execute-place-footer.png"), unresolved("11-execute-pre-audit.png"), unresolved("12-execute-pre-audit-questions.png"), unresolved("13-execute-pre-audit-footer.png"), unresolved("14-execute-section.png"), unresolved("15-execute-section-questions.png"), unresolved("16-execute-section-notes.png"));
+function buildTargets(discovery, sectionKey, deviceType) {
+	if (deviceType === "iphone") {
+		return buildIphoneTargets(discovery, sectionKey);
 	}
-
-	const reportPlace = discovery.reportPlace;
-	if (isResolvedReportPlace(reportPlace)) {
-		dynamicTargets.push({ file: "20-report-detail.png", route: `/report/${encodeURIComponent(reportPlace.audit_id)}`, requiresAuth: true });
-		dynamicTargets.push({ file: "20-report-detail.png", route: `/report/${encodeURIComponent(reportPlace.audit_id)}?__screenshotScrollY=700`, requiresAuth: true });
-		dynamicTargets.push({ file: "20-report-detail.png", route: `/report/${encodeURIComponent(reportPlace.audit_id)}?__screenshotScrollY=1200`, requiresAuth: true });
-	} else {
-		dynamicTargets.push(unresolved("20-report-detail.png", "No submitted audit with audit_id was returned by the assigned places API."));
+	if (deviceType === "ipad") {
+		return buildIpadTargets(discovery, sectionKey);
 	}
-
-	return [...STATIC_TARGETS, ...dynamicTargets];
+	throw new Error(`Unknown device type: ${deviceType}`);
 }
 
-function unresolved(file, reason = "No assigned place was returned by the assigned places API.") {
-	return { file, route: "", requiresAuth: true, skipReason: reason };
+function buildIphoneTargets(discovery, sectionKey) {
+	const routes = buildDynamicRoutes(discovery, sectionKey);
+	const targets = [
+		// publicTarget("01-login.png", "/(auth)/login", "Login screen"),
+		// publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
+		protectedTarget("03-home.png", "/", "Home top"),
+		protectedTarget("04-home-queue.png", withScreenshotScroll("/", 780), "Home queue scroll"),
+		protectedTarget("05-places.png", "/places", "Places list top"),
+		dynamicPlaceTarget("06-place-detail.png", routes.placeDetail, "Place detail"),
+		protectedTarget("07-execute.png", "/execute", "Execute list top"),
+		dynamicPlaceTarget(
+			"08-execute-place.png",
+			withScreenshotScroll(routes.executePlace, IPHONE_EXECUTE_PLACE_SCROLL_Y),
+			"Execute place merged frame; replaces old 08/09/10 using roughly one-quarter of old 09 scroll"
+		),
+		dynamicPlaceTarget("09-execute-pre-audit.png", routes.preAudit, "Pre-audit top only; old scrolled variants removed"),
+		dynamicPlaceTarget("10-execute-section.png", routes.section, "Execute section top"),
+		dynamicPlaceTarget(
+			"11-execute-section-questions.png",
+			withScreenshotScroll(routes.section, 780),
+			"Execute section questions"
+		),
+		dynamicPlaceTarget(
+			"12-execute-section-notes.png",
+			withScreenshotScroll(routes.section, 4000),
+			"Execute section notes"
+		),
+		protectedTarget("13-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
+		...buildReportDetailTargets("iphone", "14", routes.reportDetail),
+		protectedTarget("18-settings.png", "/settings", "Settings top"),
+		protectedTarget(
+			"19-settings-scrolled.png",
+			withScreenshotScroll("/settings", IPHONE_SETTINGS_SCROLL_Y),
+			"Settings scrolled frame with increased offset; old about shot removed"
+		)
+	];
+	return assertUniqueTargetFiles("iphone", targets);
+}
+
+function buildIpadTargets(discovery, sectionKey) {
+	const routes = buildDynamicRoutes(discovery, sectionKey);
+	const targets = [
+		publicTarget("01-login.png", "/(auth)/login", "Login screen"),
+		publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
+		protectedTarget("03-home.png", "/", "Home top; old home queue removed because iPad top frame fits it"),
+		protectedTarget("04-places.png", "/places", "Places list top"),
+		dynamicPlaceTarget("05-place-detail.png", routes.placeDetail, "Place detail"),
+		protectedTarget("06-execute.png", "/execute", "Execute list top"),
+		dynamicPlaceTarget("07-execute-place.png", routes.executePlace, "Execute place top; old section/footer scrolls removed"),
+		dynamicPlaceTarget(
+			"08-execute-pre-audit.png",
+			withScreenshotScroll(routes.preAudit, IPAD_PRE_AUDIT_SCROLL_Y),
+			"Single pre-audit frame with slight scroll to merge old top/questions coverage"
+		),
+		dynamicPlaceTarget(
+			"09-execute-section-notes.png",
+			withScreenshotScroll(routes.section, 4000),
+			"Execute section notes only; old top/questions frames removed"
+		),
+		protectedTarget("10-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
+		...buildReportDetailTargets("ipad", "11", routes.reportDetail),
+		protectedTarget("15-settings.png", "/settings", "Settings top"),
+		protectedTarget("16-settings-about.png", withScreenshotScroll("/settings", 1250), "Settings about; old preferences shot removed")
+	];
+	return assertUniqueTargetFiles("ipad", targets);
+}
+
+function buildDynamicRoutes(discovery, sectionKey) {
+	const place = discovery.firstPlace;
+	const reportPlace = discovery.reportPlace;
+	const routes = {
+		placeDetail: null,
+		executePlace: null,
+		preAudit: null,
+		section: null,
+		reportDetail: null
+	};
+
+	if (isResolvedPlace(place)) {
+		routes.placeDetail = `/place/${encodeURIComponent(place.place_id)}?projectId=${encodeURIComponent(place.project_id)}`;
+		routes.executePlace = `/execute/${encodeURIComponent(place.place_id)}?projectId=${encodeURIComponent(place.project_id)}`;
+		routes.preAudit = `/execute/${encodeURIComponent(place.place_id)}/pre-audit?projectId=${encodeURIComponent(place.project_id)}`;
+		routes.section = `/execute/${encodeURIComponent(place.place_id)}/section/${encodeURIComponent(sectionKey)}?projectId=${encodeURIComponent(place.project_id)}`;
+	}
+
+	if (isResolvedReportPlace(reportPlace)) {
+		routes.reportDetail = `/report/${encodeURIComponent(reportPlace.audit_id)}`;
+	}
+
+	return routes;
+}
+
+function buildReportDetailTargets(deviceType, startNumber, reportRoute) {
+	const base = Number(startNumber);
+	const scrolls = REPORT_DETAIL_SCROLLS[deviceType];
+	return [
+		dynamicReportTarget(`${pad2(base)}-report-detail-top.png`, reportRoute, "Report detail top"),
+		dynamicReportTarget(
+			`${pad2(base + 1)}-report-detail-early.png`,
+			withScreenshotScroll(reportRoute, scrolls.early),
+			"Report detail early scroll; slightly less than old 700px shot"
+		),
+		dynamicReportTarget(
+			`${pad2(base + 2)}-report-detail-near-end.png`,
+			withScreenshotScroll(reportRoute, scrolls.nearEnd),
+			"Report detail near-end frame; tune after capture if needed"
+		),
+		dynamicReportTarget(
+			`${pad2(base + 3)}-report-detail-end.png`,
+			withScreenshotScroll(reportRoute, scrolls.end),
+			"Report detail end frame; tune after capture if needed"
+		)
+	];
+}
+
+function publicTarget(file, route, note) {
+	return { file, route, skipLogin: true, note };
+}
+
+function protectedTarget(file, route, note) {
+	return { file, route, requiresAuth: true, note };
+}
+
+function dynamicPlaceTarget(file, route, note) {
+	return route === null
+		? unresolved(file, "No assigned place was returned by the assigned places API.", note)
+		: protectedTarget(file, route, note);
+}
+
+function dynamicReportTarget(file, route, note) {
+	return route === null
+		? unresolved(file, "No submitted audit with audit_id was returned by the assigned places API.", note)
+		: protectedTarget(file, route, note);
+}
+
+function unresolved(file, reason = "No assigned place was returned by the assigned places API.", note = "") {
+	return { file, route: "", requiresAuth: true, skipReason: reason, note };
+}
+
+function withScreenshotScroll(route, scrollY, scrollDelayMs = null) {
+	if (route === null) {
+		return null;
+	}
+	const delimiter = route.includes("?") ? "&" : "?";
+	let nextRoute = `${route}${delimiter}__screenshotScrollY=${encodeURIComponent(String(scrollY))}`;
+	if (scrollDelayMs !== null) {
+		nextRoute += `&__screenshotScrollDelayMs=${encodeURIComponent(String(scrollDelayMs))}`;
+	}
+	return nextRoute;
+}
+
+function pad2(value) {
+	return String(value).padStart(2, "0");
+}
+
+function assertUniqueTargetFiles(deviceType, targets) {
+	const seen = new Set();
+	for (const target of targets) {
+		if (seen.has(target.file)) {
+			throw new Error(`Duplicate screenshot target filename for ${deviceType}: ${target.file}`);
+		}
+		seen.add(target.file);
+	}
+	return targets;
 }
 
 function isResolvedPlace(value) {

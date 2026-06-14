@@ -1,129 +1,94 @@
 {
-    "generated_at": "2026-06-14T01:47:16.538Z",
+    "generated_at": "2026-06-14T20:43:34.117Z",
     "device": "ipad",
     "simulator_name": "iPad Pro 13-inch (M5)",
     "simulator_udid": "67883FCA-7F7E-4FC2-9DB8-49070B63D130",
     "appearance": "dark",
     "api_base_url": "http://127.0.0.1:8000",
     "output_directory": "/Users/praty/Desktop/StudentJob.nosync/playspace/audit-tools-playspace-mobile/screenshots/ipad/dark",
-    "total_targets": 23,
-    "success_count": 23,
+    "total_targets": 16,
+    "success_count": 16,
     "failure_count": 0,
     "successes": [
+        {
+            "file": "01-login.png",
+            "route": "/(auth)/login",
+            "output_file": "screenshots/ipad/dark/01-login.png"
+        },
+        {
+            "file": "02-signup.png",
+            "route": "/(auth)/signup",
+            "output_file": "screenshots/ipad/dark/02-signup.png"
+        },
         {
             "file": "03-home.png",
             "route": "/",
             "output_file": "screenshots/ipad/dark/03-home.png"
         },
         {
-            "file": "04-home-queue.png",
-            "route": "/?__screenshotScrollY=780",
-            "output_file": "screenshots/ipad/dark/04-home-queue.png"
-        },
-        {
-            "file": "05-places.png",
+            "file": "04-places.png",
             "route": "/places",
-            "output_file": "screenshots/ipad/dark/05-places.png"
+            "output_file": "screenshots/ipad/dark/04-places.png"
         },
         {
-            "file": "07-execute.png",
-            "route": "/execute",
-            "output_file": "screenshots/ipad/dark/07-execute.png"
-        },
-        {
-            "file": "17-reports.png",
-            "route": "/reports",
-            "output_file": "screenshots/ipad/dark/17-reports.png"
-        },
-        {
-            "file": "18-reports-list.png",
-            "route": "/reports?__screenshotScrollY=700",
-            "output_file": "screenshots/ipad/dark/18-reports-list.png"
-        },
-        {
-            "file": "19-reports-preview.png",
-            "route": "/reports?__screenshotScrollY=1180",
-            "output_file": "screenshots/ipad/dark/19-reports-preview.png"
-        },
-        {
-            "file": "21-settings.png",
-            "route": "/settings",
-            "output_file": "screenshots/ipad/dark/21-settings.png"
-        },
-        {
-            "file": "22-settings-preferences.png",
-            "route": "/settings?__screenshotScrollY=700",
-            "output_file": "screenshots/ipad/dark/22-settings-preferences.png"
-        },
-        {
-            "file": "23-settings-about.png",
-            "route": "/settings?__screenshotScrollY=1250",
-            "output_file": "screenshots/ipad/dark/23-settings-about.png"
-        },
-        {
-            "file": "06-place-detail.png",
+            "file": "05-place-detail.png",
             "route": "/place/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c?projectId=22222222-2222-4222-8222-222222222222",
-            "output_file": "screenshots/ipad/dark/06-place-detail.png"
+            "output_file": "screenshots/ipad/dark/05-place-detail.png"
         },
         {
-            "file": "08-execute-place.png",
+            "file": "06-execute.png",
+            "route": "/execute",
+            "output_file": "screenshots/ipad/dark/06-execute.png"
+        },
+        {
+            "file": "07-execute-place.png",
             "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c?projectId=22222222-2222-4222-8222-222222222222",
-            "output_file": "screenshots/ipad/dark/08-execute-place.png"
+            "output_file": "screenshots/ipad/dark/07-execute-place.png"
         },
         {
-            "file": "09-execute-place-sections.png",
-            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c?projectId=22222222-2222-4222-8222-222222222222&__screenshotScrollY=680",
-            "output_file": "screenshots/ipad/dark/09-execute-place-sections.png"
+            "file": "08-execute-pre-audit.png",
+            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c/pre-audit?projectId=22222222-2222-4222-8222-222222222222&__screenshotScrollY=360",
+            "output_file": "screenshots/ipad/dark/08-execute-pre-audit.png"
         },
         {
-            "file": "10-execute-place-footer.png",
-            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c?projectId=22222222-2222-4222-8222-222222222222&__screenshotScrollY=1200",
-            "output_file": "screenshots/ipad/dark/10-execute-place-footer.png"
-        },
-        {
-            "file": "11-execute-pre-audit.png",
-            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c/pre-audit?projectId=22222222-2222-4222-8222-222222222222",
-            "output_file": "screenshots/ipad/dark/11-execute-pre-audit.png"
-        },
-        {
-            "file": "12-execute-pre-audit-questions.png",
-            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c/pre-audit?projectId=22222222-2222-4222-8222-222222222222&__screenshotScrollY=700",
-            "output_file": "screenshots/ipad/dark/12-execute-pre-audit-questions.png"
-        },
-        {
-            "file": "13-execute-pre-audit-footer.png",
-            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c/pre-audit?projectId=22222222-2222-4222-8222-222222222222&__screenshotScrollY=1300",
-            "output_file": "screenshots/ipad/dark/13-execute-pre-audit-footer.png"
-        },
-        {
-            "file": "14-execute-section.png",
-            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c/section/section_1_playspace_character_community?projectId=22222222-2222-4222-8222-222222222222",
-            "output_file": "screenshots/ipad/dark/14-execute-section.png"
-        },
-        {
-            "file": "15-execute-section-questions.png",
-            "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c/section/section_1_playspace_character_community?projectId=22222222-2222-4222-8222-222222222222&__screenshotScrollY=780",
-            "output_file": "screenshots/ipad/dark/15-execute-section-questions.png"
-        },
-        {
-            "file": "16-execute-section-notes.png",
+            "file": "09-execute-section-notes.png",
             "route": "/execute/a7ee4768-2a9b-5aa3-9af8-eb539ab8d69c/section/section_1_playspace_character_community?projectId=22222222-2222-4222-8222-222222222222&__screenshotScrollY=4000",
-            "output_file": "screenshots/ipad/dark/16-execute-section-notes.png"
+            "output_file": "screenshots/ipad/dark/09-execute-section-notes.png"
         },
         {
-            "file": "20-report-detail.png",
+            "file": "10-reports.png",
+            "route": "/reports",
+            "output_file": "screenshots/ipad/dark/10-reports.png"
+        },
+        {
+            "file": "11-report-detail-top.png",
             "route": "/report/6da78640-0f08-5e8e-b3a6-a704b49bfa99",
-            "output_file": "screenshots/ipad/dark/20-report-detail.png"
+            "output_file": "screenshots/ipad/dark/11-report-detail-top.png"
         },
         {
-            "file": "20-report-detail.png",
-            "route": "/report/6da78640-0f08-5e8e-b3a6-a704b49bfa99?__screenshotScrollY=700",
-            "output_file": "screenshots/ipad/dark/20-report-detail.png"
+            "file": "12-report-detail-early.png",
+            "route": "/report/6da78640-0f08-5e8e-b3a6-a704b49bfa99?__screenshotScrollY=600",
+            "output_file": "screenshots/ipad/dark/12-report-detail-early.png"
         },
         {
-            "file": "20-report-detail.png",
-            "route": "/report/6da78640-0f08-5e8e-b3a6-a704b49bfa99?__screenshotScrollY=1200",
-            "output_file": "screenshots/ipad/dark/20-report-detail.png"
+            "file": "13-report-detail-near-end.png",
+            "route": "/report/6da78640-0f08-5e8e-b3a6-a704b49bfa99?__screenshotScrollY=2200",
+            "output_file": "screenshots/ipad/dark/13-report-detail-near-end.png"
+        },
+        {
+            "file": "14-report-detail-end.png",
+            "route": "/report/6da78640-0f08-5e8e-b3a6-a704b49bfa99?__screenshotScrollY=3200",
+            "output_file": "screenshots/ipad/dark/14-report-detail-end.png"
+        },
+        {
+            "file": "15-settings.png",
+            "route": "/settings",
+            "output_file": "screenshots/ipad/dark/15-settings.png"
+        },
+        {
+            "file": "16-settings-about.png",
+            "route": "/settings?__screenshotScrollY=1250",
+            "output_file": "screenshots/ipad/dark/16-settings-about.png"
         }
     ],
     "failures": []

@@ -270,7 +270,7 @@ Useful options:
 - `--target public` captures only login/signup. Use a comma-separated list of PNG names for a smaller protected subset.
 - `--output-dir <path>` writes a one-off run outside the checked-in screenshot folders.
 
-Each run writes a `manifest.json` beside the generated PNG files with successes and skipped/failing targets.
+Each run writes a `manifest.json` beside the generated PNG files with successes and skipped/failing targets. The per-device target list and scroll offsets are documented in `screenshots/TARGETS.md`.
 
 ## Scripts
 
