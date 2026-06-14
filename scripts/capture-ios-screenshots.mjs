@@ -6,9 +6,9 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const DEFAULT_SCHEME = "audit-tools-playspace-mobile";
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
-const DEFAULT_WAIT_MS = 6000;
-const DEFAULT_LOGIN_WAIT_MS = 8000;
-const DEFAULT_SCROLL_DELAY_MS = 200;
+const DEFAULT_WAIT_MS = 20000;
+const DEFAULT_LOGIN_WAIT_MS = 20000;
+const DEFAULT_SCROLL_DELAY_MS = 450;
 const DEFAULT_SIMULATOR = "booted";
 const FIRST_SECTION_FALLBACK = "section_1_playspace_character_community";
 
@@ -18,14 +18,14 @@ const TARGET_DEVICE_TYPES = ["iphone", "ipad"];
 // iPhone and iPad layouts expose different amounts of content at rest.
 const IPHONE_EXECUTE_PLACE_SCROLL_Y = 170;
 const IPHONE_SETTINGS_SCROLL_Y = 950;
-const IPAD_PRE_AUDIT_SCROLL_Y = 360;
+const IPAD_PRE_AUDIT_SCROLL_Y = 250;
 
 // Report detail is long on both devices. The early frame is slightly above the
 // old 700px shot to avoid repeated content; tail frames are first-pass values
 // and should be tuned after a fresh capture run if the report content changes.
 const REPORT_DETAIL_SCROLLS = {
-	iphone: { early: 600, nearEnd: 2600, end: 3600 },
-	ipad: { early: 600, nearEnd: 2200, end: 3200 }
+	iphone: { early: 950, nearEnd: 20500, end: 22000 },
+	ipad: { early: 850, end: 19000 }
 };
 
 function parseArgs(argv) {
@@ -487,12 +487,13 @@ function buildIphoneTargets(discovery, sectionKey) {
 			"Execute section notes"
 		),
 		protectedTarget("13-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
-		...buildReportDetailTargets("iphone", "14", routes.reportDetail),
-		protectedTarget("18-settings.png", "/settings", "Settings top"),
+		protectedTarget("14-reports-list.png", withScreenshotScroll("/reports", 700), "Reports list"),
+		...buildReportDetailTargets("iphone", "15", routes.reportDetail),
+		protectedTarget("19-settings.png", "/settings", "Settings top"),
 		protectedTarget(
-			"19-settings-scrolled.png",
+			"20-settings-scrolled.png",
 			withScreenshotScroll("/settings", IPHONE_SETTINGS_SCROLL_Y),
-			"Settings scrolled frame with increased offset; old about shot removed"
+			"Settings scrolled frame"
 		)
 	];
 	return assertUniqueTargetFiles("iphone", targets);
@@ -501,8 +502,8 @@ function buildIphoneTargets(discovery, sectionKey) {
 function buildIpadTargets(discovery, sectionKey) {
 	const routes = buildDynamicRoutes(discovery, sectionKey);
 	const targets = [
-		publicTarget("01-login.png", "/(auth)/login", "Login screen"),
-		publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
+		// publicTarget("01-login.png", "/(auth)/login", "Login screen"),
+		// publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
 		protectedTarget("03-home.png", "/", "Home top; old home queue removed because iPad top frame fits it"),
 		protectedTarget("04-places.png", "/places", "Places list top"),
 		dynamicPlaceTarget("05-place-detail.png", routes.placeDetail, "Place detail"),
@@ -513,13 +514,14 @@ function buildIpadTargets(discovery, sectionKey) {
 			withScreenshotScroll(routes.preAudit, IPAD_PRE_AUDIT_SCROLL_Y),
 			"Single pre-audit frame with slight scroll to merge old top/questions coverage"
 		),
+		dynamicPlaceTarget("09-execute-section.png", routes.section, "Execute section top"),
 		dynamicPlaceTarget(
-			"09-execute-section-notes.png",
+			"10-execute-section-notes.png",
 			withScreenshotScroll(routes.section, 4000),
-			"Execute section notes only; old top/questions frames removed"
+			"Execute section notes only"
 		),
-		protectedTarget("10-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
-		...buildReportDetailTargets("ipad", "11", routes.reportDetail),
+		protectedTarget("11-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
+		...buildReportDetailTargets("ipad", "12", routes.reportDetail),
 		protectedTarget("15-settings.png", "/settings", "Settings top"),
 		protectedTarget("16-settings-about.png", withScreenshotScroll("/settings", 1250), "Settings about; old preferences shot removed")
 	];
@@ -554,24 +556,35 @@ function buildDynamicRoutes(discovery, sectionKey) {
 function buildReportDetailTargets(deviceType, startNumber, reportRoute) {
 	const base = Number(startNumber);
 	const scrolls = REPORT_DETAIL_SCROLLS[deviceType];
-	return [
+	let targets = [
 		dynamicReportTarget(`${pad2(base)}-report-detail-top.png`, reportRoute, "Report detail top"),
 		dynamicReportTarget(
 			`${pad2(base + 1)}-report-detail-early.png`,
 			withScreenshotScroll(reportRoute, scrolls.early),
 			"Report detail early scroll; slightly less than old 700px shot"
 		),
-		dynamicReportTarget(
+
+	];
+	if (deviceType === "iphone") {
+		targets.push(dynamicReportTarget(
 			`${pad2(base + 2)}-report-detail-near-end.png`,
 			withScreenshotScroll(reportRoute, scrolls.nearEnd),
 			"Report detail near-end frame; tune after capture if needed"
-		),
-		dynamicReportTarget(
+		));
+		targets.push(dynamicReportTarget(
 			`${pad2(base + 3)}-report-detail-end.png`,
 			withScreenshotScroll(reportRoute, scrolls.end),
 			"Report detail end frame; tune after capture if needed"
-		)
-	];
+		));
+	}
+	else {
+		targets.push(dynamicReportTarget(
+			`${pad2(base + 2)}-report-detail-end.png`,
+			withScreenshotScroll(reportRoute, scrolls.end),
+			"Report detail end frame; tune after capture if needed"
+		));
+	}
+	return targets;
 }
 
 function publicTarget(file, route, note) {
