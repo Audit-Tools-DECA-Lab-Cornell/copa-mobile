@@ -37,5 +37,17 @@
         "offline": "Vous êtes hors ligne. Votre rapport est enregistré ici — renvoyez-le une fois de retour en ligne.",
         "generic": "Nous n'avons pas pu envoyer votre rapport. Veuillez réessayer."
     },
-    "sending": "Envoi…"
+    "sending": "Envoi…",
+    "queue": {
+        "promptTitle": "Envoyer les rapports enregistrés ?",
+        "promptMessage_one": "{{count}} rapport de bogue est enregistré sur cet appareil. L'envoyer maintenant ?",
+        "promptMessage_other": "{{count}} rapports de bogue sont enregistrés sur cet appareil. Les envoyer maintenant ?",
+        "promptSubmit": "Envoyer maintenant",
+        "promptLater": "Plus tard",
+        "flushed_one": "Votre rapport enregistré a été envoyé. Merci.",
+        "flushed_other": "{{count}} rapports enregistrés ont été envoyés. Merci.",
+        "flushPartial": "Certains rapports n'ont pas encore pu être envoyés. Nous vous le redemanderons à votre prochaine connexion.",
+        "savedOffline": "Vous êtes hors ligne. Votre rapport est enregistré sur cet appareil — nous vous inviterons à l'envoyer une fois de retour en ligne.",
+        "savedForLater": "Votre rapport est enregistré sur cet appareil. Nous vous inviterons à l'envoyer une fois de retour en ligne."
+    }
 }

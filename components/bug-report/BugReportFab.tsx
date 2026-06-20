@@ -21,15 +21,13 @@ import {
 } from "tamagui";
 
 import type { AuditSession } from "lib/audit/types";
-import { createBugReport, matchKnownIssues } from "lib/bug-report/api";
+import { matchKnownIssues } from "lib/bug-report/api";
 import { type BugReportRouteContext, buildMobileBugReportContext, isDeviceOnline } from "lib/bug-report/context";
 import { clearBugReportDraft, readBugReportDraft, saveBugReportDraft } from "lib/bug-report/draft-storage";
 import { isBugReportingEnabled } from "lib/bug-report/feature";
-import {
-    isScreenshotUploadConfigured,
-    uploadCapturedScreenshot,
-    type UploadedScreenshot,
-} from "lib/bug-report/screenshot";
+import { flushPendingBugReports } from "lib/bug-report/flush";
+import { createPendingBugReportId, enqueueBugReport, persistScreenshotForQueue } from "lib/bug-report/queue";
+import { isScreenshotUploadConfigured } from "lib/bug-report/screenshot";
 import type { BugReportSeverity, KnownIssueMatch } from "lib/bug-report/types";
 import { useDesignSystem } from "lib/design-system";
 import { logger } from "lib/logger";
@@ -79,9 +77,11 @@ const AUTHENTICATED_GROUPS = new Set(["(tabs)", "execute", "place", "report", "s
  * on every authenticated screen (never on auth/onboarding) when developer mode
  * is enabled, and stays clear of the bottom tab bar and audit footer controls.
  *
- * Submission is online-only: an offline tap keeps the typed draft locally and
- * tells the reporter to try again once they are back online. There is no
- * background sync for bug reports by design.
+ * Reporting works fully offline: every finished report (including its screenshot)
+ * is stored on-device in the local queue first. If the device is online the
+ * report is sent right away; if not, it stays queued and the auditor is prompted
+ * to submit it the next time the app is opened with a connection (see
+ * ``useBugReportFlushPrompt``). There is no background sync by design.
  */
 export function BugReportFab() {
     const ds = useDesignSystem();
@@ -97,35 +97,45 @@ export function BugReportFab() {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [severity, setSeverity] = useState<BugReportSeverity>("major");
-    const [screenshot, setScreenshot] = useState<UploadedScreenshot | null>(null);
+    // Local file URI of the captured screen. The image is kept on-device and only
+    // uploaded to Cloudinary when the queued report is flushed, so it survives
+    // offline. ``null`` means no screenshot is attached.
+    const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
     const [isAttaching, setIsAttaching] = useState(false);
     const [matches, setMatches] = useState<KnownIssueMatch[]>([]);
     const [hasCheckedMatches, setHasCheckedMatches] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    /** Release the temporary capture file backing the current screenshot. */
+    const releaseScreenshot = useCallback(() => {
+        setScreenshotUri((current) => {
+            if (current) {
+                releaseCapture(current);
+            }
+            return null;
+        });
+    }, []);
+
     const captureAndAttachScreenshot = useCallback(async () => {
-        if (!isScreenshotUploadConfigured() || session === null) {
+        if (!isScreenshotUploadConfigured()) {
             setOpen(true);
             return;
         }
 
         setIsAttaching(true);
-        let capturedUri: string | null = null;
         try {
             // Capture the underlying screen BEFORE the report sheet opens, so the
-            // screenshot shows what the reporter was looking at, not the form.
-            capturedUri = await captureScreen({
+            // screenshot shows what the reporter was looking at, not the form. The
+            // upload is deferred to submit/flush time so capture works offline.
+            const capturedUri = await captureScreen({
                 format: "png",
                 quality: 1,
                 result: "tmpfile",
             });
             setOpen(true);
-            const uploaded = await uploadCapturedScreenshot(session, capturedUri);
-            if (uploaded) {
-                setScreenshot(uploaded);
-            }
+            setScreenshotUri(capturedUri);
         } catch (error) {
-            // A screenshot is optional; never block the report on an upload failure.
+            // A screenshot is optional; never block the report on a capture failure.
             logger.error(
                 "Failed to capture bug-report screenshot",
                 error instanceof Error ? error.message : String(error),
@@ -133,19 +143,27 @@ export function BugReportFab() {
             setOpen(true);
             toast.show(t("screenshot.failed"));
         } finally {
-            if (capturedUri) {
-                releaseCapture(capturedUri);
-            }
             setIsAttaching(false);
         }
-    }, [session, t, toast]);
+    }, [t, toast]);
 
     const handleOpenReport = useCallback(() => {
         setMatches([]);
         setHasCheckedMatches(false);
-        setScreenshot(null);
+        releaseScreenshot();
         void captureAndAttachScreenshot();
-    }, [captureAndAttachScreenshot]);
+    }, [captureAndAttachScreenshot, releaseScreenshot]);
+
+    /** Close the sheet, discarding any not-yet-queued screenshot capture. */
+    const handleSheetOpenChange = useCallback(
+        (next: boolean) => {
+            if (!next) {
+                releaseScreenshot();
+            }
+            setOpen(next);
+        },
+        [releaseScreenshot],
+    );
 
     // Restore any locally-saved draft when the sheet opens.
     useEffect(() => {
@@ -179,15 +197,11 @@ export function BugReportFab() {
     const handleSubmit = useCallback(async () => {
         if (!canSubmit || session === null) return;
 
-        if (!(await isDeviceOnline())) {
-            // Keep the draft; tell the reporter to retry when online.
-            saveBugReportDraft({ title, description, severity });
-            toast.show(t("errors.offline"));
-            return;
-        }
+        const online = await isDeviceOnline();
 
-        // Deflection: show known-issue matches once before the first real submit.
-        if (!hasCheckedMatches) {
+        // Deflection: only possible online. Show known-issue matches once before
+        // the first real submit. Offline reporters skip straight to queuing.
+        if (online && !hasCheckedMatches) {
             setIsSubmitting(true);
             try {
                 const found = await matchKnownIssues(session, `${title} ${description}`);
@@ -217,25 +231,37 @@ export function BugReportFab() {
             if (resolved.submissionId) routeContext.submissionId = resolved.submissionId;
 
             const context = await buildMobileBugReportContext(routeContext);
-            await createBugReport(session, {
-                surface: "mobile",
+
+            // Always queue the finished report locally first, copying the captured
+            // screenshot into durable storage so nothing is lost offline.
+            const reportId = createPendingBugReportId();
+            const screenshotLocalUri = screenshotUri ? persistScreenshotForQueue(screenshotUri, reportId) : undefined;
+            enqueueBugReport({
+                id: reportId,
+                createdAt: new Date().toISOString(),
                 title: title.trim(),
                 description: description.trim(),
                 severity,
-                ...(context.project_id ? { project_id: context.project_id } : {}),
-                ...(context.place_id ? { place_id: context.place_id } : {}),
-                ...(context.playspace_submission_id
-                    ? { playspace_submission_id: context.playspace_submission_id }
-                    : {}),
-                ...(screenshot ? { screenshot_url: screenshot.url, screenshot_public_id: screenshot.publicId } : {}),
                 context,
+                ...(context.project_id ? { projectId: context.project_id } : {}),
+                ...(context.place_id ? { placeId: context.place_id } : {}),
+                ...(context.playspace_submission_id ? { submissionId: context.playspace_submission_id } : {}),
+                ...(screenshotLocalUri ? { screenshotLocalUri } : {}),
             });
+            releaseScreenshot();
             clearBugReportDraft();
-            toast.show(t("success"));
+
+            if (online) {
+                // Drain the queue now (also retries any older queued reports).
+                const result = await flushPendingBugReports(session);
+                toast.show(result.failed === 0 ? t("success") : t("queue.savedForLater"));
+            } else {
+                toast.show(t("queue.savedOffline"));
+            }
+
             setTitle("");
             setDescription("");
             setSeverity("major");
-            setScreenshot(null);
             resetForm();
             setOpen(false);
         } catch {
@@ -249,8 +275,9 @@ export function BugReportFab() {
         params.auditId,
         params.placeId,
         params.projectId,
+        releaseScreenshot,
         resetForm,
-        screenshot,
+        screenshotUri,
         segments,
         session,
         sessionsByAuditId,
@@ -284,7 +311,7 @@ export function BugReportFab() {
             <Sheet
                 modal
                 open={open}
-                onOpenChange={setOpen}
+                onOpenChange={handleSheetOpenChange}
                 snapPoints={[90]}
                 snapPointsMode="percent"
                 dismissOnSnapToBottom
@@ -382,7 +409,7 @@ export function BugReportFab() {
                                 <YStack gap="$2">
                                     <XStack justify="space-between" items="center">
                                         <Text color={ds.colors.foreground}>{t("fields.screenshot")}</Text>
-                                        {screenshot ? (
+                                        {screenshotUri ? (
                                             <XStack gap="$1.5" items="center">
                                                 <Check size={14} color={ds.colors.success} />
                                                 <Text fontSize="$2" color={ds.colors.success}>
@@ -408,7 +435,7 @@ export function BugReportFab() {
                                                 {t("screenshot.attaching")}
                                             </Text>
                                         </XStack>
-                                    ) : screenshot ? (
+                                    ) : screenshotUri ? (
                                         <YStack
                                             rounded="$4"
                                             overflow="hidden"
@@ -416,7 +443,7 @@ export function BugReportFab() {
                                             borderColor={ds.colors.border}
                                         >
                                             <Image
-                                                source={{ uri: screenshot.url }}
+                                                source={{ uri: screenshotUri }}
                                                 style={{ width: "100%", height: 180 }}
                                                 resizeMode="cover"
                                             />
@@ -428,7 +455,7 @@ export function BugReportFab() {
                                                 circular
                                                 bg={ds.colors.overlay}
                                                 icon={<X size={16} color="#fff" />}
-                                                onPress={() => setScreenshot(null)}
+                                                onPress={releaseScreenshot}
                                                 accessibilityLabel={t("screenshot.remove")}
                                             />
                                         </YStack>
@@ -500,7 +527,7 @@ export function BugReportFab() {
                                         </Text>
                                     )}
                                 </Button>
-                                <Button height={44} chromeless onPress={() => setOpen(false)}>
+                                <Button height={44} chromeless onPress={() => handleSheetOpenChange(false)}>
                                     <Text color={ds.colors.mutedForeground}>{t("cancel")}</Text>
                                 </Button>
                             </YStack>

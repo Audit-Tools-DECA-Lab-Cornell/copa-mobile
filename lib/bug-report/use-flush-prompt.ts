@@ -1,0 +1,97 @@
+import { useToastController } from "@tamagui/toast";
+import * as Network from "expo-network";
+import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { Alert, AppState, type AppStateStatus } from "react-native";
+
+import type { AuthSession } from "lib/auth/types";
+
+import { isDeviceOnline } from "lib/bug-report/context";
+import { isBugReportingEnabled } from "lib/bug-report/feature";
+import { flushPendingBugReports } from "lib/bug-report/flush";
+import { countPendingBugReports } from "lib/bug-report/queue";
+
+/**
+ * Ask the auditor whether to submit queued bug reports when the app returns
+ * online in the foreground. This replaces background sync: reports stay on the
+ * device until the auditor confirms.
+ *
+ * Runs on the same triggers as queue flushing — first authenticated render,
+ * connectivity restored, and foregrounding — but only prompts.
+ *
+ * @param session The active auth session, or null if signed out.
+ * @param isReady Whether auth and local storage are ready for submission.
+ */
+export function useBugReportFlushPrompt(session: AuthSession | null, isReady: boolean): void {
+    const { t } = useTranslation("bugReport");
+    const toast = useToastController();
+    // Guards against stacking prompts: at most one prompt is live at a time.
+    const isPromptingRef = useRef(false);
+
+    useEffect(() => {
+        if (!isBugReportingEnabled() || !isReady || session === null) {
+            return;
+        }
+
+        const maybePrompt = () => {
+            if (isPromptingRef.current || countPendingBugReports() === 0) {
+                return;
+            }
+            void (async () => {
+                if (!(await isDeviceOnline())) {
+                    return;
+                }
+                const count = countPendingBugReports();
+                if (isPromptingRef.current || count === 0) {
+                    return;
+                }
+                isPromptingRef.current = true;
+                Alert.alert(t("queue.promptTitle"), t("queue.promptMessage", { count }), [
+                    {
+                        text: t("queue.promptLater"),
+                        style: "cancel",
+                        onPress: () => {
+                            isPromptingRef.current = false;
+                        },
+                    },
+                    {
+                        text: t("queue.promptSubmit"),
+                        onPress: () => {
+                            void flushPendingBugReports(session)
+                                .then((result) => {
+                                    if (result.submitted > 0) {
+                                        toast.show(t("queue.flushed", { count: result.submitted }));
+                                    }
+                                    if (result.failed > 0) {
+                                        toast.show(t("queue.flushPartial"));
+                                    }
+                                })
+                                .finally(() => {
+                                    isPromptingRef.current = false;
+                                });
+                        },
+                    },
+                ]);
+            })();
+        };
+
+        maybePrompt();
+
+        const networkSubscription = Network.addNetworkStateListener((state) => {
+            if (state.isConnected && state.isInternetReachable !== false) {
+                maybePrompt();
+            }
+        });
+
+        const appStateSubscription = AppState.addEventListener("change", (next: AppStateStatus) => {
+            if (next === "active") {
+                maybePrompt();
+            }
+        });
+
+        return () => {
+            networkSubscription.remove();
+            appStateSubscription.remove();
+        };
+    }, [session, isReady, t, toast]);
+}

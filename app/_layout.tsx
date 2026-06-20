@@ -18,6 +18,7 @@ import {
 } from "@expo-google-fonts/space-grotesk";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { BugReportFab } from "components/bug-report/BugReportFab";
+import { useBugReportFlushPrompt } from "lib/bug-report/use-flush-prompt";
 import { Provider } from "components/Provider";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
@@ -132,6 +133,9 @@ function ActiveRootLayoutNav() {
     const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     const ds = useDesignSystem();
     const { t } = useTranslation("audit");
+
+    // Offer to submit any locally-queued bug reports once the device is online.
+    useBugReportFlushPrompt(authSession, authStatus === "authenticated" && isAuditHydrated);
     const navigationTheme =
         resolvedTheme === "light"
             ? {

@@ -37,5 +37,17 @@
         "offline": "You're offline. Your report is saved here — submit again once you're back online.",
         "generic": "We couldn't send your report. Please try again."
     },
-    "sending": "Sending…"
+    "sending": "Sending…",
+    "queue": {
+        "promptTitle": "Submit saved reports?",
+        "promptMessage_one": "You have {{count}} bug report saved on this device. Submit it now?",
+        "promptMessage_other": "You have {{count}} bug reports saved on this device. Submit them now?",
+        "promptSubmit": "Submit now",
+        "promptLater": "Later",
+        "flushed_one": "Your saved report was sent. Thank you.",
+        "flushed_other": "{{count}} saved reports were sent. Thank you.",
+        "flushPartial": "Some reports couldn't be sent yet. We'll ask again next time you're online.",
+        "savedOffline": "You're offline. Your report is saved on this device — we'll prompt you to send it when you're back online.",
+        "savedForLater": "Your report is saved on this device. We'll prompt you to send it when you're back online."
+    }
 }

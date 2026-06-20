@@ -37,5 +37,17 @@
         "offline": "Sie sind offline. Ihr Bericht ist hier gespeichert — senden Sie ihn erneut, sobald Sie wieder online sind.",
         "generic": "Ihr Bericht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
     },
-    "sending": "Wird gesendet…"
+    "sending": "Wird gesendet…",
+    "queue": {
+        "promptTitle": "Gespeicherte Berichte senden?",
+        "promptMessage_one": "Auf diesem Gerät ist {{count}} Fehlerbericht gespeichert. Jetzt senden?",
+        "promptMessage_other": "Auf diesem Gerät sind {{count}} Fehlerberichte gespeichert. Jetzt senden?",
+        "promptSubmit": "Jetzt senden",
+        "promptLater": "Später",
+        "flushed_one": "Ihr gespeicherter Bericht wurde gesendet. Vielen Dank.",
+        "flushed_other": "{{count}} gespeicherte Berichte wurden gesendet. Vielen Dank.",
+        "flushPartial": "Einige Berichte konnten noch nicht gesendet werden. Wir fragen erneut, wenn Sie wieder online sind.",
+        "savedOffline": "Sie sind offline. Ihr Bericht ist auf diesem Gerät gespeichert — wir erinnern Sie ans Senden, sobald Sie wieder online sind.",
+        "savedForLater": "Ihr Bericht ist auf diesem Gerät gespeichert. Wir erinnern Sie ans Senden, sobald Sie wieder online sind."
+    }
 }

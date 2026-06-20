@@ -27,6 +27,18 @@
                 "EXPO_PUBLIC_DEPRECATED_INTERNAL_BUILD": "false"
             }
         },
+        "internalMigration": {
+            "autoIncrement": true,
+            "distribution": "store",
+            "android": {
+                "buildType": "app-bundle"
+            },
+            "channel": "internal-migration",
+            "env": {
+                "EXPO_PUBLIC_BUILD_CHANNEL": "internal",
+                "EXPO_PUBLIC_DEPRECATED_INTERNAL_BUILD": "true"
+            }
+        },
         "production": {
             "autoIncrement": true,
             "android": {
@@ -46,6 +58,14 @@
                 "track": "alpha",
                 "serviceAccountKeyPath": "./credentials/google/playspace-deca.json",
                 "releaseStatus": "completed"
+            }
+        },
+        "internal-testing": {
+            "android": {
+                "track": "internal",
+                "serviceAccountKeyPath": "./credentials/google/playspace-deca.json",
+                "releaseStatus": "completed",
+                "changesNotSentForReview": true
             }
         }
     }
