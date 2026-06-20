@@ -82,5 +82,24 @@
     },
     "unableToLoadPlaces": "Unable to load places.",
     "unableToReachAuthenticationService": "Unable to reach authentication service.",
-    "unableToReachPlayspaceAuditService": "Unable to reach COPA audit service."
+    "unableToReachPlayspaceAuditService": "Unable to reach COPA audit service.",
+    "testingMigration": {
+        "noticeLabel": "Testing migration notice",
+        "title": "We’ve moved testing one level up",
+        "bodyPrimary": "This internal test build is no longer actively maintained. To continue receiving the latest near-production updates, please uninstall this version, opt in to the pre-production testers program using the link below, and install the newest COPA pre-production build.",
+        "bodySecondary": "Once your Google Play email is approved, the link will allow you to join and install the app. To get your email approved or resolve any issues, please reach out to Thomas Morgenthaler.",
+        "primaryCta": "Open the opt-in link",
+        "primaryHint": "Opens the opt-in link for the next COPA pre-production version.",
+        "secondaryCta": "I’ve already updated",
+        "secondaryHint": "Opens support if you have already updated and still need help.",
+        "supportText": "Need access or seeing an issue? Contact Thomas Morgenthaler.",
+        "supportEmailSubject": "COPA pre-production access",
+        "supportEmailBody": "Hi Thomas,\n\nI need access to the next COPA pre-production version.\n\nReason: {{reason}}",
+        "reasonMissingLink": "The opt-in link is not configured for the testing migration screen.",
+        "reasonOpenLinkFailed": "Opening the testing opt-in link failed.",
+        "reasonAlreadyUpdated": "I have already updated and need help getting access.",
+        "shareTitle": "Contact Thomas Morgenthaler",
+        "shareFallbackMessage": "Share this message with Thomas Morgenthaler to request access.",
+        "shareFailed": "Unable to open sharing options. Please contact Thomas Morgenthaler for access."
+    }
 }

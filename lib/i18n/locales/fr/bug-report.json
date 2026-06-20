@@ -1,0 +1,41 @@
+{
+    "launch": "Signaler un problème",
+    "title": "Signaler un problème",
+    "subtitle": "Dites-nous ce qui n'a pas fonctionné. Nous joignons automatiquement votre écran, la version de l'app et les détails de l'appareil — jamais vos réponses d'audit.",
+    "fields": {
+        "title": "Que s'est-il passé ?",
+        "description": "Décrivez le problème",
+        "severity": "À quel point cela vous bloque-t-il ?",
+        "screenshot": "Capture de l’écran"
+    },
+    "screenshot": {
+        "failed": "Impossible d’ajouter la capture de l’écran. Vous pouvez quand même envoyer le rapport sans elle.",
+        "attaching": "Une capture de cet écran est ajoutée automatiquement.",
+        "attached": "Une capture de cet écran est ajoutée automatiquement.",
+        "unavailable": "Nous n’avons pas pu joindre cet écran automatiquement. Vous pouvez quand même envoyer le rapport.",
+        "remove": "Supprimer",
+        "privacyNote": "Nous joignons une image de votre écran actuel. Supprimez-la si elle montre des informations sensibles."
+    },
+    "placeholders": {
+        "title": "Bref résumé du problème",
+        "description": "Qu'avez-vous fait, qu'attendiez-vous et que s'est-il passé à la place ?"
+    },
+    "severity": {
+        "blocking": "Bloquant",
+        "major": "Majeur",
+        "minor": "Mineur"
+    },
+    "matches": {
+        "heading": "Ces problèmes connus pourraient correspondre — vérifiez-les d'abord",
+        "workaroundLabel": "Solution de contournement"
+    },
+    "submit": "Envoyer le rapport",
+    "submitAnyway": "Envoyer quand même",
+    "cancel": "Annuler",
+    "success": "Merci — votre rapport a été envoyé.",
+    "errors": {
+        "offline": "Vous êtes hors ligne. Votre rapport est enregistré ici — renvoyez-le une fois de retour en ligne.",
+        "generic": "Nous n'avons pas pu envoyer votre rapport. Veuillez réessayer."
+    },
+    "sending": "Envoi…"
+}

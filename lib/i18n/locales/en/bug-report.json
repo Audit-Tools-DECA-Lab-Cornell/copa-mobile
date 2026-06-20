@@ -1,0 +1,41 @@
+{
+    "launch": "Report an issue",
+    "title": "Report an issue",
+    "subtitle": "Tell us what went wrong. We attach your screen, app version, and device details automatically — never your audit answers.",
+    "fields": {
+        "title": "What happened?",
+        "description": "Describe the problem",
+        "severity": "How much does it block you?",
+        "screenshot": "Screen snapshot"
+    },
+    "screenshot": {
+        "failed": "Couldn't attach the screen snapshot. You can still submit without it.",
+        "attaching": "Attaching a snapshot of this screen automatically.",
+        "attached": "A snapshot of this screen is attached automatically.",
+        "unavailable": "We could not attach this screen automatically. You can still send the report.",
+        "remove": "Remove",
+        "privacyNote": "We attach a picture of your current screen. Remove it if it shows anything sensitive."
+    },
+    "placeholders": {
+        "title": "Short summary of the problem",
+        "description": "What did you do, what did you expect, and what happened instead?"
+    },
+    "severity": {
+        "blocking": "Blocking",
+        "major": "Major",
+        "minor": "Minor"
+    },
+    "matches": {
+        "heading": "These known issues might match — check them first",
+        "workaroundLabel": "Workaround"
+    },
+    "submit": "Submit report",
+    "submitAnyway": "Submit anyway",
+    "cancel": "Cancel",
+    "success": "Thanks, your report has been sent.",
+    "errors": {
+        "offline": "You're offline. Your report is saved here — submit again once you're back online.",
+        "generic": "We couldn't send your report. Please try again."
+    },
+    "sending": "Sending…"
+}

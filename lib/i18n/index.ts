@@ -4,6 +4,7 @@ import { initReactI18next } from "react-i18next";
 
 import deAudit from "./locales/de/audit.json";
 import deAuth from "./locales/de/auth.json";
+import deBugReport from "./locales/de/bug-report.json";
 import deCommon from "./locales/de/common.json";
 import deDashboard from "./locales/de/dashboard.json";
 import deNotFound from "./locales/de/not-found.json";
@@ -13,6 +14,7 @@ import deReports from "./locales/de/reports.json";
 import deSettings from "./locales/de/settings.json";
 import enAudit from "./locales/en/audit.json";
 import enAuth from "./locales/en/auth.json";
+import enBugReport from "./locales/en/bug-report.json";
 import enCommon from "./locales/en/common.json";
 import enDashboard from "./locales/en/dashboard.json";
 import enNotFound from "./locales/en/not-found.json";
@@ -22,6 +24,7 @@ import enReports from "./locales/en/reports.json";
 import enSettings from "./locales/en/settings.json";
 import frAudit from "./locales/fr/audit.json";
 import frAuth from "./locales/fr/auth.json";
+import frBugReport from "./locales/fr/bug-report.json";
 import frCommon from "./locales/fr/common.json";
 import frDashboard from "./locales/fr/dashboard.json";
 import frNotFound from "./locales/fr/not-found.json";
@@ -31,6 +34,7 @@ import frReports from "./locales/fr/reports.json";
 import frSettings from "./locales/fr/settings.json";
 import hiAudit from "./locales/hi/audit.json";
 import hiAuth from "./locales/hi/auth.json";
+import hiBugReport from "./locales/hi/bug-report.json";
 import hiCommon from "./locales/hi/common.json";
 import hiDashboard from "./locales/hi/dashboard.json";
 import hiNotFound from "./locales/hi/not-found.json";
@@ -40,6 +44,7 @@ import hiReports from "./locales/hi/reports.json";
 import hiSettings from "./locales/hi/settings.json";
 import jaAudit from "./locales/ja/audit.json";
 import jaAuth from "./locales/ja/auth.json";
+import jaBugReport from "./locales/ja/bug-report.json";
 import jaCommon from "./locales/ja/common.json";
 import jaDashboard from "./locales/ja/dashboard.json";
 import jaNotFound from "./locales/ja/not-found.json";
@@ -87,7 +92,18 @@ const i18nInstance = i18n;
 void i18nInstance.use(initReactI18next).init({
     lng: resolveLanguagePreference("system"),
     fallbackLng: FALLBACK_LANGUAGE,
-    ns: ["common", "auth", "onboarding", "settings", "audit", "dashboard", "places", "reports", "not-found"],
+    ns: [
+        "common",
+        "auth",
+        "onboarding",
+        "settings",
+        "audit",
+        "dashboard",
+        "places",
+        "reports",
+        "not-found",
+        "bugReport",
+    ],
     defaultNS: "common",
     resources: {
         en: {
@@ -100,6 +116,7 @@ void i18nInstance.use(initReactI18next).init({
             places: enPlaces,
             reports: enReports,
             "not-found": enNotFound,
+            bugReport: enBugReport,
         },
         de: {
             common: deCommon,
@@ -111,6 +128,7 @@ void i18nInstance.use(initReactI18next).init({
             places: dePlaces,
             reports: deReports,
             "not-found": deNotFound,
+            bugReport: deBugReport,
         },
         fr: {
             common: frCommon,
@@ -122,6 +140,7 @@ void i18nInstance.use(initReactI18next).init({
             places: frPlaces,
             reports: frReports,
             "not-found": frNotFound,
+            bugReport: frBugReport,
         },
         hi: {
             common: hiCommon,
@@ -133,6 +152,7 @@ void i18nInstance.use(initReactI18next).init({
             places: hiPlaces,
             reports: hiReports,
             "not-found": hiNotFound,
+            bugReport: hiBugReport,
         },
         ja: {
             common: jaCommon,
@@ -144,6 +164,7 @@ void i18nInstance.use(initReactI18next).init({
             places: jaPlaces,
             reports: jaReports,
             "not-found": jaNotFound,
+            bugReport: jaBugReport,
         },
     },
     interpolation: {

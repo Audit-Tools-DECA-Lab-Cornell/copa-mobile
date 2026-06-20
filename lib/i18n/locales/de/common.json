@@ -82,5 +82,24 @@
     },
     "unableToLoadPlaces": "Orte konnten nicht geladen werden.",
     "unableToReachAuthenticationService": "Authentifizierungsdienst nicht erreichbar.",
-    "unableToReachPlayspaceAuditService": "COPA-Audit-Dienst nicht erreichbar."
+    "unableToReachPlayspaceAuditService": "COPA-Audit-Dienst nicht erreichbar.",
+    "testingMigration": {
+        "noticeLabel": "Hinweis zur Testumstellung",
+        "title": "Wir haben die Tests eine Stufe weitergebracht",
+        "bodyPrimary": "Dieser interne Test-Build wird nicht mehr aktiv gepflegt. Um weiterhin die neuesten nahezu produktionsreifen Updates zu erhalten, deinstalliere bitte diese Version, melde dich über den untenstehenden Link für das Vorproduktions-Testprogramm an und installiere den neuesten COPA-Vorproduktions-Build.",
+        "bodySecondary": "Sobald deine Google-Play-E-Mail-Adresse freigegeben ist, kannst du über den Link beitreten und die App installieren. Wenn deine E-Mail-Adresse freigegeben werden muss oder ein Problem auftritt, wende dich bitte an Thomas Morgenthaler.",
+        "primaryCta": "Opt-in-Link öffnen",
+        "primaryHint": "Öffnet den Opt-in-Link für die nächste COPA-Vorproduktionsversion.",
+        "secondaryCta": "Ich habe bereits aktualisiert",
+        "secondaryHint": "Öffnet den Support, wenn du bereits aktualisiert hast und noch Hilfe brauchst.",
+        "supportText": "Brauchst du Zugriff oder tritt ein Problem auf? Kontaktiere Thomas Morgenthaler.",
+        "supportEmailSubject": "COPA-Vorproduktionszugriff",
+        "supportEmailBody": "Hallo Thomas,\n\nich benötige Zugriff auf die nächste COPA-Vorproduktionsversion.\n\nGrund: {{reason}}",
+        "reasonMissingLink": "Der Opt-in-Link ist für den Hinweis zur Testumstellung nicht konfiguriert.",
+        "reasonOpenLinkFailed": "Der Opt-in-Link für die Tests konnte nicht geöffnet werden.",
+        "reasonAlreadyUpdated": "Ich habe bereits aktualisiert und benötige Hilfe beim Zugriff.",
+        "shareTitle": "Thomas Morgenthaler kontaktieren",
+        "shareFallbackMessage": "Teile diese Nachricht mit Thomas Morgenthaler, um Zugriff anzufordern.",
+        "shareFailed": "Die Freigabeoptionen konnten nicht geöffnet werden. Bitte kontaktiere Thomas Morgenthaler, um Zugriff zu erhalten."
+    }
 }

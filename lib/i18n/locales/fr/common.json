@@ -85,5 +85,24 @@
     },
     "unableToLoadPlaces": "Impossible de charger les lieux.",
     "unableToReachAuthenticationService": "Impossible de joindre le service d'authentification.",
-    "unableToReachPlayspaceAuditService": "Impossible de joindre le service d'audit COPA."
+    "unableToReachPlayspaceAuditService": "Impossible de joindre le service d'audit COPA.",
+    "testingMigration": {
+        "noticeLabel": "Avis de migration des tests",
+        "title": "Nous avons fait passer les tests au niveau supérieur",
+        "bodyPrimary": "Cette version de test interne n’est plus maintenue activement. Pour continuer à recevoir les dernières mises à jour proches de la production, désinstallez cette version, inscrivez-vous au programme de test de préproduction avec le lien ci-dessous, puis installez la dernière version de préproduction de COPA.",
+        "bodySecondary": "Une fois votre adresse e-mail Google Play approuvée, le lien vous permettra de vous inscrire et d’installer l’application. Pour faire approuver votre adresse e-mail ou résoudre un problème, contactez Thomas Morgenthaler.",
+        "primaryCta": "Ouvrir le lien d’inscription",
+        "primaryHint": "Ouvre le lien d’inscription pour la prochaine version de préproduction de COPA.",
+        "secondaryCta": "J’ai déjà mis à jour",
+        "secondaryHint": "Ouvre l’assistance si vous avez déjà mis à jour et avez encore besoin d’aide.",
+        "supportText": "Besoin d’un accès ou vous rencontrez un problème ? Contactez Thomas Morgenthaler.",
+        "supportEmailSubject": "Accès préproduction COPA",
+        "supportEmailBody": "Bonjour Thomas,\n\nj’ai besoin d’accéder à la prochaine version de préproduction de COPA.\n\nRaison : {{reason}}",
+        "reasonMissingLink": "Le lien d’inscription n’est pas configuré pour l’écran de migration des tests.",
+        "reasonOpenLinkFailed": "Impossible d’ouvrir le lien d’inscription aux tests.",
+        "reasonAlreadyUpdated": "J’ai déjà mis à jour et j’ai besoin d’aide pour accéder à l’application.",
+        "shareTitle": "Contacter Thomas Morgenthaler",
+        "shareFallbackMessage": "Partagez ce message avec Thomas Morgenthaler pour demander l’accès.",
+        "shareFailed": "Impossible d’ouvrir les options de partage. Contactez Thomas Morgenthaler pour obtenir l’accès."
+    }
 }

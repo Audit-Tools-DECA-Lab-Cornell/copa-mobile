@@ -7,23 +7,37 @@
         "development": {
             "developmentClient": true,
             "distribution": "internal",
-            "ios": { "simulator": true },
-            "android": { "buildType": "apk" },
-            "channel": "development"
+            "ios": {
+                "simulator": true
+            },
+            "android": {
+                "buildType": "apk"
+            },
+            "channel": "development",
+            "env": {
+                "EXPO_PUBLIC_BUILD_CHANNEL": "development",
+                "EXPO_PUBLIC_DEPRECATED_INTERNAL_BUILD": "false"
+            }
         },
         "preview": {
             "distribution": "internal",
-            "channel": "preview"
+            "channel": "preview",
+            "env": {
+                "EXPO_PUBLIC_BUILD_CHANNEL": "closed",
+                "EXPO_PUBLIC_DEPRECATED_INTERNAL_BUILD": "false"
+            }
         },
         "production": {
             "autoIncrement": true,
-            "android": { "buildType": "app-bundle" },
+            "android": {
+                "buildType": "app-bundle"
+            },
             "distribution": "store",
-            "channel": "production"
-        },
-        "apkClient": {
-            "android": { "buildType": "apk" },
-            "channel": "apkclient"
+            "channel": "production",
+            "env": {
+                "EXPO_PUBLIC_BUILD_CHANNEL": "closed",
+                "EXPO_PUBLIC_DEPRECATED_INTERNAL_BUILD": "false"
+            }
         }
     },
     "submit": {
@@ -32,14 +46,6 @@
                 "track": "alpha",
                 "serviceAccountKeyPath": "./credentials/google/playspace-deca.json",
                 "releaseStatus": "completed"
-            }
-        },
-        "internal-testing": {
-            "android": {
-                "track": "internal",
-                "serviceAccountKeyPath": "./credentials/google/playspace-deca.json",
-                "releaseStatus": "completed",
-                "changesNotSentForReview": true
             }
         }
     }

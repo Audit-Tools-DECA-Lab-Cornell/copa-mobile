@@ -82,5 +82,24 @@
     },
     "unableToLoadPlaces": "場所を読み込めません。",
     "unableToReachAuthenticationService": "認証サービスに接続できません。",
-    "unableToReachPlayspaceAuditService": "COPA監査サービスに接続できません。"
+    "unableToReachPlayspaceAuditService": "COPA監査サービスに接続できません。",
+    "testingMigration": {
+        "noticeLabel": "テスト移行のお知らせ",
+        "title": "テストを次の段階へ移行しました",
+        "bodyPrimary": "この内部テストビルドは現在のテスト経路ではなく、今後は積極的に保守されません。最新の本番に近い更新を受け取るには、このバージョンをアンインストールし、下のリンクからプレプロダクションテスター向けプログラムにオプトインして、最新のCOPAプレプロダクションビルドをインストールしてください。",
+        "bodySecondary": "Google Play のメールアドレスが承認されていれば、このリンクから参加してアプリをインストールできます。メールアドレスの承認が必要な場合や問題がある場合は、Thomas Morgenthaler に連絡してください。",
+        "primaryCta": "オプトインリンクを開く",
+        "primaryHint": "次のCOPAプレプロダクション版のオプトインリンクを開きます。",
+        "secondaryCta": "すでに更新しました",
+        "secondaryHint": "すでに更新済みで、まだサポートが必要な場合に連絡できます。",
+        "supportText": "アクセスが必要、または問題がありますか？Thomas Morgenthaler に連絡してください。",
+        "supportEmailSubject": "COPAプレプロダクションアクセス",
+        "supportEmailBody": "Thomasさん、\n\n次のCOPAプレプロダクション版へのアクセスが必要です。\n\n理由: {{reason}}",
+        "reasonMissingLink": "テスト移行画面のオプトインリンクが設定されていません。",
+        "reasonOpenLinkFailed": "テストのオプトインリンクを開けませんでした。",
+        "reasonAlreadyUpdated": "すでに更新しましたが、アクセスのサポートが必要です。",
+        "shareTitle": "Thomas Morgenthaler に連絡する",
+        "shareFallbackMessage": "アクセスを申請するには、このメッセージを Thomas Morgenthaler に共有してください。",
+        "shareFailed": "共有オプションを開けませんでした。アクセスについては Thomas Morgenthaler に連絡してください。"
+    }
 }

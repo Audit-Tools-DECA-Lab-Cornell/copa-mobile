@@ -1,0 +1,31 @@
+# Bug-reporting flow. Requires the build to run with
+# EXPO_PUBLIC_BUG_REPORTING_ENABLED=true so the floating report button mounts.
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- runFlow: login.yaml
+# The floating report button is available on the authenticated tabs.
+- extendedWaitUntil:
+      visible: "Report an issue"
+      timeout: 30000
+- tapOn: "Report an issue"
+- extendedWaitUntil:
+      visible: "What happened?"
+      timeout: 15000
+- tapOn: "What happened?"
+- inputText: "Maestro: report button works"
+- tapOn: "Describe the problem"
+- inputText: "Filing a report from the automated mobile flow."
+- hideKeyboard
+- tapOn: "Submit report"
+# Either the report is sent (toast) or known-issue matches are shown first;
+# in the latter case submit again.
+- runFlow:
+      when:
+          visible: "Submit anyway"
+      commands:
+          - tapOn: "Submit anyway"
+- extendedWaitUntil:
+      visible: ".*report was sent.*|.*Dashboard.*"
+      timeout: 20000

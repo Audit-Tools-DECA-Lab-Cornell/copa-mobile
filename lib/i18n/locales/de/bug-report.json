@@ -1,0 +1,41 @@
+{
+    "launch": "Problem melden",
+    "title": "Problem melden",
+    "subtitle": "Sagen Sie uns, was schiefgelaufen ist. Wir hängen automatisch Ihren Bildschirm, die App-Version und Gerätedetails an — niemals Ihre Audit-Antworten.",
+    "fields": {
+        "title": "Was ist passiert?",
+        "description": "Beschreiben Sie das Problem",
+        "severity": "Wie stark blockiert es Sie?",
+        "screenshot": "Bildschirmaufnahme"
+    },
+    "screenshot": {
+        "failed": "Die Bildschirmaufnahme konnte nicht angehängt werden. Sie können den Bericht trotzdem ohne sie senden.",
+        "attaching": "Eine Aufnahme dieses Bildschirms wird automatisch angehängt.",
+        "attached": "Eine Aufnahme dieses Bildschirms ist automatisch angehängt.",
+        "unavailable": "Wir konnten diesen Bildschirm nicht automatisch anhängen. Sie können den Bericht trotzdem senden.",
+        "remove": "Entfernen",
+        "privacyNote": "Wir hängen ein Bild Ihres aktuellen Bildschirms an. Entfernen Sie es, wenn es Sensibles zeigt."
+    },
+    "placeholders": {
+        "title": "Kurze Zusammenfassung des Problems",
+        "description": "Was haben Sie getan, was haben Sie erwartet und was ist stattdessen passiert?"
+    },
+    "severity": {
+        "blocking": "Blockierend",
+        "major": "Schwerwiegend",
+        "minor": "Gering"
+    },
+    "matches": {
+        "heading": "Diese bekannten Probleme könnten passen — bitte zuerst prüfen",
+        "workaroundLabel": "Behelfslösung"
+    },
+    "submit": "Bericht senden",
+    "submitAnyway": "Trotzdem senden",
+    "cancel": "Abbrechen",
+    "success": "Danke — Ihr Bericht wurde gesendet.",
+    "errors": {
+        "offline": "Sie sind offline. Ihr Bericht ist hier gespeichert — senden Sie ihn erneut, sobald Sie wieder online sind.",
+        "generic": "Ihr Bericht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    },
+    "sending": "Wird gesendet…"
+}

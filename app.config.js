@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "COPA",
         slug: "audit-tools-playspace-mobile",
-        version: "0.3.0",
+        version: "0.4.0",
         orientation: "portrait",
         icon: "./assets/icon-ios.png",
         scheme: "audit-tools-playspace-mobile",
@@ -70,6 +70,12 @@ export default {
         jsEngine: "hermes",
         extra: {
             router: {},
+            buildChannel: process.env.EXPO_PUBLIC_BUILD_CHANNEL ?? "development",
+            testingMigration: {
+                deprecatedInternalBuild: process.env.EXPO_PUBLIC_DEPRECATED_INTERNAL_BUILD ?? "false",
+                remoteConfigUrl: process.env.EXPO_PUBLIC_TESTING_MIGRATION_CONFIG_URL ?? "",
+                closedTestUrl: process.env.EXPO_PUBLIC_CLOSED_TEST_URL ?? "",
+            },
             eas: {
                 projectId: "2e559376-25f3-44e1-88bf-00eeaf9fb763",
             },

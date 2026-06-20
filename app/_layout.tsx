@@ -17,7 +17,9 @@ import {
     SpaceGrotesk_700Bold,
 } from "@expo-google-fonts/space-grotesk";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { BugReportFab } from "components/bug-report/BugReportFab";
 import { Provider } from "components/Provider";
+import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { registerAuditBackgroundTaskAsync, unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
@@ -28,6 +30,7 @@ import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
+import { useTestingMigrationGate } from "lib/testing-migration/config";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
@@ -107,6 +110,16 @@ export default function RootLayout() {
  * Root navigator with auth and app route groups.
  */
 function RootLayoutNav() {
+    const testingMigrationGate = useTestingMigrationGate();
+
+    if (testingMigrationGate.shouldBlock) {
+        return <TestingMigrationScreen closedTestUrl={testingMigrationGate.closedTestUrl} />;
+    }
+
+    return <ActiveRootLayoutNav />;
+}
+
+function ActiveRootLayoutNav() {
     const router = useRouter();
     const segments = useSegments();
     const authStatus = useAuthStore((state) => state.status);
@@ -377,6 +390,7 @@ function RootLayoutNav() {
                     <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
                     <Stack.Screen name="settings/edit-profile" options={{ headerShown: true }} />
                 </Stack>
+                <BugReportFab />
             </KeyboardAvoidingView>
         </ThemeProvider>
     );
