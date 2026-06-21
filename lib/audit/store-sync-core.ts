@@ -1661,6 +1661,30 @@ export function applyLocalAuditStartChange(args: ApplyLocalAuditStartChangeArgs)
 }
 
 /**
+ * Recompute `progress` and `scores.draft_progress_percent` from local draft
+ * state so offline edits reflect immediately. No-op until the instrument is
+ * hydrated, so edit paths never throw before the first sync.
+ *
+ * @param session Draft session after a local edit has been applied.
+ * @returns Session with progress fields recomputed.
+ */
+function withRecomputedProgress(session: AuditSession): AuditSession {
+    if (session.instrument === undefined || session.instrument === null) {
+        return session;
+    }
+
+    const nextLocalProgress = deriveLocalDraftProgress(session);
+    return {
+        ...session,
+        scores: {
+            ...session.scores,
+            draft_progress_percent: nextLocalProgress.draftProgressPercent,
+        },
+        progress: nextLocalProgress.progress,
+    };
+}
+
+/**
  * Apply an audit-level final-comments edit without mutating the original session.
  *
  * @param args Current session, updated comment text, and dirty-meta inputs.
@@ -1686,21 +1710,23 @@ export function applyLocalFinalCommentsChange(
         };
     }
 
-    return {
-        session: {
-            ...args.session,
+    const nextSessionBase: AuditSession = {
+        ...args.session,
+        meta: {
+            ...args.session.meta,
+            final_comments: normalizedFinalComments,
+        },
+        aggregate: {
+            ...args.session.aggregate,
             meta: {
-                ...args.session.meta,
+                ...args.session.aggregate.meta,
                 final_comments: normalizedFinalComments,
             },
-            aggregate: {
-                ...args.session.aggregate,
-                meta: {
-                    ...args.session.aggregate.meta,
-                    final_comments: normalizedFinalComments,
-                },
-            },
         },
+    };
+
+    return {
+        session: withRecomputedProgress(nextSessionBase),
         dirtyMeta: markMetaDirty(args.dirtyMeta, args.session.audit_id, args.nextVersion),
         didChange: true,
     };
@@ -1741,21 +1767,23 @@ export function applyLocalQuestionAnswerChange(
         responses: nextResponses,
     };
 
-    return {
-        session: {
-            ...args.session,
+    const nextSessionBase: AuditSession = {
+        ...args.session,
+        sections: {
+            ...args.session.sections,
+            [args.sectionKey]: nextSection,
+        },
+        aggregate: {
+            ...args.session.aggregate,
             sections: {
-                ...args.session.sections,
-                [args.sectionKey]: nextSection,
-            },
-            aggregate: {
-                ...args.session.aggregate,
-                sections: {
-                    ...args.session.aggregate.sections,
-                    [args.sectionKey]: cloneSectionState(nextSection, args.sectionKey),
-                },
+                ...args.session.aggregate.sections,
+                [args.sectionKey]: cloneSectionState(nextSection, args.sectionKey),
             },
         },
+    };
+
+    return {
+        session: withRecomputedProgress(nextSessionBase),
         dirtySections: markSectionDirty(args.dirtySections, args.session.audit_id, args.sectionKey, args.nextVersion),
         didChange: true,
     };
@@ -1790,21 +1818,23 @@ export function applyLocalSectionNoteChange(args: ApplyLocalSectionNoteChangeArg
         note: args.note,
     };
 
-    return {
-        session: {
-            ...args.session,
+    const nextSessionBase: AuditSession = {
+        ...args.session,
+        sections: {
+            ...args.session.sections,
+            [args.sectionKey]: nextSection,
+        },
+        aggregate: {
+            ...args.session.aggregate,
             sections: {
-                ...args.session.sections,
-                [args.sectionKey]: nextSection,
-            },
-            aggregate: {
-                ...args.session.aggregate,
-                sections: {
-                    ...args.session.aggregate.sections,
-                    [args.sectionKey]: cloneSectionState(nextSection, args.sectionKey),
-                },
+                ...args.session.aggregate.sections,
+                [args.sectionKey]: cloneSectionState(nextSection, args.sectionKey),
             },
         },
+    };
+
+    return {
+        session: withRecomputedProgress(nextSessionBase),
         dirtySections: markSectionDirty(args.dirtySections, args.session.audit_id, args.sectionKey, args.nextVersion),
         didChange: true,
     };
@@ -1834,15 +1864,17 @@ export function applyLocalPreAuditChange(args: ApplyLocalPreAuditChangeArgs): Ap
         };
     }
 
-    return {
-        session: {
-            ...args.session,
+    const nextSessionBase: AuditSession = {
+        ...args.session,
+        pre_audit: clonePreAuditValues(nextPreAudit),
+        aggregate: {
+            ...args.session.aggregate,
             pre_audit: clonePreAuditValues(nextPreAudit),
-            aggregate: {
-                ...args.session.aggregate,
-                pre_audit: clonePreAuditValues(nextPreAudit),
-            },
         },
+    };
+
+    return {
+        session: withRecomputedProgress(nextSessionBase),
         dirtyPreAudit: markPreAuditDirty(args.dirtyPreAudit, args.session.audit_id, args.nextVersion),
         didChange: true,
     };
