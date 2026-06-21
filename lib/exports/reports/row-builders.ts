@@ -69,9 +69,10 @@ export function buildSingleAuditWorkbook(
         fileBaseName: `pvua-${projectSegment}-${auditCodeSegment}`,
         title: `${instrument.instrument_name} Export - ${exportableAudit.auditSession.audit_code}`,
         tables: [
+            // Space Audit precedes the Overview so the space setup is seen before the scores.
+            buildSingleAuditSpaceAuditTable(exportableAudit, instrument),
             buildSingleAuditOverviewTable(exportableAudit, instrument),
             buildSingleAuditPreAuditTable(exportableAudit, instrument),
-            buildSingleAuditSpaceAuditTable(exportableAudit, instrument),
             buildAuditGuidanceTable(instrument),
             buildResponsesTable(exportableAudit, instrument),
         ],
@@ -88,9 +89,10 @@ export function buildBulkAuditWorkbook(
         fileBaseName: `pvua-bulk-${new Date().toISOString().replaceAll("-", "").replaceAll(":", "").slice(0, 15)}`,
         title: `${instrument.instrument_name} Bulk Export`,
         tables: [
+            // Space Audit precedes the Overview so the space setup is seen before the scores.
+            buildBulkAuditSpaceAuditTable(exportableAudits, auditorProfile, instrument),
             buildBulkAuditOverviewTable(exportableAudits, auditorProfile, instrument),
             buildBulkAuditPreAuditTable(exportableAudits, auditorProfile, instrument),
-            buildBulkAuditSpaceAuditTable(exportableAudits, auditorProfile, instrument),
             buildAuditGuidanceTable(instrument),
             buildBulkResponsesTable(exportableAudits, instrument),
         ],

@@ -53,17 +53,19 @@ export function buildInProgressAuditWorkbook(
 ): WorkbookPayload {
     const auditCodeSegment = slugifySegment(exportableAudit.auditSession.audit_code);
     const projectSegment = slugifySegment(exportableAudit.auditSession.project_name);
-    const tables: WorkbookTable[] = [
-        buildOverviewTable(exportableAudit, instrument),
-        buildPreAuditTable(exportableAudit, instrument),
-    ];
+    // Space Audit precedes the Overview so the space setup is seen before the scores.
+    const tables: WorkbookTable[] = [];
 
     const spaceAuditTable = buildSpaceAuditTable(exportableAudit, instrument);
     if (spaceAuditTable !== null) {
         tables.push(spaceAuditTable);
     }
 
-    tables.push(buildResponsesTable(exportableAudit, instrument));
+    tables.push(
+        buildOverviewTable(exportableAudit, instrument),
+        buildPreAuditTable(exportableAudit, instrument),
+        buildResponsesTable(exportableAudit, instrument),
+    );
 
     return {
         fileBaseName: `pvua-in-progress-${projectSegment}-${auditCodeSegment}`,
