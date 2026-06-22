@@ -38,6 +38,7 @@ export default function ExecuteFinalCommentsScreen() {
     const ensurePlaceAudit = usePlayspaceAuditStore((state) => state.ensurePlaceAudit);
     const applyLocalFinalComments = usePlayspaceAuditStore((state) => state.applyLocalFinalComments);
     const submitAuditSession = usePlayspaceAuditStore((state) => state.submitAuditSession);
+    const reopenQueuedSubmit = usePlayspaceAuditStore((state) => state.reopenQueuedSubmit);
     const isHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const isSavingDraft = usePlayspaceAuditStore((state) => state.isSavingDraft);
     const errorMessage = usePlayspaceAuditStore((state) => state.errorMessage);
@@ -258,6 +259,40 @@ export default function ExecuteFinalCommentsScreen() {
             <CenteredMessageCard
                 title={t("finalComments.preparingTitle", { ns: "audit" })}
                 message={t("finalComments.preparingMessage", { ns: "audit" })}
+            />
+        );
+    }
+
+    const auditPhase = syncStateByAuditId[auditSession.audit_id]?.phase;
+
+    if (auditPhase === "queued_submit") {
+        const handleEditSubmission = () => {
+            Alert.alert(
+                t("overview.syncStatus.editSubmissionConfirmTitle", { ns: "audit" }),
+                t("overview.syncStatus.editSubmissionConfirmMessage", { ns: "audit" }),
+                [
+                    {
+                        text: t("overview.syncStatus.editSubmissionConfirmCancel", { ns: "audit" }),
+                        style: "cancel",
+                    },
+                    {
+                        text: t("overview.syncStatus.editSubmissionConfirmConfirm", { ns: "audit" }),
+                        style: "destructive",
+                        onPress: () => {
+                            reopenQueuedSubmit(auditSession.audit_id);
+                        },
+                    },
+                ],
+            );
+        };
+
+        return (
+            <CenteredMessageCard
+                title={t("overview.syncStatus.queuedSubmitTitle", { ns: "audit" })}
+                message={t("overview.syncStatus.queuedSubmitMessage", { ns: "audit" })}
+                actionLabel={t("overview.syncStatus.editSubmissionButton", { ns: "audit" })}
+                onAction={handleEditSubmission}
+                actionTestID="edit-submission-button"
             />
         );
     }
@@ -600,13 +635,20 @@ interface CenteredMessageCardProps {
     readonly message: string;
     readonly actionLabel?: string;
     readonly onAction?: () => void;
+    readonly actionTestID?: string;
 }
 
 /**
  * @param props Message card props.
  * @returns Centered loading or recovery card.
  */
-function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
+function CenteredMessageCard({
+    title,
+    message,
+    actionLabel,
+    onAction,
+    actionTestID,
+}: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
 
@@ -638,6 +680,7 @@ function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly
                 </Paragraph>
                 {actionLabel !== undefined && typeof onAction === "function" ? (
                     <Button
+                        {...(actionTestID !== undefined ? { testID: actionTestID } : {})}
                         mt="$2"
                         height={44}
                         rounded={ds.radii.md}

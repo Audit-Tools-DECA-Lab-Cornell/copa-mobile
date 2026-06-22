@@ -14,6 +14,16 @@ import type { AuthSession } from "lib/auth/types";
 import { z } from "zod";
 
 /**
+ * Default network request timeout in milliseconds. Applied to every
+ * `requestJson` call unless the caller overrides it via `options.timeoutMs`.
+ *
+ * 20 seconds gives the server time to respond under poor connectivity while
+ * still failing fast when the OS reports a connection that has no real path
+ * to the internet (the common false-positive that causes indefinite hangs).
+ */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 20_000;
+
+/**
  * Structured API error for COPA audit API requests.
  */
 export class PlayspaceAuditApiError extends Error {
@@ -187,32 +197,91 @@ export async function notifySubmitFailureAsync(session: AuthSession, auditId: st
 }
 
 /**
+ * Per-call options for `requestJson`.
+ */
+export interface RequestJsonOptions {
+    /**
+     * Request timeout in milliseconds. Defaults to `DEFAULT_REQUEST_TIMEOUT_MS`.
+     * The underlying fetch is aborted (not just race-rejected) when the timeout
+     * fires, releasing any held connections.
+     */
+    timeoutMs?: number;
+}
+
+/**
  * Execute an authenticated playspace API request and decode JSON.
+ *
+ * A timeout abort is always in effect. If the caller also passes `init.signal`,
+ * both signals are honored: the fetch aborts when either the timeout fires or
+ * the caller's signal fires, whichever comes first.
  *
  * @param session Authenticated mobile session.
  * @param path Backend path relative to the API root.
- * @param init Fetch request options.
+ * @param init Fetch request options. `init.signal` is honored alongside the
+ *   built-in timeout signal.
+ * @param options Per-call overrides. Pass `{ timeoutMs: N }` to use a timeout
+ *   other than `DEFAULT_REQUEST_TIMEOUT_MS`.
  * @returns Parsed unknown JSON payload.
  */
-export async function requestJson(session: AuthSession, path: string, init: RequestInit): Promise<unknown> {
+export async function requestJson(
+    session: AuthSession,
+    path: string,
+    init: RequestInit,
+    options?: RequestJsonOptions,
+): Promise<unknown> {
     const baseUrl = getApiBaseUrl();
+    const timeoutMs = options?.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+
+    // Create a local AbortController that fires on timeout.
+    const timeoutController = new AbortController();
+    const timeoutHandle = setTimeout(() => {
+        timeoutController.abort();
+    }, timeoutMs);
+
+    // Resolve the effective signal: if the caller supplied a signal, honor both.
+    // AbortSignal.any() is declared in TypeScript's lib.dom.d.ts but is not
+    // implemented by the abort-controller v3 polyfill that Hermes / RN 0.83
+    // ships. Guard with a runtime typeof check and fall back to a manual
+    // listener when it is absent.
+    let effectiveSignal: AbortSignal;
+    const callerSignal = init.signal instanceof AbortSignal ? init.signal : undefined;
+
+    if (callerSignal === undefined) {
+        effectiveSignal = timeoutController.signal;
+    } else if (typeof AbortSignal.any === "function") {
+        effectiveSignal = AbortSignal.any([timeoutController.signal, callerSignal]);
+    } else {
+        // Polyfill path: wire the caller's signal so it also aborts the
+        // timeout controller, then use that single controller's signal.
+        callerSignal.addEventListener("abort", () => {
+            timeoutController.abort();
+        });
+        effectiveSignal = timeoutController.signal;
+    }
+
     let response: Response;
 
     try {
         response = await fetch(`${baseUrl}${path}`, {
             ...init,
+            signal: effectiveSignal,
             headers: {
                 ...buildAuthenticatedHeaders(session),
                 ...toHeaderRecord(init.headers),
             },
         });
     } catch (error) {
+        // Treat an abort (timeout or caller cancellation) as a transient network
+        // failure so catch blocks in submit paths derive a blocked/offline state
+        // rather than a validation or auth error.
         const message = error instanceof Error ? error.message : t("networkRequestFailed", "Network request failed.");
         throw new PlayspaceAuditApiError(
             t("unableToReachPlayspaceAuditService", "Unable to reach COPA audit service."),
             0,
             message,
         );
+    } finally {
+        clearTimeout(timeoutHandle);
     }
 
     if (!response.ok) {

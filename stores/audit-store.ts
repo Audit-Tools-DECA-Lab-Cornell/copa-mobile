@@ -176,6 +176,14 @@ interface PlayspaceAuditStoreState {
     flushPendingChanges: (session: AuthSession) => Promise<FlushPendingChangesResult>;
     submitAuditSession: (session: AuthSession, auditId: string) => Promise<AuditSession>;
     clearError: () => void;
+    /**
+     * Cancel a durable offline-queued submit and return the audit to an editable
+     * state so the auditor can review and resubmit. Only acts when the audit's
+     * current phase is exactly `queued_submit`; no-ops otherwise.
+     *
+     * The auditor must tap Submit again after editing to re-queue delivery.
+     */
+    reopenQueuedSubmit: (auditId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -1873,27 +1881,42 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
         }
     };
 
-    // Queue the submit for background delivery when offline.
+    // Park the submit for automatic background delivery: keep the durable outbox
+    // op and mark the audit queued (a locked, calm "will upload" state), clearing
+    // any stale error. Used both when the device is offline and when an online
+    // delivery attempt fails transiently, so an unreachable network never
+    // surfaces to the auditor as a hard "submit failed" — `processQueuedSubmits`
+    // retries the queued submit automatically once connectivity returns.
+    const queueSubmitForDelivery = (): AuditSession => {
+        enqueueDurableSubmitOp();
+        const current = auditData$.sessions_by_audit_id[auditId]?.peek();
+        if (current === undefined) {
+            throw new Error(t("audit:errors.submitFallback"));
+        }
+        const queuedPhase = auditData$.sync_state_by_audit_id.peek()[auditId]?.phase;
+        if (queuedPhase !== "queued_submit") {
+            auditData$.sync_state_by_audit_id.set(
+                writeAuditSyncState(
+                    auditData$.sync_state_by_audit_id.peek(),
+                    auditId,
+                    "queued_submit",
+                    new Date().toISOString(),
+                ),
+            );
+        }
+        auditUI$.errorMessage.set(null);
+        saveNow();
+        return current;
+    };
+
+    // Queue the submit for background delivery when the device is offline.
     const netState = await Network.getNetworkStateAsync();
     const isOnline = netState.isConnected !== false && netState.isInternetReachable !== false;
     if (!isOnline) {
         const currentSession = auditData$.sessions_by_audit_id[auditId]?.peek();
         if (currentSession !== undefined && currentSession.status !== "SUBMITTED") {
-            enqueueDurableSubmitOp();
-            const currentPhase = auditData$.sync_state_by_audit_id.peek()[auditId]?.phase;
-            if (currentPhase !== "queued_submit") {
-                auditData$.sync_state_by_audit_id.set(
-                    writeAuditSyncState(
-                        auditData$.sync_state_by_audit_id.peek(),
-                        auditId,
-                        "queued_submit",
-                        new Date().toISOString(),
-                    ),
-                );
-                saveNow();
-                log.withMetadata({ auditId }).info("offline submit queued for background delivery");
-            }
-            return currentSession;
+            log.withMetadata({ auditId }).info("offline submit queued for background delivery");
+            return queueSubmitForDelivery();
         }
     }
 
@@ -1910,9 +1933,12 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
         const hasFailedDraftSync = flushResult.failedAuditIds.includes(auditId);
         const hasRemainingDirtyChanges = flushResult.remainingDirtyAuditIds.includes(auditId);
         if (hasFailedDraftSync || hasRemainingDirtyChanges) {
-            const message = t("audit:errors.submitNeedsUploadedDraft");
-            auditUI$.errorMessage.set(message);
-            throw new Error(message);
+            // The draft could not be fully uploaded (typically an unreachable
+            // network). Park the submit for automatic delivery rather than
+            // failing: `processQueuedSubmits` flushes the remaining draft and
+            // submits once connectivity returns.
+            log.withMetadata({ auditId }).info("submit deferred: draft upload incomplete, queued for delivery");
+            return queueSubmitForDelivery();
         }
     }
 
@@ -2078,6 +2104,14 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
             }
         }
 
+        if (isRetryableSubmitError(error)) {
+            // Transient/unreachable failure: keep the audit queued for automatic
+            // delivery instead of surfacing a hard error. The durable outbox op
+            // remains and `processQueuedSubmits` retries it once back online.
+            log.withError(error).withMetadata({ auditId }).info("submit failed transiently; kept queued for delivery");
+            return queueSubmitForDelivery();
+        }
+
         const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
         batch(() => {
             auditData$.sync_state_by_audit_id.set(
@@ -2157,8 +2191,9 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
             const updatedSyncState = updatedData.sync_state_by_audit_id[auditId];
             const session_ = updatedData.sessions_by_audit_id[auditId];
             const message = formatAuditErrorMessage(error, t("audit:errors.submitFallback"));
+            const retryable = isRetryableSubmitError(error);
 
-            log.withError(error).withMetadata({ auditId }).error("queued submit delivery failed");
+            log.withError(error).withMetadata({ auditId, retryable }).error("queued submit delivery failed");
 
             // Update the durable outbox op: keep it (with backoff) for a
             // retryable transient failure, or drop it for a terminal one that a
@@ -2166,7 +2201,7 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
             if (drainUserId !== null) {
                 const existingOp = submitOutbox.get(drainUserId, auditId);
                 if (existingOp !== null) {
-                    if (isRetryableSubmitError(error)) {
+                    if (retryable) {
                         submitOutbox.put(drainUserId, registerAttempt(existingOp, new Date().toISOString(), message));
                     } else {
                         submitOutbox.remove(drainUserId, auditId);
@@ -2174,9 +2209,22 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
                 }
             }
 
-            // Ensure phase reflects a hard failure (submitAuditSessionInternal already sets it,
-            // but we piggyback the notification write here regardless).
-            if (updatedSyncState !== undefined && updatedSyncState.phase !== "submitted") {
+            if (retryable) {
+                // Still unreachable/transient: keep the audit calmly queued for a
+                // later automatic retry rather than alarming the auditor. The
+                // submission is recorded and will be sent when connectivity returns.
+                auditData$.sync_state_by_audit_id.set(
+                    writeAuditSyncState(
+                        auditData$.sync_state_by_audit_id.peek(),
+                        auditId,
+                        "queued_submit",
+                        new Date().toISOString(),
+                    ),
+                );
+                auditUI$.errorMessage.set(null);
+            } else if (updatedSyncState !== undefined && updatedSyncState.phase !== "submitted") {
+                // Terminal failure the auditor must act on (submitAuditSessionInternal
+                // already set the blocked phase; raise the notification here).
                 appendSubmitFailureNotification({
                     auditId,
                     placeName: session_?.place_name ?? auditId,
@@ -2197,6 +2245,64 @@ function submitAuditSession(session: AuthSession, auditId: string): Promise<Audi
 
 function clearError(): void {
     auditUI$.errorMessage.set(null);
+}
+
+/**
+ * Cancel a durable offline-queued submit and return the audit to an editable
+ * state ("Edit submission" reopen path).
+ *
+ * Guards:
+ * - No-ops if the current phase is not exactly `queued_submit`, so a concurrent
+ *   `processQueuedSubmits` drain that has already flipped the phase cannot be
+ *   inadvertently reversed.
+ * - Guards `submitOutbox.remove` on `currentUserId !== null`.
+ *
+ * The audit transitions to `dirty` when unsaved fragments are present, or to
+ * `idle` when there are none — mirroring the `processQueuedSubmits` logic.
+ * `canApplyLocalDraftEdits` already permits both phases, so inputs unlock
+ * immediately and the auditor can edit and tap Submit to re-queue.
+ *
+ * Note on submit-intent residual (review item 9): `recordSubmitIntentAsync`
+ * fires before the offline gate in `submitAuditSessionInternal`, so the server
+ * may hold a submit-intent entry. No client-side clear/cancel API exists for
+ * submit-intent today; the server's never-arrived detector may email a false
+ * alert if the auditor reopens and never resubmits. Accept this residual until
+ * a clear-intent endpoint is available.
+ */
+function reopenQueuedSubmit(auditId: string): void {
+    // Read phase fresh to guard against a concurrent drain that may have already
+    // advanced the phase off `queued_submit`.
+    const currentPhase = auditData$.sync_state_by_audit_id.peek()[auditId]?.phase;
+    if (currentPhase !== "queued_submit") {
+        return;
+    }
+
+    // Remove the durable outbox op so `processQueuedSubmits` no longer attempts
+    // delivery for this audit.
+    const currentUserId = auditUI$.currentUserId.peek();
+    if (currentUserId !== null) {
+        submitOutbox.remove(currentUserId, auditId);
+    }
+
+    // Transition to dirty or idle based on whether unsaved fragments remain.
+    const latestData = auditData$.peek();
+    const hasDirty = hasDirtyFragmentsForAudit(
+        auditId,
+        latestData.dirty_meta,
+        latestData.dirty_pre_audit,
+        latestData.dirty_sections,
+        latestData.dirty_started_at,
+    );
+
+    auditData$.sync_state_by_audit_id.set(
+        writeAuditSyncState(
+            latestData.sync_state_by_audit_id,
+            auditId,
+            hasDirty ? "dirty" : "idle",
+            new Date().toISOString(),
+        ),
+    );
+    saveNow();
 }
 
 // ---------------------------------------------------------------------------
@@ -2227,6 +2333,7 @@ const actions = {
     flushPendingChanges,
     submitAuditSession,
     clearError,
+    reopenQueuedSubmit,
 } as const;
 
 /**

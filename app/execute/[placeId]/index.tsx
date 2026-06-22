@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { ArrowRight, ClipboardList, Shapes, TriangleAlert } from "@tamagui/lucide-icons-2";
+import { ArrowRight, ClipboardList, Shapes } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, type ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 import { doesExecutionModeRequireSpaceAudit, getExecuteFlowSubject } from "lib/audit/execute-flow";
@@ -11,6 +11,7 @@ import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { CollapsibleCard } from "components/ui/collapsible-card";
 import { AuditExportCard } from "components/playspace-audit/audit-export-card";
+import { AuditSyncStatusCard } from "components/playspace-audit/audit-sync-status-card";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -132,6 +133,7 @@ export default function ExecutePlaceScreen() {
         auditSession === undefined ? 0 : Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
     const hasPendingPreAudit = auditSession !== undefined && dirtyPreAudit[auditSession.audit_id] !== undefined;
     const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
+    const auditPhase = auditSession !== undefined ? syncStateByAuditId[auditSession.audit_id]?.phase : undefined;
     const canEditInputs =
         auditSession !== undefined &&
         canEditAuditInputs({
@@ -322,6 +324,7 @@ export default function ExecutePlaceScreen() {
                 hasPendingLocalChanges={hasPendingLocalChanges}
                 isSyncing={isSyncing}
                 lastSyncError={lastSyncError}
+                phase={auditPhase}
             />
             {viewPlaceDetailsButton}
             {roleCard}
@@ -404,6 +407,7 @@ export default function ExecutePlaceScreen() {
                         hasPendingLocalChanges={hasPendingLocalChanges}
                         isSyncing={isSyncing}
                         lastSyncError={lastSyncError}
+                        phase={auditPhase}
                     />
                     {viewPlaceDetailsButton}
                     <PreamblePanel blocks={preambleBlocks} />
@@ -852,81 +856,6 @@ function parsePreambleBlock(rawBlock: string): ParsedPreambleBlock {
         heading,
         lines: parsedLines,
     };
-}
-
-interface AuditSyncStatusCardProps {
-    readonly hasPendingLocalChanges: boolean;
-    readonly isSyncing: boolean;
-    readonly lastSyncError: string | null;
-}
-
-/**
- * Compact sync-state card so auditors can tell whether their draft is queued,
- * uploading, or blocked on-device.
- *
- * @param props Sync-state presentation props.
- * @returns Status card or null when there is nothing noteworthy to show.
- */
-function AuditSyncStatusCard({ hasPendingLocalChanges, isSyncing, lastSyncError }: Readonly<AuditSyncStatusCardProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
-    const { t } = useTranslation("audit");
-    const hasSyncFailure = lastSyncError !== null;
-    const shouldShowCard = hasPendingLocalChanges || hasSyncFailure;
-
-    if (!shouldShowCard) {
-        return null;
-    }
-
-    const tone = isSyncing ? ds.colors.primary : hasSyncFailure ? ds.colors.danger : ds.colors.mutedForeground;
-    const cardBackgroundColor = isSyncing
-        ? ds.colors.primarySoft
-        : hasSyncFailure
-          ? ds.colors.dangerSoft
-          : ds.colors.surfaceMuted;
-    const title = isSyncing
-        ? t("overview.syncStatus.syncingTitle")
-        : hasSyncFailure
-          ? t("overview.syncStatus.retryTitle")
-          : t("overview.syncStatus.pendingTitle");
-    const message = isSyncing
-        ? t("overview.syncStatus.syncingMessage")
-        : hasSyncFailure
-          ? (lastSyncError ?? "")
-          : t("overview.syncStatus.pendingMessage");
-
-    return (
-        <YStack
-            rounded={ds.radii.md}
-            borderWidth={1}
-            borderColor={tone}
-            bg={cardBackgroundColor}
-            p={layout.cardPadding}
-            gap="$2.5"
-            style={{ boxShadow: ds.shadows.card }}
-        >
-            <XStack items="center" gap="$2">
-                {hasSyncFailure ? <TriangleAlert size={18} color={tone} /> : null}
-                <Text
-                    color={tone}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.1}
-                >
-                    {title}
-                </Text>
-            </XStack>
-            <Paragraph
-                color={ds.colors.secondaryForeground}
-                fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodyMd.fontSize}
-                lineHeight={ds.typography.bodyMd.lineHeight}
-            >
-                {message}
-            </Paragraph>
-        </YStack>
-    );
 }
 
 interface CenteredMessageCardProps {

@@ -88,7 +88,15 @@
             "pendingTitle": "Auf diesem Geraet gespeichert",
             "retryTitle": "Upload pausiert",
             "syncingMessage": "Gespeicherte Aenderungen werden jetzt hochgeladen. Lassen Sie die App geoeffnet, wenn Sie direkt danach einreichen moechten.",
-            "syncingTitle": "Aenderungen werden hochgeladen"
+            "syncingTitle": "Aenderungen werden hochgeladen",
+            "queuedSubmitTitle": "Einreichung vorgemerkt",
+            "queuedSubmitMessage": "Ihre Antworten sind gespeichert. Die Einreichung wird gesendet, sobald Sie wieder online sind.",
+            "editSubmissionButton": "Einreichung bearbeiten",
+            "editSubmissionConfirmTitle": "Vorgemerkte Einreichung abbrechen?",
+            "editSubmissionConfirmMessage": "Dadurch wird die vorgemerkte Einreichung abgebrochen. Ihre Antworten bleiben auf diesem Geraet gespeichert, aber Sie muessen erneut auf Einreichen tippen, um die Einreichung zu wiederholen.",
+            "editSubmissionConfirmCancel": "Vorgemerkt lassen",
+            "editSubmissionConfirmConfirm": "Einreichung abbrechen",
+            "reopenedToast": "Audit erneut geoeffnet. Tippen Sie auf Einreichen, wenn Sie bereit sind."
         },
         "viewPlaceDetails": "Ortsdetails anzeigen"
     },

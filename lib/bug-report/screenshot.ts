@@ -56,6 +56,10 @@ async function fetchSignedUploadParams(session: AuthSession): Promise<z.infer<ty
     }
 }
 
+// Timeout applied to the raw Cloudinary multipart upload (20 s). The
+// background flush must not hang indefinitely on a stalled upload.
+const CLOUDINARY_UPLOAD_TIMEOUT_MS = 20_000;
+
 /**
  * Upload a captured local screenshot URI to Cloudinary using a backend-signed
  * request (no unsigned upload preset - the API secret never reaches the device).
@@ -82,11 +86,25 @@ export async function uploadCapturedScreenshot(session: AuthSession, uri: string
     formData.append("signature", params.signature);
     formData.append("folder", params.folder);
 
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${params.cloud_name}/image/upload`, {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body: formData,
-    });
+    // Abort the upload if Cloudinary does not respond within the timeout so a
+    // background flush cannot hang on a stalled connection.
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+        controller.abort();
+    }, CLOUDINARY_UPLOAD_TIMEOUT_MS);
+
+    let response: Awaited<ReturnType<typeof fetch>>;
+    try {
+        response = await fetch(`https://api.cloudinary.com/v1_1/${params.cloud_name}/image/upload`, {
+            method: "POST",
+            headers: { Accept: "application/json" },
+            body: formData,
+            signal: controller.signal,
+        });
+    } finally {
+        clearTimeout(timer);
+    }
+
     const json = (await response.json().catch(() => null)) as {
         secure_url?: string;
         public_id?: string;

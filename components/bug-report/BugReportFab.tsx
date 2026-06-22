@@ -72,6 +72,10 @@ function severityColor(ds: ReturnType<typeof useDesignSystem>, severity: BugRepo
 // Auth and onboarding screens are intentionally excluded.
 const AUTHENTICATED_GROUPS = new Set(["(tabs)", "execute", "place", "report", "settings"]);
 
+// Known-issue deflection timeout (ms). Short so the auditor is not kept
+// waiting when the network is slow or unavailable.
+const DEFLECTION_TIMEOUT_MS = 4_000;
+
 /**
  * Floating "Report an issue" button mounted once in the root layout. It appears
  * on every authenticated screen (never on auth/onboarding) when developer mode
@@ -104,7 +108,9 @@ export function BugReportFab() {
     const [isAttaching, setIsAttaching] = useState(false);
     const [matches, setMatches] = useState<KnownIssueMatch[]>([]);
     const [hasCheckedMatches, setHasCheckedMatches] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    // True only during the brief deflection network check; the sheet closes
+    // immediately after queuing so this never covers the actual send.
+    const [isCheckingMatches, setIsCheckingMatches] = useState(false);
 
     /** Release the temporary capture file backing the current screenshot. */
     const releaseScreenshot = useCallback(() => {
@@ -186,88 +192,94 @@ export function BugReportFab() {
     const segment0 = String(segments[0] ?? "");
     const isVisible = isBugReportingEnabled() && session !== null && AUTHENTICATED_GROUPS.has(segment0);
 
-    const canSubmit = title.trim().length > 0 && description.trim().length > 0 && !isSubmitting && !isAttaching;
+    const canSubmit = title.trim().length > 0 && description.trim().length > 0 && !isCheckingMatches && !isAttaching;
 
     const resetForm = useCallback(() => {
         setMatches([]);
         setHasCheckedMatches(false);
-        setIsSubmitting(false);
+        setIsCheckingMatches(false);
     }, []);
 
     const handleSubmit = useCallback(async () => {
         if (!canSubmit || session === null) return;
 
-        const online = await isDeviceOnline();
-
-        // Deflection: only possible online. Show known-issue matches once before
-        // the first real submit. Offline reporters skip straight to queuing.
-        if (online && !hasCheckedMatches) {
-            setIsSubmitting(true);
+        // Deflection: attempt once before the first real submit. No online gate —
+        // the request times out quickly (DEFLECTION_TIMEOUT_MS) on a bad link and
+        // falls through to queuing automatically, so the sheet never hangs.
+        if (!hasCheckedMatches) {
+            setIsCheckingMatches(true);
             try {
-                const found = await matchKnownIssues(session, `${title} ${description}`);
+                const found = await matchKnownIssues(session, `${title} ${description}`, {
+                    timeoutMs: DEFLECTION_TIMEOUT_MS,
+                });
                 setHasCheckedMatches(true);
                 if (found.length > 0) {
                     setMatches(found);
-                    setIsSubmitting(false);
+                    setIsCheckingMatches(false);
                     return;
                 }
             } catch {
+                // Timeout or network error: fall through to queuing without deflection.
                 setHasCheckedMatches(true);
             }
-            setIsSubmitting(false);
+            setIsCheckingMatches(false);
         }
 
-        setIsSubmitting(true);
-        try {
-            // Auto-populate the audit context from navigation + the audit store.
-            const resolved = resolveAuditContext(sessionsByAuditId, {
-                placeId: typeof params.placeId === "string" ? params.placeId : undefined,
-                auditId: typeof params.auditId === "string" ? params.auditId : undefined,
-                projectId: typeof params.projectId === "string" ? params.projectId : undefined,
-            });
-            const routeContext: BugReportRouteContext = { route: segments.join("/") };
-            if (resolved.projectId) routeContext.projectId = resolved.projectId;
-            if (resolved.placeId) routeContext.placeId = resolved.placeId;
-            if (resolved.submissionId) routeContext.submissionId = resolved.submissionId;
+        // Auto-populate the audit context from navigation + the audit store.
+        const resolved = resolveAuditContext(sessionsByAuditId, {
+            placeId: typeof params.placeId === "string" ? params.placeId : undefined,
+            auditId: typeof params.auditId === "string" ? params.auditId : undefined,
+            projectId: typeof params.projectId === "string" ? params.projectId : undefined,
+        });
+        const routeContext: BugReportRouteContext = { route: segments.join("/") };
+        if (resolved.projectId) routeContext.projectId = resolved.projectId;
+        if (resolved.placeId) routeContext.placeId = resolved.placeId;
+        if (resolved.submissionId) routeContext.submissionId = resolved.submissionId;
 
-            const context = await buildMobileBugReportContext(routeContext);
+        const context = await buildMobileBugReportContext(routeContext);
 
-            // Always queue the finished report locally first, copying the captured
-            // screenshot into durable storage so nothing is lost offline.
-            const reportId = createPendingBugReportId();
-            const screenshotLocalUri = screenshotUri ? persistScreenshotForQueue(screenshotUri, reportId) : undefined;
-            enqueueBugReport({
-                id: reportId,
-                createdAt: new Date().toISOString(),
-                title: title.trim(),
-                description: description.trim(),
-                severity,
-                context,
-                ...(context.project_id ? { projectId: context.project_id } : {}),
-                ...(context.place_id ? { placeId: context.place_id } : {}),
-                ...(context.playspace_submission_id ? { submissionId: context.playspace_submission_id } : {}),
-                ...(screenshotLocalUri ? { screenshotLocalUri } : {}),
-            });
-            releaseScreenshot();
-            clearBugReportDraft();
+        // Persist the screenshot into durable storage and enqueue the report
+        // BEFORE releasing the captured image or closing the sheet, so neither
+        // can be lost if the app is backgrounded mid-submit.
+        const reportId = createPendingBugReportId();
+        const screenshotLocalUri = screenshotUri ? persistScreenshotForQueue(screenshotUri, reportId) : undefined;
+        enqueueBugReport({
+            id: reportId,
+            createdAt: new Date().toISOString(),
+            title: title.trim(),
+            description: description.trim(),
+            severity,
+            context,
+            ...(context.project_id ? { projectId: context.project_id } : {}),
+            ...(context.place_id ? { placeId: context.place_id } : {}),
+            ...(context.playspace_submission_id ? { submissionId: context.playspace_submission_id } : {}),
+            ...(screenshotLocalUri ? { screenshotLocalUri } : {}),
+        });
+        clearBugReportDraft();
 
-            if (online) {
-                // Drain the queue now (also retries any older queued reports).
-                const result = await flushPendingBugReports(session);
-                toast.show(result.failed === 0 ? t("success") : t("queue.savedForLater"));
-            } else {
-                toast.show(t("queue.savedOffline"));
-            }
+        // Release the temporary capture file now that a durable copy exists.
+        releaseScreenshot();
 
-            setTitle("");
-            setDescription("");
-            setSeverity("major");
-            resetForm();
-            setOpen(false);
-        } catch {
-            toast.show(t("errors.generic"));
-            setIsSubmitting(false);
+        // Close the sheet immediately — the auditor is not kept waiting while
+        // the send happens.
+        setTitle("");
+        setDescription("");
+        setSeverity("major");
+        resetForm();
+        setOpen(false);
+
+        // Best-effort connectivity check for toast wording only. The flush
+        // proceeds regardless (single-flight; deduplicates concurrent callers).
+        const online = await isDeviceOnline();
+        if (online) {
+            toast.show(t("queue.savedForLater"));
+        } else {
+            toast.show(t("queue.savedOffline"));
         }
+
+        // Drain the queue in the background. Errors are swallowed here; the
+        // report is already queued and will be retried on the next flush prompt.
+        void flushPendingBugReports(session);
     }, [
         canSubmit,
         description,
@@ -407,12 +419,18 @@ export function BugReportFab() {
 
                             {isScreenshotUploadConfigured() ? (
                                 <YStack gap="$2">
-                                    <XStack justify="space-between" items="center">
+                                    <XStack justify="space-between" items="center" px="$1">
                                         <Text color={ds.colors.foreground}>{t("fields.screenshot")}</Text>
                                         {screenshotUri ? (
-                                            <XStack gap="$1.5" items="center">
+                                            <XStack gap="$1.5" items="center" flex={1} justify="flex-end" pl="$2">
                                                 <Check size={14} color={ds.colors.success} />
-                                                <Text fontSize="$2" color={ds.colors.success}>
+                                                <Text
+                                                    fontSize="$2"
+                                                    color={ds.colors.success}
+                                                    flex={1}
+                                                    numberOfLines={2}
+                                                    style={{ flexShrink: 1 }}
+                                                >
                                                     {t("screenshot.attached")}
                                                 </Text>
                                             </XStack>
@@ -429,9 +447,16 @@ export function BugReportFab() {
                                             items="center"
                                             justify="center"
                                             gap="$2"
+                                            px="$3"
                                         >
                                             <Spinner size="small" color={ds.colors.primary} />
-                                            <Text fontSize="$2" color={ds.colors.mutedForeground}>
+                                            <Text
+                                                fontSize="$2"
+                                                color={ds.colors.mutedForeground}
+                                                flex={1}
+                                                numberOfLines={2}
+                                                style={{ flexShrink: 1 }}
+                                            >
                                                 {t("screenshot.attaching")}
                                             </Text>
                                         </XStack>
@@ -453,7 +478,7 @@ export function BugReportFab() {
                                                 r="$2"
                                                 size="$2"
                                                 circular
-                                                bg={ds.colors.overlay}
+                                                bg="rgba(0,0,0,0.55)"
                                                 icon={<X size={16} color="#fff" />}
                                                 onPress={releaseScreenshot}
                                                 accessibilityLabel={t("screenshot.remove")}
@@ -469,9 +494,16 @@ export function BugReportFab() {
                                             items="center"
                                             justify="center"
                                             gap="$2"
+                                            px="$3"
                                         >
                                             <Camera size={16} color={ds.colors.mutedForeground} />
-                                            <Text fontSize="$2" color={ds.colors.mutedForeground}>
+                                            <Text
+                                                fontSize="$2"
+                                                color={ds.colors.mutedForeground}
+                                                flex={1}
+                                                numberOfLines={2}
+                                                style={{ flexShrink: 1 }}
+                                            >
                                                 {t("screenshot.unavailable")}
                                             </Text>
                                         </XStack>
@@ -506,6 +538,7 @@ export function BugReportFab() {
 
                             <YStack gap="$2" mt="$2">
                                 <Button
+                                    testID="bug-report-submit"
                                     height={50}
                                     rounded="$4"
                                     disabled={!canSubmit}
@@ -514,7 +547,7 @@ export function BugReportFab() {
                                     onPress={handleSubmit}
                                     pressStyle={{ opacity: 0.85 }}
                                 >
-                                    {isSubmitting ? (
+                                    {isCheckingMatches ? (
                                         <XStack gap="$2" items="center">
                                             <Spinner size="small" color={ds.colors.background} />
                                             <Text color={ds.colors.background} fontWeight="700">

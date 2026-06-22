@@ -88,7 +88,15 @@
             "pendingTitle": "このデバイスに保存済み",
             "retryTitle": "アップロードが一時停止中",
             "syncingMessage": "保存された変更を現在アップロードしています。すぐに提出したい場合は、この処理が完了するまでアプリを開いたままにしてください。",
-            "syncingTitle": "変更をアップロード中"
+            "syncingTitle": "変更をアップロード中",
+            "queuedSubmitTitle": "提出がキューに入っています",
+            "queuedSubmitMessage": "回答は保存されています。オンラインに戻ったときに提出が送信されます。",
+            "editSubmissionButton": "提出を編集",
+            "editSubmissionConfirmTitle": "キューの提出をキャンセルしますか？",
+            "editSubmissionConfirmMessage": "キューに入っている提出がキャンセルされます。回答はこのデバイスに保存されたままですが、再提出するにはもう一度「提出」をタップする必要があります。",
+            "editSubmissionConfirmCancel": "キューのままにする",
+            "editSubmissionConfirmConfirm": "提出をキャンセル",
+            "reopenedToast": "監査を再開しました。再提出の準備ができたら「提出」をタップしてください。"
         },
         "viewPlaceDetails": "場所の詳細を表示"
     },

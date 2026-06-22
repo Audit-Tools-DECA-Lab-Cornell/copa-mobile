@@ -1,0 +1,50 @@
+# Bug-report offline-submit flow.
+#
+# Verifies that submitting a bug report closes the sheet immediately without
+# hanging, even when the device is offline. The report is queued locally and
+# sent later when the network is restored.
+#
+# MANUAL OFFLINE PRECONDITION (cannot be automated in Maestro):
+#   Before running this flow, enable airplane mode on the device so that all
+#   network calls fail. The sheet must still close without hanging and show a
+#   "saved" toast. Re-enable network after the flow to let the flush prompt
+#   drain the queue in a subsequent manual check.
+#
+# Requires the build to run with EXPO_PUBLIC_BUG_REPORTING_ENABLED=true.
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- runFlow: login.yaml
+
+# The floating report button is available on the authenticated tabs.
+- extendedWaitUntil:
+      visible: "Report an issue"
+      timeout: 30000
+- tapOn: "Report an issue"
+
+- extendedWaitUntil:
+      visible: "What happened?"
+      timeout: 15000
+- tapOn: "What happened?"
+- inputText: "Maestro offline: report submit does not hang"
+- tapOn: "Describe the problem"
+- inputText: "Filed while offline to verify the sheet closes immediately."
+- hideKeyboard
+
+# NOTE: If the device is truly offline the known-issue deflection call will
+# be aborted by the timeout and the form falls through to queue-first submit.
+- tapOn:
+      id: "bug-report-submit"
+
+# The sheet must close promptly regardless of connectivity. The auditor sees
+# either a "saved" or "report sent" toast — either is acceptable.
+# A timeout here that expires means the sheet is hanging (the bug being fixed).
+- extendedWaitUntil:
+      # Sheet dismissed: the "What happened?" input is no longer visible.
+      notVisible: "What happened?"
+      timeout: 8000
+
+# After dismiss, the main tab bar or dashboard must be visible.
+- assertVisible:
+      text: ".*Dashboard.*|.*Report an issue.*|.*Places.*"

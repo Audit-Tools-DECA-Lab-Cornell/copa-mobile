@@ -88,7 +88,15 @@
             "pendingTitle": "Enregistré sur cet appareil",
             "retryTitle": "Téléversement en pause",
             "syncingMessage": "Les modifications enregistrées sont en cours de téléversement. Gardez l’application ouverte jusqu’à la fin si vous devez envoyer immédiatement.",
-            "syncingTitle": "Téléversement des modifications"
+            "syncingTitle": "Téléversement des modifications",
+            "queuedSubmitTitle": "Envoi en attente",
+            "queuedSubmitMessage": "Vos réponses sont enregistrées. L’envoi sera effectué dès que vous vous reconnecterez.",
+            "editSubmissionButton": "Modifier l’envoi",
+            "editSubmissionConfirmTitle": "Annuler l’envoi en attente ?",
+            "editSubmissionConfirmMessage": "Cela annulera l’envoi en attente. Vos réponses restent enregistrées sur cet appareil, mais vous devrez appuyer à nouveau sur Envoyer pour resoumettre.",
+            "editSubmissionConfirmCancel": "Garder en attente",
+            "editSubmissionConfirmConfirm": "Annuler l’envoi",
+            "reopenedToast": "Audit rouvert. Appuyez sur Envoyer quand vous êtes prêt à resoumettre."
         },
         "viewPlaceDetails": "Voir les détails du lieu"
     },

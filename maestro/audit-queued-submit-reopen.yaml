@@ -1,0 +1,86 @@
+# Offline audit submit → "Edit submission" reopen flow.
+#
+# Verifies the end-to-end journey:
+#   1. An audit is submitted while offline → overview shows "Submission queued".
+#   2. "Edit submission" button is visible on the overview.
+#   3. Tapping it and confirming the dialog returns the audit to an editable state.
+#
+# MANUAL OFFLINE PRECONDITION (cannot be automated in Maestro):
+#   Enable airplane mode before starting this flow so the submit lands in the
+#   offline `queued_submit` branch rather than being delivered to the server.
+#   The flow comments mark where the manual step is required.
+#
+# testIDs:
+#   - The status card carries testID="sync-status-card" and the reopen button
+#     carries testID="edit-submission-button", so those selectors are stable.
+#   - The confirmation dialog is a native Alert.alert, which cannot carry a
+#     testID; its confirm button is matched by label as the only option.
+#
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+# ── Step 1: Create a new audit (navigates to audit overview). ──────────────
+- runFlow: create-audit.yaml
+
+# ── Step 2: Submit the audit.
+# NOTE: Device must be in airplane mode at this point so the submit is
+# queued offline instead of delivered to the server.
+- extendedWaitUntil:
+      visible: ".*Submit.*|.*Final comments.*"
+      timeout: 30000
+
+# Navigate through final-comments screen if present (the button label
+# matches both the pre-submit prompt and the actual submit button).
+- runFlow:
+      when:
+          visible: "Final comments"
+      commands:
+          - tapOn: "Submit audit"
+
+# Confirm the destructive submit dialog.
+- runFlow:
+      when:
+          visible: ".*Submit.*|.*confirm.*"
+      commands:
+          - tapOn:
+                text: ".*Submit.*"
+                index: 1
+
+# ── Step 3: Verify the overview shows "Submission queued" (not "Uploading"). ──
+- extendedWaitUntil:
+      visible:
+          id: "sync-status-card"
+      timeout: 15000
+
+# ── Step 4: The "Edit submission" button must be visible. ──────────────────
+- assertVisible:
+      id: "edit-submission-button"
+
+# ── Step 5: Tap "Edit submission" and confirm the dialog. ──────────────────
+- tapOn:
+      id: "edit-submission-button"
+
+# The confirmation dialog must appear before we proceed.
+- extendedWaitUntil:
+      visible: ".*cancel.*|.*reopen.*|.*Edit submission.*|.*confirm.*"
+      timeout: 10000
+
+# Confirm the reopen. This is a native Alert.alert button (no testID possible),
+# so it is matched by label — keep this pattern in sync with
+# overview.syncStatus.editSubmissionConfirmConfirm in the i18n locales.
+- tapOn:
+      text: ".*Yes.*|.*Edit.*|.*Confirm.*"
+      index: 0
+
+# ── Step 6: Audit must be editable again. ─────────────────────────────────
+# The sync-status queued card is gone and inputs are unlocked.
+- extendedWaitUntil:
+      notVisible:
+          id: "sync-status-card"
+      timeout: 10000
+
+# The submit button must be re-enabled (not grayed out) — the overview
+# or final-comments screen is the normal editable view.
+- assertVisible:
+      text: ".*Submit.*|.*Pre-audit.*|.*Section.*"

@@ -115,7 +115,13 @@
             "syncingMessage": "Saved changes are uploading now. Keep the app open until this finishes if you need to submit right away.",
             "syncingTitle": "Uploading changes",
             "queuedSubmitTitle": "Submission queued",
-            "queuedSubmitMessage": "Your responses are saved. The submission will be sent when you go back online."
+            "queuedSubmitMessage": "Your responses are saved. The submission will be sent when you go back online.",
+            "editSubmissionButton": "Edit submission",
+            "editSubmissionConfirmTitle": "Cancel queued submission?",
+            "editSubmissionConfirmMessage": "This will cancel the queued submission. Your responses stay saved on this device, but you will need to tap Submit again to resubmit.",
+            "editSubmissionConfirmCancel": "Keep queued",
+            "editSubmissionConfirmConfirm": "Cancel submission",
+            "reopenedToast": "Audit reopened. Tap Submit when you are ready to resubmit."
         },
         "viewPlaceDetails": "View place details"
     },

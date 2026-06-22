@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { ArrowRight, ClipboardList, TriangleAlert } from "@tamagui/lucide-icons-2";
+import { ArrowRight, ClipboardList } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import type { TFunction } from "i18next";
@@ -30,6 +30,7 @@ import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { FilterChip } from "components/ui/filter-chip";
 import { AuditExportCard } from "components/playspace-audit/audit-export-card";
+import { AuditSyncStatusCard } from "components/playspace-audit/audit-sync-status-card";
 import { useDesignSystem } from "lib/design-system";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useAuthStore } from "stores/auth-store";
@@ -61,6 +62,8 @@ export default function ExecuteSectionOverviewScreen() {
     const lastSyncError = usePlayspaceAuditStore((state) => state.lastSyncError);
     const dirtySections = usePlayspaceAuditStore((state) => state.dirtySections);
     const dirtyPreAudit = usePlayspaceAuditStore((state) => state.dirtyPreAudit);
+    const syncStateByAuditId = usePlayspaceAuditStore((state) => state.syncStateByAuditId);
+    const reopenQueuedSubmit = usePlayspaceAuditStore((state) => state.reopenQueuedSubmit);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const scrollViewRef = useRef<ScrollView | null>(null);
 
@@ -282,6 +285,7 @@ export default function ExecuteSectionOverviewScreen() {
     const pendingSectionCount = Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
     const hasPendingPreAudit = dirtyPreAudit[auditSession.audit_id] !== undefined;
     const hasPendingLocalChanges = pendingSectionCount > 0 || hasPendingPreAudit;
+    const auditPhase = syncStateByAuditId[auditSession.audit_id]?.phase;
     const firstIncompleteSectionKey = sectionOverviewSummary.firstIncompleteSectionKey;
 
     const sectionReviewCard = (
@@ -370,6 +374,10 @@ export default function ExecuteSectionOverviewScreen() {
                             hasPendingLocalChanges={hasPendingLocalChanges}
                             isSyncing={isSyncing}
                             lastSyncError={lastSyncError}
+                            phase={auditPhase}
+                            onReopenQueuedSubmit={() => {
+                                reopenQueuedSubmit(auditSession.audit_id);
+                            }}
                         />
                         {setupSummaryCard}
                         <AuditExportCard auditSession={auditSession} place={currentPlace} />
@@ -381,6 +389,10 @@ export default function ExecuteSectionOverviewScreen() {
                         hasPendingLocalChanges={hasPendingLocalChanges}
                         isSyncing={isSyncing}
                         lastSyncError={lastSyncError}
+                        phase={auditPhase}
+                        onReopenQueuedSubmit={() => {
+                            reopenQueuedSubmit(auditSession.audit_id);
+                        }}
                     />
                     {setupSummaryCard}
                     {sectionReviewCard}
@@ -676,74 +688,6 @@ function getSetupCompleteModeLabel(mode: ExecutionMode): string {
         default:
             return "COPA Tool";
     }
-}
-
-interface AuditSyncStatusCardProps {
-    readonly hasPendingLocalChanges: boolean;
-    readonly isSyncing: boolean;
-    readonly lastSyncError: string | null;
-}
-
-function AuditSyncStatusCard({ hasPendingLocalChanges, isSyncing, lastSyncError }: Readonly<AuditSyncStatusCardProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
-    const { t } = useTranslation("audit");
-    const hasSyncFailure = lastSyncError !== null;
-    const shouldShowCard = hasPendingLocalChanges || hasSyncFailure;
-
-    if (!shouldShowCard) {
-        return null;
-    }
-
-    const tone = isSyncing ? ds.colors.primary : hasSyncFailure ? ds.colors.danger : ds.colors.mutedForeground;
-    const cardBackgroundColor = isSyncing
-        ? ds.colors.primarySoft
-        : hasSyncFailure
-          ? ds.colors.dangerSoft
-          : ds.colors.surfaceMuted;
-    const title = isSyncing
-        ? t("overview.syncStatus.syncingTitle")
-        : hasSyncFailure
-          ? t("overview.syncStatus.retryTitle")
-          : t("overview.syncStatus.pendingTitle");
-    const message = isSyncing
-        ? t("overview.syncStatus.syncingMessage")
-        : hasSyncFailure
-          ? (lastSyncError ?? "")
-          : t("overview.syncStatus.pendingMessage");
-
-    return (
-        <YStack
-            rounded={ds.radii.md}
-            borderWidth={1}
-            borderColor={tone}
-            bg={cardBackgroundColor}
-            p={layout.cardPadding}
-            gap="$2.5"
-            style={{ boxShadow: ds.shadows.card }}
-        >
-            <XStack items="center" gap="$2">
-                {hasSyncFailure ? <TriangleAlert size={18} color={tone} /> : null}
-                <Text
-                    color={tone}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.1}
-                >
-                    {title}
-                </Text>
-            </XStack>
-            <Paragraph
-                color={ds.colors.secondaryForeground}
-                fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodyMd.fontSize}
-                lineHeight={ds.typography.bodyMd.lineHeight}
-            >
-                {message}
-            </Paragraph>
-        </YStack>
-    );
 }
 
 interface CenteredMessageCardProps {
