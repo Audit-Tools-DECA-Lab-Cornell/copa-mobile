@@ -67,7 +67,7 @@ appId: com.pratyush.sudhakar.audittoolsplayspacemobile
       timeout: 10000
 
 # Confirm the reopen. This is a native Alert.alert button (no testID possible),
-# so it is matched by label — keep this pattern in sync with
+# so it is matched by label - keep this pattern in sync with
 # overview.syncStatus.editSubmissionConfirmConfirm in the i18n locales.
 - tapOn:
       text: ".*Yes.*|.*Edit.*|.*Confirm.*"
@@ -80,7 +80,7 @@ appId: com.pratyush.sudhakar.audittoolsplayspacemobile
           id: "sync-status-card"
       timeout: 10000
 
-# The submit button must be re-enabled (not grayed out) — the overview
+# The submit button must be re-enabled (not grayed out) - the overview
 # or final-comments screen is the normal editable view.
 - assertVisible:
       text: ".*Submit.*|.*Pre-audit.*|.*Section.*"

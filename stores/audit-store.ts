@@ -1885,7 +1885,7 @@ async function submitAuditSessionInternal(session: AuthSession, auditId: string)
     // op and mark the audit queued (a locked, calm "will upload" state), clearing
     // any stale error. Used both when the device is offline and when an online
     // delivery attempt fails transiently, so an unreachable network never
-    // surfaces to the auditor as a hard "submit failed" — `processQueuedSubmits`
+    // surfaces to the auditor as a hard "submit failed" - `processQueuedSubmits`
     // retries the queued submit automatically once connectivity returns.
     const queueSubmitForDelivery = (): AuditSession => {
         enqueueDurableSubmitOp();
@@ -2258,7 +2258,7 @@ function clearError(): void {
  * - Guards `submitOutbox.remove` on `currentUserId !== null`.
  *
  * The audit transitions to `dirty` when unsaved fragments are present, or to
- * `idle` when there are none — mirroring the `processQueuedSubmits` logic.
+ * `idle` when there are none - mirroring the `processQueuedSubmits` logic.
  * `canApplyLocalDraftEdits` already permits both phases, so inputs unlock
  * immediately and the auditor can edit and tap Submit to re-queue.
  *

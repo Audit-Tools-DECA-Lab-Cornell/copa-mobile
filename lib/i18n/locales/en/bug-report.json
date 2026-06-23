@@ -1,7 +1,7 @@
 {
     "launch": "Report an issue",
     "title": "Report an issue",
-    "subtitle": "Tell us what went wrong. We attach your screen, app version, and device details automatically — never your audit answers.",
+    "subtitle": "Tell us what went wrong. We attach your screen, app version, and device details automatically - never your audit answers.",
     "fields": {
         "title": "What happened?",
         "description": "Describe the problem",
@@ -26,7 +26,7 @@
         "minor": "Minor"
     },
     "matches": {
-        "heading": "These known issues might match — check them first",
+        "heading": "These known issues might match - check them first",
         "workaroundLabel": "Workaround"
     },
     "submit": "Submit report",
@@ -34,7 +34,7 @@
     "cancel": "Cancel",
     "success": "Thanks, your report has been sent.",
     "errors": {
-        "offline": "You're offline. Your report is saved here — submit again once you're back online.",
+        "offline": "You're offline. Your report is saved here - submit again once you're back online.",
         "generic": "We couldn't send your report. Please try again."
     },
     "sending": "Sending…",
@@ -47,7 +47,7 @@
         "flushed_one": "Your saved report was sent. Thank you.",
         "flushed_other": "{{count}} saved reports were sent. Thank you.",
         "flushPartial": "Some reports couldn't be sent yet. We'll ask again next time you're online.",
-        "savedOffline": "You're offline. Your report is saved on this device — we'll prompt you to send it when you're back online.",
+        "savedOffline": "You're offline. Your report is saved on this device - we'll prompt you to send it when you're back online.",
         "savedForLater": "Your report is saved on this device. We'll prompt you to send it when you're back online."
     }
 }

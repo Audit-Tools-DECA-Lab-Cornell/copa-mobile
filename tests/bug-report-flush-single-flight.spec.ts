@@ -3,12 +3,12 @@
  *
  * The goal is to verify the single-flight guarantee: two concurrent callers
  * share one in-flight execution and every queued report is POSTed exactly once
- * — no duplicate submissions regardless of how many callers overlap.
+ * - no duplicate submissions regardless of how many callers overlap.
  *
  * Strategy: mock the queue, api, and screenshot layers so the test controls
  * what reports are "pending" and can count exact `createBugReport` call counts.
  * The `createSingleFlightRunner` wrapper inside `flush.ts` is the real
- * production code under test — we exercise it through the exported function.
+ * production code under test - we exercise it through the exported function.
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,7 +18,7 @@ import type { PendingBugReport } from "lib/bug-report/queue";
 import type { BugReport } from "lib/bug-report/types";
 
 // `flush.ts` imports `createSingleFlightRunner` from `lib/audit/store-sync-core`.
-// The actual implementation is pure JS with no native deps — let it run for
+// The actual implementation is pure JS with no native deps - let it run for
 // real so the single-flight semantics are exercised against real code.
 // No mock needed for store-sync-core.
 
@@ -29,7 +29,7 @@ import type { BugReport } from "lib/bug-report/types";
 import { flushPendingBugReports } from "lib/bug-report/flush";
 
 // ---------------------------------------------------------------------------
-// Hoisted mocks — must be established before any module is imported.
+// Hoisted mocks - must be established before any module is imported.
 // ---------------------------------------------------------------------------
 
 const mocks = vi.hoisted(() => {
@@ -122,7 +122,7 @@ function makePendingReport(id: string, withScreenshot = false): PendingBugReport
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("flushPendingBugReports — single-flight guard", () => {
+describe("flushPendingBugReports - single-flight guard", () => {
     beforeEach(() => {
         mocks.resetQueue();
         vi.clearAllMocks();
@@ -143,7 +143,7 @@ describe("flushPendingBugReports — single-flight guard", () => {
         expect(mocks.removePendingBugReport).toHaveBeenCalledWith("r2");
     });
 
-    it("two concurrent callers share one in-flight execution — each report POSTed exactly once", async () => {
+    it("two concurrent callers share one in-flight execution - each report POSTed exactly once", async () => {
         // Two reports queued. Two concurrent flush calls should NOT result in
         // four POST calls (each report sent once by each caller).
         mocks.pendingQueue.push(makePendingReport("r1"), makePendingReport("r2"));
@@ -156,7 +156,7 @@ describe("flushPendingBugReports — single-flight guard", () => {
 
         // Both callers resolve to the same result (the single shared execution).
         expect(result1).toEqual(result2);
-        // Exactly 2 POSTs — not 4 (single-flight guarantee).
+        // Exactly 2 POSTs - not 4 (single-flight guarantee).
         expect(mocks.createBugReport).toHaveBeenCalledTimes(2);
         expect(mocks.removePendingBugReport).toHaveBeenCalledTimes(2);
     });
@@ -170,7 +170,7 @@ describe("flushPendingBugReports — single-flight guard", () => {
             flushPendingBugReports(fakeSession),
         ]);
 
-        // 3 reports, 1 execution — 3 POSTs total (not 9).
+        // 3 reports, 1 execution - 3 POSTs total (not 9).
         expect(mocks.createBugReport).toHaveBeenCalledTimes(3);
         expect(mocks.removePendingBugReport).toHaveBeenCalledTimes(3);
     });
@@ -219,7 +219,7 @@ describe("flushPendingBugReports — single-flight guard", () => {
     it("uploads screenshots before posting and continues without them if upload fails", async () => {
         const reportWithScreenshot = makePendingReport("r-img", true);
         mocks.pendingQueue.push(reportWithScreenshot);
-        // Screenshot upload fails — the report should still be submitted.
+        // Screenshot upload fails - the report should still be submitted.
         mocks.uploadCapturedScreenshot.mockRejectedValueOnce(new Error("upload failed"));
 
         const result = await flushPendingBugReports(fakeSession);

@@ -16,8 +16,8 @@ import { countPendingBugReports } from "lib/bug-report/queue";
  * online in the foreground. This replaces background sync: reports stay on the
  * device until the auditor confirms.
  *
- * Runs on the same triggers as queue flushing — first authenticated render,
- * connectivity restored, and foregrounding — but only prompts.
+ * Runs on the same triggers as queue flushing - first authenticated render,
+ * connectivity restored, and foregrounding - but only prompts.
  *
  * @param session The active auth session, or null if signed out.
  * @param isReady Whether auth and local storage are ready for submission.

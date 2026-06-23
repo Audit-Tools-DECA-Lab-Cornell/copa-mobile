@@ -126,8 +126,8 @@ Each export includes: audit overview, pre-audit answers, PVUA guidance / scale l
 ### Current Approach
 
 - Shared UI strings (labels, buttons, messages) live in locale JSON files under `lib/i18n/locales/<lang>/`.
-- **Instrument copy is server-authoritative in every language** — there are no client-side instrument text overlays. The single client seam for other languages is the `lang` parameter on the language-aware fetch in `lib/services/instrument-sync.ts`.
-- `useLocalizedInstrument()` returns the synced (or audit-scoped) instrument **as-is** — no overlay.
+- **Instrument copy is server-authoritative in every language** - there are no client-side instrument text overlays. The single client seam for other languages is the `lang` parameter on the language-aware fetch in `lib/services/instrument-sync.ts`.
+- `useLocalizedInstrument()` returns the synced (or audit-scoped) instrument **as-is** - no overlay.
 - For offline first launch the bundled instrument (`assets/bundled-instrument.json`, loaded via `lib/audit/bundled-instrument.ts`) is the fallback.
 
 ### Rule: i18n for user-facing copy only
@@ -253,7 +253,7 @@ Screenshot assets under `screenshots/<device>/<appearance>/` are generated local
 # List targets without capturing
 bun run screenshots:ios -- --list
 
-# Capture all screens — auto-detects device type, runs both light and dark
+# Capture all screens - auto-detects device type, runs both light and dark
 bun run screenshots:ios -- --email <auditor-email> --password <auditor-password>
 
 # Target a specific device / appearance only
@@ -261,7 +261,7 @@ bun run screenshots:ios -- --device iphone --appearance light --email <auditor-e
 bun run screenshots:ios -- --device ipad --appearance dark --email <auditor-email> --password <auditor-password>
 ```
 
-Each capture is pinned to a concrete simulator UDID, so the output folder always matches the device captured and a simulator booted mid-run is ignored. When `--device` is omitted the script captures **every booted simulator** (one folder per device type) — boot an iPhone and an iPad and run once to capture both. When `--appearance` is omitted it captures light and dark in sequence. Output is written to `screenshots/<device>/<appearance>/`.
+Each capture is pinned to a concrete simulator UDID, so the output folder always matches the device captured and a simulator booted mid-run is ignored. When `--device` is omitted the script captures **every booted simulator** (one folder per device type) - boot an iPhone and an iPad and run once to capture both. When `--appearance` is omitted it captures light and dark in sequence. Output is written to `screenshots/<device>/<appearance>/`.
 
 Useful options:
 
@@ -306,13 +306,13 @@ Each run writes a `manifest.json` beside the generated PNG files with successes 
 
 ### Versioning & Releases
 
-The app is **pre-1.0 beta** — the display version stays under `1.0` until public GA. Bump it with the scheme below (`scripts/bump-version.mjs`); EAS owns the Android `versionCode` (do not set it by hand).
+The app is **pre-1.0 beta** - the display version stays under `1.0` until public GA. Bump it with the scheme below (`scripts/bump-version.mjs`); EAS owns the Android `versionCode` (do not set it by hand).
 
 | Command                 | Description                                                 |
 | ----------------------- | ----------------------------------------------------------- |
 | `bun run version:show`  | Print the current app version                               |
-| `bun run version:minor` | "Major" change (e.g. `0.3.4 → 0.4.0`) — usually a new build |
-| `bun run version:patch` | "Small" change (e.g. `0.3.4 → 0.3.5`) — often OTA-able      |
+| `bun run version:minor` | "Major" change (e.g. `0.3.4 → 0.4.0`) - usually a new build |
+| `bun run version:patch` | "Small" change (e.g. `0.3.4 → 0.3.5`) - often OTA-able      |
 
 `runtimeVersion` is `fingerprint`, so a JS-only patch ships over-the-air (`eas update`) while a native/minor change needs `bun run eas:android` → `bun run submit:android`. The bump script prints which. Full policy: `.claude/memory/mobile-versioning.md`.
 

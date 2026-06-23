@@ -203,7 +203,7 @@ export function BugReportFab() {
     const handleSubmit = useCallback(async () => {
         if (!canSubmit || session === null) return;
 
-        // Deflection: attempt once before the first real submit. No online gate —
+        // Deflection: attempt once before the first real submit. No online gate -
         // the request times out quickly (DEFLECTION_TIMEOUT_MS) on a bad link and
         // falls through to queuing automatically, so the sheet never hangs.
         if (!hasCheckedMatches) {
@@ -260,7 +260,7 @@ export function BugReportFab() {
         // Release the temporary capture file now that a durable copy exists.
         releaseScreenshot();
 
-        // Close the sheet immediately — the auditor is not kept waiting while
+        // Close the sheet immediately - the auditor is not kept waiting while
         // the send happens.
         setTitle("");
         setDescription("");

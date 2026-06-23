@@ -357,8 +357,8 @@ async function captureSimulatorRun({ options, simulator, appearance, targets }) 
 		failures: []
 	};
 
-	// Reset and login happens at most once per run — on the first protected
-	// target — so all subsequent screens reuse the cached session and do not
+	// Reset and login happens at most once per run - on the first protected
+	// target - so all subsequent screens reuse the cached session and do not
 	// each pay a full logout→login round-trip.
 	let hasResetThisRun = false;
 

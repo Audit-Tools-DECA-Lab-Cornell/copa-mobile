@@ -200,7 +200,7 @@ describe("submit while connected-but-unreachable", () => {
         expect(result.status).toBe("IN_PROGRESS");
 
         const state = usePlayspaceAuditStore.getState();
-        // Audit is parked as queued (locked, calm) — not a hard failure.
+        // Audit is parked as queued (locked, calm) - not a hard failure.
         expect(state.syncStateByAuditId[AUDIT_ID]?.phase).toBe("queued_submit");
         // No red error banner.
         expect(state.errorMessage).toBeNull();

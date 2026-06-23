@@ -114,7 +114,7 @@ const completedPreAudit = {
 
 /**
  * Build an audit session. Defaults: IN_PROGRESS, instrument attached, pre-audit
- * incomplete, q1 unanswered — so ready_to_submit starts false.
+ * incomplete, q1 unanswered - so ready_to_submit starts false.
  */
 function buildSession(overrides: {
     status?: "IN_PROGRESS" | "PAUSED" | "SUBMITTED";
@@ -208,7 +208,7 @@ const emptyDirty = {
     dirtyStartedAt: {},
 };
 
-describe("applyLocalQuestionAnswerChange — progress recompute", () => {
+describe("applyLocalQuestionAnswerChange - progress recompute", () => {
     it("flips ready_to_submit when the last required question is answered offline (no server round-trip)", () => {
         // Session is otherwise complete: pre-audit done, q1 still unanswered.
         const session = buildSession({ preAuditComplete: true, q1Answered: false });
@@ -264,7 +264,7 @@ describe("applyLocalQuestionAnswerChange — progress recompute", () => {
         });
 
         expect(result.didChange).toBe(false);
-        expect(result.session.progress).toBe(before); // referential equality — unchanged object
+        expect(result.session.progress).toBe(before); // referential equality - unchanged object
         expect(result.dirtySections).toEqual({});
     });
 
@@ -287,7 +287,7 @@ describe("applyLocalQuestionAnswerChange — progress recompute", () => {
     });
 });
 
-describe("applyLocalPreAuditChange — progress recompute", () => {
+describe("applyLocalPreAuditChange - progress recompute", () => {
     it("sets required_pre_audit_complete when the required field is filled in", () => {
         const session = buildSession({ preAuditComplete: false, q1Answered: true });
         expect(session.progress.required_pre_audit_complete).toBe(false);
@@ -338,7 +338,7 @@ describe("applyLocalPreAuditChange — progress recompute", () => {
     });
 });
 
-describe("applyLocalSectionNoteChange — progress recompute", () => {
+describe("applyLocalSectionNoteChange - progress recompute", () => {
     it("recomputes progress after a section note is added", () => {
         const session = buildSession({ preAuditComplete: true, q1Answered: true });
         // ready_to_submit is already true; adding a note should not break that.
@@ -383,7 +383,7 @@ describe("applyLocalSectionNoteChange — progress recompute", () => {
     });
 });
 
-describe("applyLocalFinalCommentsChange — progress recompute", () => {
+describe("applyLocalFinalCommentsChange - progress recompute", () => {
     it("recomputes progress after final comments are saved", () => {
         const session = buildSession({ preAuditComplete: true, q1Answered: true });
         expect(session.progress.ready_to_submit).toBe(true);
@@ -438,7 +438,7 @@ describe("applyLocalFinalCommentsChange — progress recompute", () => {
     });
 });
 
-describe("edit paths — submitted session guard", () => {
+describe("edit paths - submitted session guard", () => {
     it("applyLocalQuestionAnswerChange returns didChange=false for SUBMITTED sessions", () => {
         const session = buildSession({ status: "SUBMITTED", preAuditComplete: true, q1Answered: false });
 

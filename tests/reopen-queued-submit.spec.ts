@@ -22,7 +22,7 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
 import type { AuditSyncStateByAuditId, DirtySections } from "lib/audit/types";
 
 // ---------------------------------------------------------------------------
-// Shared MMKV fake — same shape as the persistence-guards spec.
+// Shared MMKV fake - same shape as the persistence-guards spec.
 // ---------------------------------------------------------------------------
 
 const mmkvData = vi.hoisted(() => new Map<string, string>());
@@ -61,7 +61,7 @@ vi.mock("lib/services/instrument-sync", () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Fixture data — minimal instrument + session builder.
+// Fixture data - minimal instrument + session builder.
 // ---------------------------------------------------------------------------
 
 const instrument = playspaceInstrumentSchema.parse({
@@ -213,7 +213,7 @@ function outboxHasOp(userId: string, auditId: string): boolean {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("reopenQueuedSubmit — no-op when phase is not queued_submit", () => {
+describe("reopenQueuedSubmit - no-op when phase is not queued_submit", () => {
     beforeEach(async () => {
         await usePlayspaceAuditStore.getState().detachStoredState();
         mmkvData.clear();
@@ -244,7 +244,7 @@ describe("reopenQueuedSubmit — no-op when phase is not queued_submit", () => {
         usePlayspaceAuditStore.getState().reopenQueuedSubmit(AUDIT_ID);
 
         expect(outboxHasOp(USER_ID, AUDIT_ID)).toBe(true);
-        // After hydrate the phase is "resolving_submit" — not queued_submit, so
+        // After hydrate the phase is "resolving_submit" - not queued_submit, so
         // reopenQueuedSubmit is a no-op and the persisted phase stays as-is.
         expect(readPersistedPhase(USER_ID, AUDIT_ID)).toBe("resolving_submit");
 
@@ -267,7 +267,7 @@ describe("reopenQueuedSubmit — no-op when phase is not queued_submit", () => {
         usePlayspaceAuditStore.getState().reopenQueuedSubmit(AUDIT_ID);
 
         expect(outboxHasOp(USER_ID, AUDIT_ID)).toBe(true);
-        // "submitted" is dropped on hydrate — no sync entry persisted.
+        // "submitted" is dropped on hydrate - no sync entry persisted.
         expect(readPersistedPhase(USER_ID, AUDIT_ID)).toBeNull();
 
         await usePlayspaceAuditStore.getState().detachStoredState();
@@ -313,7 +313,7 @@ describe("reopenQueuedSubmit — no-op when phase is not queued_submit", () => {
     });
 
     it("no-ops when there is no sync state entry for the audit (implicitly idle)", async () => {
-        // No sync state entry — effective phase is idle (or dirty if fragments
+        // No sync state entry - effective phase is idle (or dirty if fragments
         // exist, but we seed none here, so effective phase is idle).
         seedPersistedBlob(USER_ID, { syncStateByAuditId: {} });
         submitOutbox.put(USER_ID, createSubmitOp(AUDIT_ID, "2026-06-21T00:00:00.000Z"));
@@ -330,7 +330,7 @@ describe("reopenQueuedSubmit — no-op when phase is not queued_submit", () => {
     });
 });
 
-describe("reopenQueuedSubmit — transitions from queued_submit with dirty fragments", () => {
+describe("reopenQueuedSubmit - transitions from queued_submit with dirty fragments", () => {
     beforeEach(async () => {
         await usePlayspaceAuditStore.getState().detachStoredState();
         mmkvData.clear();
@@ -391,7 +391,7 @@ describe("reopenQueuedSubmit — transitions from queued_submit with dirty fragm
     });
 });
 
-describe("reopenQueuedSubmit — transitions from queued_submit with no dirty fragments", () => {
+describe("reopenQueuedSubmit - transitions from queued_submit with no dirty fragments", () => {
     beforeEach(async () => {
         await usePlayspaceAuditStore.getState().detachStoredState();
         mmkvData.clear();
@@ -418,7 +418,7 @@ describe("reopenQueuedSubmit — transitions from queued_submit with no dirty fr
 
     it("removes the outbox op and transitions to 'idle' when dirty sections map is empty", async () => {
         // dirtySections has an entry for the audit but with zero section keys
-        // — `hasDirtyFragmentsForAudit` treats this as no dirty fragments.
+        // - `hasDirtyFragmentsForAudit` treats this as no dirty fragments.
         seedPersistedBlob(USER_ID, {
             dirtySections: { [AUDIT_ID]: {} },
             syncStateByAuditId: {
@@ -437,14 +437,14 @@ describe("reopenQueuedSubmit — transitions from queued_submit with no dirty fr
     });
 });
 
-describe("reopenQueuedSubmit — no-op when no user is signed in", () => {
+describe("reopenQueuedSubmit - no-op when no user is signed in", () => {
     beforeEach(async () => {
         await usePlayspaceAuditStore.getState().detachStoredState();
         mmkvData.clear();
     });
 
     it("does not throw and leaves the outbox untouched when currentUserId is null", () => {
-        // No hydrate call — currentUserId remains null.
+        // No hydrate call - currentUserId remains null.
         // Seed an op so we can verify it is not removed.
         submitOutbox.put(USER_ID, createSubmitOp(AUDIT_ID, "2026-06-21T00:00:00.000Z"));
 

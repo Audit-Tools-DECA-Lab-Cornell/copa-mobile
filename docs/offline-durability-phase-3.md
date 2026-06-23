@@ -1,4 +1,4 @@
-# Offline Durability — Phase 3 (Delivery Depth) Implementation Spec
+# Offline Durability - Phase 3 (Delivery Depth) Implementation Spec
 
 Status as of 2026-06-12: drain triggers (foreground/hydrate/network) landed in
 Phase 0; `pendingUploadCount` selector landed in Phase 2; the **pending-uploads
@@ -8,7 +8,7 @@ This spec covers the remaining, native/infra-bound pieces that need an
 live tree yet (importing a missing native module would break the build).
 
 Principle: the server-side never-arrived detector (Phase 1) is the real delivery
-**guarantee**. Everything here is timeliness / UX — getting the auditor to reopen
+**guarantee**. Everything here is timeliness / UX - getting the auditor to reopen
 on wifi sooner, or waking the app to drain without the user.
 
 ---
@@ -109,7 +109,7 @@ push; the app wakes in the background and runs `processQueuedSubmits`. This is
 the most reliable background mechanism on iOS because it is event-driven, not
 interval-scheduled.
 
-### Client: push-token registration — `lib/notifications/push-registration.ts`
+### Client: push-token registration - `lib/notifications/push-registration.ts`
 
 ```ts
 import * as Device from "expo-device";
@@ -199,7 +199,7 @@ also use the shorter iOS BGAppRefresh window:
 - `app.config.js` → `ios.infoPlist.UIBackgroundModes` include `"fetch"`.
 - The existing `registerAuditBackgroundTaskAsync` already sets a 15-min minimum
   interval; no code change beyond ensuring the background modes are present.
-- Treat as best-effort only — never the guarantee.
+- Treat as best-effort only - never the guarantee.
 
 ---
 

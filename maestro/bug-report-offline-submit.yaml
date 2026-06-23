@@ -38,7 +38,7 @@ appId: com.pratyush.sudhakar.audittoolsplayspacemobile
       id: "bug-report-submit"
 
 # The sheet must close promptly regardless of connectivity. The auditor sees
-# either a "saved" or "report sent" toast — either is acceptable.
+# either a "saved" or "report sent" toast - either is acceptable.
 # A timeout here that expires means the sheet is hanging (the bug being fixed).
 - extendedWaitUntil:
       # Sheet dismissed: the "What happened?" input is no longer visible.

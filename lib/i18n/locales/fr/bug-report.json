@@ -1,7 +1,7 @@
 {
     "launch": "Signaler un problème",
     "title": "Signaler un problème",
-    "subtitle": "Dites-nous ce qui n'a pas fonctionné. Nous joignons automatiquement votre écran, la version de l'app et les détails de l'appareil — jamais vos réponses d'audit.",
+    "subtitle": "Dites-nous ce qui n'a pas fonctionné. Nous joignons automatiquement votre écran, la version de l'app et les détails de l'appareil - jamais vos réponses d'audit.",
     "fields": {
         "title": "Que s'est-il passé ?",
         "description": "Décrivez le problème",
@@ -26,15 +26,15 @@
         "minor": "Mineur"
     },
     "matches": {
-        "heading": "Ces problèmes connus pourraient correspondre — vérifiez-les d'abord",
+        "heading": "Ces problèmes connus pourraient correspondre - vérifiez-les d'abord",
         "workaroundLabel": "Solution de contournement"
     },
     "submit": "Envoyer le rapport",
     "submitAnyway": "Envoyer quand même",
     "cancel": "Annuler",
-    "success": "Merci — votre rapport a été envoyé.",
+    "success": "Merci - votre rapport a été envoyé.",
     "errors": {
-        "offline": "Vous êtes hors ligne. Votre rapport est enregistré ici — renvoyez-le une fois de retour en ligne.",
+        "offline": "Vous êtes hors ligne. Votre rapport est enregistré ici - renvoyez-le une fois de retour en ligne.",
         "generic": "Nous n'avons pas pu envoyer votre rapport. Veuillez réessayer."
     },
     "sending": "Envoi…",
@@ -47,7 +47,7 @@
         "flushed_one": "Votre rapport enregistré a été envoyé. Merci.",
         "flushed_other": "{{count}} rapports enregistrés ont été envoyés. Merci.",
         "flushPartial": "Certains rapports n'ont pas encore pu être envoyés. Nous vous le redemanderons à votre prochaine connexion.",
-        "savedOffline": "Vous êtes hors ligne. Votre rapport est enregistré sur cet appareil — nous vous inviterons à l'envoyer une fois de retour en ligne.",
+        "savedOffline": "Vous êtes hors ligne. Votre rapport est enregistré sur cet appareil - nous vous inviterons à l'envoyer une fois de retour en ligne.",
         "savedForLater": "Votre rapport est enregistré sur cet appareil. Nous vous inviterons à l'envoyer une fois de retour en ligne."
     }
 }

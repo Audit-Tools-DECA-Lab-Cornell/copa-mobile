@@ -4,7 +4,7 @@
  *
  * Bumps ONLY the human-readable `version` string in `app.config.js`
  * (Android versionName / iOS CFBundleShortVersionString). It never touches the
- * Android `versionCode` — that is owned by EAS (`appVersionSource: "remote"` +
+ * Android `versionCode` - that is owned by EAS (`appVersionSource: "remote"` +
  * `autoIncrement: true` in eas.json) and increments automatically on each build.
  *
  * Versioning policy (full rationale: .claude/memory/mobile-versioning.md):
@@ -100,7 +100,7 @@ function releaseHint(current, next) {
 	}
 	return [
 		"Patch bump = a small change. If it is JS-only (colors, copy, i18n, minor UI),",
-		"ship it over-the-air — no Play review:",
+		"ship it over-the-air - no Play review:",
 		"  eas update --branch production --message \"v" + next + "\"",
 		"If it touched native code/deps, build instead: bun run eas:android",
 	].join("\n");
@@ -137,7 +137,7 @@ function main() {
 
 	writeFileSync(CONFIG, source.replace(VERSION_RE, `$1${next}$3`), "utf8");
 	console.log(`✓ app.config.js version: ${current} -> ${next}`);
-	console.log("  (versionCode is managed by EAS — not changed here.)");
+	console.log("  (versionCode is managed by EAS - not changed here.)");
 	console.log(`\n${releaseHint(current, next)}`);
 	console.log(
 		"\nGit is left untouched. When ready, commit + tag yourself, e.g.:\n" +

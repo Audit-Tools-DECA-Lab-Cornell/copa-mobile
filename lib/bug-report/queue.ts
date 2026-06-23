@@ -92,7 +92,7 @@ export function removePendingBugReport(id: string): void {
  * Copy a freshly-captured temporary screenshot into durable per-app storage so
  * it survives until the report is submitted, even across app restarts. Returns
  * the durable URI, or ``undefined`` if the copy fails (the report is still
- * queued without a screenshot — attachment is always optional).
+ * queued without a screenshot - attachment is always optional).
  */
 export function persistScreenshotForQueue(tmpUri: string, reportId: string): string | undefined {
     try {
