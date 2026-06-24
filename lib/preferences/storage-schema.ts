@@ -9,6 +9,7 @@ export interface PersistedPreferences {
     readonly high_contrast: boolean;
     readonly dyslexic_font: boolean;
     readonly field_mode: boolean;
+    readonly has_seen_intro: boolean;
 }
 
 export const DEFAULT_PERSISTED_PREFERENCES: PersistedPreferences = {
@@ -18,6 +19,7 @@ export const DEFAULT_PERSISTED_PREFERENCES: PersistedPreferences = {
     high_contrast: false,
     dyslexic_font: false,
     field_mode: false,
+    has_seen_intro: false,
 };
 
 /**
@@ -65,6 +67,10 @@ export function normalizePersistedPreferences(value: unknown): PersistedPreferen
     const fieldMode = value["field_mode"];
     const validFieldMode = typeof fieldMode === "boolean" ? fieldMode : DEFAULT_PERSISTED_PREFERENCES.field_mode;
 
+    const hasSeenIntro = value["has_seen_intro"];
+    const validHasSeenIntro =
+        typeof hasSeenIntro === "boolean" ? hasSeenIntro : DEFAULT_PERSISTED_PREFERENCES.has_seen_intro;
+
     return {
         theme_mode: validThemeMode,
         language: validLanguagePreference,
@@ -72,6 +78,7 @@ export function normalizePersistedPreferences(value: unknown): PersistedPreferen
         high_contrast: validHighContrast,
         dyslexic_font: validDyslexicFont,
         field_mode: validFieldMode,
+        has_seen_intro: validHasSeenIntro,
     };
 }
 

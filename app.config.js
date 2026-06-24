@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "COPA",
         slug: "copa-mobile",
-        version: "0.5.2",
+        version: "0.5.3",
         orientation: "portrait",
         icon: "./assets/icon-ios.png",
         scheme: "copa-mobile",

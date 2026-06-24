@@ -622,13 +622,13 @@ export default function SettingsScreen() {
                 <ProfileRow
                     ds={ds}
                     label={t("about.instrument", { ns: "settings" })}
-                    value={instrument!.instrument_name}
+                    value={instrument?.instrument_name ?? "-"}
                 />
                 <Separator borderColor={ds.colors.border} />
                 <ProfileRow
                     ds={ds}
                     label={t("about.version", { ns: "settings" })}
-                    value={`v${instrument!.instrument_version}`}
+                    value={`v${instrument?.instrument_version ?? "-"}`}
                 />
                 <Separator borderColor={ds.colors.border} />
                 <ProfileRow

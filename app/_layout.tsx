@@ -131,6 +131,7 @@ function ActiveRootLayoutNav() {
     const isAuditHydrated = usePlayspaceAuditStore((state) => state.isHydrated);
     const currentAuditUserId = usePlayspaceAuditStore((state) => state.currentUserId);
     const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
+    const hasSeenIntro = usePreferencesStore((state) => state.hasSeenIntro);
     const ds = useDesignSystem();
     const { t } = useTranslation("audit");
 
@@ -342,7 +343,7 @@ function ActiveRootLayoutNav() {
 
         if (authStatus === "unauthenticated") {
             if (!inAuthGroup) {
-                router.replace("/(auth)/login");
+                router.replace(hasSeenIntro ? "/(auth)/login" : "/(auth)/intro");
             }
             return;
         }
