@@ -1,5 +1,5 @@
 import json
-with open('/Users/praty/Desktop/StudentJob/playspace/audit-tools-playspace-mobile/assets/bundled-instrument.json', 'r') as f:
+with open('/Users/praty/Desktop/StudentJob/playspace/copa-mobile/assets/bundled-instrument.json', 'r') as f:
     data = json.load(f)
 for s_idx, section in enumerate(data['sections']):
     if 'notes_prompt' in section:

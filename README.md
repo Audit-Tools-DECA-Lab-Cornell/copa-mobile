@@ -1,6 +1,6 @@
 # COPA mobile
 
-[![Mobile Quality](https://github.com/Audit-Tools-DECA-Lab-Cornell/audit-tools-playspace-mobile/actions/workflows/mobile-quality.yml/badge.svg?branch=master)](https://github.com/Audit-Tools-DECA-Lab-Cornell/audit-tools-playspace-mobile/actions/workflows/mobile-quality.yml)
+[![Mobile Quality](https://github.com/Audit-Tools-DECA-Lab-Cornell/copa-mobile/actions/workflows/mobile-quality.yml/badge.svg?branch=master)](https://github.com/Audit-Tools-DECA-Lab-Cornell/copa-mobile/actions/workflows/mobile-quality.yml)
 ![Android Build](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/pratyush1712/d2ca48d8459d001342f0ab89cab24d69/raw/copa-android.json&cacheSeconds=300)
 ![Expo SDK](https://img.shields.io/badge/Expo-SDK%2055-000020?logo=expo&logoColor=white)
 

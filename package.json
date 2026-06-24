@@ -1,5 +1,5 @@
 {
-    "name": "audit-tools-playspace-mobile",
+    "name": "copa-mobile",
     "version": "2.0.0-rc.40",
     "private": true,
     "main": "expo-router/entry",

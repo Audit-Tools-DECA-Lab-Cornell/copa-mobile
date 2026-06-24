@@ -287,7 +287,7 @@ export function roundedPercentOfMax(value: number, max: number): number | null {
 
 /**
  * Bar color band from percentage: 70+ high, 40+ mid, below low, null for not assessed.
- * Matches `reportBarScoreTier` in `audit-tools-playspace-frontend/src/lib/audit/report-helpers.ts`.
+ * Matches `reportBarScoreTier` in `copa-frontend/src/lib/audit/report-helpers.ts`.
  */
 export type ReportBarScoreTier = "na" | "high" | "mid" | "low";
 

@@ -5,7 +5,7 @@ These flows cover the auditor-only native app path. They assume a development bu
 ## Run
 
 ```bash
-cd audit-tools-playspace-mobile
+cd copa-mobile
 EXPO_PUBLIC_API_URL=http://127.0.0.1:8000 bun run dev
 bun run test:e2e:maestro:smoke
 ```

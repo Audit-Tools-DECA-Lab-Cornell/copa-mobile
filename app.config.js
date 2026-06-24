@@ -1,11 +1,11 @@
 export default {
     expo: {
         name: "COPA",
-        slug: "audit-tools-playspace-mobile",
+        slug: "copa-mobile",
         version: "0.5.2",
         orientation: "portrait",
         icon: "./assets/icon-ios.png",
-        scheme: "audit-tools-playspace-mobile",
+        scheme: "copa-mobile",
         userInterfaceStyle: "automatic",
         splash: {
             image: "./assets/images/splash.png",
@@ -85,7 +85,7 @@ export default {
             policy: "fingerprint",
         },
         owner: "audit-tools-deca-lab-cornell",
-        githubUrl: "https://github.com/audit-tools-deca-lab-cornell/audit-tools-playspace-mobile",
+        githubUrl: "https://github.com/audit-tools-deca-lab-cornell/copa-mobile",
         updates: {
             url: "https://u.expo.dev/2e559376-25f3-44e1-88bf-00eeaf9fb763",
             enableBsdiffPatchSupport: true,
