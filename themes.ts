@@ -57,4 +57,4 @@ const builtThemes = createV5Theme({
 
 export type Themes = typeof builtThemes;
 
-export const themes = builtThemes;
+export const themes: Themes = builtThemes;
