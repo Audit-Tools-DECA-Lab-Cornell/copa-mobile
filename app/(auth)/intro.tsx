@@ -1,4 +1,4 @@
-import { type JSX, useRef, useState } from "react";
+import { type JSX, useEffect, useRef, useState } from "react";
 import {
     Image,
     ScrollView,
@@ -6,6 +6,14 @@ import {
     type NativeScrollEvent,
     type NativeSyntheticEvent,
 } from "react-native";
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withTiming,
+    withDelay,
+    interpolateColor,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { ArrowRight, BadgeCheck, ClipboardCheck, ShieldCheck, UploadCloud } from "@tamagui/lucide-icons-2";
 import type { IconProps } from "@tamagui/helpers-icon";
@@ -140,13 +148,14 @@ export default function IntroScreen() {
                 onMomentumScrollEnd={handleMomentumScrollEnd}
                 style={{ flex: 1 }}
             >
-                {SLIDES.map((slide) => (
+                {SLIDES.map((slide, index) => (
                     <SlideView
                         key={slide.key}
                         slide={slide}
                         width={screenWidth}
                         paddingHorizontal={contentPaddingHorizontal}
                         isTablet={layout.isTablet}
+                        isActive={index === currentSlide}
                         ds={ds}
                         t={t}
                     />
@@ -164,18 +173,14 @@ export default function IntroScreen() {
                 <YStack width="100%" gap="$4" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                     {/* Progress dots — pill expands on the active slide */}
                     <XStack justify="center" gap="$2">
-                        {SLIDES.map((slide, index) => {
-                            const isActive = index === currentSlide;
-                            return (
-                                <YStack
-                                    key={slide.key}
-                                    width={isActive ? 24 : 8}
-                                    height={8}
-                                    rounded={ds.radii.full}
-                                    bg={isActive ? ds.colors.primary : ds.colors.border}
-                                />
-                            );
-                        })}
+                        {SLIDES.map((slide, index) => (
+                            <AnimatedDot
+                                key={slide.key}
+                                isActive={index === currentSlide}
+                                activeColor={ds.colors.primary}
+                                inactiveColor={ds.colors.border}
+                            />
+                        ))}
                     </XStack>
 
                     <Button
@@ -212,83 +217,237 @@ interface SlideViewProps {
     readonly width: number;
     readonly paddingHorizontal: number;
     readonly isTablet: boolean;
+    readonly isActive: boolean;
     readonly ds: ReturnType<typeof useDesignSystem>;
     readonly t: (key: string) => string;
 }
 
-function SlideView({ slide, width, paddingHorizontal, isTablet, ds, t }: SlideViewProps) {
+const SPRING_CONFIG = { damping: 18, stiffness: 180 } as const;
+
+function SlideView({ slide, width, paddingHorizontal, isTablet, isActive, ds, t }: SlideViewProps) {
     const { Icon } = slide;
+    const { height: screenHeight } = useWindowDimensions();
 
-    // The mockup images are tall portrait frames. Give the image generous vertical
-    // space and let the text sit below it without crowding either region.
-    const imageAreaHeight = isTablet ? 380 : 300;
-    const titleFontSize = isTablet ? 30 : 24;
-    const titleLineHeight = isTablet ? 38 : 30;
+    const imageScale = useSharedValue(0.94);
+    const eyebrowOpacity = useSharedValue(0);
+    const eyebrowY = useSharedValue(12);
+    const titleOpacity = useSharedValue(0);
+    const titleY = useSharedValue(12);
+    const bodyOpacity = useSharedValue(0);
+    const bodyY = useSharedValue(12);
 
+    useEffect(() => {
+        if (isActive) {
+            imageScale.value = withSpring(1, { damping: 14, stiffness: 130 });
+            eyebrowOpacity.value = withDelay(60, withTiming(1, { duration: 260 }));
+            eyebrowY.value = withDelay(60, withSpring(0, SPRING_CONFIG));
+            titleOpacity.value = withDelay(130, withTiming(1, { duration: 260 }));
+            titleY.value = withDelay(130, withSpring(0, SPRING_CONFIG));
+            bodyOpacity.value = withDelay(200, withTiming(1, { duration: 260 }));
+            bodyY.value = withDelay(200, withSpring(0, SPRING_CONFIG));
+        } else {
+            imageScale.value = 0.94;
+            eyebrowOpacity.value = 0;
+            eyebrowY.value = 12;
+            titleOpacity.value = 0;
+            titleY.value = 12;
+            bodyOpacity.value = 0;
+            bodyY.value = 12;
+        }
+    }, [isActive, imageScale, eyebrowOpacity, eyebrowY, titleOpacity, titleY, bodyOpacity, bodyY]);
+
+    const imageStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: imageScale.value }],
+    }));
+
+    const eyebrowStyle = useAnimatedStyle(() => ({
+        opacity: eyebrowOpacity.value,
+        transform: [{ translateY: eyebrowY.value }],
+    }));
+
+    const titleStyle = useAnimatedStyle(() => ({
+        opacity: titleOpacity.value,
+        transform: [{ translateY: titleY.value }],
+    }));
+
+    const bodyStyle = useAnimatedStyle(() => ({
+        opacity: bodyOpacity.value,
+        transform: [{ translateY: bodyY.value }],
+    }));
+
+    // ─── Tablet: side-by-side layout ────────────────────────────────────────
+    // Portrait phone-frame images are tall and narrow (~9:19 ratio). Stacking
+    // them in a vertical layout on a wide tablet wastes horizontal space and
+    // forces a short, small image. A two-column layout lets the image fill the
+    // full available height while the text sits beside it, vertically centered.
+    if (isTablet) {
+        const imageColWidth = width * 0.44;
+        // Use 68% of screen height so the image is large but clear of safe-area
+        // insets, the skip bar, and the footer.
+        const tabletImageHeight = screenHeight * 0.68;
+
+        return (
+            <XStack width={width} flex={1} items="center" px={paddingHorizontal} gap="$8">
+                {/* Left column: screenshot, drives its own height */}
+                <YStack width={imageColWidth} items="center" justify="center">
+                    <Animated.View style={imageStyle}>
+                        <Image
+                            source={SLIDE_IMAGES[slide.key]}
+                            style={{ width: imageColWidth, height: tabletImageHeight }}
+                            resizeMode="contain"
+                            accessibilityRole="image"
+                            accessibilityLabel={t(slide.titleKey)}
+                        />
+                    </Animated.View>
+                </YStack>
+
+                {/* Right column: text, vertically centered */}
+                <YStack flex={1} justify="center" gap="$6">
+                    <Animated.View style={eyebrowStyle}>
+                        <XStack items="center" gap="$2">
+                            <YStack
+                                width={32}
+                                height={32}
+                                rounded={ds.radii.sm}
+                                items="center"
+                                justify="center"
+                                bg={ds.colors.primarySoft}
+                                borderWidth={1}
+                                borderColor={ds.colors.primary}
+                            >
+                                <Icon size={16} color={ds.colors.primary} />
+                            </YStack>
+                            <Paragraph
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelMd.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.8}
+                            >
+                                {t(slide.labelKey)}
+                            </Paragraph>
+                        </XStack>
+                    </Animated.View>
+
+                    <Animated.View style={titleStyle}>
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.headingBold}
+                            fontSize={36}
+                            lineHeight={44}
+                            textTransform="uppercase"
+                            fontStyle="italic"
+                            letterSpacing={-0.5}
+                        >
+                            {t(slide.titleKey)}
+                        </Text>
+                    </Animated.View>
+
+                    <Animated.View style={bodyStyle}>
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyLg.fontSize}
+                            lineHeight={ds.typography.bodyLg.lineHeight}
+                        >
+                            {t(slide.bodyKey)}
+                        </Paragraph>
+                    </Animated.View>
+                </YStack>
+            </XStack>
+        );
+    }
+
+    // ─── Phone: vertical layout ──────────────────────────────────────────────
     return (
-        <YStack width={width} flex={1} justify="flex-start" gap={isTablet ? "$5" : "$4"} pb="$2">
+        <YStack width={width} flex={1} justify="flex-start" gap="$4" pb="$2">
             {/* Screenshot image — centered, contain so the phone frame stays intact */}
-            <YStack height={imageAreaHeight} width={width} items="center" justify="center" overflow="hidden">
-                <Image
-                    source={SLIDE_IMAGES[slide.key]}
-                    style={{
-                        width: width * (isTablet ? 0.52 : 0.62),
-                        height: imageAreaHeight,
-                    }}
-                    resizeMode="contain"
-                    accessibilityRole="image"
-                    accessibilityLabel={t(slide.titleKey)}
-                />
+            <YStack height={300} width={width} items="center" justify="center" overflow="hidden">
+                <Animated.View style={imageStyle}>
+                    <Image
+                        source={SLIDE_IMAGES[slide.key]}
+                        style={{ width: width * 0.62, height: 300 }}
+                        resizeMode="contain"
+                        accessibilityRole="image"
+                        accessibilityLabel={t(slide.titleKey)}
+                    />
+                </Animated.View>
             </YStack>
 
-            {/* Text content */}
-            <YStack px={paddingHorizontal} gap={isTablet ? "$4" : "$3"} style={{ maxWidth: 520 }}>
-                {/* Icon badge + eyebrow on one line */}
-                <XStack items="center" gap="$2">
-                    <YStack
-                        width={28}
-                        height={28}
-                        rounded={ds.radii.sm}
-                        items="center"
-                        justify="center"
-                        bg={ds.colors.primarySoft}
-                        borderWidth={1}
-                        borderColor={ds.colors.primary}
-                    >
-                        <Icon size={14} color={ds.colors.primary} />
-                    </YStack>
-                    <Paragraph
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
+            {/* Text content — each element staggers in when the slide becomes active */}
+            <YStack px={paddingHorizontal} gap="$3" style={{ maxWidth: 520 }}>
+                <Animated.View style={eyebrowStyle}>
+                    <XStack items="center" gap="$2">
+                        <YStack
+                            width={28}
+                            height={28}
+                            rounded={ds.radii.sm}
+                            items="center"
+                            justify="center"
+                            bg={ds.colors.primarySoft}
+                            borderWidth={1}
+                            borderColor={ds.colors.primary}
+                        >
+                            <Icon size={14} color={ds.colors.primary} />
+                        </YStack>
+                        <Paragraph
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.8}
+                        >
+                            {t(slide.labelKey)}
+                        </Paragraph>
+                    </XStack>
+                </Animated.View>
+
+                <Animated.View style={titleStyle}>
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={24}
+                        lineHeight={30}
                         textTransform="uppercase"
-                        letterSpacing={1.8}
+                        fontStyle="italic"
+                        letterSpacing={-0.5}
                     >
-                        {t(slide.labelKey)}
+                        {t(slide.titleKey)}
+                    </Text>
+                </Animated.View>
+
+                <Animated.View style={bodyStyle}>
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyMd.fontSize}
+                        lineHeight={ds.typography.bodyMd.lineHeight}
+                    >
+                        {t(slide.bodyKey)}
                     </Paragraph>
-                </XStack>
-
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={titleFontSize}
-                    lineHeight={titleLineHeight}
-                    textTransform="uppercase"
-                    fontStyle="italic"
-                    letterSpacing={-0.5}
-                >
-                    {t(slide.titleKey)}
-                </Text>
-
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={isTablet ? ds.typography.bodyLg.fontSize : ds.typography.bodyMd.fontSize}
-                    lineHeight={isTablet ? ds.typography.bodyLg.lineHeight : ds.typography.bodyMd.lineHeight}
-                >
-                    {t(slide.bodyKey)}
-                </Paragraph>
+                </Animated.View>
             </YStack>
         </YStack>
     );
+}
+
+interface AnimatedDotProps {
+    readonly isActive: boolean;
+    readonly activeColor: string;
+    readonly inactiveColor: string;
+}
+
+function AnimatedDot({ isActive, activeColor, inactiveColor }: AnimatedDotProps) {
+    const progress = useSharedValue(isActive ? 1 : 0);
+
+    useEffect(() => {
+        progress.value = withSpring(isActive ? 1 : 0, { damping: 14, stiffness: 160 });
+    }, [isActive, progress]);
+
+    const animStyle = useAnimatedStyle(() => ({
+        width: 8 + progress.value * 16,
+        backgroundColor: interpolateColor(progress.value, [0, 1], [inactiveColor, activeColor]),
+    }));
+
+    return <Animated.View style={[animStyle, { height: 8, borderRadius: 999 }]} />;
 }

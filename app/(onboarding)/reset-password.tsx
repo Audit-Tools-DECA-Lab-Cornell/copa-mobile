@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { Check, KeyRound, Lock, X } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
@@ -232,34 +233,71 @@ function RequirementsCard({ ds, requirements, t }: RequirementsCardProps) {
 
             <YStack gap="$2">
                 {requirements.map((requirement) => (
-                    <XStack key={requirement.key} items="center" gap="$2">
-                        <YStack
-                            width={20}
-                            height={20}
-                            rounded={ds.radii.full}
-                            items="center"
-                            justify="center"
-                            bg={requirement.met ? ds.colors.successSoft : ds.colors.mutedSurface}
-                            borderWidth={1}
-                            borderColor={requirement.met ? ds.colors.success : ds.colors.border}
-                        >
-                            {requirement.met ? (
-                                <Check size={12} color={ds.colors.success} />
-                            ) : (
-                                <X size={12} color={ds.colors.mutedForeground} />
-                            )}
-                        </YStack>
-                        <Text
-                            color={requirement.met ? ds.colors.foreground : ds.colors.mutedForeground}
-                            fontFamily={requirement.met ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {t(`resetPassword.${requirement.labelKey}`)}
-                        </Text>
-                    </XStack>
+                    <AnimatedRequirementRow
+                        key={requirement.key}
+                        met={requirement.met}
+                        label={t(`resetPassword.${requirement.labelKey}`)}
+                        ds={ds}
+                    />
                 ))}
             </YStack>
         </YStack>
+    );
+}
+
+interface AnimatedRequirementRowProps {
+    readonly met: boolean;
+    readonly label: string;
+    readonly ds: ReturnType<typeof useDesignSystem>;
+}
+
+function AnimatedRequirementRow({ met, label, ds }: AnimatedRequirementRowProps) {
+    const iconScale = useSharedValue(met ? 1 : 0.6);
+    const iconOpacity = useSharedValue(met ? 1 : 0);
+
+    useEffect(() => {
+        if (met) {
+            iconScale.value = withSpring(1, { damping: 10, stiffness: 200 });
+            iconOpacity.value = withSpring(1, { damping: 14, stiffness: 180 });
+        } else {
+            iconScale.value = 0.6;
+            iconOpacity.value = 0;
+        }
+    }, [met, iconScale, iconOpacity]);
+
+    const iconStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: iconScale.value }],
+        opacity: iconOpacity.value,
+    }));
+
+    return (
+        <XStack items="center" gap="$2">
+            <YStack
+                width={20}
+                height={20}
+                rounded={ds.radii.full}
+                items="center"
+                justify="center"
+                bg={met ? ds.colors.successSoft : ds.colors.mutedSurface}
+                borderWidth={1}
+                borderColor={met ? ds.colors.success : ds.colors.border}
+            >
+                {met ? (
+                    <Animated.View style={iconStyle}>
+                        <Check size={12} color={ds.colors.success} />
+                    </Animated.View>
+                ) : (
+                    <X size={12} color={ds.colors.mutedForeground} />
+                )}
+            </YStack>
+            <Text
+                color={met ? ds.colors.foreground : ds.colors.mutedForeground}
+                fontFamily={met ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodySm.fontSize}
+            >
+                {label}
+            </Text>
+        </XStack>
     );
 }
 

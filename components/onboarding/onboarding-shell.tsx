@@ -1,5 +1,13 @@
-import { JSX, type ReactNode } from "react";
+import { JSX, useEffect, type ReactNode } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, type StyleProp, type ViewStyle } from "react-native";
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    withSpring,
+    withDelay,
+    interpolateColor,
+} from "react-native-reanimated";
 import { ArrowRight } from "@tamagui/lucide-icons-2";
 import type { IconProps } from "@tamagui/helpers-icon";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
@@ -209,6 +217,25 @@ function OnboardingHeader({
     ds,
     totalSteps,
 }: OnboardingHeaderProps) {
+    const opacity = useSharedValue(0);
+    const translateY = useSharedValue(10);
+    const iconScale = useSharedValue(0.85);
+
+    useEffect(() => {
+        opacity.value = withTiming(1, { duration: 300 });
+        translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
+        iconScale.value = withDelay(120, withSpring(1, { damping: 14, stiffness: 160 }));
+    }, [opacity, translateY, iconScale]);
+
+    const contentStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+        transform: [{ translateY: translateY.value }],
+    }));
+
+    const iconStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: iconScale.value }],
+    }));
+
     return (
         <YStack
             px={paddingHorizontal}
@@ -222,53 +249,57 @@ function OnboardingHeader({
             <YStack width="100%" style={{ maxWidth: contentMaxWidth, alignSelf: "center" }} gap="$4">
                 <ProgressSegments currentStep={step} totalSteps={totalSteps} ds={ds} />
 
-                <YStack gap="$3">
-                    <Paragraph
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.6}
-                    >
-                        {eyebrow}
-                    </Paragraph>
-
-                    <XStack items="flex-start" gap="$3">
-                        <YStack
-                            width={heroIconBox}
-                            height={heroIconBox}
-                            rounded={ds.radii.md}
-                            items="center"
-                            justify="center"
-                            bg={ds.colors.primarySoft}
-                            borderWidth={1}
-                            borderColor={ds.colors.primary}
+                <Animated.View style={contentStyle}>
+                    <YStack gap="$3">
+                        <Paragraph
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.6}
                         >
-                            <Icon size={heroIconSize} color={ds.colors.primary} />
-                        </YStack>
-                        <YStack flex={1} gap="$2">
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.headingBold}
-                                fontSize={titleTypography.fontSize}
-                                lineHeight={titleTypography.lineHeight}
-                                textTransform="uppercase"
-                                fontStyle="italic"
-                                letterSpacing={-0.5}
-                            >
-                                {title}
-                            </Text>
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyMd.fontSize}
-                                lineHeight={ds.typography.bodyMd.lineHeight}
-                            >
-                                {subtitle}
-                            </Paragraph>
-                        </YStack>
-                    </XStack>
-                </YStack>
+                            {eyebrow}
+                        </Paragraph>
+
+                        <XStack items="flex-start" gap="$3">
+                            <Animated.View style={iconStyle}>
+                                <YStack
+                                    width={heroIconBox}
+                                    height={heroIconBox}
+                                    rounded={ds.radii.md}
+                                    items="center"
+                                    justify="center"
+                                    bg={ds.colors.primarySoft}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.primary}
+                                >
+                                    <Icon size={heroIconSize} color={ds.colors.primary} />
+                                </YStack>
+                            </Animated.View>
+                            <YStack flex={1} gap="$2">
+                                <Text
+                                    color={ds.colors.foreground}
+                                    fontFamily={ds.fonts.headingBold}
+                                    fontSize={titleTypography.fontSize}
+                                    lineHeight={titleTypography.lineHeight}
+                                    textTransform="uppercase"
+                                    fontStyle="italic"
+                                    letterSpacing={-0.5}
+                                >
+                                    {title}
+                                </Text>
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodyMd.fontSize}
+                                    lineHeight={ds.typography.bodyMd.lineHeight}
+                                >
+                                    {subtitle}
+                                </Paragraph>
+                            </YStack>
+                        </XStack>
+                    </YStack>
+                </Animated.View>
             </YStack>
         </YStack>
     );
@@ -289,24 +320,37 @@ function ProgressSegments({ currentStep, totalSteps, ds }: ProgressSegmentsProps
             accessibilityRole="progressbar"
             accessibilityValue={{ min: 1, max: totalSteps, now: currentStep }}
         >
-            {segments.map((segmentStep) => {
-                const isActive = segmentStep === currentStep;
-                const isComplete = segmentStep < currentStep;
-                const fillColor = isActive || isComplete ? ds.colors.primary : ds.colors.border;
-
-                return (
-                    <YStack
-                        key={segmentStep}
-                        flex={1}
-                        height={6}
-                        rounded={ds.radii.full}
-                        bg={fillColor}
-                        opacity={isComplete ? 0.85 : 1}
-                    />
-                );
-            })}
+            {segments.map((segmentStep) => (
+                <AnimatedSegment
+                    key={segmentStep}
+                    isFilled={segmentStep <= currentStep}
+                    activeColor={ds.colors.primary}
+                    inactiveColor={ds.colors.border}
+                />
+            ))}
         </XStack>
     );
+}
+
+interface AnimatedSegmentProps {
+    readonly isFilled: boolean;
+    readonly activeColor: string;
+    readonly inactiveColor: string;
+}
+
+function AnimatedSegment({ isFilled, activeColor, inactiveColor }: AnimatedSegmentProps) {
+    const progress = useSharedValue(isFilled ? 1 : 0);
+
+    useEffect(() => {
+        progress.value = withSpring(isFilled ? 1 : 0, { damping: 16, stiffness: 140 });
+    }, [isFilled, progress]);
+
+    const animStyle = useAnimatedStyle(() => ({
+        backgroundColor: interpolateColor(progress.value, [0, 1], [inactiveColor, activeColor]),
+        opacity: 0.6 + progress.value * 0.4,
+    }));
+
+    return <Animated.View style={[animStyle, { flex: 1, height: 6, borderRadius: 999 }]} />;
 }
 
 interface OnboardingFooterProps {
@@ -347,19 +391,7 @@ function OnboardingFooter({
             bg={ds.colors.background}
         >
             <YStack width="100%" gap="$3" style={{ maxWidth: contentMaxWidth, alignSelf: "center" }}>
-                {errorMessage !== null ? (
-                    <YStack
-                        borderWidth={1}
-                        borderColor={ds.colors.danger}
-                        bg={ds.colors.dangerSoft}
-                        rounded={ds.radii.md}
-                        p="$3"
-                    >
-                        <Paragraph color={ds.colors.danger} fontFamily={ds.fonts.bodyMedium}>
-                            {errorMessage}
-                        </Paragraph>
-                    </YStack>
-                ) : null}
+                {errorMessage !== null ? <AnimatedErrorCard ds={ds} message={errorMessage} /> : null}
 
                 {typeof helperText === "string" && helperText.length > 0 ? (
                     <Paragraph
@@ -401,6 +433,42 @@ function OnboardingFooter({
                 </Button>
             </YStack>
         </YStack>
+    );
+}
+
+interface AnimatedErrorCardProps {
+    readonly ds: ReturnType<typeof useDesignSystem>;
+    readonly message: string;
+}
+
+function AnimatedErrorCard({ ds, message }: AnimatedErrorCardProps) {
+    const opacity = useSharedValue(0);
+    const translateY = useSharedValue(-8);
+
+    useEffect(() => {
+        opacity.value = withTiming(1, { duration: 220 });
+        translateY.value = withSpring(0, { damping: 16, stiffness: 200 });
+    }, [opacity, translateY]);
+
+    const animStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+        transform: [{ translateY: translateY.value }],
+    }));
+
+    return (
+        <Animated.View style={animStyle}>
+            <YStack
+                borderWidth={1}
+                borderColor={ds.colors.danger}
+                bg={ds.colors.dangerSoft}
+                rounded={ds.radii.md}
+                p="$3"
+            >
+                <Paragraph color={ds.colors.danger} fontFamily={ds.fonts.bodyMedium}>
+                    {message}
+                </Paragraph>
+            </YStack>
+        </Animated.View>
     );
 }
 

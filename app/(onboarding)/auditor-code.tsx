@@ -1,4 +1,13 @@
 import { useEffect, useState } from "react";
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withTiming,
+    withDelay,
+    withSequence,
+    withRepeat,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { BadgeCheck, ShieldCheck } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
@@ -122,8 +131,36 @@ interface CodeRevealCardProps {
  */
 function CodeRevealCard({ auditorCode, ds, hasError, isLoading, isTablet, codeLabel }: CodeRevealCardProps) {
     const isHighlighted = !hasError;
-    const codeFontSize = isTablet ? ds.typography.metricMd.fontSize : ds.typography.metricMd.fontSize;
-    const codeLineHeight = isTablet ? ds.typography.metricMd.lineHeight : ds.typography.metricMd.lineHeight;
+    const codeFontSize = ds.typography.metricMd.fontSize;
+    const codeLineHeight = ds.typography.metricMd.lineHeight;
+
+    // Skeleton pulse while loading
+    const skeletonOpacity = useSharedValue(0.35);
+    useEffect(() => {
+        if (isLoading) {
+            skeletonOpacity.value = withRepeat(
+                withSequence(withTiming(0.7, { duration: 600 }), withTiming(0.35, { duration: 600 })),
+                -1,
+            );
+        }
+    }, [isLoading, skeletonOpacity]);
+
+    const skeletonStyle = useAnimatedStyle(() => ({ opacity: skeletonOpacity.value }));
+
+    // Code reveal — fires once when the code first arrives
+    const codeScale = useSharedValue(0.75);
+    const codeOpacity = useSharedValue(0);
+    useEffect(() => {
+        if (auditorCode !== null) {
+            codeScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+            codeOpacity.value = withTiming(1, { duration: 280 });
+        }
+    }, [auditorCode, codeScale, codeOpacity]);
+
+    const codeStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: codeScale.value }],
+        opacity: codeOpacity.value,
+    }));
 
     return (
         <YStack
@@ -148,17 +185,21 @@ function CodeRevealCard({ auditorCode, ds, hasError, isLoading, isTablet, codeLa
                 {codeLabel}
             </Paragraph>
             {isLoading ? (
-                <YStack width={180} height={56} rounded={ds.radii.md} bg={ds.colors.border} opacity={0.55} />
+                <Animated.View style={skeletonStyle}>
+                    <YStack width={180} height={56} rounded={ds.radii.md} bg={ds.colors.border} />
+                </Animated.View>
             ) : (
-                <Text
-                    color={auditorCode !== null ? ds.colors.primary : ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.monoMedium}
-                    fontSize={codeFontSize}
-                    lineHeight={codeLineHeight}
-                    selectable
-                >
-                    {auditorCode ?? "-"}
-                </Text>
+                <Animated.View style={codeStyle}>
+                    <Text
+                        color={auditorCode !== null ? ds.colors.primary : ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.monoMedium}
+                        fontSize={codeFontSize}
+                        lineHeight={codeLineHeight}
+                        selectable
+                    >
+                        {auditorCode ?? "-"}
+                    </Text>
+                </Animated.View>
             )}
         </YStack>
     );
@@ -174,47 +215,62 @@ interface PrivacyExplanationCardProps {
  * icon reinforces the privacy framing.
  */
 function PrivacyExplanationCard({ ds, explanation }: PrivacyExplanationCardProps) {
+    const opacity = useSharedValue(0);
+    const translateY = useSharedValue(14);
+
+    useEffect(() => {
+        opacity.value = withDelay(320, withTiming(1, { duration: 300 }));
+        translateY.value = withDelay(320, withSpring(0, { damping: 18, stiffness: 180 }));
+    }, [opacity, translateY]);
+
+    const animStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+        transform: [{ translateY: translateY.value }],
+    }));
+
     return (
-        <YStack
-            rounded={ds.radii.md}
-            borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
-            p="$4"
-            gap="$3"
-            style={{ boxShadow: ds.shadows.card }}
-        >
-            <XStack items="flex-start" gap="$3">
-                <YStack
-                    width={36}
-                    height={36}
-                    rounded={ds.radii.md}
-                    items="center"
-                    justify="center"
-                    bg={ds.colors.successSoft}
-                    borderWidth={1}
-                    borderColor={ds.colors.success}
-                >
-                    <ShieldCheck size={18} color={ds.colors.success} />
-                </YStack>
-                <YStack flex={1} gap="$1">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleSm.fontSize}
+        <Animated.View style={animStyle}>
+            <YStack
+                rounded={ds.radii.md}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
+                p="$4"
+                gap="$3"
+                style={{ boxShadow: ds.shadows.card }}
+            >
+                <XStack items="flex-start" gap="$3">
+                    <YStack
+                        width={36}
+                        height={36}
+                        rounded={ds.radii.md}
+                        items="center"
+                        justify="center"
+                        bg={ds.colors.successSoft}
+                        borderWidth={1}
+                        borderColor={ds.colors.success}
                     >
-                        Why we use a code
-                    </Text>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                        lineHeight={ds.typography.bodyMd.lineHeight}
-                    >
-                        {explanation}
-                    </Paragraph>
-                </YStack>
-            </XStack>
-        </YStack>
+                        <ShieldCheck size={18} color={ds.colors.success} />
+                    </YStack>
+                    <YStack flex={1} gap="$1">
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.titleSm.fontSize}
+                        >
+                            Why we use a code
+                        </Text>
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyMd.fontSize}
+                            lineHeight={ds.typography.bodyMd.lineHeight}
+                        >
+                            {explanation}
+                        </Paragraph>
+                    </YStack>
+                </XStack>
+            </YStack>
+        </Animated.View>
     );
 }
