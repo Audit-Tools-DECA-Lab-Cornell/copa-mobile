@@ -359,14 +359,16 @@ function SlideView({ slide, width, paddingHorizontal, isTablet, isActive, ds, t 
     }
 
     // ─── Phone: vertical layout ──────────────────────────────────────────────
+    const phoneImageHeight = Math.round(screenHeight * 0.44);
+
     return (
         <YStack width={width} flex={1} justify="flex-start" gap="$4" pb="$2">
             {/* Screenshot image — centered, contain so the phone frame stays intact */}
-            <YStack height={300} width={width} items="center" justify="center" overflow="hidden">
+            <YStack height={phoneImageHeight} width={width} items="center" justify="center" overflow="hidden">
                 <Animated.View style={imageStyle}>
                     <Image
                         source={SLIDE_IMAGES[slide.key]}
-                        style={{ width: width * 0.62, height: 300 }}
+                        style={{ width: width * 0.62, height: phoneImageHeight }}
                         resizeMode="contain"
                         accessibilityRole="image"
                         accessibilityLabel={t(slide.titleKey)}
