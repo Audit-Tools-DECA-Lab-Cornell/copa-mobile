@@ -34,6 +34,7 @@ export default {
         },
         plugins: [
             "./plugins/withCustomPodfilePatches",
+            ["expo-navigation-bar", { hidden: true }],
             "expo-router",
             "expo-localization",
             "expo-font",
