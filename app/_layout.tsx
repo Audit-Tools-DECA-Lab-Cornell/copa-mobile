@@ -3,7 +3,6 @@ import "../tamagui.generated.css";
 import { vexo } from "vexo-analytics";
 
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from "@expo-google-fonts/geist";
-import * as Network from "expo-network";
 import {
     JetBrainsMono_400Regular,
     JetBrainsMono_500Medium,
@@ -18,26 +17,28 @@ import {
 } from "@expo-google-fonts/space-grotesk";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { BugReportFab } from "components/bug-report/BugReportFab";
-import { useBugReportFlushPrompt } from "lib/bug-report/use-flush-prompt";
 import { Provider } from "components/Provider";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
+import { NavigationBar } from "expo-navigation-bar";
+import * as Network from "expo-network";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { registerAuditBackgroundTaskAsync, unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
+import { useBugReportFlushPrompt } from "lib/bug-report/use-flush-prompt";
 import { useDesignSystem } from "lib/design-system";
 import { applyLanguagePreference } from "lib/i18n";
 import { logger } from "lib/logger";
 import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
+import { useTestingMigrationGate } from "lib/testing-migration/config";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Alert, AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
-import { useTestingMigrationGate } from "lib/testing-migration/config";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
 import { usePreferencesStore } from "stores/preferences-store";
-import { StatusBar } from "expo-status-bar";
 
 vexo(process.env.EXPO_PUBLIC_VEXO_API_KEY ?? "");
 export { ErrorBoundary } from "expo-router";
@@ -381,6 +382,7 @@ function ActiveRootLayoutNav() {
 
     return (
         <ThemeProvider value={navigationTheme}>
+            <NavigationBar hidden={true} />
             <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
                 <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: ds.colors.background }}>
