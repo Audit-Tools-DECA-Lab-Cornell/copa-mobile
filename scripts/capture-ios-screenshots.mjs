@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 import { execFileSync, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { copyFileSync, rmSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
@@ -383,7 +386,7 @@ async function captureSimulatorRun({ options, simulator, appearance, targets }) 
 			console.log(`Opening ${target.route}${shouldReset ? " (reset + login)" : ""}`);
 			run("xcrun", ["simctl", "openurl", simulator.udid, url]);
 			await sleep(waitMs);
-			run("xcrun", ["simctl", "io", simulator.udid, "screenshot", outputPath]);
+			captureIOSScreenshot(simulator.udid, outputPath);
 
 			manifest.successes.push({
 				file: target.file,
@@ -704,6 +707,24 @@ function ensureXcrunAvailable() {
 	const result = spawnSync("xcrun", ["simctl", "help"], { stdio: "ignore" });
 	if (result.error || result.status !== 0) {
 		throw new Error("xcrun simctl is unavailable. Install Xcode command-line tools and boot an iOS simulator.");
+	}
+}
+
+/**
+ * Capture an iOS simulator screenshot to the target path.
+ * CoreSimulator cannot write to TCC-protected folders like ~/Desktop,
+ * ~/Documents, or ~/Downloads, so we capture to temp first and then copy
+ * the file into place with Node.
+ * @param {string} udid Simulator UDID.
+ * @param {string} outputPath Final PNG path.
+ */
+function captureIOSScreenshot(udid, outputPath) {
+	const tempPath = path.join(os.tmpdir(), `copa-screenshot-${randomUUID()}.png`);
+	try {
+		run("xcrun", ["simctl", "io", udid, "screenshot", tempPath]);
+		copyFileSync(tempPath, outputPath);
+	} finally {
+		rmSync(tempPath, { force: true });
 	}
 }
 

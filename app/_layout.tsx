@@ -20,7 +20,7 @@ import { BugReportFab } from "components/bug-report/BugReportFab";
 import { Provider } from "components/Provider";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
-import NavigationBar from "expo-navigation-bar";
+import { setVisibilityAsync } from "expo-navigation-bar";
 import * as Network from "expo-network";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -327,7 +327,7 @@ function ActiveRootLayoutNav() {
     }, [authSession, authStatus, isAuditHydrated, t]);
 
     useEffect(() => {
-        NavigationBar.setVisibilityAsync("hidden");
+        setVisibilityAsync("hidden");
         if (authStatus === "loading") {
             return;
         }

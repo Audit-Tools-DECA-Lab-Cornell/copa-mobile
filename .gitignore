@@ -88,10 +88,8 @@ docs/superpowers/
 .caliber/.caliber-state.json
 .caliber/cache/fingerprint.json
 
-
-# Scripts
-scripts/screenshots/*
-
-# Generated App Store / marketing screenshots (regenerate with bun run screenshots:ios)
+# Generated App Store / Play Store marketing screenshots (regenerate with bun run {screenshots:ios, screenshots:android, screenshots})
 screenshots/iphone/
 screenshots/ipad/
+screenshots/android-phone/
+screenshots/android-tablet/
