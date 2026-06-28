@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "COPA",
         slug: "audit-tools-playspace-mobile",
-        version: "0.5.5",
+        version: "0.5.6",
         orientation: "portrait",
         icon: "./assets/icon-ios.png",
         scheme: "copa-mobile",

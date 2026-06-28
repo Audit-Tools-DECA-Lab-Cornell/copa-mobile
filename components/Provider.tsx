@@ -1,5 +1,5 @@
 import { ToastProvider, ToastViewport } from "@tamagui/toast";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { TamaguiProvider, type TamaguiProviderProps } from "tamagui";
 import { config } from "../tamagui.config";
 import { CurrentToast } from "./CurrentToast";
@@ -36,13 +36,15 @@ function SafeToastViewport() {
 export function Provider({ children, ...rest }: Readonly<ProviderProps>) {
     const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     return (
-        <TamaguiProvider config={config} defaultTheme={resolvedTheme} {...rest}>
-            <ToastProvider swipeDirection="vertical" duration={6000} native={[]}>
-                {children}
-                <CurrentToast />
-                <NotificationsPanel />
-                <SafeToastViewport />
-            </ToastProvider>
-        </TamaguiProvider>
+        <SafeAreaProvider>
+            <TamaguiProvider config={config} defaultTheme={resolvedTheme} {...rest}>
+                <ToastProvider swipeDirection="vertical" duration={6000} native={[]}>
+                    {children}
+                    <CurrentToast />
+                    <NotificationsPanel />
+                    <SafeToastViewport />
+                </ToastProvider>
+            </TamaguiProvider>
+        </SafeAreaProvider>
     );
 }

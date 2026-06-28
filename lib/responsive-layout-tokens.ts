@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 
 export const FALLBACK_WINDOW_WIDTH = 390;
-export const TABLET_BREAKPOINT = 720;
+export const TABLET_BREAKPOINT = 600;
 export const WIDE_TABLET_BREAKPOINT = 960;
 export const PHONE_CONTENT_MAX_WIDTH = 560;
 export const NARROW_TABLET_CONTENT_MAX_WIDTH = 1040;
