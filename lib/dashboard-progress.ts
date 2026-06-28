@@ -1,9 +1,7 @@
 import type { LocalizedPlaceStatus } from "lib/i18n/format";
 
 type PriorityProgressTranslationKey =
-    | "priorityProgress.notStarted"
-    | "priorityProgress.inProgress"
-    | "priorityProgress.submitted";
+    "priorityProgress.notStarted" | "priorityProgress.inProgress" | "priorityProgress.submitted";
 
 type PriorityProgressTranslate = (
     key: PriorityProgressTranslationKey,

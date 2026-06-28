@@ -332,12 +332,7 @@ export interface PendingAuditPatchSnapshot {
 
 /** Why automatic sync ran: connectivity/foreground, auth, checkpoints, or app lifecycle. */
 export type AutomaticSyncTrigger =
-    | "auth_restore"
-    | "foreground"
-    | "network_restore"
-    | "blur"
-    | "section_change"
-    | "app_background";
+    "auth_restore" | "foreground" | "network_restore" | "blur" | "section_change" | "app_background";
 
 const BLOCKED_SYNC_PHASES: readonly AuditSyncPhase[] = [
     "blocked_network",
