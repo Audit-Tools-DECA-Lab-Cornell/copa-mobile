@@ -20,7 +20,7 @@ import { BugReportFab } from "components/bug-report/BugReportFab";
 import { Provider } from "components/Provider";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
-import { NavigationBar } from "expo-navigation-bar";
+import NavigationBar from "expo-navigation-bar";
 import * as Network from "expo-network";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -327,6 +327,7 @@ function ActiveRootLayoutNav() {
     }, [authSession, authStatus, isAuditHydrated, t]);
 
     useEffect(() => {
+        NavigationBar.setVisibilityAsync("hidden");
         if (authStatus === "loading") {
             return;
         }
@@ -382,7 +383,6 @@ function ActiveRootLayoutNav() {
 
     return (
         <ThemeProvider value={navigationTheme}>
-            <NavigationBar hidden={true} />
             <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
                 <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: ds.colors.background }}>
