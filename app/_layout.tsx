@@ -34,7 +34,6 @@ import { useTestingMigrationGate } from "lib/testing-migration/config";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert, AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
@@ -327,7 +326,8 @@ function ActiveRootLayoutNav() {
     }, [authSession, authStatus, isAuditHydrated, t]);
 
     useEffect(() => {
-        setVisibilityAsync("hidden");
+        if (Platform.OS === "android") setVisibilityAsync("hidden");
+
         if (authStatus === "loading") {
             return;
         }
@@ -385,21 +385,19 @@ function ActiveRootLayoutNav() {
         <ThemeProvider value={navigationTheme}>
             <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
-                <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: ds.colors.background }}>
-                    <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background, paddingTop: 20 } }}>
-                        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                        <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-                        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                        <Stack.Screen
-                            name="execute/[placeId]/index"
-                            options={{ headerShown: true, title: t("stack.execute") }}
-                        />
-                        <Stack.Screen name="place/[placeId]" options={{ headerShown: true }} />
-                        <Stack.Screen name="report/[auditId]" options={{ headerShown: true }} />
-                        <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
-                        <Stack.Screen name="settings/edit-profile" options={{ headerShown: true }} />
-                    </Stack>
-                </SafeAreaView>
+                <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background, paddingTop: 20 } }}>
+                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen
+                        name="execute/[placeId]/index"
+                        options={{ headerShown: true, title: t("stack.execute") }}
+                    />
+                    <Stack.Screen name="place/[placeId]" options={{ headerShown: true }} />
+                    <Stack.Screen name="report/[auditId]" options={{ headerShown: true }} />
+                    <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
+                    <Stack.Screen name="settings/edit-profile" options={{ headerShown: true }} />
+                </Stack>
             </KeyboardAvoidingView>
             <BugReportFab />
         </ThemeProvider>
