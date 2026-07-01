@@ -52,8 +52,10 @@
         "prepare": "husky && husky install",
         "test:e2e:maestro": "maestro test maestro",
         "test:e2e:maestro:smoke": "maestro test maestro/login.yaml maestro/assigned-place-visible.yaml",
-        "test:contracts:shared": "node ../testing/scripts/validate-contracts.mjs",
-        "screenshots:ios": "node scripts/capture-ios-screenshots.mjs"
+        "test:contracts:shared": "node ../copa-testing/scripts/validate-contracts.mjs",
+        "screenshots:ios": "node scripts/capture-screenshots.mjs --platform ios",
+        "screenshots:android": "node scripts/capture-screenshots.mjs --platform android",
+        "screenshots": "bun run screenshots:ios && bun run screenshots:android"
     },
     "dependencies": {
         "@expo-google-fonts/geist": "^0.4.2",
