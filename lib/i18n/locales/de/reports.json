@@ -70,9 +70,10 @@
     "scoredPlacesHelper": "{{scored}} von {{total}} Orten bewertet",
     "singleAuditExport": "Dieses Audit exportieren",
     "sociabilityHelper": "Verfolgt den durchschnittlichen Wert des sozialen Spielverhaltens über alle eingereichten Audits.",
+    "scoreShare": "{{percent}} % der Maximalpunktzahl",
     "sociabilityShort": "S",
     "subtitle": "Pruefen Sie die Audit-Ergebnisse Ihrer zugewiesenen Orte.",
-    "title": "COPA-Bewertung",
+    "title": "Berichte",
     "topScoringPlace": "Ort mit bester Bewertung",
     "usabilityShort": "U",
     "toggle": {

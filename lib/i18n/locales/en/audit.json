@@ -71,8 +71,8 @@
         "emptyTitle": "No audits match",
         "openSelectedAudit": "Open selected audit",
         "searchPlaceholder": "Search places or projects",
-        "subtitle": "Choose a place to start or resume the section-by-section COPA audit flow.",
-        "title": "Audit Execute"
+        "subtitle": "Pick a place to start or continue its audit.",
+        "title": "Execute audits"
     },
     "loggedInAs": "You are logged in as {{name}}",
     "mode": "- {{mode}}",
@@ -133,7 +133,7 @@
         "subtitle": "Review how the tool works, then choose the role that best matches how you will complete this audit.",
         "roleTitle": "Execution Mode",
         "roleQuestion": "What is your role with respect to this playspace?",
-        "preambleTitle": "Rewiew important info, before you begin"
+        "preambleTitle": "Review important info before you begin"
     },
     "auditInfo": {
         "auditorCodePending": "Available after profile lookup",
@@ -209,8 +209,8 @@
         "preparingMessage": "Loading the current section and any previously saved answers...",
         "preparingTitle": "Preparing Section",
         "reviewSection": "Review section",
-        "saveAndBackToPrevious": "Save and back to previous section",
-        "saveAndNext": "Save and next",
+        "previousSection": "Previous",
+        "saveAndNext": "Next section",
         "saveSection": "Save section",
         "finalCommentsCta": "Continue",
         "sectionNotes": "Section Notes",

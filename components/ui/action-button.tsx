@@ -55,10 +55,10 @@ export function ActionButton({
                 )}
                 <Text
                     color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={layout.isTablet ? ds.typography.labelLg.fontSize : ds.typography.labelMd.fontSize}
-                    lineHeight={layout.isTablet ? ds.typography.labelLg.lineHeight : ds.typography.labelMd.lineHeight}
-                    letterSpacing={layout.isTablet ? 1.35 : 1.2}
+                    fontFamily={ds.fonts.bodySemiBold}
+                    fontSize={layout.isTablet ? ds.typography.bodyMd.fontSize : ds.typography.bodySm.fontSize}
+                    lineHeight={layout.isTablet ? ds.typography.bodyMd.lineHeight : ds.typography.bodySm.lineHeight}
+                    numberOfLines={1}
                 >
                     {label}
                 </Text>

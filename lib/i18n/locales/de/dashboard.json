@@ -1,4 +1,20 @@
 {
+    "personalize": {
+        "label": "Personalisieren",
+        "description": "Lege Design, Sprache und Textgröße fest.",
+        "theme": "Design",
+        "language": "Sprache",
+        "textSize": "Textgröße",
+        "openSettings": "Einstellungen öffnen"
+    },
+    "reportsSummary": {
+        "label": "Deine Berichte",
+        "submitted": "Eingereichte Berichte",
+        "avgPlayValue": "Ø Spielwert",
+        "avgUsability": "Ø Nutzbarkeit",
+        "noScores": "Werte erscheinen hier, sobald deine Einreichungen verarbeitet wurden.",
+        "viewReports": "Berichte ansehen"
+    },
     "activeAuditor": "Aktive Pruefperson",
     "activeWork": "Aktive Audits",
     "connectivityStatus": "Verbindungsstatus",

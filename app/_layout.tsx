@@ -20,7 +20,6 @@ import { BugReportFab } from "components/bug-report/BugReportFab";
 import { Provider } from "components/Provider";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
-import { setVisibilityAsync } from "expo-navigation-bar";
 import * as Network from "expo-network";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -30,6 +29,7 @@ import { useDesignSystem } from "lib/design-system";
 import { applyLanguagePreference } from "lib/i18n";
 import { logger } from "lib/logger";
 import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
+import { useHiddenAndroidNavBar } from "lib/system-bars";
 import { useTestingMigrationGate } from "lib/testing-migration/config";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -124,6 +124,7 @@ function RootLayoutNav() {
 function ActiveRootLayoutNav() {
     const router = useRouter();
     const segments = useSegments();
+    const routeKey = segments.join("/");
     const authStatus = useAuthStore((state) => state.status);
     const authSession = useAuthStore((state) => state.session);
     const initializeAuth = useAuthStore((state) => state.initialize);
@@ -135,6 +136,8 @@ function ActiveRootLayoutNav() {
     const hasSeenIntro = usePreferencesStore((state) => state.hasSeenIntro);
     const ds = useDesignSystem();
     const { t } = useTranslation("audit");
+
+    useHiddenAndroidNavBar(routeKey);
 
     // Offer to submit any locally-queued bug reports once the device is online.
     useBugReportFlushPrompt(authSession, authStatus === "authenticated" && isAuditHydrated);
@@ -326,8 +329,6 @@ function ActiveRootLayoutNav() {
     }, [authSession, authStatus, isAuditHydrated, t]);
 
     useEffect(() => {
-        if (Platform.OS === "android") setVisibilityAsync("hidden");
-
         if (authStatus === "loading") {
             return;
         }

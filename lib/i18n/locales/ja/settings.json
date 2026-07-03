@@ -1,4 +1,10 @@
 {
+    "pendingChanges": {
+        "label": "未保存の変更",
+        "description": "上のプレビューで変更を確認できます。アプリ全体に適用するには保存してください。",
+        "save": "変更を保存",
+        "discard": "破棄"
+    },
     "about": {
         "app": "アプリ",
         "appName": "COPA",

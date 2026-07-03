@@ -2,16 +2,11 @@ export default {
     expo: {
         name: "COPA",
         slug: "audit-tools-playspace-mobile",
-        version: "0.5.6",
+        version: "0.5.7",
         orientation: "portrait",
         icon: "./assets/icon-ios.png",
         scheme: "copa-mobile",
         userInterfaceStyle: "automatic",
-        splash: {
-            image: "./assets/images/splash.png",
-            resizeMode: "contain",
-            backgroundColor: "#F7F1EB",
-        },
         assetBundlePatterns: ["**/*"],
         ios: {
             supportsTablet: true,
@@ -36,6 +31,18 @@ export default {
         plugins: [
             "./plugins/withCustomPodfilePatches",
             ["expo-navigation-bar", { hidden: true }],
+            [
+                "expo-splash-screen",
+                {
+                    backgroundColor: "#F7F1EB",
+                    image: "./assets/images/splash-icon.png",
+                    imageWidth: 200,
+                    dark: {
+                        backgroundColor: "#0E0E0E",
+                        image: "./assets/images/splash-icon.png",
+                    },
+                },
+            ],
             "expo-router",
             "expo-localization",
             "expo-font",
@@ -82,14 +89,14 @@ export default {
                 projectId: "2e559376-25f3-44e1-88bf-00eeaf9fb763",
             },
         },
-        // Fingerprint OTA runtime: JS-only patches via `eas update`; native changes need a new build.
         runtimeVersion: {
             policy: "fingerprint",
         },
-        owner: "audit-tools-deca-lab-cornell",
+        owner: "copa-decalab-cornell",
         githubUrl: "https://github.com/audit-tools-deca-lab-cornell/copa-mobile",
         updates: {
             url: "https://u.expo.dev/2e559376-25f3-44e1-88bf-00eeaf9fb763",
+            enableTracking: true,
             enableBsdiffPatchSupport: true,
         },
     },

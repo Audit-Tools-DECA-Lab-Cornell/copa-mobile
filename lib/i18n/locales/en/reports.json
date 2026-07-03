@@ -73,11 +73,12 @@
     "provisionShort": "Q",
     "searchPlaceholder": "Search places, projects, or audits",
     "scoredPlacesHelper": "{{scored}} of {{total}} places scored",
+    "scoreShare": "{{percent}}% of max score",
     "singleAuditExport": "Export this audit",
     "sociabilityHelper": "Tracked across all submitted audits",
     "sociabilityShort": "S",
     "subtitle": "Review audit performance across your assigned places.",
-    "title": "COPA Scoring",
+    "title": "Reports",
     "topScoringPlace": "Top scoring place",
     "usabilityShort": "U",
     "toggle": {

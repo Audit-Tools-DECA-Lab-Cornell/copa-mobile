@@ -15,7 +15,7 @@ import {
 } from "@tamagui/lucide-icons-2";
 import { useRouter } from "expo-router";
 import { fetchMyAccount, fetchMyAuditorProfile, type MyAccount, type MyAuditorProfile } from "lib/audit/profile-api";
-import { useDesignSystem, type DesignSystemTheme } from "lib/design-system";
+import { getDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import { getSettingsPageMaxWidth } from "lib/responsive";
@@ -25,7 +25,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactN
 import { useTranslation } from "react-i18next";
 import { ScrollView, TextStyle, type DimensionValue } from "react-native";
 import { useAuthStore } from "stores/auth-store";
-import { usePreferencesStore, type LanguagePreference, type ThemeMode } from "stores/preferences-store";
+import {
+    resolveThemeMode,
+    usePreferencesStore,
+    type EditablePreferences,
+    type LanguagePreference,
+    type ThemeMode,
+} from "stores/preferences-store";
 import { Button, Paragraph, Separator, Slider, Text, XStack, YStack } from "tamagui";
 
 const THEME_OPTIONS: readonly { key: ThemeMode; Icon: FC<IconProps> }[] = [
@@ -83,7 +89,6 @@ function resolveAppLanguage(languageTag: string | undefined): ResolvedAppLanguag
  * flows are designed.
  */
 export default function SettingsScreen() {
-    const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["settings", "common"]);
@@ -91,34 +96,83 @@ export default function SettingsScreen() {
     const session = useAuthStore((state) => state.session);
     const logout = useAuthStore((state) => state.logout);
 
-    const themeMode = usePreferencesStore((state) => state.themeMode);
-    const setThemeMode = usePreferencesStore((state) => state.setThemeMode);
-    const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
-    const languagePreference = usePreferencesStore((state) => state.languagePreference);
-    const setLanguagePreference = usePreferencesStore((state) => state.setLanguagePreference);
-    const fontScale = usePreferencesStore((state) => state.fontScale);
-    const setFontScale = usePreferencesStore((state) => state.setFontScale);
-    const highContrast = usePreferencesStore((state) => state.highContrast);
-    const setHighContrast = usePreferencesStore((state) => state.setHighContrast);
-    const dyslexicFont = usePreferencesStore((state) => state.dyslexicFont);
-    const setDyslexicFont = usePreferencesStore((state) => state.setDyslexicFont);
-    const fieldMode = usePreferencesStore((state) => state.fieldMode);
-    const setFieldMode = usePreferencesStore((state) => state.setFieldMode);
-    const fieldModePresentation = useMemo(() => {
-        return resolveFieldModePresentation({
-            fieldMode,
-            fontScale,
-            highContrast,
-            theme: resolvedTheme,
-        });
-    }, [fieldMode, fontScale, highContrast, resolvedTheme]);
+    // Committed preferences live in the global store. The screen edits a local
+    // draft so appearance and text-scale changes preview instantly here without
+    // re-rendering the whole app; the draft is committed in one batch on save.
+    const committedThemeMode = usePreferencesStore((state) => state.themeMode);
+    const committedLanguage = usePreferencesStore((state) => state.languagePreference);
+    const committedFontScale = usePreferencesStore((state) => state.fontScale);
+    const committedHighContrast = usePreferencesStore((state) => state.highContrast);
+    const committedDyslexicFont = usePreferencesStore((state) => state.dyslexicFont);
+    const committedFieldMode = usePreferencesStore((state) => state.fieldMode);
+    const applyPreferences = usePreferencesStore((state) => state.applyPreferences);
 
+    const committedPreferences = useMemo<EditablePreferences>(
+        () => ({
+            themeMode: committedThemeMode,
+            languagePreference: committedLanguage,
+            fontScale: committedFontScale,
+            highContrast: committedHighContrast,
+            dyslexicFont: committedDyslexicFont,
+            fieldMode: committedFieldMode,
+        }),
+        [
+            committedThemeMode,
+            committedLanguage,
+            committedFontScale,
+            committedHighContrast,
+            committedDyslexicFont,
+            committedFieldMode,
+        ],
+    );
+
+    const [draft, setDraft] = useState<EditablePreferences>(committedPreferences);
     const [account, setAccount] = useState<MyAccount | null>(null);
     const [profile, setProfile] = useState<MyAuditorProfile | null>(null);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
     const scrollViewRef = useRef<ScrollView | null>(null);
+
+    // Re-seed the draft whenever committed values change (hydration, or the
+    // store settling after a save) so the screen always opens in sync.
+    useEffect(() => {
+        setDraft(committedPreferences);
+    }, [committedPreferences]);
+
+    const isDirty = useMemo(() => !arePreferencesEqual(draft, committedPreferences), [draft, committedPreferences]);
+
+    // Design tokens for THIS screen come from the draft, giving an instant local
+    // preview of theme, contrast, dyslexic-font, and text-scale changes.
+    const ds = useMemo(
+        () =>
+            getDesignSystem(resolveThemeMode(draft.themeMode), {
+                fontScale: draft.fontScale,
+                highContrast: draft.highContrast,
+                dyslexicFont: draft.dyslexicFont,
+                fieldMode: draft.fieldMode,
+                isTablet: layout.isTablet,
+            }),
+        [draft, layout.isTablet],
+    );
+
+    const fieldModePresentation = useMemo(() => {
+        return resolveFieldModePresentation({
+            fieldMode: draft.fieldMode,
+            fontScale: draft.fontScale,
+            highContrast: draft.highContrast,
+            theme: resolveThemeMode(draft.themeMode),
+        });
+    }, [draft]);
+
+    const handleSavePreferences = useCallback(() => {
+        applyPreferences(draft);
+    }, [applyPreferences, draft]);
+
+    const handleDiscardPreferences = useCallback(() => {
+        setDraft(committedPreferences);
+        setIsLanguageMenuOpen(false);
+    }, [committedPreferences]);
 
     useEffect(() => {
         if (session === null) {
@@ -186,7 +240,7 @@ export default function SettingsScreen() {
 
         return t(`language.${matchingOption.translationKey}`, { ns: "settings" });
     };
-    const selectedLanguageLabel = getLanguageOptionLabel(languagePreference);
+    const selectedLanguageLabel = getLanguageOptionLabel(draft.languagePreference);
     const settingsPageMaxWidth = getSettingsPageMaxWidth({
         isTablet: layout.isTablet,
         contentMaxWidth: layout.contentMaxWidth,
@@ -212,19 +266,18 @@ export default function SettingsScreen() {
             </YStack>
             <XStack gap="$2">
                 {THEME_OPTIONS.map((option) => {
-                    const isSelected = themeMode === option.key;
+                    const isSelected = draft.themeMode === option.key;
                     const OptionIcon = option.Icon;
                     return (
                         <Button
                             key={option.key}
-                            flex={1}
                             height={layout.isTablet ? 64 : 56}
                             rounded={ds.radii.md}
                             borderWidth={1}
                             borderColor={isSelected ? ds.colors.primary : ds.colors.border}
                             bg={isSelected ? ds.colors.primarySoft : ds.colors.input}
                             pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                            onPress={() => setThemeMode(option.key)}
+                            onPress={() => setDraft((current) => ({ ...current, themeMode: option.key }))}
                         >
                             <YStack items="center" gap="$1">
                                 <OptionIcon
@@ -267,14 +320,14 @@ export default function SettingsScreen() {
                     </Text>
                 </XStack>
                 <Slider
-                    value={[fontScale]}
+                    value={[draft.fontScale]}
                     min={0.85}
                     max={1.3}
                     step={0.05}
                     onValueChange={(values: number[]) => {
                         const nextValue = values[0];
                         if (typeof nextValue === "number") {
-                            setFontScale(nextValue);
+                            setDraft((current) => ({ ...current, fontScale: nextValue }));
                         }
                     }}
                 >
@@ -290,7 +343,7 @@ export default function SettingsScreen() {
                 >
                     {t("accessibility.fontScaleDescription", { ns: "settings" })}
                 </Paragraph>
-                {fieldMode ? (
+                {draft.fieldMode ? (
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
@@ -311,8 +364,8 @@ export default function SettingsScreen() {
                 label={t("accessibility.fieldMode", { ns: "settings" })}
                 description={t("accessibility.fieldModeDescription", { ns: "settings" })}
                 icon={Sun}
-                isEnabled={fieldMode}
-                onToggle={() => setFieldMode(!fieldMode)}
+                isEnabled={draft.fieldMode}
+                onToggle={() => setDraft((current) => ({ ...current, fieldMode: !current.fieldMode }))}
             />
 
             <Separator borderColor={ds.colors.border} />
@@ -321,14 +374,14 @@ export default function SettingsScreen() {
                 ds={ds}
                 label={t("accessibility.highContrast", { ns: "settings" })}
                 description={t(
-                    fieldMode
+                    draft.fieldMode
                         ? "accessibility.highContrastManagedDescription"
                         : "accessibility.highContrastDescription",
                     { ns: "settings" },
                 )}
                 icon={Eye}
-                isEnabled={highContrast || fieldMode}
-                onToggle={() => setHighContrast(!highContrast)}
+                isEnabled={draft.highContrast || draft.fieldMode}
+                onToggle={() => setDraft((current) => ({ ...current, highContrast: !current.highContrast }))}
             />
 
             <Separator borderColor={ds.colors.border} />
@@ -338,8 +391,8 @@ export default function SettingsScreen() {
                 label={t("accessibility.dyslexicFont", { ns: "settings" })}
                 description={t("accessibility.dyslexicFontDescription", { ns: "settings" })}
                 icon={Type}
-                isEnabled={dyslexicFont}
-                onToggle={() => setDyslexicFont(!dyslexicFont)}
+                isEnabled={draft.dyslexicFont}
+                onToggle={() => setDraft((current) => ({ ...current, dyslexicFont: !current.dyslexicFont }))}
             />
         </SettingsCard>
     );
@@ -349,87 +402,402 @@ export default function SettingsScreen() {
     }
 
     return (
-        <ScrollView
-            ref={scrollViewRef}
-            contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
-                gap: layout.isTablet ? 28 : 24,
-                maxWidth: settingsPageMaxWidth,
-            })}
-        >
-            <YStack gap="$3">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                    lineHeight={
-                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
-                    }
-                >
-                    {t("title", { ns: "settings" })}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                >
-                    {t("subtitle", { ns: "settings" })}
-                </Paragraph>
-            </YStack>
+        <YStack flex={1} bg={ds.colors.background}>
+            <ScrollView
+                ref={scrollViewRef}
+                contentInsetAdjustmentBehavior="automatic"
+                style={{ backgroundColor: ds.colors.background }}
+                contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                    // Reserve extra room for the save bar so the last card stays reachable.
+                    bottomPadding: isDirty ? 168 : 92,
+                    gap: layout.isTablet ? 28 : 24,
+                    maxWidth: settingsPageMaxWidth,
+                })}
+            >
+                <YStack gap="$3">
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
+                        lineHeight={
+                            layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
+                        }
+                    >
+                        {t("title", { ns: "settings" })}
+                    </Text>
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodyLg.fontSize}
+                    >
+                        {t("subtitle", { ns: "settings" })}
+                    </Paragraph>
+                </YStack>
 
-            {/* Profile Card (read-only) */}
-            <SettingsCard ds={ds} label={t("profile.label", { ns: "settings" })} Icon={User}>
-                <ProfileRow ds={ds} label={t("profile.name", { ns: "settings" })} value={userName} />
-                <Separator borderColor={ds.colors.border} />
-                <ProfileRow ds={ds} label={t("profile.email", { ns: "settings" })} value={userEmail} />
-                {account?.organization != null ? (
-                    <>
-                        <Separator borderColor={ds.colors.border} />
-                        <ProfileRow
-                            ds={ds}
-                            label={t("profile.organization", { ns: "settings" })}
-                            value={account.organization}
-                        />
-                    </>
-                ) : null}
-                <Separator borderColor={ds.colors.border} />
-                <ProfileRow ds={ds} label={t("profile.accountType", { ns: "settings" })} value={accountType} />
+                {/* Profile Card (read-only) */}
+                <SettingsCard ds={ds} label={t("profile.label", { ns: "settings" })} Icon={User}>
+                    <ProfileRow ds={ds} label={t("profile.name", { ns: "settings" })} value={userName} />
+                    <Separator borderColor={ds.colors.border} />
+                    <ProfileRow ds={ds} label={t("profile.email", { ns: "settings" })} value={userEmail} />
+                    {account?.organization != null ? (
+                        <>
+                            <Separator borderColor={ds.colors.border} />
+                            <ProfileRow
+                                ds={ds}
+                                label={t("profile.organization", { ns: "settings" })}
+                                value={account.organization}
+                            />
+                        </>
+                    ) : null}
+                    <Separator borderColor={ds.colors.border} />
+                    <ProfileRow ds={ds} label={t("profile.accountType", { ns: "settings" })} value={accountType} />
 
-                {profile === null ? null : (
+                    {profile === null ? null : (
+                        <>
+                            <Separator borderColor={ds.colors.border} />
+                            <ProfileRow
+                                ds={ds}
+                                label={t("profile.auditorCode", { ns: "settings" })}
+                                value={profile.auditor_code}
+                            />
+                            {profile.role === null ? null : (
+                                <>
+                                    <Separator borderColor={ds.colors.border} />
+                                    <ProfileRow
+                                        ds={ds}
+                                        label={t("profile.role", { ns: "settings" })}
+                                        value={profile.role}
+                                        textTransform="capitalize"
+                                    />
+                                </>
+                            )}
+                            {profile.country === null ? null : (
+                                <>
+                                    <Separator borderColor={ds.colors.border} />
+                                    <ProfileRow
+                                        ds={ds}
+                                        label={t("profile.country", { ns: "settings" })}
+                                        value={profile.country}
+                                        textTransform="capitalize"
+                                    />
+                                </>
+                            )}
+                        </>
+                    )}
+
+                    <XStack gap="$2">
+                        <Button
+                            flex={1}
+                            height={layout.isTablet ? 50 : 46}
+                            rounded={ds.radii.md}
+                            borderWidth={1}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
+                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            onPress={() => {
+                                router.push("/settings/edit-profile");
+                            }}
+                        >
+                            <Text
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelSm.fontSize}
+                                letterSpacing={1.1}
+                            >
+                                {t("profile.editProfile", { ns: "settings" })}
+                            </Text>
+                        </Button>
+                        <Button
+                            flex={1}
+                            height={layout.isTablet ? 50 : 46}
+                            rounded={ds.radii.md}
+                            borderWidth={1}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
+                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            onPress={() => router.push("/settings/change-password")}
+                        >
+                            <Text
+                                color={ds.colors.foreground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelSm.fontSize}
+                                letterSpacing={1.1}
+                            >
+                                {t("profile.changePassword", { ns: "settings" })}
+                            </Text>
+                        </Button>
+                    </XStack>
+
+                    <Button
+                        height={layout.isTablet ? 50 : 46}
+                        rounded={ds.radii.md}
+                        borderWidth={1}
+                        borderColor={ds.colors.danger}
+                        bg={ds.colors.dangerSoft}
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={() => {
+                            logout()
+                                .then(() => {
+                                    router.replace("/(auth)/login");
+                                })
+                                .catch(() => undefined);
+                        }}
+                    >
+                        <XStack items="center" gap="$2">
+                            <LogOut size={14} color={ds.colors.danger} />
+                            <Text
+                                color={ds.colors.danger}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelLg.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={1.1}
+                            >
+                                {t("actions.signOut", { ns: "common" })}
+                            </Text>
+                        </XStack>
+                    </Button>
+                </SettingsCard>
+
+                {layout.isTablet ? (
+                    <XStack gap="$3" items="stretch">
+                        <YStack flex={1}>{appearanceCard}</YStack>
+                        <YStack flex={1}>{accessibilityCard}</YStack>
+                    </XStack>
+                ) : (
                     <>
-                        <Separator borderColor={ds.colors.border} />
-                        <ProfileRow
-                            ds={ds}
-                            label={t("profile.auditorCode", { ns: "settings" })}
-                            value={profile.auditor_code}
-                        />
-                        {profile.role === null ? null : (
-                            <>
-                                <Separator borderColor={ds.colors.border} />
-                                <ProfileRow
-                                    ds={ds}
-                                    label={t("profile.role", { ns: "settings" })}
-                                    value={profile.role}
-                                    textTransform="capitalize"
-                                />
-                            </>
-                        )}
-                        {profile.country === null ? null : (
-                            <>
-                                <Separator borderColor={ds.colors.border} />
-                                <ProfileRow
-                                    ds={ds}
-                                    label={t("profile.country", { ns: "settings" })}
-                                    value={profile.country}
-                                    textTransform="capitalize"
-                                />
-                            </>
-                        )}
+                        {appearanceCard}
+                        {accessibilityCard}
                     </>
                 )}
 
+                {/* Language Card */}
+                <SettingsCard ds={ds} label={t("language.label", { ns: "settings" })} Icon={Globe}>
+                    <YStack gap="$1.5">
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.titleMd.fontSize}
+                        >
+                            {t("language.selection", { ns: "settings" })}
+                        </Text>
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                        >
+                            {t("language.description", { ns: "settings" })}
+                        </Paragraph>
+                    </YStack>
+                    <Button
+                        width="100%"
+                        height={layout.controlHeight}
+                        rounded={ds.radii.md}
+                        borderWidth={1}
+                        borderColor={isLanguageMenuOpen ? ds.colors.primary : ds.colors.border}
+                        bg={isLanguageMenuOpen ? ds.colors.primarySoft : ds.colors.input}
+                        px="$3.5"
+                        justify="space-between"
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={() => {
+                            setIsLanguageMenuOpen((currentValue) => !currentValue);
+                        }}
+                    >
+                        <Text
+                            color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.foreground}
+                            fontFamily={isLanguageMenuOpen ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                        >
+                            {selectedLanguageLabel}
+                        </Text>
+                        <ChevronDown
+                            size={16}
+                            color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.mutedForeground}
+                        />
+                    </Button>
+
+                    {isLanguageMenuOpen ? (
+                        <YStack
+                            width="100%"
+                            rounded={ds.radii.md}
+                            borderWidth={1}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
+                            p="$1"
+                            gap="$1"
+                            style={{ boxShadow: ds.shadows.card }}
+                        >
+                            {LANGUAGE_OPTIONS.map((option) => {
+                                const isSelected = draft.languagePreference === option.key;
+
+                                return (
+                                    <Button
+                                        key={option.key}
+                                        justify="space-between"
+                                        height={layout.isTablet ? 50 : 46}
+                                        rounded={ds.radii.md}
+                                        borderWidth={1}
+                                        borderColor={isSelected ? ds.colors.primary : "transparent"}
+                                        bg={isSelected ? ds.colors.primarySoft : "transparent"}
+                                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                        onPress={() => {
+                                            setDraft((current) => ({ ...current, languagePreference: option.key }));
+                                            setIsLanguageMenuOpen(false);
+                                        }}
+                                    >
+                                        <Text
+                                            color={isSelected ? ds.colors.primary : ds.colors.foreground}
+                                            fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodyMd.fontSize}
+                                        >
+                                            {getLanguageOptionLabel(option.key)}
+                                        </Text>
+                                        {isSelected ? (
+                                            <Check size={16} color={ds.colors.primary} />
+                                        ) : (
+                                            <YStack width={16} height={16} />
+                                        )}
+                                    </Button>
+                                );
+                            })}
+                        </YStack>
+                    ) : null}
+                    <Paragraph
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {t("language.currentValue", {
+                            ns: "settings",
+                            value: t(getActiveLanguageTranslationKey(activeLanguage), {
+                                ns: "settings",
+                            }),
+                        })}
+                    </Paragraph>
+                </SettingsCard>
+
+                {/* About Card */}
+                <SettingsCard ds={ds} label={t("about.label", { ns: "settings" })} Icon={Info}>
+                    <ProfileRow
+                        ds={ds}
+                        label={t("about.instrument", { ns: "settings" })}
+                        value={instrument?.instrument_name ?? "-"}
+                    />
+                    <Separator borderColor={ds.colors.border} />
+                    <ProfileRow
+                        ds={ds}
+                        label={t("about.version", { ns: "settings" })}
+                        value={`v${instrument?.instrument_version ?? "-"}`}
+                    />
+                    <Separator borderColor={ds.colors.border} />
+                    <ProfileRow
+                        ds={ds}
+                        label={t("about.app", { ns: "settings" })}
+                        value={t("about.appName", { ns: "settings" })}
+                    />
+                </SettingsCard>
+            </ScrollView>
+
+            {isDirty ? (
+                <SettingsSaveBar
+                    ds={ds}
+                    layout={layout}
+                    onSave={handleSavePreferences}
+                    onDiscard={handleDiscardPreferences}
+                    label={t("pendingChanges.label", { ns: "settings" })}
+                    description={t("pendingChanges.description", { ns: "settings" })}
+                    saveLabel={t("pendingChanges.save", { ns: "settings" })}
+                    discardLabel={t("pendingChanges.discard", { ns: "settings" })}
+                />
+            ) : null}
+        </YStack>
+    );
+}
+
+/**
+ * Compare two editable preference sets for equality across every field.
+ *
+ * @returns True when both sets hold identical values.
+ */
+function arePreferencesEqual(left: EditablePreferences, right: EditablePreferences): boolean {
+    return (
+        left.themeMode === right.themeMode &&
+        left.languagePreference === right.languagePreference &&
+        left.fontScale === right.fontScale &&
+        left.highContrast === right.highContrast &&
+        left.dyslexicFont === right.dyslexicFont &&
+        left.fieldMode === right.fieldMode
+    );
+}
+
+interface SettingsSaveBarProps {
+    readonly ds: DesignSystemTheme;
+    readonly layout: ResponsiveLayout;
+    readonly onSave: () => void;
+    readonly onDiscard: () => void;
+    readonly label: string;
+    readonly description: string;
+    readonly saveLabel: string;
+    readonly discardLabel: string;
+}
+
+/**
+ * Sticky action bar shown while the settings draft differs from the saved
+ * preferences. Changes only apply app-wide once the user presses Save.
+ */
+function SettingsSaveBar({
+    ds,
+    layout,
+    onSave,
+    onDiscard,
+    label,
+    description,
+    saveLabel,
+    discardLabel,
+}: SettingsSaveBarProps) {
+    return (
+        <YStack
+            position="absolute"
+            b={0}
+            l={0}
+            r={0}
+            borderTopWidth={1}
+            borderTopColor={ds.colors.border}
+            bg={ds.colors.surface}
+            px={layout.screenPaddingHorizontal}
+            pt="$3"
+            pb="$4"
+            gap="$3"
+            style={{ boxShadow: ds.shadows.card }}
+        >
+            <YStack
+                width="100%"
+                maxW={getSettingsPageMaxWidth({
+                    isTablet: layout.isTablet,
+                    contentMaxWidth: layout.contentMaxWidth,
+                    formMaxWidth: layout.formMaxWidth,
+                })}
+                self="center"
+                gap="$3"
+            >
+                <XStack items="center" justify="space-between" gap="$3">
+                    <YStack flex={1} gap="$0.5">
+                        <Text
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.bodyMd.fontSize}
+                        >
+                            {label}
+                        </Text>
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodySm.fontSize}
+                            numberOfLines={2}
+                        >
+                            {description}
+                        </Paragraph>
+                    </YStack>
+                </XStack>
                 <XStack gap="$2">
                     <Button
                         flex={1}
@@ -439,205 +807,36 @@ export default function SettingsScreen() {
                         borderColor={ds.colors.border}
                         bg={ds.colors.surface}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={() => {
-                            router.push("/settings/edit-profile");
-                        }}
+                        onPress={onDiscard}
                     >
                         <Text
-                            color={ds.colors.foreground}
+                            color={ds.colors.mutedForeground}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            letterSpacing={1.1}
+                            fontSize={ds.typography.labelLg.fontSize}
                         >
-                            {t("profile.editProfile", { ns: "settings" })}
+                            {discardLabel}
                         </Text>
                     </Button>
                     <Button
-                        flex={1}
+                        flex={2}
                         height={layout.isTablet ? 50 : 46}
                         rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
+                        borderWidth={0}
+                        bg={ds.colors.primary}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={() => router.push("/settings/change-password")}
+                        onPress={onSave}
                     >
                         <Text
-                            color={ds.colors.foreground}
+                            color={ds.colors.primaryForeground}
                             fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelSm.fontSize}
-                            letterSpacing={1.1}
+                            fontSize={ds.typography.labelLg.fontSize}
                         >
-                            {t("profile.changePassword", { ns: "settings" })}
+                            {saveLabel}
                         </Text>
                     </Button>
                 </XStack>
-
-                <Button
-                    height={layout.isTablet ? 50 : 46}
-                    rounded={ds.radii.md}
-                    borderWidth={1}
-                    borderColor={ds.colors.danger}
-                    bg={ds.colors.dangerSoft}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={() => {
-                        logout()
-                            .then(() => {
-                                router.replace("/(auth)/login");
-                            })
-                            .catch(() => undefined);
-                    }}
-                >
-                    <XStack items="center" gap="$2">
-                        <LogOut size={14} color={ds.colors.danger} />
-                        <Text
-                            color={ds.colors.danger}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelLg.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.1}
-                        >
-                            {t("actions.signOut", { ns: "common" })}
-                        </Text>
-                    </XStack>
-                </Button>
-            </SettingsCard>
-
-            {layout.isTablet ? (
-                <XStack gap="$3" items="stretch">
-                    <YStack flex={1}>{appearanceCard}</YStack>
-                    <YStack flex={1}>{accessibilityCard}</YStack>
-                </XStack>
-            ) : (
-                <>
-                    {appearanceCard}
-                    {accessibilityCard}
-                </>
-            )}
-
-            {/* Language Card */}
-            <SettingsCard ds={ds} label={t("language.label", { ns: "settings" })} Icon={Globe}>
-                <YStack gap="$1.5">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleMd.fontSize}
-                    >
-                        {t("language.selection", { ns: "settings" })}
-                    </Text>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodySm.fontSize}
-                    >
-                        {t("language.description", { ns: "settings" })}
-                    </Paragraph>
-                </YStack>
-                <Button
-                    width="100%"
-                    height={layout.controlHeight}
-                    rounded={ds.radii.md}
-                    borderWidth={1}
-                    borderColor={isLanguageMenuOpen ? ds.colors.primary : ds.colors.border}
-                    bg={isLanguageMenuOpen ? ds.colors.primarySoft : ds.colors.input}
-                    px="$3.5"
-                    justify="space-between"
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={() => {
-                        setIsLanguageMenuOpen((currentValue) => !currentValue);
-                    }}
-                >
-                    <Text
-                        color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.foreground}
-                        fontFamily={isLanguageMenuOpen ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodySm.fontSize}
-                    >
-                        {selectedLanguageLabel}
-                    </Text>
-                    <ChevronDown size={16} color={isLanguageMenuOpen ? ds.colors.primary : ds.colors.mutedForeground} />
-                </Button>
-
-                {isLanguageMenuOpen ? (
-                    <YStack
-                        width="100%"
-                        rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
-                        p="$1"
-                        gap="$1"
-                        style={{ boxShadow: ds.shadows.card }}
-                    >
-                        {LANGUAGE_OPTIONS.map((option) => {
-                            const isSelected = languagePreference === option.key;
-
-                            return (
-                                <Button
-                                    key={option.key}
-                                    justify="space-between"
-                                    height={layout.isTablet ? 50 : 46}
-                                    rounded={ds.radii.md}
-                                    borderWidth={1}
-                                    borderColor={isSelected ? ds.colors.primary : "transparent"}
-                                    bg={isSelected ? ds.colors.primarySoft : "transparent"}
-                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                    onPress={() => {
-                                        setLanguagePreference(option.key);
-                                        setIsLanguageMenuOpen(false);
-                                    }}
-                                >
-                                    <Text
-                                        color={isSelected ? ds.colors.primary : ds.colors.foreground}
-                                        fontFamily={isSelected ? ds.fonts.bodyBold : ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodyMd.fontSize}
-                                    >
-                                        {getLanguageOptionLabel(option.key)}
-                                    </Text>
-                                    {isSelected ? (
-                                        <Check size={16} color={ds.colors.primary} />
-                                    ) : (
-                                        <YStack width={16} height={16} />
-                                    )}
-                                </Button>
-                            );
-                        })}
-                    </YStack>
-                ) : null}
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
-                >
-                    {t("language.currentValue", {
-                        ns: "settings",
-                        value: t(getActiveLanguageTranslationKey(activeLanguage), {
-                            ns: "settings",
-                        }),
-                    })}
-                </Paragraph>
-            </SettingsCard>
-
-            {/* About Card */}
-            <SettingsCard ds={ds} label={t("about.label", { ns: "settings" })} Icon={Info}>
-                <ProfileRow
-                    ds={ds}
-                    label={t("about.instrument", { ns: "settings" })}
-                    value={instrument?.instrument_name ?? "-"}
-                />
-                <Separator borderColor={ds.colors.border} />
-                <ProfileRow
-                    ds={ds}
-                    label={t("about.version", { ns: "settings" })}
-                    value={`v${instrument?.instrument_version ?? "-"}`}
-                />
-                <Separator borderColor={ds.colors.border} />
-                <ProfileRow
-                    ds={ds}
-                    label={t("about.app", { ns: "settings" })}
-                    value={t("about.appName", { ns: "settings" })}
-                />
-            </SettingsCard>
-        </ScrollView>
+            </YStack>
+        </YStack>
     );
 }
 
@@ -870,36 +1069,27 @@ interface ProfileRowProps {
  */
 function ProfileRow({ ds, label, value, textTransform }: ProfileRowProps) {
     return (
-        <XStack justify="space-between" items="center" py="$1.5" flex={1}>
+        <XStack justify="space-between" items="flex-start" gap="$3" py="$1.5">
             <Text
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyMedium}
                 fontSize={ds.typography.bodyMd.fontSize}
-                flex={1}
+                shrink={0}
             >
                 {label}
             </Text>
-            <YStack flex={1}>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{
-                        flexGrow: 1,
-                        justifyContent: "flex-end",
-                    }}
-                >
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodySemiBold}
-                        fontSize={ds.typography.bodyMd.fontSize}
-                        lineHeight={ds.typography.bodyMd.lineHeight}
-                        flex={1}
-                        textTransform={textTransform}
-                    >
-                        {value}
-                    </Text>
-                </ScrollView>
-            </YStack>
+            <Text
+                selectable
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodySemiBold}
+                fontSize={ds.typography.bodyMd.fontSize}
+                lineHeight={ds.typography.bodyMd.lineHeight}
+                flex={1}
+                textTransform={textTransform}
+                style={{ textAlign: "right" }}
+            >
+                {value}
+            </Text>
         </XStack>
     );
 }

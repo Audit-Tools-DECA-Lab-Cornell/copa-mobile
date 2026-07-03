@@ -1,4 +1,10 @@
 {
+    "pendingChanges": {
+        "label": "Unsaved changes",
+        "description": "Preview your changes above. Save to apply them across the app.",
+        "save": "Save changes",
+        "discard": "Discard"
+    },
     "about": {
         "app": "App",
         "appName": "COPA",

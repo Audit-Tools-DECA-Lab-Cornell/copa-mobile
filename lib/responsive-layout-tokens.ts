@@ -1,5 +1,3 @@
-import { Platform } from "react-native";
-
 export const FALLBACK_WINDOW_WIDTH = 390;
 export const TABLET_BREAKPOINT = 600;
 export const WIDE_TABLET_BREAKPOINT = 960;
@@ -21,7 +19,7 @@ export const TABLET_TYPOGRAPHY_BASE_SCALE = 1.3;
 
 const PHONE_LAYOUT_TOKENS = {
     screenPaddingHorizontal: 15,
-    screenPaddingVertical: Platform.OS === "android" ? 64 : 16,
+    screenPaddingVertical: 16,
     contentMaxWidth: PHONE_CONTENT_MAX_WIDTH,
     formMaxWidth: PHONE_FORM_MAX_WIDTH,
     twoPaneGap: 20,

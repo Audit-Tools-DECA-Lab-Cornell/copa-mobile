@@ -247,26 +247,32 @@ bun run android    # run Android app
 
 ## Automated Screenshots
 
-Screenshot assets under `screenshots/<device>/<appearance>/` are generated locally from a booted iOS simulator through the dev-only `app/__screenshot-bootstrap.tsx` route. They are gitignored and not shipped with the app. Public auth screens can be listed or captured without credentials; protected screens require a screenshot auditor account so the driver can resolve assigned place/report IDs before opening each route.
+Screenshot assets under `screenshots/<device>/<appearance>/` are generated locally from booted iOS simulators or connected Android devices through the dev-only `app/__screenshot-bootstrap.tsx` route. They are gitignored and not shipped with the app. Public auth screens can be listed or captured without credentials; protected screens require a screenshot auditor account so the driver can resolve assigned place/report IDs before opening each route. A single `scripts/capture-screenshots.mjs` driver serves both platforms via `--platform`; `screenshots:ios` and `screenshots:android` are thin wrappers, and `bun run screenshots` runs iOS then Android.
 
 ```bash
-# List targets without capturing
+# List targets without capturing (per platform)
 bun run screenshots:ios -- --list
+bun run screenshots:android -- --list
 
 # Capture all screens - auto-detects device type, runs both light and dark
 bun run screenshots:ios -- --email <auditor-email> --password <auditor-password>
+bun run screenshots:android -- --email <auditor-email> --password <auditor-password>
 
 # Target a specific device / appearance only
 bun run screenshots:ios -- --device iphone --appearance light --email <auditor-email> --password <auditor-password>
-bun run screenshots:ios -- --device ipad --appearance dark --email <auditor-email> --password <auditor-password>
+bun run screenshots:android -- --device android-tablet --appearance dark --email <auditor-email> --password <auditor-password>
 ```
 
-Each capture is pinned to a concrete simulator UDID, so the output folder always matches the device captured and a simulator booted mid-run is ignored. When `--device` is omitted the script captures **every booted simulator** (one folder per device type) - boot an iPhone and an iPad and run once to capture both. When `--appearance` is omitted it captures light and dark in sequence. Output is written to `screenshots/<device>/<appearance>/`.
+**iOS** captures from a booted simulator via `xcrun simctl`. Each capture is pinned to a concrete simulator UDID, so the output folder always matches the device captured and a simulator booted mid-run is ignored. When `--device` is omitted the script captures **every booted simulator** (one folder per device type) - boot an iPhone and an iPad and run once to capture both.
+
+**Android** captures from a device connected over USB with debugging enabled, via `adb`. `android-phone` vs `android-tablet` is classified from the model name and the device's smallest-width dp (≥600dp is a tablet). When `--device` is omitted the script captures every connected device (one folder per type); use `--android-device <serial|model>` to pin a specific device when several are attached.
+
+The device theme is switched automatically per appearance (`simctl ui … appearance` on iOS, `adb shell cmd uimode night …` on Android), so omitting `--appearance` captures light and dark in sequence into `screenshots/<device>/<appearance>/`. The `android-phone`/`android-tablet` device types map to the same target lists as `iphone`/`ipad`.
 
 Useful options:
 
 - `--api-base-url <url>` points the ID discovery step at a seeded Playspace backend.
-- `--login-wait-ms <ms>` overrides the wait used after the first login (default 7000 ms).
+- `--login-wait-ms <ms>` overrides the wait used after the first login (default 20000 ms).
 - `--target public` captures only login/signup. Use a comma-separated list of PNG names for a smaller protected subset.
 - `--output-dir <path>` writes a one-off run outside the default screenshot folders.
 

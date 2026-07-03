@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { ArrowRight, ClipboardList } from "@tamagui/lucide-icons-2";
+import { ArrowRight, ClipboardList, Download } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import type { TFunction } from "i18next";
@@ -66,6 +66,7 @@ export default function ExecuteSectionOverviewScreen() {
     const reopenQueuedSubmit = usePlayspaceAuditStore((state) => state.reopenQueuedSubmit);
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const scrollViewRef = useRef<ScrollView | null>(null);
+    const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
 
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
@@ -311,6 +312,24 @@ export default function ExecuteSectionOverviewScreen() {
 
     const setupSummaryCard = <SetupSummaryCard selectedMode={selectedMode} />;
 
+    const exportPanelToggleButton = (
+        <Button
+            circular
+            size={layout.isTablet ? "$3.5" : "$3"}
+            borderWidth={1}
+            borderColor={isExportPanelOpen ? ds.colors.primary : ds.colors.border}
+            bg={isExportPanelOpen ? ds.colors.primarySoft : ds.colors.input}
+            pressStyle={{ opacity: 0.92, scale: 0.96 }}
+            aria-label={t("setup.exportAudit", { ns: "audit", defaultValue: "Export audit" })}
+            onPress={() => setIsExportPanelOpen((value) => !value)}
+        >
+            <Download
+                size={layout.isTablet ? 16 : 14}
+                color={isExportPanelOpen ? ds.colors.primary : ds.colors.foreground}
+            />
+        </Button>
+    );
+
     return (
         <ScrollView
             ref={scrollViewRef}
@@ -319,23 +338,25 @@ export default function ExecuteSectionOverviewScreen() {
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
-                maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
                 includeTopPadding: false,
             })}
         >
             <LoggedInAsNotice />
             <YStack gap="$3">
-                <XStack items="center" gap="$2">
-                    <ClipboardList size={16} color={ds.colors.primary} />
-                    <Text
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        {t("overview.sections", { ns: "audit" })}
-                    </Text>
+                <XStack items="center" justify="space-between" gap="$2">
+                    <XStack items="center" gap="$2">
+                        <ClipboardList size={16} color={ds.colors.primary} />
+                        <Text
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            {t("overview.sections", { ns: "audit" })}
+                        </Text>
+                    </XStack>
+                    {exportPanelToggleButton}
                 </XStack>
                 <Text
                     color={ds.colors.foreground}
@@ -364,41 +385,20 @@ export default function ExecuteSectionOverviewScreen() {
                 </Paragraph>
             </YStack>
 
-            {layout.isTablet ? (
-                <XStack gap={layout.twoPaneGap} items="flex-start">
-                    <YStack flex={1} gap="$3">
-                        {sectionReviewCard}
-                    </YStack>
-                    <YStack width={layout.supportRailWidth} gap="$3">
-                        <AuditSyncStatusCard
-                            hasPendingLocalChanges={hasPendingLocalChanges}
-                            isSyncing={isSyncing}
-                            lastSyncError={lastSyncError}
-                            phase={auditPhase}
-                            onReopenQueuedSubmit={() => {
-                                reopenQueuedSubmit(auditSession.audit_id);
-                            }}
-                        />
-                        {setupSummaryCard}
-                        <AuditExportCard auditSession={auditSession} place={currentPlace} />
-                    </YStack>
-                </XStack>
-            ) : (
-                <YStack gap="$3">
-                    <AuditSyncStatusCard
-                        hasPendingLocalChanges={hasPendingLocalChanges}
-                        isSyncing={isSyncing}
-                        lastSyncError={lastSyncError}
-                        phase={auditPhase}
-                        onReopenQueuedSubmit={() => {
-                            reopenQueuedSubmit(auditSession.audit_id);
-                        }}
-                    />
-                    {setupSummaryCard}
-                    {sectionReviewCard}
-                    <AuditExportCard auditSession={auditSession} place={currentPlace} />
-                </YStack>
-            )}
+            <YStack gap="$3">
+                {isExportPanelOpen ? <AuditExportCard auditSession={auditSession} place={currentPlace} /> : null}
+                <AuditSyncStatusCard
+                    hasPendingLocalChanges={hasPendingLocalChanges}
+                    isSyncing={isSyncing}
+                    lastSyncError={lastSyncError}
+                    phase={auditPhase}
+                    onReopenQueuedSubmit={() => {
+                        reopenQueuedSubmit(auditSession.audit_id);
+                    }}
+                />
+                {setupSummaryCard}
+                {sectionReviewCard}
+            </YStack>
         </ScrollView>
     );
 }

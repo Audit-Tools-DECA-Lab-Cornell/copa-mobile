@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { createResponsiveLayout } from "lib/responsive-layout";
+import {
+    createResponsiveLayout,
+    getResponsiveContentContainerStyle,
+    getResponsiveTabBarLayout,
+} from "lib/responsive-layout";
 
 vi.mock("react-native", () => ({
     Platform: { OS: "android" },
@@ -31,5 +35,35 @@ describe("createResponsiveLayout", () => {
         expect(layout.isTablet).toBe(false);
         expect(layout.contentMaxWidth).toBe(560);
         expect(layout.screenPaddingHorizontal).toBe(15);
+    });
+
+    it("adds the top safe-area inset to standard screen top padding", () => {
+        // Given: a phone layout and a reported status-bar safe area.
+        const layout = createResponsiveLayout(390);
+        const topInset = 24;
+
+        // When: a headerless screen builds its responsive content container.
+        const style = getResponsiveContentContainerStyle(layout, {
+            bottomPadding: 32,
+            topInset,
+        });
+
+        // Then: content starts below both the safe area and normal screen padding.
+        expect(style.paddingTop).toBe(layout.screenPaddingVertical + topInset);
+    });
+
+    it("keeps tablet tab content clear after bottom safe-area padding is applied", () => {
+        // Given: a tablet layout with a bottom system inset.
+        const layout = createResponsiveLayout(600);
+        const bottomInset = 24;
+
+        // When: the bottom tab bar sizing is resolved.
+        const tabBarLayout = getResponsiveTabBarLayout(layout, bottomInset);
+
+        // Then: the height reserves separate space for content, padding, and the inset.
+        expect(tabBarLayout.height).toBe(
+            tabBarLayout.contentHeight + tabBarLayout.paddingTop + tabBarLayout.paddingBottom,
+        );
+        expect(tabBarLayout.height - tabBarLayout.paddingTop - tabBarLayout.paddingBottom).toBe(layout.buttonHeight);
     });
 });

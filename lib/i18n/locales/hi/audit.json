@@ -51,7 +51,7 @@
         "emptyTitle": "कोई ऑडिट मेल नहीं खाता",
         "openSelectedAudit": "चयनित ऑडिट खोलें",
         "searchPlaceholder": "स्थान या प्रोजेक्ट खोजें",
-        "subtitle": "सेक्शन-दर-सेक्शन COPA ऑडिट फ़्लो शुरू करने या फिर से जारी करने के लिए एक स्थान चुनें।",
+        "subtitle": "किसी स्थान का ऑडिट शुरू करने या जारी रखने के लिए उसे चुनें।",
         "title": "ऑडिट निष्पादन"
     },
     "loggedInAs": "आप {{name}} के रूप में लॉग इन हैं",
@@ -172,7 +172,8 @@
         "preparingMessage": "वर्तमान सेक्शन और पहले से सहेजे गए उत्तर लोड किए जा रहे हैं...",
         "preparingTitle": "सेक्शन तैयार किया जा रहा है",
         "reviewSection": "सेक्शन की समीक्षा करें",
-        "saveAndNext": "सहेजें और आगे बढ़ें",
+        "previousSection": "पिछला",
+        "saveAndNext": "अगला सेक्शन",
         "saveSection": "सेक्शन सहेजें",
         "finalCommentsCta": "Continue",
         "sectionNotes": "सेक्शन नोट्स",

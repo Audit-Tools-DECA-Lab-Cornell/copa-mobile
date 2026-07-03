@@ -1,4 +1,20 @@
 {
+    "personalize": {
+        "label": "Personnaliser",
+        "description": "Choisissez le thème, la langue et la taille du texte.",
+        "theme": "Thème",
+        "language": "Langue",
+        "textSize": "Taille du texte",
+        "openSettings": "Ouvrir les réglages"
+    },
+    "reportsSummary": {
+        "label": "Vos rapports",
+        "submitted": "Rapports envoyés",
+        "avgPlayValue": "Valeur de jeu moy.",
+        "avgUsability": "Utilisabilité moy.",
+        "noScores": "Les scores apparaîtront ici une fois vos envois traités.",
+        "viewReports": "Voir les rapports"
+    },
     "activeAuditor": "Auditeur actif",
     "activeWork": "Audits actifs",
     "connectivityStatus": "État de la connectivité",

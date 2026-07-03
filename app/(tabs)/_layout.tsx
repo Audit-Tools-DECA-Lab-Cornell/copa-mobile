@@ -3,7 +3,7 @@ import { BarChart3, ClipboardCheck, LayoutDashboard, MapPinned, Settings } from 
 import { Tabs } from "expo-router";
 import { useAuditSync } from "lib/audit/use-audit-sync";
 import { isGlassUiEnabled, useDesignSystem } from "lib/design-system";
-import { useResponsiveLayout, type ResponsiveLayout } from "lib/responsive-layout";
+import { getResponsiveTabBarLayout, useResponsiveLayout, type ResponsiveLayout } from "lib/responsive-layout";
 import { useNotificationsStore } from "stores/notifications-store";
 import { useTranslation } from "react-i18next";
 import type { ColorTokens } from "tamagui";
@@ -31,9 +31,7 @@ export default function TabLayout() {
     const insets = useSafeAreaInsets();
     const tabBarActiveTintColor = ds.colors.primary;
     const tabBarInactiveTintColor = layout.isTablet ? ds.colors.secondaryForeground : ds.colors.mutedForeground;
-    const tabBarHeight = (layout.isTablet ? layout.buttonHeight : 42) + insets.bottom;
-    const tabBarPaddingTop = layout.isTablet ? 10 : 8;
-    const tabBarPaddingBottom = (layout.isTablet ? 6 : 2) + insets.bottom;
+    const tabBarLayout = getResponsiveTabBarLayout(layout, insets.bottom);
     const tabBarLabelFontSize = layout.isTablet ? ds.typography.labelSm.fontSize : ds.typography.labelXs.fontSize;
     const tabBarLabelLineHeight = layout.isTablet ? ds.typography.labelSm.lineHeight : ds.typography.labelXs.lineHeight;
 
@@ -53,9 +51,9 @@ export default function TabLayout() {
                 tabBarStyle: {
                     borderTopColor: isGlassEnabled ? ds.glass.tabBarBorder : ds.colors.border,
                     borderTopWidth: 1,
-                    height: tabBarHeight,
-                    paddingTop: tabBarPaddingTop,
-                    paddingBottom: tabBarPaddingBottom,
+                    height: tabBarLayout.height,
+                    paddingTop: tabBarLayout.paddingTop - 10,
+                    paddingBottom: tabBarLayout.paddingBottom,
                 },
                 tabBarItemStyle: {
                     borderRadius: layout.isTablet ? ds.radii.md : 0,

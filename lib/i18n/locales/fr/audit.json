@@ -51,7 +51,7 @@
         "emptyTitle": "Aucune audit ne correspond",
         "openSelectedAudit": "Ouvrir l’audit sélectionné",
         "searchPlaceholder": "Rechercher des lieux ou des projets",
-        "subtitle": "Choisissez un lieu pour démarrer ou reprendre le flux d’audit COPA section par section.",
+        "subtitle": "Choisissez un lieu pour démarrer ou reprendre son audit.",
         "title": "Exécution de l’audit"
     },
     "loggedInAs": "Vous êtes connecté en tant que {{name}}",
@@ -172,7 +172,8 @@
         "preparingMessage": "Chargement de la section actuelle et des réponses précédemment enregistrées...",
         "preparingTitle": "Préparation de la section",
         "reviewSection": "Passer en revue la section",
-        "saveAndNext": "Enregistrer et suivant",
+        "previousSection": "Précédent",
+        "saveAndNext": "Section suivante",
         "saveSection": "Enregistrer la section",
         "finalCommentsCta": "Continue",
         "sectionNotes": "Notes de section",

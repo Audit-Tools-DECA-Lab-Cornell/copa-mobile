@@ -420,6 +420,10 @@ function ScaleOptionCell({
                         key={`${questionKey}.${scale.key}.${option.key}`}
                         width="100%"
                         height="auto"
+                        // Zero frame padding: the inner XStack carries the padding, so
+                        // labels get the full cell width and never break mid-word.
+                        px={0}
+                        py={0}
                         rounded={ds.radii.md}
                         disabled={disabled}
                         borderWidth={isSelected ? 2 : 1}

@@ -51,7 +51,7 @@
         "emptyTitle": "一致する監査はありません",
         "openSelectedAudit": "選択した監査を開く",
         "searchPlaceholder": "場所またはプロジェクトを検索",
-        "subtitle": "セクションごとの COPA 監査フローを開始または再開する場所を選択してください。",
+        "subtitle": "監査を開始または再開する場所を選択してください。",
         "title": "監査の実行"
     },
     "loggedInAs": "ログイン中: {{name}}",
@@ -172,7 +172,8 @@
         "preparingMessage": "現在のセクションと以前に保存された回答を読み込み中...",
         "preparingTitle": "セクションを準備中",
         "reviewSection": "セクションを確認",
-        "saveAndNext": "保存して次へ",
+        "previousSection": "前へ",
+        "saveAndNext": "次のセクション",
         "saveSection": "セクションを保存",
         "finalCommentsCta": "Continue",
         "sectionNotes": "セクションのノート",

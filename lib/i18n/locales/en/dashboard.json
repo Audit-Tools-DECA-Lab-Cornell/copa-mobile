@@ -1,4 +1,20 @@
 {
+    "personalize": {
+        "label": "Personalize",
+        "description": "Set your theme, language, and text size.",
+        "theme": "Theme",
+        "language": "Language",
+        "textSize": "Text size",
+        "openSettings": "Open settings"
+    },
+    "reportsSummary": {
+        "label": "Your reports",
+        "submitted": "Reports submitted",
+        "avgPlayValue": "Avg play value",
+        "avgUsability": "Avg usability",
+        "noScores": "Scores appear here once your submissions are processed.",
+        "viewReports": "View reports"
+    },
     "activeAuditor": "Active auditor",
     "auditorOrganization": "Organisation",
     "activeWork": "Active audits",

@@ -326,7 +326,7 @@ export default function LoginScreen() {
                                 px="$4"
                                 rounded={ds.radii.md}
                                 borderWidth={1}
-                                borderColor="rgba(255, 107, 0, 0.24)"
+                                borderColor={ds.colors.primarySoft}
                                 bg="transparent"
                                 pressStyle={{ opacity: 0.92, scale: 0.985 }}
                                 onPress={() => {

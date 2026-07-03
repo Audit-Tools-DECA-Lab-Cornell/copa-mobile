@@ -1,4 +1,20 @@
 {
+    "personalize": {
+        "label": "अपने अनुसार बनाएं",
+        "description": "थीम, भाषा और टेक्स्ट आकार सेट करें।",
+        "theme": "थीम",
+        "language": "भाषा",
+        "textSize": "टेक्स्ट आकार",
+        "openSettings": "सेटिंग्स खोलें"
+    },
+    "reportsSummary": {
+        "label": "आपकी रिपोर्ट",
+        "submitted": "सबमिट की गई रिपोर्ट",
+        "avgPlayValue": "औसत प्ले वैल्यू",
+        "avgUsability": "औसत उपयोगिता",
+        "noScores": "आपके सबमिशन प्रोसेस होने के बाद स्कोर यहाँ दिखेंगे।",
+        "viewReports": "रिपोर्ट देखें"
+    },
     "activeAuditor": "सक्रिय ऑडिटर",
     "activeWork": "सक्रिय ऑडिट",
     "connectivityStatus": "कनेक्टिविटी स्थिति",

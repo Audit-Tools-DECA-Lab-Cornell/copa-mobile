@@ -5,7 +5,6 @@ import {
     savePersistedPreferences,
     type PersistedLanguagePreference,
 } from "lib/preferences/storage";
-import { applyLanguagePreference } from "lib/i18n";
 
 /** User-selected theme preference. */
 export type ThemeMode = "system" | "light" | "dark";
@@ -15,6 +14,20 @@ export type ResolvedTheme = "light" | "dark";
 
 /** User-selected language preference. */
 export type LanguagePreference = PersistedLanguagePreference;
+
+/**
+ * The user-editable subset of preferences that the settings screen stages
+ * locally and commits in one batch. Keeping these together lets a screen
+ * preview draft changes without touching the global store until the user saves.
+ */
+export interface EditablePreferences {
+    readonly themeMode: ThemeMode;
+    readonly languagePreference: LanguagePreference;
+    readonly fontScale: number;
+    readonly highContrast: boolean;
+    readonly dyslexicFont: boolean;
+    readonly fieldMode: boolean;
+}
 
 /** Minimum font scale the user can select. */
 const MIN_FONT_SCALE = 0.85;
@@ -34,22 +47,20 @@ interface PreferencesStoreState {
     readonly isHydrated: boolean;
 
     hydrate: () => Promise<void>;
-    setThemeMode: (mode: ThemeMode) => void;
-    setLanguagePreference: (language: LanguagePreference) => void;
-    setFontScale: (scale: number) => void;
-    setHighContrast: (enabled: boolean) => void;
-    setDyslexicFont: (enabled: boolean) => void;
-    setFieldMode: (enabled: boolean) => void;
+    applyPreferences: (next: EditablePreferences) => void;
     markIntroSeen: () => void;
 }
 
 /**
  * Resolve the display theme from a user-selected mode.
  *
+ * Exported so screens that preview a draft theme (before it is committed to the
+ * store) can resolve "system" the same way the store does.
+ *
  * @param mode User theme preference.
  * @returns Concrete light or dark theme.
  */
-function resolveTheme(mode: ThemeMode): ResolvedTheme {
+export function resolveThemeMode(mode: ThemeMode): ResolvedTheme {
     if (mode === "light" || mode === "dark") {
         return mode;
     }
@@ -70,10 +81,12 @@ function clampFontScale(scale: number): number {
 /**
  * Persist the current state snapshot to device-local storage.
  *
+ * The live i18n language is applied by the root layout in response to
+ * `languagePreference` changes, so persistence only writes to disk.
+ *
  * @param state Current store snapshot.
  */
 function persistState(state: PreferencesStoreState): void {
-    applyLanguagePreference(state.languagePreference);
     savePersistedPreferences({
         theme_mode: state.themeMode,
         language: state.languagePreference,
@@ -90,7 +103,7 @@ function persistState(state: PreferencesStoreState): void {
  */
 export const usePreferencesStore = create<PreferencesStoreState>((set, get) => ({
     themeMode: "system",
-    resolvedTheme: resolveTheme("system"),
+    resolvedTheme: resolveThemeMode("system"),
     languagePreference: "system",
     fontScale: 1,
     highContrast: false,
@@ -108,7 +121,7 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
             const persisted = await readPersistedPreferences();
             set(() => ({
                 themeMode: persisted.theme_mode,
-                resolvedTheme: resolveTheme(persisted.theme_mode),
+                resolvedTheme: resolveThemeMode(persisted.theme_mode),
                 languagePreference: persisted.language,
                 fontScale: clampFontScale(persisted.font_scale),
                 highContrast: persisted.high_contrast,
@@ -124,33 +137,23 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
         }
     },
 
-    setThemeMode: (mode: ThemeMode) => {
-        set(() => ({ themeMode: mode, resolvedTheme: resolveTheme(mode) }));
-        persistState(get());
-    },
-
-    setLanguagePreference: (language: LanguagePreference) => {
-        set(() => ({ languagePreference: language }));
-        persistState(get());
-    },
-
-    setFontScale: (scale: number) => {
-        set(() => ({ fontScale: clampFontScale(scale) }));
-        persistState(get());
-    },
-
-    setHighContrast: (enabled: boolean) => {
-        set(() => ({ highContrast: enabled }));
-        persistState(get());
-    },
-
-    setDyslexicFont: (enabled: boolean) => {
-        set(() => ({ dyslexicFont: enabled }));
-        persistState(get());
-    },
-
-    setFieldMode: (enabled: boolean) => {
-        set(() => ({ fieldMode: enabled }));
+    /**
+     * Commit a staged set of user preferences in a single update.
+     *
+     * The settings screen previews draft changes locally and only calls this on
+     * save, so the global store (and the app-wide re-render it triggers) is
+     * touched exactly once instead of on every keystroke or slider tick.
+     */
+    applyPreferences: (next: EditablePreferences) => {
+        set(() => ({
+            themeMode: next.themeMode,
+            resolvedTheme: resolveThemeMode(next.themeMode),
+            languagePreference: next.languagePreference,
+            fontScale: clampFontScale(next.fontScale),
+            highContrast: next.highContrast,
+            dyslexicFont: next.dyslexicFont,
+            fieldMode: next.fieldMode,
+        }));
         persistState(get());
     },
 

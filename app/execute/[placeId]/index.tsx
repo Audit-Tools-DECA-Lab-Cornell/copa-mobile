@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { ArrowRight, ClipboardList, Shapes } from "@tamagui/lucide-icons-2";
+import { ArrowRight, ClipboardList, Download, Shapes } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, type ColorTokens, Paragraph, Text, XStack, YStack } from "tamagui";
 import { doesExecutionModeRequireSpaceAudit, getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getPreAuditValues, getVisiblePreAuditQuestions, isRequiredPreAuditComplete } from "lib/audit/selectors";
+import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { CollapsibleCard } from "components/ui/collapsible-card";
@@ -70,7 +71,7 @@ export default function ExecutePlaceScreen() {
     const sessionsByPairKey = usePlayspaceAuditStore((state) => state.sessionsByPairKey);
     const scrollViewRef = useRef<ScrollView | null>(null);
     const [scrollLayoutVersion, setScrollLayoutVersion] = useState(0);
-
+    const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
     const placeId = readSingleParam(params.placeId);
     const projectId = readSingleParam(params.projectId);
     const pairKey = placeId === null || projectId === null ? null : getProjectPlaceKey(projectId, placeId);
@@ -229,117 +230,83 @@ export default function ExecutePlaceScreen() {
         />
     );
 
+    const continueLabel =
+        flowSubject === null
+            ? t("setup.continueToAuditInfo", { ns: "audit" })
+            : t("copy.continueToSubjectInfo", {
+                  ns: "audit",
+                  subject: flowSubject,
+              });
     const continueButton = (
-        <Button
-            height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-            rounded={ds.radii.sm}
-            borderWidth={0}
-            bg={selectedMode === null ? ds.colors.mutedSurface : ds.colors.primary}
+        <AppButton
+            size={layout.isTablet ? "regular" : "compact"}
+            label={continueLabel}
+            p={layout.isTablet ? "$3.5" : "$2"}
+            variant="primary"
             disabled={selectedMode === null}
-            opacity={selectedMode === null ? 0.6 : 1}
-            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            iconRight={
+                <ArrowRight
+                    size={layout.isTablet ? 16 : 14}
+                    color={buttonForegroundColor("primary", ds.colors, selectedMode === null)}
+                />
+            }
             onPress={() => {
                 router.push(`/execute/${placeId}/pre-audit?projectId=${encodeURIComponent(projectId)}` as Href);
             }}
-        >
-            <XStack items="center" gap="$2">
-                <Text
-                    color={selectedMode === null ? ds.colors.mutedForeground : ds.colors.primaryForeground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelLg.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.1}
-                >
-                    {flowSubject === null
-                        ? t("setup.continueToAuditInfo", { ns: "audit" })
-                        : t("copy.continueToSubjectInfo", {
-                              ns: "audit",
-                              subject: flowSubject,
-                          })}
-                </Text>
-                <ArrowRight size={16} color={ds.colors.primaryForeground} />
-            </XStack>
-        </Button>
+        />
     );
+    // Setup already complete: offer the shortcut as a quiet text action so the
+    // screen keeps a single visually-primary CTA.
     const sectionOverviewButton = isSetupFlowComplete ? (
-        <Button
-            height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
-            rounded={ds.radii.sm}
-            borderWidth={1}
-            borderColor={ds.colors.primary}
-            bg={ds.colors.primarySoft}
-            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+        <AppButton
+            size={layout.isTablet ? "regular" : "compact"}
+            label={t("setup.skipToSectionOverview", {
+                ns: "audit",
+                defaultValue: "Skip to section overview",
+            })}
+            variant="tertiary"
+            iconRight={
+                <ArrowRight size={layout.isTablet ? 16 : 14} color={buttonForegroundColor("tertiary", ds.colors)} />
+            }
             onPress={() => {
                 router.push(`/execute/${placeId}/overview?projectId=${encodeURIComponent(projectId)}` as Href);
             }}
-        >
-            <XStack items="center" gap="$2">
-                <Text
-                    color={ds.colors.primary}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelLg.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.1}
-                >
-                    {t("setup.skipToSectionOverview", {
-                        ns: "audit",
-                        defaultValue: "Skip to section overview",
-                    })}
-                </Text>
-                <ArrowRight size={16} color={ds.colors.primary} />
-            </XStack>
-        </Button>
+        />
     ) : null;
 
-    const viewPlaceDetailsButton = (
+    const viewPlaceDetailsIconButton = (
         <Button
-            height={layout.isTablet ? layout.buttonHeight : 46}
-            rounded={ds.radii.sm}
+            circular
+            size={layout.isTablet ? "$3.5" : "$3"}
             borderWidth={1}
             borderColor={ds.colors.border}
             bg={ds.colors.input}
-            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+            pressStyle={{ opacity: 0.92, scale: 0.96 }}
+            aria-label={t("overview.viewPlaceDetails", { ns: "audit" })}
             onPress={() => {
                 router.push(`/place/${placeId}?projectId=${encodeURIComponent(projectId)}` as Href);
             }}
         >
-            <XStack items="center" gap="$2">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.1}
-                >
-                    {t("overview.viewPlaceDetails", { ns: "audit" })}
-                </Text>
-                <ArrowRight size={14} color={ds.colors.foreground} />
-            </XStack>
+            <ArrowRight size={layout.isTablet ? 16 : 14} color={ds.colors.foreground} />
         </Button>
     );
 
-    const supportRail = (
-        <YStack width={layout.supportRailWidth} gap="$3">
-            <AuditSyncStatusCard
-                hasPendingLocalChanges={hasPendingLocalChanges}
-                isSyncing={isSyncing}
-                lastSyncError={lastSyncError}
-                phase={auditPhase}
+    const exportPanelToggleButton = (
+        <Button
+            circular
+            size={layout.isTablet ? "$3.5" : "$3"}
+            borderWidth={1}
+            borderColor={isExportPanelOpen ? ds.colors.primary : ds.colors.border}
+            bg={isExportPanelOpen ? ds.colors.primarySoft : ds.colors.input}
+            pressStyle={{ opacity: 0.92, scale: 0.96 }}
+            aria-label={t("setup.exportAudit", { ns: "audit", defaultValue: "Export audit" })}
+            onPress={() => setIsExportPanelOpen((value) => !value)}
+        >
+            <Download
+                size={layout.isTablet ? 16 : 14}
+                color={isExportPanelOpen ? ds.colors.primary : ds.colors.foreground}
             />
-            {viewPlaceDetailsButton}
-            {roleCard}
-            {continueButton}
-            {sectionOverviewButton}
-            {selectedMode === null ? (
-                <Paragraph
-                    color={ds.colors.warning}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
-                >
-                    {t("setup.modeRequired", { ns: "audit" })}
-                </Paragraph>
-            ) : null}
-        </YStack>
+        </Button>
     );
 
     return (
@@ -351,34 +318,41 @@ export default function ExecutePlaceScreen() {
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
-                maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
                 includeTopPadding: false,
             })}
         >
             <LoggedInAsNotice />
             <YStack gap="$3">
-                <XStack items="center" gap="$2">
-                    <Shapes size={16} color={ds.colors.primary} />
-                    <Text
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                    >
-                        {t("setup.stepEyebrow", { ns: "audit" })}
-                    </Text>
+                <XStack items="center" justify="space-between" gap="$2">
+                    <XStack items="center" gap="$2">
+                        <Shapes size={16} color={ds.colors.primary} />
+                        <Text
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.2}
+                        >
+                            {t("setup.stepEyebrow", { ns: "audit" })}
+                        </Text>
+                    </XStack>
                 </XStack>
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                    lineHeight={
-                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
-                    }
-                >
-                    {auditSession.place_name}
-                </Text>
+                <XStack items="center" justify="space-between" gap="$2">
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
+                        lineHeight={
+                            layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
+                        }
+                    >
+                        {auditSession.place_name}
+                    </Text>
+                    <XStack items="center" gap="$2">
+                        {exportPanelToggleButton}
+                        {viewPlaceDetailsIconButton}
+                    </XStack>
+                </XStack>
                 <Paragraph
                     color={ds.colors.secondaryForeground}
                     fontFamily={ds.fonts.bodyMedium}
@@ -387,50 +361,33 @@ export default function ExecutePlaceScreen() {
                 >
                     {t("setup.subtitle", { ns: "audit" })}
                 </Paragraph>
+                {isExportPanelOpen ? <AuditExportCard auditSession={auditSession} place={currentPlace} /> : null}
             </YStack>
 
-            {layout.isTablet ? (
-                <XStack gap={layout.twoPaneGap} items="flex-start">
-                    <YStack flex={1} gap="$3">
-                        <PreamblePanel blocks={preambleBlocks} />
-                        <SetupFlowHintCard
-                            requiresSpaceAudit={requiresSpaceAudit}
-                            isSetupFlowComplete={isSetupFlowComplete}
-                        />
-                        <AuditExportCard auditSession={auditSession} place={currentPlace} />
-                    </YStack>
-                    {supportRail}
-                </XStack>
-            ) : (
-                <YStack gap="$3">
-                    <AuditSyncStatusCard
-                        hasPendingLocalChanges={hasPendingLocalChanges}
-                        isSyncing={isSyncing}
-                        lastSyncError={lastSyncError}
-                        phase={auditPhase}
-                    />
-                    {viewPlaceDetailsButton}
-                    <PreamblePanel blocks={preambleBlocks} />
-
-                    {roleCard}
+            <YStack gap="$4">
+                <AuditSyncStatusCard
+                    hasPendingLocalChanges={hasPendingLocalChanges}
+                    isSyncing={isSyncing}
+                    lastSyncError={lastSyncError}
+                    phase={auditPhase}
+                />
+                <PreamblePanel blocks={preambleBlocks} />
+                <SetupFlowHintCard requiresSpaceAudit={requiresSpaceAudit} isSetupFlowComplete={isSetupFlowComplete} />
+                {roleCard}
+                {selectedMode === null ? (
+                    <Paragraph
+                        color={ds.colors.warning}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {t("setup.modeRequired", { ns: "audit" })}
+                    </Paragraph>
+                ) : null}
+                <XStack items="center">
                     {continueButton}
                     {sectionOverviewButton}
-                    {selectedMode === null ? (
-                        <Paragraph
-                            color={ds.colors.warning}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                        >
-                            {t("setup.modeRequired", { ns: "audit" })}
-                        </Paragraph>
-                    ) : null}
-                    <SetupFlowHintCard
-                        requiresSpaceAudit={requiresSpaceAudit}
-                        isSetupFlowComplete={isSetupFlowComplete}
-                    />
-                    <AuditExportCard auditSession={auditSession} place={currentPlace} />
-                </YStack>
-            )}
+                </XStack>
+            </YStack>
         </ScrollView>
     );
 }

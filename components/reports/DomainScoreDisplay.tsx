@@ -71,13 +71,6 @@ const CONSTRUCT_METRICS: readonly MetricConfig[] = [
 
 const ALL_BAR_METRICS: readonly MetricConfig[] = [...SCALE_METRICS, ...CONSTRUCT_METRICS];
 
-// The two headline constructs use a balanced teal/gold pair - co-equal peers,
-// distinct from the scale colors and the brand clay.
-const PVU_BAR_COLORS: Record<"play_value" | "usability", string> = {
-    play_value: "#2E7D78",
-    usability: "#C7972F",
-};
-
 // Percentage cutoffs where the legacy bar color used to change. Now rendered as
 // horizontal dotted lines across each bar, labeled at the start of each group.
 const BAR_THRESHOLDS = [33.3, 66.6] as const;
@@ -101,9 +94,9 @@ function barColorForMetric(key: MetricKey, isNa: boolean, ds: ReturnType<typeof 
         case "sociability":
             return ds.colors.sociability;
         case "play_value":
-            return PVU_BAR_COLORS.play_value;
+            return ds.colors.playValue;
         case "usability":
-            return PVU_BAR_COLORS.usability;
+            return ds.colors.usabilityConstruct;
     }
 }
 

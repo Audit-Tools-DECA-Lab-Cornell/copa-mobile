@@ -848,11 +848,9 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
                 opacity: pressed ? 0.96 : 1,
                 transform: [{ scale: pressed ? 0.99 : 1 }],
                 flex: 1,
-                height: "100%",
             })}
         >
             <YStack
-                flex={1}
                 rounded={ds.radii.lg}
                 borderWidth={1}
                 borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
@@ -939,7 +937,7 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
                         </XStack>
 
                         {/* --- MIDDLE SECTION: Meta details --- */}
-                        <YStack gap="$1.5" mb="$4">
+                        <YStack gap="$1.5">
                             <XStack items="center" gap="$2">
                                 <MapPin size={14} color={ds.colors.mutedForeground} opacity={0.8} />
                                 <Paragraph
@@ -985,7 +983,7 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
                         </YStack>
 
                         {/* --- BOTTOM SECTION: Progress & Call to Action --- */}
-                        <YStack flex={1} gap="$2" pt="$2" justify="flex-end">
+                        <YStack gap="$2">
                             {hasScore ? (
                                 <YStack gap="$2" pt="$2" borderTopWidth={1} borderColor={ds.colors.border}>
                                     <XStack items="center" justify="space-between">
@@ -1000,10 +998,14 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
                                         {barPercent !== null && (
                                             <Text
                                                 color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.monoMedium}
-                                                fontSize={ds.typography.labelXs.fontSize}
+                                                fontFamily={ds.fonts.bodyMedium}
+                                                fontSize={ds.typography.labelLg.fontSize}
                                             >
-                                                {`${barPercent.toString()}%`}
+                                                {t("scoreShare", {
+                                                    ns: "reports",
+                                                    defaultValue: "{{percent}}% of max score",
+                                                    percent: barPercent,
+                                                })}
                                             </Text>
                                         )}
                                     </XStack>

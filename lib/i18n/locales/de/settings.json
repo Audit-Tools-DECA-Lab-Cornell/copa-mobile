@@ -1,4 +1,10 @@
 {
+    "pendingChanges": {
+        "label": "Nicht gespeicherte Änderungen",
+        "description": "Vorschau oben. Speichern, um sie in der gesamten App anzuwenden.",
+        "save": "Änderungen speichern",
+        "discard": "Verwerfen"
+    },
     "about": {
         "app": "App",
         "appName": "COPA",

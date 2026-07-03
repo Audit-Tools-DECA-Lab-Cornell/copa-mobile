@@ -1,4 +1,20 @@
 {
+    "personalize": {
+        "label": "カスタマイズ",
+        "description": "テーマ・言語・文字サイズを設定できます。",
+        "theme": "テーマ",
+        "language": "言語",
+        "textSize": "文字サイズ",
+        "openSettings": "設定を開く"
+    },
+    "reportsSummary": {
+        "label": "あなたのレポート",
+        "submitted": "提出済みレポート",
+        "avgPlayValue": "平均プレイ価値",
+        "avgUsability": "平均ユーザビリティ",
+        "noScores": "提出内容が処理されるとスコアがここに表示されます。",
+        "viewReports": "レポートを見る"
+    },
     "activeAuditor": "現在の監査人",
     "activeWork": "実施中の監査",
     "connectivityStatus": "接続状況",

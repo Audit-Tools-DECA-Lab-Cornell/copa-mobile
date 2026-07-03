@@ -20,10 +20,23 @@ interface ResponsiveContentWidthOptions {
     readonly gap?: number;
     readonly maxWidth?: number;
     readonly includeTopPadding?: boolean;
+    /**
+     * Top safe-area inset (`useSafeAreaInsets().top`) added to `paddingTop` so
+     * content clears the status bar. Only applied when top padding is included;
+     * omit it on screens that already have a native header.
+     */
+    readonly topInset?: number;
 }
 
 /** Responsive layout values shared across phone and tablet screens. */
 export type ResponsiveLayout = ResponsiveLayoutTokens;
+
+export interface ResponsiveTabBarLayout {
+    readonly contentHeight: number;
+    readonly height: number;
+    readonly paddingBottom: number;
+    readonly paddingTop: number;
+}
 
 /**
  * Resolve a max-width override to a safe positive value.
@@ -80,6 +93,23 @@ export function createResponsiveLayout(width: number): ResponsiveLayout {
     return createResponsiveLayoutTokens(width);
 }
 
+export function getResponsiveTabBarLayout(
+    layout: Pick<ResponsiveLayout, "buttonHeight" | "isTablet">,
+    bottomInset: number,
+): ResponsiveTabBarLayout {
+    const safeBottomInset = Number.isFinite(bottomInset) && bottomInset > 0 ? bottomInset : 0;
+    const contentHeight = layout.isTablet ? layout.buttonHeight : 42;
+    const paddingTop = layout.isTablet ? 10 : 8;
+    const paddingBottom = (layout.isTablet ? 6 : 2) + safeBottomInset;
+
+    return {
+        contentHeight,
+        height: contentHeight + paddingTop + paddingBottom,
+        paddingBottom,
+        paddingTop,
+    };
+}
+
 /**
  * Centralize tablet-aware padding and sizing so screens stay visually balanced
  * on iPad without disturbing compact phone layouts.
@@ -118,7 +148,11 @@ export function getResponsiveContentContainerStyle(
     }
 
     if (options.includeTopPadding !== false) {
-        style.paddingTop = layout.screenPaddingVertical;
+        const topInset =
+            typeof options.topInset === "number" && Number.isFinite(options.topInset) && options.topInset > 0
+                ? options.topInset
+                : 0;
+        style.paddingTop = layout.screenPaddingVertical + topInset;
     }
 
     if (typeof options.gap === "number" && Number.isFinite(options.gap) && options.gap > 0) {

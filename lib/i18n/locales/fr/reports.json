@@ -70,9 +70,10 @@
     "scoredPlacesHelper": "{{scored}} lieux notés sur {{total}}",
     "singleAuditExport": "Exporter cet audit",
     "sociabilityHelper": "Permet de suivre le score moyen de jeu social à travers les audits soumis.",
+    "scoreShare": "{{percent}} % du score maximal",
     "sociabilityShort": "S",
     "subtitle": "Consultez les performances d’audit de vos lieux attribués.",
-    "title": "Notation COPA",
+    "title": "Rapports",
     "topScoringPlace": "Lieu le mieux noté",
     "usabilityShort": "U",
     "toggle": {

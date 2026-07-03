@@ -1,6 +1,8 @@
-# iOS screenshot targets
+# Screenshot targets
 
-This file documents the trimmed iOS screenshot target lists used by `scripts/capture-ios-screenshots.mjs`.
+This file documents the trimmed screenshot target lists used by `scripts/capture-screenshots.mjs` (driven by `bun run screenshots:ios` / `bun run screenshots:android`).
+
+The tables below are organized by phone vs tablet layout. The `android-phone` device type uses the **iPhone** target list and `android-tablet` uses the **iPad** target list (same routes, scroll offsets, and filenames), so only two tables are maintained.
 
 Routes with `<placeId>`, `<projectId>`, and `<auditId>` are resolved at runtime from the screenshot account's assigned places and submitted audits. `Scroll Y` means the value passed through `__screenshotScrollY`.
 
@@ -8,16 +10,21 @@ Routes with `<placeId>`, `<projectId>`, and `<auditId>` are resolved at runtime 
 
 After this renumbering, treat the existing PNGs under these folders as stale unless the exact filename appears in the tables below:
 
-- `screenshots/iphone/light/`
-- `screenshots/iphone/dark/`
-- `screenshots/ipad/light/`
-- `screenshots/ipad/dark/`
+- `screenshots/iphone/light/` and `screenshots/iphone/dark/`
+- `screenshots/ipad/light/` and `screenshots/ipad/dark/`
+- `screenshots/android-phone/light/` and `screenshots/android-phone/dark/`
+- `screenshots/android-tablet/light/` and `screenshots/android-tablet/dark/`
 
 Safest cleanup before the next run:
 
 ```bash
+# iOS (booted simulators)
 find screenshots/iphone screenshots/ipad -type f -name '*.png' -delete
 bun run screenshots:ios -- --email "$SCREENSHOT_EMAIL" --password "$SCREENSHOT_PASSWORD"
+
+# Android (connected devices, USB debugging enabled)
+find screenshots/android-phone screenshots/android-tablet -type f -name '*.png' -delete
+bun run screenshots:android -- --email "$SCREENSHOT_EMAIL" --password "$SCREENSHOT_PASSWORD"
 ```
 
 The report-detail tail offsets are first-pass values. After the fresh capture run, check the near-end/end frames and tune the values in `REPORT_DETAIL_SCROLLS` if either frame is still too similar or misses the report footer.

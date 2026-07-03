@@ -70,9 +70,10 @@
     "scoredPlacesHelper": "{{total}} 件中 {{scored}} 件をスコア済み",
     "singleAuditExport": "この監査をエクスポート",
     "sociabilityHelper": "提出された監査全体の平均ソーシャルプレイスコアを追跡します。",
+    "scoreShare": "最大スコアの{{percent}}%",
     "sociabilityShort": "S",
     "subtitle": "割り当てられた場所の監査結果を確認します。",
-    "title": "COPA スコアリング",
+    "title": "レポート",
     "topScoringPlace": "最高スコアの場所",
     "usabilityShort": "U",
     "toggle": {

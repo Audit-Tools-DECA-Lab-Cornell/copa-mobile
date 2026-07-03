@@ -861,6 +861,9 @@ export default function AuditReportDetailScreen() {
             <Stack.Screen
                 options={{
                     headerShown: true,
+                    headerBackButtonDisplayMode: "generic",
+                    headerBackButtonMenuEnabled: true,
+                    headerBackVisible: true,
                     headerStyle: { backgroundColor: ds.colors.surfaceMuted },
                     contentStyle: { paddingTop: 20 },
                     headerTintColor: ds.colors.primary,
@@ -964,61 +967,35 @@ export default function AuditReportDetailScreen() {
                                             {t("detail.exportThisAudit", { ns: "reports" })}
                                         </Text>
                                     </XStack>
-                                    {layout.isTablet ? (
-                                        <XStack gap="$2" mt="$1" width="100%">
-                                            <ActionButton
-                                                label={t("exportPdf", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("pdf").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:pdf`}
-                                            />
-                                            <ActionButton
-                                                label={t("exportCsv", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("csv").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:csv`}
-                                            />
-                                            <ActionButton
-                                                label={t("exportExcel", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("xlsx").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
-                                            />
-                                        </XStack>
-                                    ) : (
-                                        <YStack gap="$2" mt="$1">
-                                            <ActionButton
-                                                label={t("exportPdf", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("pdf").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:pdf`}
-                                            />
-                                            <ActionButton
-                                                label={t("exportCsv", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("csv").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:csv`}
-                                            />
-                                            <ActionButton
-                                                label={t("exportExcel", { ns: "reports" })}
-                                                onPress={() => {
-                                                    handleSingleAuditExport("xlsx").catch(() => undefined);
-                                                }}
-                                                disabled={activeExportKey !== null}
-                                                isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
-                                            />
-                                        </YStack>
-                                    )}
+                                    {/* One compact row on all form factors: the three
+                                        format labels are short, and stacked full-width
+                                        buttons out-shout the report content. */}
+                                    <XStack gap="$2" mt="$1" width="100%">
+                                        <ActionButton
+                                            label={t("exportPdf", { ns: "reports" })}
+                                            onPress={() => {
+                                                handleSingleAuditExport("pdf").catch(() => undefined);
+                                            }}
+                                            disabled={activeExportKey !== null}
+                                            isLoading={activeExportKey === `single:${place.place_id}:pdf`}
+                                        />
+                                        <ActionButton
+                                            label={t("exportCsv", { ns: "reports" })}
+                                            onPress={() => {
+                                                handleSingleAuditExport("csv").catch(() => undefined);
+                                            }}
+                                            disabled={activeExportKey !== null}
+                                            isLoading={activeExportKey === `single:${place.place_id}:csv`}
+                                        />
+                                        <ActionButton
+                                            label={t("exportExcel", { ns: "reports" })}
+                                            onPress={() => {
+                                                handleSingleAuditExport("xlsx").catch(() => undefined);
+                                            }}
+                                            disabled={activeExportKey !== null}
+                                            isLoading={activeExportKey === `single:${place.place_id}:xlsx`}
+                                        />
+                                    </XStack>
                                 </SurfaceCard>
                             )}
 
@@ -1059,8 +1036,10 @@ export default function AuditReportDetailScreen() {
                                 scrollViewRef.current?.scrollTo({ y: 0, animated: true });
                             }}
                             style={{
+                                // Bottom-left keeps this clear of the global bug-report FAB
+                                // (bottom-right) and the right-aligned score values in tables.
                                 position: "absolute",
-                                right: 16,
+                                left: 16,
                                 bottom: 96,
                                 zIndex: 40,
                                 elevation: 8,
@@ -1346,28 +1325,17 @@ function MetadataRow({ label, value, selectable = false, isCode = false }: Reado
                 {label}
             </Paragraph>
             {isCode ? (
-                <YStack flex={1} style={{ minWidth: 0 }}>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{
-                            flexGrow: 1,
-                            justifyContent: "flex-start",
-                            alignItems: "center",
-                        }}
-                    >
-                        <Text
-                            selectable={selectable}
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.monoMedium}
-                            fontSize={ds.typography.bodySm.fontSize}
-                            lineHeight={ds.typography.bodySm.lineHeight}
-                            style={{ textAlign: "left" }}
-                        >
-                            {value}
-                        </Text>
-                    </ScrollView>
-                </YStack>
+                <Text
+                    selectable
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.monoMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                    lineHeight={ds.typography.bodySm.lineHeight}
+                    flex={1}
+                    style={{ textAlign: "left" }}
+                >
+                    {value}
+                </Text>
             ) : (
                 <Text
                     selectable={selectable}

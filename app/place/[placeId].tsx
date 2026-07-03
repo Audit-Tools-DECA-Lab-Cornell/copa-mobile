@@ -85,6 +85,8 @@ export default function PlaceDetailScreen() {
                         />
                     ),
                     headerShown: true,
+                    headerBackButtonDisplayMode: "generic",
+                    headerBackVisible: true,
                     headerStyle: {
                         backgroundColor: ds.colors.surface,
                     },

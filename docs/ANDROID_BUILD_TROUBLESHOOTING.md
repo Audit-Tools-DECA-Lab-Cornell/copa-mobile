@@ -61,3 +61,14 @@ eas build --platform android --profile production
 Root cause: The Google Maps API key restrictions do not include the SHA-5 fingerprint of the app.
 
 Fix: Add the SHA-5 fingerprint of the app to the Google Maps API key restrictions in the Google Cloud Console.
+
+### 4. Android edge-to-edge shell behavior
+
+The app targets Android edge-to-edge. Keep these pieces together when changing native shell, keyboard, or splash behavior:
+
+- `lib/system-bars.ts` hides the Android navigation bar and is re-applied from `app/_layout.tsx` after route, foreground, and keyboard changes.
+- Headerless screens add `useSafeAreaInsets().top` through `getResponsiveContentContainerStyle`; native-header screens should not add a second top inset.
+- `android.softwareKeyboardLayoutMode` should stay `pan` so multiline audit notes move into view instead of relying on users to scroll manually.
+- Android 12+ splash rendering uses the `expo-splash-screen` config plugin with `assets/images/splash-icon.png` as a centered icon.
+
+Changes to splash config or Android soft-input behavior require `expo prebuild --clean` verification and a new native build.

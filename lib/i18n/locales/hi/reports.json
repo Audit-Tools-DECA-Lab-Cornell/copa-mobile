@@ -70,9 +70,10 @@
     "scoredPlacesHelper": "{{scored}} में से {{total}} स्थानों को स्कोर किया गया",
     "singleAuditExport": "इस ऑडिट का निर्यात करें",
     "sociabilityHelper": "सबमिट किए गए ऑडिटों के बीच औसत सामाजिक-खेल स्कोर ट्रैक करता है।",
+    "scoreShare": "अधिकतम स्कोर का {{percent}}%",
     "sociabilityShort": "S",
     "subtitle": "अपने असाइन किए गए स्थानों में ऑडिट प्रदर्शन की समीक्षा करें।",
-    "title": "COPA स्कोरिंग",
+    "title": "रिपोर्ट्स",
     "topScoringPlace": "सबसे अधिक स्कोर वाला स्थान",
     "usabilityShort": "U",
     "toggle": {

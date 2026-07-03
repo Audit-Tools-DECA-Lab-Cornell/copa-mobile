@@ -51,7 +51,7 @@
         "emptyTitle": "Keine Prüfungen gefunden",
         "openSelectedAudit": "Ausgewaehltes Audit oeffnen",
         "searchPlaceholder": "Orte oder Projekte suchen",
-        "subtitle": "Wählen Sie einen Ort, um den COPA-Audit-Ablauf abschnittsweise zu starten oder fortzusetzen.",
+        "subtitle": "Wählen Sie einen Ort, um dessen Audit zu starten oder fortzusetzen.",
         "title": "Audit durchfuehren"
     },
     "loggedInAs": "Sie sind angemeldet als {{name}}",
@@ -172,7 +172,8 @@
         "preparingMessage": "Der aktuelle Abschnitt und zuvor gespeicherte Antworten werden geladen...",
         "preparingTitle": "Abschnitt wird vorbereitet",
         "reviewSection": "Abschnitt pruefen",
-        "saveAndNext": "Speichern und weiter",
+        "previousSection": "Zurück",
+        "saveAndNext": "Nächster Abschnitt",
         "saveSection": "Abschnitt speichern",
         "finalCommentsCta": "Continue",
         "sectionNotes": "Abschnittsnotizen",

@@ -1,4 +1,10 @@
 {
+    "pendingChanges": {
+        "label": "Modifications non enregistrées",
+        "description": "Aperçu ci-dessus. Enregistrez pour les appliquer à toute l’application.",
+        "save": "Enregistrer les modifications",
+        "discard": "Annuler"
+    },
     "about": {
         "app": "Application",
         "appName": "COPA",
