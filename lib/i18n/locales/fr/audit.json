@@ -103,6 +103,9 @@
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
         "continueToAuditInfo": "Continuer vers les détails de l’audit",
+        "skipToSectionOverview": "Passer à l’aperçu des sections",
+        "sectionOverview": "Aperçu des sections",
+        "preAudit": "Pré-audit",
         "modeRequired": "Sélectionnez un mode d’exécution avant de continuer.",
         "stepEyebrow": "Étape 1 sur 3",
         "subtitle": "Passez en revue le fonctionnement de l’outil, puis choisissez le rôle qui correspond le mieux à la manière dont vous allez réaliser cet audit.",

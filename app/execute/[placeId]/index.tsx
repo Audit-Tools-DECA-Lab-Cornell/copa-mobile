@@ -230,18 +230,22 @@ export default function ExecutePlaceScreen() {
         />
     );
 
-    const continueLabel =
-        flowSubject === null
+    const continueLabel = layout.isTablet
+        ? flowSubject === null
             ? t("setup.continueToAuditInfo", { ns: "audit" })
             : t("copy.continueToSubjectInfo", {
                   ns: "audit",
                   subject: flowSubject,
-              });
+              })
+        : t("setup.preAudit", { ns: "audit" });
+    const skipToSectionOverviewLabel = layout.isTablet
+        ? t("setup.skipToSectionOverview", { ns: "audit" })
+        : t("setup.sectionOverview", { ns: "audit" });
     const continueButton = (
         <AppButton
             size={layout.isTablet ? "regular" : "compact"}
             label={continueLabel}
-            p={layout.isTablet ? "$3.5" : "$2"}
+            flex={1}
             variant="primary"
             disabled={selectedMode === null}
             iconRight={
@@ -260,13 +264,11 @@ export default function ExecutePlaceScreen() {
     const sectionOverviewButton = isSetupFlowComplete ? (
         <AppButton
             size={layout.isTablet ? "regular" : "compact"}
-            label={t("setup.skipToSectionOverview", {
-                ns: "audit",
-                defaultValue: "Skip to section overview",
-            })}
-            variant="tertiary"
+            label={skipToSectionOverviewLabel}
+            flex={1}
+            variant="accent"
             iconRight={
-                <ArrowRight size={layout.isTablet ? 16 : 14} color={buttonForegroundColor("tertiary", ds.colors)} />
+                <ArrowRight size={layout.isTablet ? 16 : 14} color={buttonForegroundColor("accent", ds.colors)} />
             }
             onPress={() => {
                 router.push(`/execute/${placeId}/overview?projectId=${encodeURIComponent(projectId)}` as Href);
@@ -383,9 +385,9 @@ export default function ExecutePlaceScreen() {
                         {t("setup.modeRequired", { ns: "audit" })}
                     </Paragraph>
                 ) : null}
-                <XStack items="center">
-                    {continueButton}
+                <XStack items="center" flex={1} gap="$2">
                     {sectionOverviewButton}
+                    {continueButton}
                 </XStack>
             </YStack>
         </ScrollView>

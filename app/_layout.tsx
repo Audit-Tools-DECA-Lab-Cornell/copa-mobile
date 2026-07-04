@@ -38,6 +38,7 @@ import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
 import { usePreferencesStore } from "stores/preferences-store";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 vexo(process.env.EXPO_PUBLIC_VEXO_API_KEY ?? "");
 export { ErrorBoundary } from "expo-router";
@@ -138,6 +139,7 @@ function ActiveRootLayoutNav() {
     const { t } = useTranslation("audit");
 
     useHiddenAndroidNavBar(routeKey);
+    const safeAreaInsets = useSafeAreaInsets();
 
     // Offer to submit any locally-queued bug reports once the device is online.
     useBugReportFlushPrompt(authSession, authStatus === "authenticated" && isAuditHydrated);
@@ -386,7 +388,11 @@ function ActiveRootLayoutNav() {
         <ThemeProvider value={navigationTheme}>
             <StatusBar style={resolvedTheme === "light" ? "dark" : "light"} />
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
-                <Stack screenOptions={{ contentStyle: { backgroundColor: ds.colors.background, paddingTop: 20 } }}>
+                <Stack
+                    screenOptions={{
+                        contentStyle: { backgroundColor: ds.colors.background, paddingTop: safeAreaInsets.top },
+                    }}
+                >
                     <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                     <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

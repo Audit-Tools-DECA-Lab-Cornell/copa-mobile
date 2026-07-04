@@ -103,6 +103,9 @@
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
         "continueToAuditInfo": "監査の詳細へ進む",
+        "skipToSectionOverview": "セクションの概要に進む",
+        "sectionOverview": "セクションの概要",
+        "preAudit": "事前監査",
         "modeRequired": "続行する前に、実行モードを1つ選択してください。",
         "stepEyebrow": "3ステップ中の1",
         "subtitle": "ツールの使い方を確認し、その後、この監査を完了する方法に最も合った役割を選択してください。",

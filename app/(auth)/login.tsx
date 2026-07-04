@@ -27,8 +27,8 @@ export default function LoginScreen() {
     const isSubmitting = useAuthStore((state) => state.isSubmitting);
     const errorMessage = useAuthStore((state) => state.errorMessage);
 
-    const [email, setEmail] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
+    const [email, setEmail] = useState<string>("test-auditor-09@example.org");
+    const [password, setPassword] = useState<string>("Fieldtest123!");
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const [staySignedIn, setStaySignedIn] = useState<boolean>(true);

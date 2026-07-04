@@ -538,7 +538,6 @@ export default function ExecuteSectionScreen() {
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                     bottomPadding: 32,
                     gap: layout.sectionGap,
-                    maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
                     includeTopPadding: false,
                 })}
             >
@@ -558,11 +557,17 @@ export default function ExecuteSectionScreen() {
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyLg.fontSize}
+                        lineHeight={ds.typography.bodyLg.lineHeight}
                     >
                         {sectionInstructionsPromptSegments.map((segment, index) => (
                             <Fragment key={`${resolvedActiveSection.section_key}-seg-${index.toString()}`}>
                                 <Text
                                     fontFamily={segment.bold ? ds.fonts.bodyBold : ds.fonts.bodyRegular}
+                                    lineHeight={
+                                        segment.bold
+                                            ? ds.typography.titleMd.lineHeight
+                                            : ds.typography.titleSm.lineHeight
+                                    }
                                     fontSize={
                                         layout.isTablet
                                             ? ds.typography.titleMd.fontSize

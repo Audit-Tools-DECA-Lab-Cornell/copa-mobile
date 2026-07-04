@@ -93,20 +93,16 @@ export function createResponsiveLayout(width: number): ResponsiveLayout {
     return createResponsiveLayoutTokens(width);
 }
 
-export function getResponsiveTabBarLayout(
-    layout: Pick<ResponsiveLayout, "buttonHeight" | "isTablet">,
-    bottomInset: number,
-): ResponsiveTabBarLayout {
-    const safeBottomInset = Number.isFinite(bottomInset) && bottomInset > 0 ? bottomInset : 0;
-    const contentHeight = layout.isTablet ? layout.buttonHeight : 42;
-    const paddingTop = layout.isTablet ? 10 : 8;
-    const paddingBottom = (layout.isTablet ? 6 : 2) + safeBottomInset;
+export function getResponsiveTabBarLayout(layout: ResponsiveLayout): ResponsiveTabBarLayout {
+    const contentHeight = layout.isWideTablet ? layout.buttonHeight : layout.isTablet ? layout.buttonHeight : 64;
+    const paddingTop = 20;
+    const paddingBottom = layout.isWideTablet ? 0 : 0;
 
     return {
         contentHeight,
         height: contentHeight + paddingTop + paddingBottom,
-        paddingBottom,
-        paddingTop,
+        paddingBottom: paddingTop,
+        paddingTop: paddingBottom,
     };
 }
 

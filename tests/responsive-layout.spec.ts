@@ -55,10 +55,9 @@ describe("createResponsiveLayout", () => {
     it("keeps tablet tab content clear after bottom safe-area padding is applied", () => {
         // Given: a tablet layout with a bottom system inset.
         const layout = createResponsiveLayout(600);
-        const bottomInset = 24;
 
         // When: the bottom tab bar sizing is resolved.
-        const tabBarLayout = getResponsiveTabBarLayout(layout, bottomInset);
+        const tabBarLayout = getResponsiveTabBarLayout(layout);
 
         // Then: the height reserves separate space for content, padding, and the inset.
         expect(tabBarLayout.height).toBe(

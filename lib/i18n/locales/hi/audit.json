@@ -103,6 +103,9 @@
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
         "continueToAuditInfo": "ऑडिट विवरण पर आगे बढ़ें",
+        "skipToSectionOverview": "अनुभाग अवलोकन पर जाएँ",
+        "sectionOverview": "अनुभाग अवलोकन",
+        "preAudit": "प्री-ऑडिट",
         "modeRequired": "जारी रखने से पहले एक निष्पादन मोड चुनें।",
         "stepEyebrow": "चरण 1 of 3",
         "subtitle": "देखें कि यह टूल कैसे काम करता है, फिर वह भूमिका चुनें जो इस ऑडिट को पूरा करने के आपके तरीके से सबसे बेहतर मेल खाती हो।",

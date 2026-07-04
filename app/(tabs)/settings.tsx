@@ -14,6 +14,7 @@ import {
     User,
 } from "@tamagui/lucide-icons-2";
 import { useRouter } from "expo-router";
+import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { fetchMyAccount, fetchMyAuditorProfile, type MyAccount, type MyAuditorProfile } from "lib/audit/profile-api";
 import { getDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
@@ -23,7 +24,7 @@ import { getResponsiveContentContainerStyle, ResponsiveLayout, useResponsiveLayo
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, TextStyle, type DimensionValue } from "react-native";
+import { ScrollView, Switch, TextStyle, type DimensionValue } from "react-native";
 import { useAuthStore } from "stores/auth-store";
 import {
     resolveThemeMode,
@@ -270,6 +271,7 @@ export default function SettingsScreen() {
                     const OptionIcon = option.Icon;
                     return (
                         <Button
+                            flex={1}
                             key={option.key}
                             height={layout.isTablet ? 64 : 56}
                             rounded={ds.radii.md}
@@ -381,6 +383,7 @@ export default function SettingsScreen() {
                 )}
                 icon={Eye}
                 isEnabled={draft.highContrast || draft.fieldMode}
+                disabled={draft.fieldMode}
                 onToggle={() => setDraft((current) => ({ ...current, highContrast: !current.highContrast }))}
             />
 
@@ -486,82 +489,27 @@ export default function SettingsScreen() {
                     )}
 
                     <XStack gap="$2">
-                        <Button
+                        <AppButton
                             flex={1}
-                            height={layout.isTablet ? 50 : 46}
-                            rounded={ds.radii.md}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            label={t("profile.editProfile", { ns: "settings" })}
+                            variant="secondary"
                             onPress={() => {
                                 router.push("/settings/edit-profile");
                             }}
-                        >
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                letterSpacing={1.1}
-                            >
-                                {t("profile.editProfile", { ns: "settings" })}
-                            </Text>
-                        </Button>
-                        <Button
+                        />
+                        <AppButton
                             flex={1}
-                            height={layout.isTablet ? 50 : 46}
-                            rounded={ds.radii.md}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            label={t("profile.changePassword", { ns: "settings" })}
+                            variant="secondary"
                             onPress={() => router.push("/settings/change-password")}
-                        >
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                letterSpacing={1.1}
-                            >
-                                {t("profile.changePassword", { ns: "settings" })}
-                            </Text>
-                        </Button>
+                        />
                     </XStack>
-
-                    <Button
-                        height={layout.isTablet ? 50 : 46}
-                        rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={ds.colors.danger}
-                        bg={ds.colors.dangerSoft}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={() => {
-                            logout()
-                                .then(() => {
-                                    router.replace("/(auth)/login");
-                                })
-                                .catch(() => undefined);
-                        }}
-                    >
-                        <XStack items="center" gap="$2">
-                            <LogOut size={14} color={ds.colors.danger} />
-                            <Text
-                                color={ds.colors.danger}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelLg.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.1}
-                            >
-                                {t("actions.signOut", { ns: "common" })}
-                            </Text>
-                        </XStack>
-                    </Button>
                 </SettingsCard>
 
                 {layout.isTablet ? (
                     <XStack gap="$3" items="stretch">
-                        <YStack flex={1}>{appearanceCard}</YStack>
                         <YStack flex={1}>{accessibilityCard}</YStack>
+                        <YStack flex={1}>{appearanceCard}</YStack>
                     </XStack>
                 ) : (
                     <>
@@ -695,6 +643,21 @@ export default function SettingsScreen() {
                         value={t("about.appName", { ns: "settings" })}
                     />
                 </SettingsCard>
+
+                {/* Sign out lives at the very bottom: a destructive action ends
+                    the page rather than sitting among profile fields. */}
+                <AppButton
+                    label={t("actions.signOut", { ns: "common" })}
+                    variant="destructive"
+                    iconLeft={<LogOut size={16} color={buttonForegroundColor("destructive", ds.colors)} />}
+                    onPress={() => {
+                        logout()
+                            .then(() => {
+                                router.replace("/(auth)/login");
+                            })
+                            .catch(() => undefined);
+                    }}
+                />
             </ScrollView>
 
             {isDirty ? (
@@ -1101,45 +1064,47 @@ interface ToggleRowProps {
     readonly icon: FC<IconProps>;
     readonly isEnabled: boolean;
     readonly onToggle: () => void;
+    /** When another setting manages this one (e.g. Field Mode forces High Contrast). */
+    readonly disabled?: boolean;
 }
 
 /**
- * Toggle switch row for boolean accessibility preferences.
+ * Toggle switch row for boolean accessibility preferences. Uses the platform
+ * `Switch` so the on/off state and semantics are unambiguous to sighted and
+ * screen-reader users alike.
  */
-function ToggleRow({ ds, label, description, icon: ToggleIcon, isEnabled, onToggle }: ToggleRowProps) {
-    const layout = useResponsiveLayout();
-    const { t } = useTranslation("common");
+function ToggleRow({
+    ds,
+    label,
+    description,
+    icon: ToggleIcon,
+    isEnabled,
+    onToggle,
+    disabled = false,
+}: ToggleRowProps) {
     return (
-        <YStack gap="$1.5">
-            <XStack justify="space-between" items="center">
+        <YStack gap="$1.5" opacity={disabled ? 0.6 : 1}>
+            <XStack justify="space-between" items="center" gap="$3">
                 <XStack items="center" gap="$2" flex={1}>
-                    <ToggleIcon size={14} color={ds.colors.primary} />
+                    <ToggleIcon size={16} color={ds.colors.primary} />
                     <Text
                         color={ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
+                        fontFamily={ds.fonts.bodySemiBold}
                         fontSize={ds.typography.bodyMd.fontSize}
+                        flex={1}
                     >
                         {label}
                     </Text>
                 </XStack>
-                <Button
-                    height={layout.isTablet ? 36 : 32}
-                    px="$3"
-                    rounded={ds.radii.full}
-                    borderWidth={1}
-                    borderColor={isEnabled ? ds.colors.primary : ds.colors.border}
-                    bg={isEnabled ? ds.colors.primarySoft : ds.colors.input}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                    onPress={onToggle}
-                >
-                    <Text
-                        color={isEnabled ? ds.colors.primary : ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelSm.fontSize}
-                    >
-                        {isEnabled ? t("status.on") : t("status.off")}
-                    </Text>
-                </Button>
+                <Switch
+                    value={isEnabled}
+                    onValueChange={onToggle}
+                    disabled={disabled}
+                    accessibilityLabel={label}
+                    trackColor={{ false: ds.colors.mutedSurface, true: ds.colors.primary }}
+                    thumbColor={ds.colors.primaryForeground}
+                    ios_backgroundColor={ds.colors.mutedSurface}
+                />
             </XStack>
             <Paragraph
                 color={ds.colors.mutedForeground}

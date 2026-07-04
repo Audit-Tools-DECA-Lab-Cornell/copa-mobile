@@ -1,4 +1,3 @@
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BarChart3, ClipboardCheck, LayoutDashboard, MapPinned, Settings } from "@tamagui/lucide-icons-2";
 import { Tabs } from "expo-router";
 import { useAuditSync } from "lib/audit/use-audit-sync";
@@ -28,12 +27,19 @@ export default function TabLayout() {
     const unreadCount = useNotificationsStore((state) => state.unreadCount);
     const { t } = useTranslation("common");
     const isGlassEnabled = isGlassUiEnabled();
-    const insets = useSafeAreaInsets();
     const tabBarActiveTintColor = ds.colors.primary;
     const tabBarInactiveTintColor = layout.isTablet ? ds.colors.secondaryForeground : ds.colors.mutedForeground;
-    const tabBarLayout = getResponsiveTabBarLayout(layout, insets.bottom);
-    const tabBarLabelFontSize = layout.isTablet ? ds.typography.labelSm.fontSize : ds.typography.labelXs.fontSize;
-    const tabBarLabelLineHeight = layout.isTablet ? ds.typography.labelSm.lineHeight : ds.typography.labelXs.lineHeight;
+    const tabBarLayout = getResponsiveTabBarLayout(layout);
+    const tabBarLabelFontSize = layout.isWideTablet
+        ? ds.typography.labelLg.fontSize
+        : layout.isTablet
+          ? ds.typography.labelMd.fontSize
+          : ds.typography.labelSm.fontSize;
+    const tabBarLabelLineHeight = layout.isWideTablet
+        ? ds.typography.labelLg.lineHeight
+        : layout.isTablet
+          ? ds.typography.labelMd.lineHeight
+          : ds.typography.labelSm.lineHeight;
 
     /** Matches header bell cap so tab badge and in-app count stay consistent. */
     const homeTabBadgeOptions =
@@ -52,13 +58,13 @@ export default function TabLayout() {
                     borderTopColor: isGlassEnabled ? ds.glass.tabBarBorder : ds.colors.border,
                     borderTopWidth: 1,
                     height: tabBarLayout.height,
-                    paddingTop: tabBarLayout.paddingTop - 10,
+                    paddingTop: tabBarLayout.paddingTop,
                     paddingBottom: tabBarLayout.paddingBottom,
                 },
                 tabBarItemStyle: {
                     borderRadius: layout.isTablet ? ds.radii.md : 0,
                     marginHorizontal: layout.isTablet ? 4 : 0,
-                    marginVertical: layout.isTablet ? 6 : 0,
+                    marginVertical: layout.isTablet ? 10 : 8,
                     paddingTop: 0,
                 },
                 tabBarLabelStyle: {

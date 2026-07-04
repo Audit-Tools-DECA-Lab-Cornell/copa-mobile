@@ -257,7 +257,6 @@ export default function PreAuditScreen() {
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                 bottomPadding: 132,
                 gap: layout.sectionGap,
-                maxWidth: layout.isTablet ? layout.contentMaxWidth : layout.formMaxWidth,
                 includeTopPadding: false,
             })}
         >

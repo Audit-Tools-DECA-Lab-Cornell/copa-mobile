@@ -574,7 +574,7 @@ function SectionReviewCard({
                             >
                                 {`${sectionSummary.sectionNumber}. ${sectionSummary.title}`}
                             </Text>
-                            <XStack justify="space-between" items="center">
+                            <XStack justify="space-between" items="center" grow={1}>
                                 <Paragraph
                                     color={ds.colors.mutedForeground}
                                     fontFamily={ds.fonts.bodyMedium}
@@ -589,6 +589,8 @@ function SectionReviewCard({
                                 <Button
                                     height={layout.isTablet ? 42 : 38}
                                     rounded={ds.radii.sm}
+                                    maxW="$15"
+                                    grow={1}
                                     borderWidth={1}
                                     borderColor={ds.colors.border}
                                     bg={ds.colors.surface}
@@ -601,6 +603,7 @@ function SectionReviewCard({
                                         color={ds.colors.foreground}
                                         fontFamily={ds.fonts.bodyBold}
                                         fontSize={ds.typography.labelMd.fontSize}
+                                        lineHeight={ds.typography.labelMd.lineHeight}
                                         textTransform="uppercase"
                                         letterSpacing={1}
                                     >

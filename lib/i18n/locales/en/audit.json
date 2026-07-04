@@ -128,6 +128,9 @@
     "place_namesuffix": "{{place_name}}{{suffix}}",
     "setup": {
         "continueToAuditInfo": "Continue to audit details",
+        "skipToSectionOverview": "Skip to section overview",
+        "sectionOverview": "Section overview",
+        "preAudit": "Pre-Audit",
         "modeRequired": "Select one execution mode before continuing.",
         "stepEyebrow": "Step 1 of 3",
         "subtitle": "Review how the tool works, then choose the role that best matches how you will complete this audit.",

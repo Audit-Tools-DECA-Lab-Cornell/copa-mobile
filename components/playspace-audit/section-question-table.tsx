@@ -134,7 +134,7 @@ export function SectionQuestionTable({
                                                 <EmptyScaleCell
                                                     key={`${row.question.question_key}.${scaleKey}`}
                                                     width={readScaleColumnWidth(columnMetrics, scaleKey)}
-                                                    text={t("section.table.notAvailable")}
+                                                    text="—"
                                                     showTrailingBorder={showTrailingBorder}
                                                 />
                                             );
@@ -147,6 +147,7 @@ export function SectionQuestionTable({
                                                     width={readScaleColumnWidth(columnMetrics, scaleKey)}
                                                     text={t("section.table.followUpPending")}
                                                     showTrailingBorder={showTrailingBorder}
+                                                    locked
                                                 />
                                             );
                                         }
@@ -482,12 +483,15 @@ interface EmptyScaleCellProps {
     readonly width: number;
     readonly text: string;
     readonly showTrailingBorder: boolean;
+    /** Gated follow-up cell: renders the hint text; otherwise a centered dash. */
+    readonly locked?: boolean;
 }
 
 /**
- * Placeholder cell for scales that are unavailable or still gated.
+ * Placeholder cell for scales that are unavailable (a centered dash) or still
+ * gated behind a provision answer (a short unlock hint).
  */
-function EmptyScaleCell({ width, text, showTrailingBorder }: Readonly<EmptyScaleCellProps>) {
+function EmptyScaleCell({ width, text, showTrailingBorder, locked = false }: Readonly<EmptyScaleCellProps>) {
     const ds = useDesignSystem();
 
     return (
@@ -498,12 +502,15 @@ function EmptyScaleCell({ width, text, showTrailingBorder }: Readonly<EmptyScale
             borderRightWidth={showTrailingBorder ? 1 : 0}
             borderColor={ds.colors.border}
             justify="center"
+            items="center"
         >
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodySm.fontSize}
-                lineHeight={ds.typography.bodySm.lineHeight}
+                fontSize={locked ? ds.typography.bodyXs.fontSize : ds.typography.bodyMd.fontSize}
+                lineHeight={locked ? ds.typography.bodyXs.lineHeight : ds.typography.bodyMd.lineHeight}
+                opacity={locked ? 1 : 0.6}
+                style={{ textAlign: "center" }}
             >
                 {text}
             </Paragraph>
