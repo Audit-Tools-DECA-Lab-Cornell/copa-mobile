@@ -506,7 +506,7 @@ export default function SettingsScreen() {
                     </XStack>
                 </SettingsCard>
 
-                {layout.isTablet ? (
+                {layout.isWideTablet ? (
                     <XStack gap="$3" items="stretch">
                         <YStack flex={1}>{accessibilityCard}</YStack>
                         <YStack flex={1}>{appearanceCard}</YStack>
