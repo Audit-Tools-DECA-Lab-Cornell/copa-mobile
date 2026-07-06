@@ -104,7 +104,7 @@ export default function SignupScreen() {
                     {/* Header */}
                     <YStack items="center" gap="$4">
                         <Image
-                            source={require("assets/icon-ios.png")}
+                            source={require("assets/icon-compact.png")}
                             style={{ width: 150, height: 150 }}
                             resizeMode="contain"
                         />
