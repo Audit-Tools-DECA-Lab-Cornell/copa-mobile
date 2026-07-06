@@ -18,8 +18,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /**
  * Dev-only quick-login roster.
  */
-const DEV_QUICK_LOGIN_PASSWORD = "DemoPass123!";
-const PROD_QUICK_LOGIN_PASSWORD = "Fieldtest123!";
+const DEV_QUICK_LOGIN_PASSWORD = process.env.EXPO_PUBLIC_DEV_QUICK_LOGIN_PASSWORD!;
+const PROD_QUICK_LOGIN_PASSWORD = process.env.EXPO_PUBLIC_PROD_QUICK_LOGIN_PASSWORD!;
 const DEV_QUICK_LOGIN_USERS = [
     { name: "Ariana Ngata", email: "ariana.ngata@example.org", mode: "dev" },
     { name: "Luca Patel", email: "luca.patel@example.org", mode: "dev" },
@@ -398,74 +398,68 @@ export default function LoginScreen() {
                 </YStack>
             </ScrollView>
 
-            {__DEV__ ? (
-                <Sheet
-                    modal
-                    open={devSheetOpen}
-                    onOpenChange={setDevSheetOpen}
-                    snapPoints={[60]}
-                    snapPointsMode="percent"
-                    dismissOnSnapToBottom
-                    zIndex={100_000}
+            <Sheet
+                modal
+                open={devSheetOpen}
+                onOpenChange={setDevSheetOpen}
+                snapPoints={[60]}
+                snapPointsMode="percent"
+                dismissOnSnapToBottom
+                zIndex={100_000}
+            >
+                <Sheet.Overlay opacity={0.5} />
+                <Sheet.Frame
+                    p="$5"
+                    pb={insets.bottom + 24}
+                    gap="$3"
+                    bg={ds.colors.background}
+                    borderTopLeftRadius={ds.radii.lg}
+                    borderTopRightRadius={ds.radii.lg}
                 >
-                    <Sheet.Overlay opacity={0.5} />
-                    <Sheet.Frame
-                        p="$5"
-                        pb={insets.bottom + 24}
-                        gap="$3"
-                        bg={ds.colors.background}
-                        borderTopLeftRadius={ds.radii.lg}
-                        borderTopRightRadius={ds.radii.lg}
-                    >
-                        <Sheet.Handle bg={ds.colors.border} />
-                        <YStack gap="$1" mt="$2">
-                            <Text color={ds.colors.foreground} fontFamily={ds.fonts.headingBold} fontSize={22}>
-                                Quick login roster
-                            </Text>
-                            <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} fontSize={13}>
-                                Tap a seeded test auditor to sign in instantly.
-                            </Paragraph>
-                        </YStack>
-                        {[...PROD_QUICK_LOGIN_USERS, ...DEV_QUICK_LOGIN_USERS].map((user) => (
-                            <Button
-                                key={user.email}
-                                height={64}
-                                flex={1}
-                                justify="flex-start"
-                                rounded={ds.radii.md}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={ds.colors.surface}
-                                pressStyle={{ opacity: 0.9, scale: 0.99 }}
-                                disabled={isSubmitting}
-                                onPress={() => {
-                                    void handleQuickLogin(user.email);
-                                }}
-                            >
-                                <YStack gap="$0.5" items="flex-start" justify="center">
-                                    <Text color={ds.colors.primary} fontFamily={ds.fonts.bodyBold} fontSize={15}>
-                                        {user.name}
-                                    </Text>
-                                    <Paragraph
-                                        color={ds.colors.secondaryForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={13}
-                                    >
-                                        {user.email}
-                                    </Paragraph>
-                                    <Text
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={13}
-                                        color={ds.colors.mutedForeground}
-                                    >
-                                        {`Password: ${user.mode === "dev" ? DEV_QUICK_LOGIN_PASSWORD : PROD_QUICK_LOGIN_PASSWORD}`}
-                                    </Text>
-                                </YStack>
-                            </Button>
-                        ))}
-                    </Sheet.Frame>
-                </Sheet>
-            ) : null}
+                    <Sheet.Handle bg={ds.colors.border} />
+                    <YStack gap="$1" mt="$2">
+                        <Text color={ds.colors.foreground} fontFamily={ds.fonts.headingBold} fontSize={22}>
+                            Quick login roster
+                        </Text>
+                        <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} fontSize={13}>
+                            Tap a seeded test auditor to sign in instantly.
+                        </Paragraph>
+                    </YStack>
+                    {[...PROD_QUICK_LOGIN_USERS, ...DEV_QUICK_LOGIN_USERS].map((user) => (
+                        <Button
+                            key={user.email}
+                            height={64}
+                            flex={1}
+                            justify="flex-start"
+                            rounded={ds.radii.md}
+                            borderWidth={1}
+                            borderColor={ds.colors.border}
+                            bg={ds.colors.surface}
+                            pressStyle={{ opacity: 0.9, scale: 0.99 }}
+                            disabled={isSubmitting}
+                            onPress={() => {
+                                void handleQuickLogin(user.email);
+                            }}
+                        >
+                            <YStack gap="$0.5" items="flex-start" justify="center">
+                                <Text color={ds.colors.primary} fontFamily={ds.fonts.bodyBold} fontSize={15}>
+                                    {user.name}
+                                </Text>
+                                <Paragraph
+                                    color={ds.colors.secondaryForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={13}
+                                >
+                                    {user.email}
+                                </Paragraph>
+                                <Text fontFamily={ds.fonts.bodyMedium} fontSize={13} color={ds.colors.mutedForeground}>
+                                    {`Password: ${user.mode === "dev" ? DEV_QUICK_LOGIN_PASSWORD : PROD_QUICK_LOGIN_PASSWORD}`}
+                                </Text>
+                            </YStack>
+                        </Button>
+                    ))}
+                </Sheet.Frame>
+            </Sheet>
         </KeyboardAvoidingView>
     );
 }

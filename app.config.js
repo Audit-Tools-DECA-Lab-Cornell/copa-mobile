@@ -4,7 +4,6 @@ export default {
         slug: "audit-tools-playspace-mobile",
         version: "0.6.2",
         orientation: "portrait",
-        icon: "./assets/icon.png",
         scheme: "copa-mobile",
         userInterfaceStyle: "automatic",
         assetBundlePatterns: ["**/*"],
@@ -19,7 +18,7 @@ export default {
             },
         },
         android: {
-            icon: "./assets/android-icons/icon.png",
+            icon: "./assets/android-icons/icon-bg.png",
             softwareKeyboardLayoutMode: "pan",
             adaptiveIcon: {
                 foregroundImage: "./assets/android-icons/adaptive-icon.png",
