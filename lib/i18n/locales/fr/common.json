@@ -87,6 +87,17 @@
     "unableToLoadPlaces": "Impossible de charger les lieux.",
     "unableToReachAuthenticationService": "Impossible de joindre le service d'authentification.",
     "unableToReachPlayspaceAuditService": "Impossible de joindre le service d'audit COPA.",
+    "forceUpdate": {
+        "title": "Mettez COPA à jour pour continuer",
+        "body": "Installez la dernière version de COPA pour continuer à utiliser les audits terrain.",
+        "latestVersion": "Dernière version : {{version}}",
+        "primaryCta": "Ouvrir la mise à jour",
+        "primaryHint": "Ouvre la page de la boutique pour la dernière version de COPA.",
+        "retryCta": "Vérifier à nouveau",
+        "loading": "Vérification de la version de l’application...",
+        "alertTitle": "Impossible d’ouvrir la mise à jour",
+        "alertBody": "Ouvrez la boutique d’applications et installez la dernière version de COPA."
+    },
     "testingMigration": {
         "noticeLabel": "Avis de migration des tests",
         "title": "Nous avons fait passer les tests au niveau supérieur",

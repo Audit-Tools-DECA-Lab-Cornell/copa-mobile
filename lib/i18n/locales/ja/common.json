@@ -84,6 +84,17 @@
     "unableToLoadPlaces": "場所を読み込めません。",
     "unableToReachAuthenticationService": "認証サービスに接続できません。",
     "unableToReachPlayspaceAuditService": "COPA監査サービスに接続できません。",
+    "forceUpdate": {
+        "title": "続行するにはCOPAを更新してください",
+        "body": "フィールド監査を引き続き使用するには、最新のCOPAアプリをインストールしてください。",
+        "latestVersion": "最新バージョン: {{version}}",
+        "primaryCta": "更新を開く",
+        "primaryHint": "最新のCOPAアプリのストアページを開きます。",
+        "retryCta": "もう一度確認",
+        "loading": "アプリのバージョンを確認しています...",
+        "alertTitle": "更新を開けません",
+        "alertBody": "アプリストアを開き、最新のCOPAアプリをインストールしてください。"
+    },
     "testingMigration": {
         "noticeLabel": "テスト移行のお知らせ",
         "title": "テストを次の段階へ移行しました",

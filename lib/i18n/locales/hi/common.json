@@ -84,6 +84,17 @@
     "unableToLoadPlaces": "स्थान लोड नहीं किए जा सके।",
     "unableToReachAuthenticationService": "प्रमाणीकरण सेवा तक नहीं पहुंचा जा सका।",
     "unableToReachPlayspaceAuditService": "COPA ऑडिट सेवा तक नहीं पहुंचा जा सका।",
+    "forceUpdate": {
+        "title": "जारी रखने के लिए COPA अपडेट करें",
+        "body": "फील्ड ऑडिट का उपयोग जारी रखने के लिए नवीनतम COPA ऐप इंस्टॉल करें।",
+        "latestVersion": "नवीनतम संस्करण: {{version}}",
+        "primaryCta": "अपडेट खोलें",
+        "primaryHint": "नवीनतम COPA ऐप के लिए स्टोर पेज खोलता है।",
+        "retryCta": "फिर से जांचें",
+        "loading": "ऐप संस्करण जांचा जा रहा है...",
+        "alertTitle": "अपडेट नहीं खुल सका",
+        "alertBody": "ऐप स्टोर खोलें और नवीनतम COPA ऐप इंस्टॉल करें।"
+    },
     "testingMigration": {
         "noticeLabel": "टेस्टिंग माइग्रेशन सूचना",
         "title": "हमने टेस्टिंग को अगले स्तर पर ले जाया है",

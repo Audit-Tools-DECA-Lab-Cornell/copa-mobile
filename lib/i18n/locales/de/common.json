@@ -84,6 +84,17 @@
     "unableToLoadPlaces": "Orte konnten nicht geladen werden.",
     "unableToReachAuthenticationService": "Authentifizierungsdienst nicht erreichbar.",
     "unableToReachPlayspaceAuditService": "COPA-Audit-Dienst nicht erreichbar.",
+    "forceUpdate": {
+        "title": "COPA aktualisieren, um fortzufahren",
+        "body": "Installiere die neueste COPA-App, um Feld-Audits weiter zu nutzen.",
+        "latestVersion": "Neueste Version: {{version}}",
+        "primaryCta": "Update öffnen",
+        "primaryHint": "Öffnet die Store-Seite für die neueste COPA-App.",
+        "retryCta": "Erneut prüfen",
+        "loading": "App-Version wird geprüft...",
+        "alertTitle": "Update konnte nicht geöffnet werden",
+        "alertBody": "Öffne den App Store und installiere die neueste COPA-App."
+    },
     "testingMigration": {
         "noticeLabel": "Hinweis zur Testumstellung",
         "title": "Wir haben die Tests eine Stufe weitergebracht",

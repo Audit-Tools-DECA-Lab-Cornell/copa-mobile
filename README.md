@@ -320,7 +320,9 @@ The app is **pre-1.0 beta** - the display version stays under `1.0` until public
 | `bun run version:minor` | "Major" change (e.g. `0.3.4 → 0.4.0`) - usually a new build |
 | `bun run version:patch` | "Small" change (e.g. `0.3.4 → 0.3.5`) - often OTA-able      |
 
-`runtimeVersion` is `fingerprint`, so a JS-only patch ships over-the-air (`eas update`) while a native/minor change needs `bun run eas:android` → `bun run submit:android`. The bump script prints which. Full policy: `.claude/memory/mobile-versioning.md`.
+`runtimeVersion` is `fingerprint`, so a compatible JS/assets patch ships over-the-air with `bun run update:production`, while a native/minor change needs `bun run eas:android` → `bun run submit:android`. The bump script prints which. Full policy: `.claude/memory/mobile-versioning.md`.
+
+The app checks `/playspace/mobile-release-policy` at startup. Raise the backend `minimum_supported_version` or platform build threshold when testers must install a newer Play Store/TestFlight binary before continuing.
 
 ---
 

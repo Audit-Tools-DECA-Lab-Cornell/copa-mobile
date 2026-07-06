@@ -2,9 +2,9 @@ export default {
     expo: {
         name: "COPA",
         slug: "audit-tools-playspace-mobile",
-        version: "0.5.8",
+        version: "0.6.0",
         orientation: "portrait",
-        icon: "./assets/icon-ios.png",
+        icon: "./assets/icon.png",
         scheme: "copa-mobile",
         userInterfaceStyle: "automatic",
         assetBundlePatterns: ["**/*"],
@@ -19,12 +19,12 @@ export default {
             },
         },
         android: {
-            icon: "./assets/images/favicon.png",
+            icon: "./assets/android-icons/icon.png",
             softwareKeyboardLayoutMode: "pan",
             adaptiveIcon: {
-                foregroundImage: "./assets/images/adaptive-icon.png",
+                foregroundImage: "./assets/android-icons/adaptive-icon.png",
                 backgroundColor: "#F7F1EB",
-                monochromeImage: "./assets/images/adaptive-monochrome.png",
+                monochromeImage: "./assets/android-icons/adaptive-monochrome.png",
             },
             package: "com.pratyush.sudhakar.audittoolsplayspacemobile",
         },
@@ -35,11 +35,11 @@ export default {
                 "expo-splash-screen",
                 {
                     backgroundColor: "#F7F1EB",
-                    image: "./assets/images/splash-icon.png",
+                    image: "./assets/splash-icon.png",
                     imageWidth: 200,
                     dark: {
                         backgroundColor: "#0E0E0E",
-                        image: "./assets/images/splash-icon.png",
+                        image: "./assets/splash-icon.png",
                     },
                 },
             ],

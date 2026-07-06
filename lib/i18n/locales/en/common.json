@@ -84,6 +84,17 @@
     "unableToLoadPlaces": "Unable to load places.",
     "unableToReachAuthenticationService": "Unable to reach authentication service.",
     "unableToReachPlayspaceAuditService": "Unable to reach COPA audit service.",
+    "forceUpdate": {
+        "title": "Update COPA to continue",
+        "body": "Install the latest COPA app to keep using field audits.",
+        "latestVersion": "Latest version: {{version}}",
+        "primaryCta": "Open update",
+        "primaryHint": "Opens the store page for the latest COPA app.",
+        "retryCta": "Check again",
+        "loading": "Checking app version...",
+        "alertTitle": "Unable to open update",
+        "alertBody": "Open the app store and install the latest COPA app."
+    },
     "testingMigration": {
         "noticeLabel": "Testing migration notice",
         "title": "We’ve moved testing one level up",

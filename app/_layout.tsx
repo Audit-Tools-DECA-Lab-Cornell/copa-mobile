@@ -18,6 +18,7 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { BugReportFab } from "components/bug-report/BugReportFab";
 import { Provider } from "components/Provider";
+import { ForceUpdateScreen, ReleasePolicyLoadingScreen } from "components/release-policy/ForceUpdateScreen";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
 import * as Network from "expo-network";
@@ -26,9 +27,11 @@ import { StatusBar } from "expo-status-bar";
 import { registerAuditBackgroundTaskAsync, unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { useBugReportFlushPrompt } from "lib/bug-report/use-flush-prompt";
 import { useDesignSystem } from "lib/design-system";
+import { useEasUpdateBootstrap } from "lib/eas-updates";
 import { applyLanguagePreference } from "lib/i18n";
 import { logger } from "lib/logger";
 import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
+import { useReleasePolicyGate } from "lib/release-policy";
 import { useHiddenAndroidNavBar } from "lib/system-bars";
 import { useTestingMigrationGate } from "lib/testing-migration/config";
 import { useEffect } from "react";
@@ -113,7 +116,18 @@ export default function RootLayout() {
  * Root navigator with auth and app route groups.
  */
 function RootLayoutNav() {
+    const releasePolicyGate = useReleasePolicyGate();
     const testingMigrationGate = useTestingMigrationGate();
+
+    useEasUpdateBootstrap();
+
+    if (releasePolicyGate.status === "loading") {
+        return <ReleasePolicyLoadingScreen />;
+    }
+
+    if (releasePolicyGate.status === "blocked") {
+        return <ForceUpdateScreen decision={releasePolicyGate.decision} onRetry={releasePolicyGate.retry} />;
+    }
 
     if (testingMigrationGate.shouldBlock) {
         return <TestingMigrationScreen closedTestUrl={testingMigrationGate.closedTestUrl} />;
