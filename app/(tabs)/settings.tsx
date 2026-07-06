@@ -827,26 +827,26 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
             })}
         >
             <YStack gap="$3">
-                <SkeletonBlock ds={ds} width="36%" height={layout.isTablet ? 40 : 28} rounded={ds.radii.sm} />
+                <SkeletonBlock ds={ds} width="36%" height={layout.isTablet ? 52 : 28} rounded={ds.radii.sm} />
                 <SkeletonBlock ds={ds} width="68%" height={layout.isTablet ? 28 : 18} rounded={ds.radii.sm} />
             </YStack>
 
-            <SettingsCardSkeleton ds={ds} labelWidth="26%">
+            <SettingsCardSkeleton ds={ds}>
                 <ProfileSkeletonRow ds={ds} labelWidth="26%" valueWidth="38%" layout={layout} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileSkeletonRow ds={ds} labelWidth="24%" valueWidth="46%" layout={layout} />
+                <ProfileSkeletonRow ds={ds} labelWidth="26%" valueWidth="52%" layout={layout} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileSkeletonRow ds={ds} labelWidth="32%" valueWidth="34%" layout={layout} />
+                <ProfileSkeletonRow ds={ds} labelWidth="26%" valueWidth="34%" layout={layout} />
                 <Separator borderColor={ds.colors.border} />
-                <ProfileSkeletonRow ds={ds} labelWidth="30%" valueWidth="28%" layout={layout} />
-                <SkeletonBlock ds={ds} width="78%" height={layout.isTablet ? 28 : 18} rounded={ds.radii.sm} />
+                <ProfileSkeletonRow ds={ds} labelWidth="26%" valueWidth="38%" layout={layout} />
+                <SkeletonBlock ds={ds} width="70%" height={layout.isTablet ? 28 : 18} rounded={ds.radii.sm} />
                 <SkeletonBlock ds={ds} width="100%" height={layout.isTablet ? 64 : 48} />
             </SettingsCardSkeleton>
 
-            {layout.isTablet ? (
+            {layout.isWideTablet ? (
                 <XStack gap="$3" items="stretch">
                     <YStack flex={1}>
-                        <SettingsCardSkeleton ds={ds} labelWidth="48%" stretch>
+                        <SettingsCardSkeleton ds={ds} stretch>
                             <YStack gap="$3.5">
                                 <SkeletonBlock ds={ds} width="52%" height={36} rounded={ds.radii.sm} />
                                 <SkeletonBlock ds={ds} width="72%" height={36} rounded={ds.radii.sm} />
@@ -858,7 +858,7 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                         </SettingsCardSkeleton>
                     </YStack>
                     <YStack flex={1}>
-                        <SettingsCardSkeleton ds={ds} labelWidth="48%" stretch>
+                        <SettingsCardSkeleton ds={ds} stretch>
                             <YStack gap="$3.5">
                                 <SkeletonBlock ds={ds} width="52%" height={48} rounded={ds.radii.sm} />
                                 <SkeletonBlock ds={ds} width="96%" height={36} rounded={ds.radii.sm} />
@@ -871,10 +871,10 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                 </XStack>
             ) : (
                 <>
-                    <SettingsCardSkeleton ds={ds} labelWidth="34%">
-                        <YStack gap="$1.5">
-                            <SkeletonBlock ds={ds} width="34%" height={20} rounded={ds.radii.sm} />
-                            <SkeletonBlock ds={ds} width="72%" height={16} rounded={ds.radii.sm} />
+                    <SettingsCardSkeleton ds={ds}>
+                        <YStack gap="$3">
+                            <SkeletonBlock ds={ds} width="34%" height={28} rounded={ds.radii.sm} />
+                            <SkeletonBlock ds={ds} width="72%" height={28} rounded={ds.radii.sm} />
                         </YStack>
                         <XStack gap="$2">
                             <SkeletonBlock ds={ds} flex={1} height={56} />
@@ -883,13 +883,12 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
                         </XStack>
                     </SettingsCardSkeleton>
 
-                    <SettingsCardSkeleton ds={ds} labelWidth="28%">
-                        <YStack gap="$1.5">
-                            <SkeletonBlock ds={ds} width="38%" height={20} rounded={ds.radii.sm} />
-                            <SkeletonBlock ds={ds} width="70%" height={16} rounded={ds.radii.sm} />
+                    <SettingsCardSkeleton ds={ds}>
+                        <YStack gap="$3">
+                            <SkeletonBlock ds={ds} width="34%" height={28} rounded={ds.radii.sm} />
+                            <SkeletonBlock ds={ds} width="72%" height={28} rounded={ds.radii.sm} />
                         </YStack>
                         <SkeletonBlock ds={ds} width="100%" height={52} />
-                        <SkeletonBlock ds={ds} width="58%" height={16} rounded={ds.radii.sm} />
                     </SettingsCardSkeleton>
                 </>
             )}
@@ -899,7 +898,6 @@ function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
 
 interface SettingsCardSkeletonProps {
     readonly ds: DesignSystemTheme;
-    readonly labelWidth: DimensionValue;
     readonly children: ReactNode;
     readonly stretch?: boolean;
 }
@@ -907,7 +905,7 @@ interface SettingsCardSkeletonProps {
 /**
  * Placeholder card wrapper that mirrors the spacing of a real settings card.
  */
-function SettingsCardSkeleton({ ds, labelWidth, children, stretch = false }: SettingsCardSkeletonProps) {
+function SettingsCardSkeleton({ ds, children, stretch = false }: SettingsCardSkeletonProps) {
     const layout = useResponsiveLayout();
     return (
         <YStack
@@ -917,18 +915,9 @@ function SettingsCardSkeleton({ ds, labelWidth, children, stretch = false }: Set
             borderColor={ds.colors.border}
             bg={ds.colors.surface}
             p={layout.cardPadding}
-            gap="$3"
+            gap="$4"
             style={{ boxShadow: ds.shadows.card }}
         >
-            <XStack items="center" gap="$2">
-                <SkeletonBlock
-                    ds={ds}
-                    width={layout.isTablet ? 20 : 16}
-                    height={layout.isTablet ? 20 : 16}
-                    rounded={ds.radii.full}
-                />
-                <SkeletonBlock ds={ds} width={labelWidth} height={layout.isTablet ? 18 : 12} rounded={ds.radii.sm} />
-            </XStack>
             {children}
         </YStack>
     );

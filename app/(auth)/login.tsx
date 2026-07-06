@@ -3,7 +3,8 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView } from "react-native"
 import { useRouter } from "expo-router";
 import { ArrowRight, Check, Eye, EyeOff, KeyRound, UserRound } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
-import { Button, Checkbox, type ColorTokens, Input, Paragraph, Text, XStack, YStack } from "tamagui";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Checkbox, type ColorTokens, Input, Paragraph, Sheet, Text, XStack, YStack } from "tamagui";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
@@ -15,11 +16,28 @@ const logger = createModuleLogger("login");
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
+ * Dev-only quick-login roster.
+ */
+const DEV_QUICK_LOGIN_PASSWORD = "DemoPass123!";
+const PROD_QUICK_LOGIN_PASSWORD = "Fieldtest123!";
+const DEV_QUICK_LOGIN_USERS = [
+    { name: "Ariana Ngata", email: "ariana.ngata@example.org", mode: "dev" },
+    { name: "Luca Patel", email: "luca.patel@example.org", mode: "dev" },
+    { name: "Maya Thompson", email: "maya.thompson@example.org", mode: "dev" },
+    { name: "Riley Morgan", email: "riley.morgan@example.org", mode: "dev" },
+];
+const PROD_QUICK_LOGIN_USERS = [
+    { name: "Test Auditor 09", email: "test-auditor-09@example.org", mode: "prod" },
+    { name: "Test Auditor 11", email: "test-auditor-11@example.org", mode: "prod" },
+];
+
+/**
  * Login screen for COPA mobile.
  */
 export default function LoginScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { t } = useTranslation(["auth", "common"]);
     const login = useAuthStore((state) => state.login);
@@ -32,6 +50,7 @@ export default function LoginScreen() {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const [staySignedIn, setStaySignedIn] = useState<boolean>(true);
+    const [devSheetOpen, setDevSheetOpen] = useState<boolean>(false);
     const scrollViewRef = useRef<ScrollView | null>(null);
 
     const scrollLoginToOffset = useCallback((offset: number) => {
@@ -79,6 +98,27 @@ export default function LoginScreen() {
         router.replace("/(tabs)");
     };
 
+    /**
+     * Dev-only shortcut: fill in a seeded test auditor and sign in immediately.
+     * Only rendered under `__DEV__`, so it is absent from production builds.
+     */
+    const handleQuickLogin = async (userEmail: string): Promise<void> => {
+        setDevSheetOpen(false);
+        clearError();
+        setValidationMessage(null);
+        setEmail(userEmail);
+        setPassword(DEV_QUICK_LOGIN_PASSWORD);
+
+        try {
+            await login({ email: userEmail, password: DEV_QUICK_LOGIN_PASSWORD });
+        } catch {
+            logger.error("Failed to quick-login");
+            return;
+        }
+
+        router.replace("/(tabs)");
+    };
+
     const visibleErrorMessage = validationMessage ?? errorMessage;
 
     return (
@@ -98,11 +138,21 @@ export default function LoginScreen() {
             >
                 <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                     <YStack items="center" gap="$4">
-                        <Image
-                            source={require("assets/icon-compact.png")}
-                            style={{ width: 150, height: 150 }}
-                            resizeMode="contain"
-                        />
+                        <YStack
+                            {...(__DEV__
+                                ? {
+                                      onPress: () => setDevSheetOpen(true),
+                                      pressStyle: { opacity: 0.6 },
+                                      hitSlop: { top: 12, bottom: 12, left: 12, right: 12 },
+                                  }
+                                : {})}
+                        >
+                            <Image
+                                source={require("assets/icon-compact.png")}
+                                style={{ width: 150, height: 150 }}
+                                resizeMode="contain"
+                            />
+                        </YStack>
 
                         <YStack items="center" gap="$2">
                             <Text
@@ -347,6 +397,75 @@ export default function LoginScreen() {
                     </YStack>
                 </YStack>
             </ScrollView>
+
+            {__DEV__ ? (
+                <Sheet
+                    modal
+                    open={devSheetOpen}
+                    onOpenChange={setDevSheetOpen}
+                    snapPoints={[60]}
+                    snapPointsMode="percent"
+                    dismissOnSnapToBottom
+                    zIndex={100_000}
+                >
+                    <Sheet.Overlay opacity={0.5} />
+                    <Sheet.Frame
+                        p="$5"
+                        pb={insets.bottom + 24}
+                        gap="$3"
+                        bg={ds.colors.background}
+                        borderTopLeftRadius={ds.radii.lg}
+                        borderTopRightRadius={ds.radii.lg}
+                    >
+                        <Sheet.Handle bg={ds.colors.border} />
+                        <YStack gap="$1" mt="$2">
+                            <Text color={ds.colors.foreground} fontFamily={ds.fonts.headingBold} fontSize={22}>
+                                Quick login roster
+                            </Text>
+                            <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} fontSize={13}>
+                                Tap a seeded test auditor to sign in instantly.
+                            </Paragraph>
+                        </YStack>
+                        {[...PROD_QUICK_LOGIN_USERS, ...DEV_QUICK_LOGIN_USERS].map((user) => (
+                            <Button
+                                key={user.email}
+                                height={64}
+                                flex={1}
+                                justify="flex-start"
+                                rounded={ds.radii.md}
+                                borderWidth={1}
+                                borderColor={ds.colors.border}
+                                bg={ds.colors.surface}
+                                pressStyle={{ opacity: 0.9, scale: 0.99 }}
+                                disabled={isSubmitting}
+                                onPress={() => {
+                                    void handleQuickLogin(user.email);
+                                }}
+                            >
+                                <YStack gap="$0.5" items="flex-start" justify="center">
+                                    <Text color={ds.colors.primary} fontFamily={ds.fonts.bodyBold} fontSize={15}>
+                                        {user.name}
+                                    </Text>
+                                    <Paragraph
+                                        color={ds.colors.secondaryForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={13}
+                                    >
+                                        {user.email}
+                                    </Paragraph>
+                                    <Text
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={13}
+                                        color={ds.colors.mutedForeground}
+                                    >
+                                        {`Password: ${user.mode === "dev" ? DEV_QUICK_LOGIN_PASSWORD : PROD_QUICK_LOGIN_PASSWORD}`}
+                                    </Text>
+                                </YStack>
+                            </Button>
+                        ))}
+                    </Sheet.Frame>
+                </Sheet>
+            ) : null}
         </KeyboardAvoidingView>
     );
 }
