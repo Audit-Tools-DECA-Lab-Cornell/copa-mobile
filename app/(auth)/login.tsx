@@ -18,15 +18,21 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /**
  * Dev-only quick-login roster.
  */
+type QuickLoginMode = "dev" | "prod";
+type QuickLoginUser = {
+    readonly name: string;
+    readonly email: string;
+    readonly mode: QuickLoginMode;
+};
 const DEV_QUICK_LOGIN_PASSWORD = process.env.EXPO_PUBLIC_DEV_QUICK_LOGIN_PASSWORD!;
 const PROD_QUICK_LOGIN_PASSWORD = process.env.EXPO_PUBLIC_PROD_QUICK_LOGIN_PASSWORD!;
-const DEV_QUICK_LOGIN_USERS = [
+const DEV_QUICK_LOGIN_USERS: QuickLoginUser[] = [
     { name: "Ariana Ngata", email: "ariana.ngata@example.org", mode: "dev" },
     { name: "Luca Patel", email: "luca.patel@example.org", mode: "dev" },
     { name: "Maya Thompson", email: "maya.thompson@example.org", mode: "dev" },
     { name: "Riley Morgan", email: "riley.morgan@example.org", mode: "dev" },
 ];
-const PROD_QUICK_LOGIN_USERS = [
+const PROD_QUICK_LOGIN_USERS: QuickLoginUser[] = [
     { name: "Test Auditor 09", email: "test-auditor-09@example.org", mode: "prod" },
     { name: "Test Auditor 11", email: "test-auditor-11@example.org", mode: "prod" },
 ];
@@ -101,15 +107,18 @@ export default function LoginScreen() {
     /**
      * Dev-only shortcut: fill in a seeded test auditor and sign in immediately.
      */
-    const handleQuickLogin = async (userEmail: string): Promise<void> => {
+    const handleQuickLogin = async (userEmail: string, userMode: QuickLoginMode): Promise<void> => {
         setDevSheetOpen(false);
         clearError();
         setValidationMessage(null);
         setEmail(userEmail);
-        setPassword(DEV_QUICK_LOGIN_PASSWORD);
+        setPassword(userMode === "dev" ? DEV_QUICK_LOGIN_PASSWORD : PROD_QUICK_LOGIN_PASSWORD);
 
         try {
-            await login({ email: userEmail, password: DEV_QUICK_LOGIN_PASSWORD });
+            await login({
+                email: userEmail,
+                password: userMode === "dev" ? DEV_QUICK_LOGIN_PASSWORD : PROD_QUICK_LOGIN_PASSWORD,
+            });
         } catch {
             logger.error("Failed to quick-login");
             return;
@@ -435,7 +444,7 @@ export default function LoginScreen() {
                             pressStyle={{ opacity: 0.9, scale: 0.99 }}
                             disabled={isSubmitting}
                             onPress={() => {
-                                void handleQuickLogin(user.email);
+                                void handleQuickLogin(user.email, user.mode);
                             }}
                         >
                             <YStack gap="$0.5" items="flex-start" justify="center">
