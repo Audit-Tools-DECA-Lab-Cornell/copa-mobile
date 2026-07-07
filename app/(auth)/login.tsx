@@ -100,7 +100,6 @@ export default function LoginScreen() {
 
     /**
      * Dev-only shortcut: fill in a seeded test auditor and sign in immediately.
-     * Only rendered under `__DEV__`, so it is absent from production builds.
      */
     const handleQuickLogin = async (userEmail: string): Promise<void> => {
         setDevSheetOpen(false);
@@ -139,13 +138,11 @@ export default function LoginScreen() {
                 <YStack gap="$6" width="100%" style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}>
                     <YStack items="center" gap="$4">
                         <YStack
-                            {...(__DEV__
-                                ? {
-                                      onPress: () => setDevSheetOpen(true),
-                                      pressStyle: { opacity: 0.6 },
-                                      hitSlop: { top: 12, bottom: 12, left: 12, right: 12 },
-                                  }
-                                : {})}
+                            {...{
+                                onPress: () => setDevSheetOpen(true),
+                                pressStyle: { opacity: 0.6 },
+                                hitSlop: { top: 12, bottom: 12, left: 12, right: 12 },
+                            }}
                         >
                             <Image
                                 source={require("assets/icon-compact.png")}
