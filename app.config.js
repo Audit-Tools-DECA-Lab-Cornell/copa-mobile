@@ -5,6 +5,7 @@ export default {
         version: "0.6.2",
         orientation: "portrait",
         scheme: "copa-mobile",
+        icon: "./assets/icon.png",
         userInterfaceStyle: "automatic",
         assetBundlePatterns: ["**/*"],
         ios: {
@@ -18,7 +19,7 @@ export default {
             },
         },
         android: {
-            icon: "./assets/android-icons/icon-bg.png",
+            icon: "./assets/android-icons/icon.png",
             softwareKeyboardLayoutMode: "pan",
             adaptiveIcon: {
                 foregroundImage: "./assets/android-icons/adaptive-icon.png",
