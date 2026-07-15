@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ScrollView } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowRight, ClipboardList } from "@tamagui/lucide-icons-2";
@@ -8,6 +8,7 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
+import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import { getPreAuditValues, getVisiblePreAuditQuestions, isRequiredPreAuditComplete } from "lib/audit/selectors";
 import type { AuditSession, PreAuditQuestion } from "lib/audit/types";
@@ -85,23 +86,7 @@ export default function SpaceAuditScreen() {
     const canEditInputsRef = useRef(false);
     const scrollViewRef = useRef<ScrollView | null>(null);
 
-    const themedHeaderOptions = useMemo(
-        () => ({
-            headerShown: true,
-            headerBackButtonMenuEnabled: true,
-            headerBackButtonDisplayMode: "generic",
-            headerBackVisible: true,
-            headerBlurEffect: "light",
-            headerStyle: { backgroundColor: ds.colors.surfaceMuted },
-            headerTintColor: ds.colors.primary,
-            contentStyle: { paddingTop: 20 },
-            headerTitleStyle: {
-                color: ds.colors.foreground,
-                fontFamily: ds.fonts.bodyBold,
-            },
-        }),
-        [ds],
-    );
+    const themedHeaderOptions = useThemedHeaderOptions();
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);

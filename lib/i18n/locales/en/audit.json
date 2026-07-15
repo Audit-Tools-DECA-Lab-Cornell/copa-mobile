@@ -193,6 +193,7 @@
         "backToOverview": "Back to overview",
         "finalCommentsCta": "Continue",
         "followUpHidden": "Variety, Sociability, and Challenge appear only after a positive Provision answer.",
+        "headerSecondary": "Section: {{title}}",
         "incompleteConfirmContinue": "Continue anyway",
         "incompleteGoBack": "Go back",
         "incompleteListLabel": "Unanswered questions:",

@@ -7,6 +7,7 @@ import { ProjectFilterSelect } from "components/ui/project-filter-select";
 import { TypeFilterSelect } from "components/ui/type-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
+import { ScreenHeader } from "components/ui/screen-header";
 import { useRouter, type Href } from "expo-router";
 import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/exports/reports";
 import { buildAuditExportPreview, shareBulkAuditExport } from "lib/exports/reports";
@@ -378,47 +379,7 @@ export default function ReportsScreen() {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <YStack gap="$4">
-                    {layout.isTablet ? (
-                        <XStack justify="space-between" items="flex-end" gap="$4">
-                            <YStack gap="$1" flex={1}>
-                                <Text
-                                    color={ds.colors.foreground}
-                                    fontFamily={ds.fonts.headingBold}
-                                    fontSize={ds.typography.displayLg.fontSize}
-                                    lineHeight={ds.typography.displayLg.lineHeight}
-                                    letterSpacing={-0.7}
-                                >
-                                    {t("title")}
-                                </Text>
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodyLg.fontSize}
-                                >
-                                    {t("subtitle")}
-                                </Paragraph>
-                            </YStack>
-                        </XStack>
-                    ) : (
-                        <YStack gap="$3">
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.headingBold}
-                                fontSize={ds.typography.displayMd.fontSize}
-                                lineHeight={ds.typography.displayMd.lineHeight}
-                                letterSpacing={-0.7}
-                            >
-                                {t("title")}
-                            </Text>
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyLg.fontSize}
-                            >
-                                {t("subtitle")}
-                            </Paragraph>
-                        </YStack>
-                    )}
+                    <ScreenHeader title={t("title")} subtitle={t("subtitle")} />
 
                     {layout.isTablet ? (
                         <XStack gap="$3">

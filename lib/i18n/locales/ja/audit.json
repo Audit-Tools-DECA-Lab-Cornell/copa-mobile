@@ -169,6 +169,7 @@
         "backToOverview": "概要へ戻る",
         "finalCommentsCta": "Continue",
         "followUpHidden": "多様性、社交性、そして挑戦は、数量の肯定的な回答を得た後にのみ表示されます。",
+        "headerSecondary": "セクション：{{title}}",
         "notesDefault": "このセクションについての所感や推奨事項を追加してください。",
         "notesPlaceholder": "セクションのノートまたは推奨事項を追加...",
         "openSection": "セクションを開く",

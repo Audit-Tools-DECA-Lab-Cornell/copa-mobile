@@ -15,6 +15,7 @@ import {
 } from "@tamagui/lucide-icons-2";
 import { useRouter } from "expo-router";
 import { AppButton, buttonForegroundColor } from "components/ui/app-button";
+import { ScreenHeader } from "components/ui/screen-header";
 import { fetchMyAccount, fetchMyAuditorProfile, type MyAccount, type MyAuditorProfile } from "lib/audit/profile-api";
 import { getDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
@@ -417,25 +418,7 @@ export default function SettingsScreen() {
                     maxWidth: settingsPageMaxWidth,
                 })}
             >
-                <YStack gap="$3">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.headingBold}
-                        fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                        lineHeight={
-                            layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
-                        }
-                    >
-                        {t("title", { ns: "settings" })}
-                    </Text>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyLg.fontSize}
-                    >
-                        {t("subtitle", { ns: "settings" })}
-                    </Paragraph>
-                </YStack>
+                <ScreenHeader title={t("title", { ns: "settings" })} subtitle={t("subtitle", { ns: "settings" })} />
 
                 {/* Profile Card (read-only) */}
                 <SettingsCard ds={ds} label={t("profile.label", { ns: "settings" })} Icon={User}>

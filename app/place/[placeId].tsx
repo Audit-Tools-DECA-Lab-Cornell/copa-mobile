@@ -24,6 +24,7 @@ import type { AuditorPlace } from "lib/audit/places-api";
 import type { AuditSession, ExecutionMode } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
+import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -39,7 +40,7 @@ const log = createModuleLogger("place-detail");
  * Full-screen place detail used from the places and execute flows.
  */
 export default function PlaceDetailScreen() {
-    const ds = useDesignSystem();
+    const themedHeaderOptions = useThemedHeaderOptions();
     const router = useRouter();
     const { t, i18n } = useTranslation(["places", "common", "reports"]);
     const params = useLocalSearchParams<{
@@ -77,24 +78,14 @@ export default function PlaceDetailScreen() {
         <>
             <Stack.Screen
                 options={{
-                    contentStyle: { paddingTop: 20 },
+                    ...themedHeaderOptions,
+                    title: t("detail.screenTitle", { ns: "places" }),
                     headerTitle: () => (
                         <AuditHeaderTitle
                             primary={place?.place_name ?? t("detail.screenTitle", { ns: "places" })}
                             size="lg"
                         />
                     ),
-                    headerShown: true,
-                    headerBackButtonDisplayMode: "generic",
-                    headerBackVisible: true,
-                    headerStyle: {
-                        backgroundColor: ds.colors.surface,
-                    },
-                    headerTintColor: ds.colors.primary,
-                    headerTitleStyle: {
-                        color: ds.colors.foreground,
-                        fontFamily: ds.fonts.bodyBold,
-                    },
                 }}
             />
 

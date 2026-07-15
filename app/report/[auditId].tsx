@@ -33,6 +33,7 @@ import {
 import type { AuditScoreTotals, AuditSession } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
+import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -613,6 +614,7 @@ function SectionNavigatorCard({ sectionRows, onSectionPress }: Readonly<SectionN
  */
 export default function AuditReportDetailScreen() {
     const ds = useDesignSystem();
+    const themedHeaderOptions = useThemedHeaderOptions();
     const layout = useResponsiveLayout();
     const { t } = useTranslation(["reports", "common", "places"]);
     const toast = useToastController();
@@ -860,18 +862,9 @@ export default function AuditReportDetailScreen() {
         <>
             <Stack.Screen
                 options={{
-                    headerShown: true,
-                    headerBackButtonDisplayMode: "generic",
-                    headerBackButtonMenuEnabled: true,
-                    headerBackVisible: true,
-                    headerStyle: { backgroundColor: ds.colors.surfaceMuted },
-                    contentStyle: { paddingTop: 20 },
-                    headerTintColor: ds.colors.primary,
+                    ...themedHeaderOptions,
+                    title: t("detail.screenTitle", { ns: "reports" }),
                     headerTitle: () => <AuditHeaderTitle primary={title} size="lg" />,
-                    headerTitleStyle: {
-                        color: ds.colors.foreground,
-                        fontFamily: ds.fonts.bodyBold,
-                    },
                 }}
             />
 

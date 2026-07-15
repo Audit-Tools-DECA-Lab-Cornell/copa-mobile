@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Alert, ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowLeft, ArrowRight, LayoutDashboard } from "@tamagui/lucide-icons-2";
@@ -20,6 +20,7 @@ import {
 } from "lib/audit/section-navigation";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
+import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     getQuestionAnswers,
@@ -102,23 +103,7 @@ export default function ExecuteSectionScreen() {
     const scrollViewRef = useRef<ScrollView | null>(null);
     const [scrollLayoutVersion, setScrollLayoutVersion] = useState(0);
 
-    const themedHeaderOptions = useMemo(
-        () => ({
-            headerShown: true,
-            headerBackButtonMenuEnabled: true,
-            headerBackButtonDisplayMode: "generic",
-            headerBackVisible: true,
-            headerBlurEffect: "light",
-            headerStyle: { backgroundColor: ds.colors.surfaceMuted },
-            headerTintColor: ds.colors.primary,
-            contentStyle: { paddingTop: 20 },
-            headerTitleStyle: {
-                color: ds.colors.foreground,
-                fontFamily: ds.fonts.bodyBold,
-            },
-        }),
-        [ds],
-    );
+    const themedHeaderOptions = useThemedHeaderOptions();
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -209,41 +194,47 @@ export default function ExecuteSectionScreen() {
     }, [flushNoteToStore, router]);
 
     useLayoutEffect(() => {
-        // Unconditional localized fallback so the header never shows the raw
-        // route slug while audit data is still loading (G1).
+        // Single setOptions per render: the localized fallback title always
+        // applies so the header never shows the raw route slug (G1), and the
+        // data-driven headerTitle/headerRight merge in once data resolves.
         navigation.setOptions({
             ...themedHeaderOptions,
             animation: "ios_from_right",
             title: t("stack.sectionFallback", { ns: "audit" }),
+            ...(activeSection === undefined
+                ? {}
+                : {
+                      headerTitle: () => (
+                          <AuditHeaderTitle
+                              primary={auditSession?.place_name ?? ""}
+                              secondary={t("section.headerSecondary", {
+                                  ns: "audit",
+                                  title: activeSection.title,
+                              })}
+                          />
+                      ),
+                      headerRight: () => (
+                          <Button
+                              chromeless
+                              onPress={handleReturnHome}
+                              accessibilityLabel={t("tabs.home", { ns: "common" })}
+                          >
+                              <XStack gap="$1.5" items="center">
+                                  <LayoutDashboard size={16} color={ds.colors.primary} />
+                                  <Text
+                                      color={ds.colors.primary}
+                                      fontFamily={ds.fonts.bodyBold}
+                                      fontSize={ds.typography.labelSm.fontSize}
+                                      textTransform="uppercase"
+                                      letterSpacing={1}
+                                  >
+                                      {t("tabs.home", { ns: "common" })}
+                                  </Text>
+                              </XStack>
+                          </Button>
+                      ),
+                  }),
         });
-        if (activeSection !== undefined) {
-            navigation.setOptions({
-                ...themedHeaderOptions,
-                animation: "ios_from_right",
-                headerTitle: () => (
-                    <AuditHeaderTitle
-                        primary={auditSession?.place_name ?? ""}
-                        secondary={`Section: ${activeSection.title}`}
-                    />
-                ),
-                headerRight: () => (
-                    <Button chromeless onPress={handleReturnHome} accessibilityLabel={t("tabs.home", { ns: "common" })}>
-                        <XStack gap="$1.5" items="center">
-                            <LayoutDashboard size={16} color={ds.colors.primary} />
-                            <Text
-                                color={ds.colors.primary}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1}
-                            >
-                                {t("tabs.home", { ns: "common" })}
-                            </Text>
-                        </XStack>
-                    </Button>
-                ),
-            });
-        }
     }, [themedHeaderOptions, navigation, activeSection, auditSession, handleReturnHome, t, ds]);
 
     const scrollSectionToOffset = useCallback((offset: number) => {

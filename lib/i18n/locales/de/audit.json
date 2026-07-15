@@ -169,6 +169,7 @@
         "backToOverview": "Zurueck zur Uebersicht",
         "finalCommentsCta": "Continue",
         "followUpHidden": "Vielfalt, Geselligkeit und Herausforderung erscheinen erst nach einer positiven Antwort bei Quantitaet.",
+        "headerSecondary": "Abschnitt: {{title}}",
         "notesDefault": "Fuegen Sie Ueberlegungen oder Empfehlungen fuer diesen Abschnitt hinzu.",
         "notesPlaceholder": "Notizen oder Empfehlungen hinzufuegen...",
         "openSection": "Abschnitt oeffnen",

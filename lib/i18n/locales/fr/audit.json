@@ -169,6 +169,7 @@
         "backToOverview": "Retour à l’aperçu",
         "finalCommentsCta": "Continue",
         "followUpHidden": "Variété, sociabilité et défi n’apparaissent qu’après une réponse positive à la question sur la quantité.",
+        "headerSecondary": "Section : {{title}}",
         "notesDefault": "Ajoutez des réflexions ou des recommandations pour cette section.",
         "notesPlaceholder": "Ajouter des notes ou des recommandations pour cette section...",
         "openSection": "Ouvrir la section",

@@ -15,6 +15,7 @@ import {
     WifiOff,
 } from "@tamagui/lucide-icons-2";
 import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
+import { ScreenHeader } from "components/ui/screen-header";
 import { PendingUploadsBanner } from "components/playspace-audit/pending-uploads-banner";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
@@ -751,83 +752,74 @@ export default function DashboardScreen() {
             >
                 <YStack gap="$6">
                     <PendingUploadsBanner />
-                    <XStack justify="space-between" items="center" gap="$3">
-                        <XStack items="center" gap="$3" flex={1}>
-                            <YStack
-                                width={64}
-                                height={64}
-                                items="center"
-                                justify="center"
-                                rounded={ds.radii.md}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={ds.colors.surfaceMuted}
-                            >
-                                <UserRound size={32} color={ds.colors.primary} />
-                            </YStack>
-                            <YStack flex={1} gap="$1.5">
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelMd.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.4}
+                    {/* Merged single-row tablet header (2.2/G9): title + date on
+                        the left; auditor identity, bell, and sign-out on the
+                        right - replaces the old stacked double header. */}
+                    <ScreenHeader
+                        title={t("title", { ns: "dashboard" })}
+                        subtitle={dateLabel}
+                        actions={
+                            <>
+                                <XStack
+                                    items="center"
+                                    gap="$2.5"
+                                    rounded={ds.radii.full}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
+                                    pl="$1.5"
+                                    pr="$3.5"
+                                    py="$1.5"
                                 >
-                                    {t("activeAuditor", { ns: "dashboard" })}
-                                </Paragraph>
-                                <Text
-                                    color={ds.colors.foreground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.displaySm.fontSize}
-                                    lineHeight={ds.typography.displaySm.lineHeight}
-                                >
-                                    {activeAuditorName}
-                                </Text>
-                                {auditorOrganization !== null ? (
-                                    <Paragraph
-                                        color={ds.colors.mutedForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                        numberOfLines={1}
+                                    <YStack
+                                        width={40}
+                                        height={40}
+                                        items="center"
+                                        justify="center"
+                                        rounded={ds.radii.full}
+                                        bg={ds.colors.primarySoft}
                                     >
-                                        {auditorOrganization}
-                                    </Paragraph>
-                                ) : null}
-                            </YStack>
-                        </XStack>
-
-                        <XStack gap="$2">
-                            <NotificationBellIcon />
-                            <Button
-                                width={46}
-                                height={46}
-                                p={0}
-                                rounded={ds.radii.full}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={ds.colors.surfaceMuted}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={logout}
-                            >
-                                <LogOut size={18} color={ds.colors.foreground} />
-                            </Button>
-                        </XStack>
-                    </XStack>
-
-                    <YStack gap="$1.5">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.displayLg.fontSize}
-                            lineHeight={ds.typography.displayLg.lineHeight}
-                            letterSpacing={-0.8}
-                        >
-                            {t("title", { ns: "dashboard" })}
-                        </Text>
-                        <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodySemiBold}>
-                            {dateLabel}
-                        </Paragraph>
-                    </YStack>
+                                        <UserRound size={20} color={ds.colors.primary} />
+                                    </YStack>
+                                    <YStack>
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.bodyMd.fontSize}
+                                            numberOfLines={1}
+                                        >
+                                            {activeAuditorName}
+                                        </Text>
+                                        {auditorOrganization !== null ? (
+                                            <Paragraph
+                                                color={ds.colors.mutedForeground}
+                                                fontFamily={ds.fonts.bodyMedium}
+                                                fontSize={ds.typography.bodySm.fontSize}
+                                                numberOfLines={1}
+                                            >
+                                                {auditorOrganization}
+                                            </Paragraph>
+                                        ) : null}
+                                    </YStack>
+                                </XStack>
+                                <NotificationBellIcon />
+                                <Button
+                                    width={46}
+                                    height={46}
+                                    p={0}
+                                    rounded={ds.radii.full}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={logout}
+                                    accessibilityLabel={t("actions.signOut", { ns: "common" })}
+                                >
+                                    <LogOut size={18} color={ds.colors.foreground} />
+                                </Button>
+                            </>
+                        }
+                    />
 
                     <XStack gap="$3">
                         <YStack
@@ -970,82 +962,74 @@ export default function DashboardScreen() {
         >
             <YStack gap="$6">
                 <PendingUploadsBanner />
-                <XStack justify="space-between" items="center" gap="$3">
-                    <XStack items="center" gap="$3" flex={1}>
-                        <YStack
-                            width={44}
-                            height={44}
-                            items="center"
-                            justify="center"
-                            rounded={ds.radii.md}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surfaceMuted}
-                        >
-                            <UserRound size={layout.isTablet ? 22 : 20} color={ds.colors.primary} />
-                        </YStack>
-                        <YStack flex={1} gap="$0.5">
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelXs.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.4}
-                            >
-                                {t("activeAuditor", { ns: "dashboard" })}
-                            </Paragraph>
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.bodyLg.fontSize}
-                            >
-                                {activeAuditorName}
-                            </Text>
-                            {auditorOrganization !== null ? (
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    numberOfLines={1}
+                <ScreenHeader
+                    aboveTitle={
+                        <XStack justify="space-between" items="center" gap="$3">
+                            <XStack items="center" gap="$3" flex={1}>
+                                <YStack
+                                    width={44}
+                                    height={44}
+                                    items="center"
+                                    justify="center"
+                                    rounded={ds.radii.md}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
                                 >
-                                    {auditorOrganization}
-                                </Paragraph>
-                            ) : null}
-                        </YStack>
-                    </XStack>
+                                    <UserRound size={20} color={ds.colors.primary} />
+                                </YStack>
+                                <YStack flex={1} gap="$0.5">
+                                    <Paragraph
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelXs.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.4}
+                                    >
+                                        {t("activeAuditor", { ns: "dashboard" })}
+                                    </Paragraph>
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.bodyLg.fontSize}
+                                    >
+                                        {activeAuditorName}
+                                    </Text>
+                                    {auditorOrganization !== null ? (
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                            numberOfLines={1}
+                                        >
+                                            {auditorOrganization}
+                                        </Paragraph>
+                                    ) : null}
+                                </YStack>
+                            </XStack>
 
-                    <XStack gap="$2">
-                        <NotificationBellIcon />
-                        <Button
-                            width={layout.isTablet ? 46 : 42}
-                            height={layout.isTablet ? 46 : 42}
-                            p={0}
-                            rounded={ds.radii.full}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surfaceMuted}
-                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                            onPress={logout}
-                        >
-                            <LogOut size={layout.isTablet ? 18 : 16} color={ds.colors.foreground} />
-                        </Button>
-                    </XStack>
-                </XStack>
-
-                <YStack gap="$1.5">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.headingBold}
-                        fontSize={ds.typography.displayLg.fontSize}
-                        lineHeight={ds.typography.displayLg.lineHeight}
-                        letterSpacing={-0.8}
-                    >
-                        {t("title", { ns: "dashboard" })}
-                    </Text>
-                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodySemiBold}>
-                        {dateLabel}
-                    </Paragraph>
-                </YStack>
+                            <XStack gap="$2">
+                                <NotificationBellIcon />
+                                <Button
+                                    width={42}
+                                    height={42}
+                                    p={0}
+                                    rounded={ds.radii.full}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={logout}
+                                    accessibilityLabel={t("actions.signOut", { ns: "common" })}
+                                >
+                                    <LogOut size={16} color={ds.colors.foreground} />
+                                </Button>
+                            </XStack>
+                        </XStack>
+                    }
+                    title={t("title", { ns: "dashboard" })}
+                    subtitle={dateLabel}
+                />
 
                 <XStack gap="$3">
                     <YStack

@@ -3,6 +3,7 @@ import { ArrowRight, Clock3 } from "@tamagui/lucide-icons-2";
 import { ProjectFilterSelect } from "components/ui/project-filter-select";
 import { TypeFilterSelect } from "components/ui/type-filter-select";
 import { SearchInput } from "components/ui/search-input";
+import { ScreenHeader } from "components/ui/screen-header";
 import { useRouter } from "expo-router";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
@@ -235,45 +236,7 @@ export default function PlacesScreen() {
 
     const headerComponent = (
         <YStack gap="$4">
-            {layout.isTablet ? (
-                <XStack justify="space-between" items="flex-end" gap="$4">
-                    <YStack gap="$3" flex={1}>
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.displayLg.fontSize}
-                            lineHeight={ds.typography.displayLg.lineHeight}
-                        >
-                            {t("title", { ns: "places" })}
-                        </Text>
-                        <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyLg.fontSize}
-                        >
-                            {t("subtitle", { ns: "places" })}
-                        </Paragraph>
-                    </YStack>
-                </XStack>
-            ) : (
-                <YStack gap="$3">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.headingBold}
-                        fontSize={ds.typography.displayMd.fontSize}
-                        lineHeight={ds.typography.displayMd.lineHeight}
-                    >
-                        {t("title", { ns: "places" })}
-                    </Text>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyLg.fontSize}
-                    >
-                        {t("subtitle", { ns: "places" })}
-                    </Paragraph>
-                </YStack>
-            )}
+            <ScreenHeader title={t("title", { ns: "places" })} subtitle={t("subtitle", { ns: "places" })} />
 
             <XStack gap="$3">
                 <Pressable

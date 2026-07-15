@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
+import { ScreenHeader } from "components/ui/screen-header";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, derivePlaceRequirementStatus, matchesPlaceSearch } from "lib/audit/place-helpers";
@@ -188,25 +189,10 @@ export default function ExecuteIndexScreen() {
 
     const headerComponent = (
         <YStack gap="$4">
-            <YStack gap="$3">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                    lineHeight={
-                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
-                    }
-                >
-                    {t("executeLanding.title", { ns: "audit" })}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                >
-                    {t("executeLanding.subtitle", { ns: "audit" })}
-                </Paragraph>
-            </YStack>
+            <ScreenHeader
+                title={t("executeLanding.title", { ns: "audit" })}
+                subtitle={t("executeLanding.subtitle", { ns: "audit" })}
+            />
 
             <SearchInput
                 value={searchQuery}
