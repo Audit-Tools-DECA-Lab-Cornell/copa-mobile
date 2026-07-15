@@ -8,6 +8,7 @@ import { TypeFilterSelect } from "components/ui/type-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
 import { ScreenHeader } from "components/ui/screen-header";
+import { QueueCardHeader, QueueCardMetaRow, QueueCardShell } from "components/ui/queue-card";
 import { useRouter, type Href } from "expo-router";
 import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/exports/reports";
 import { buildAuditExportPreview, shareBulkAuditExport } from "lib/exports/reports";
@@ -32,13 +33,12 @@ import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem } from "lib/design-system";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { getCardTextLineLimit } from "lib/responsive";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable, ScrollView } from "react-native";
+import { ActivityIndicator, ScrollView } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -753,7 +753,6 @@ interface ReportQueueCardProps {
 
 function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
     const ds = useDesignSystem();
-    const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
     const router = useRouter();
     const { t, i18n } = useTranslation(["reports", "common"]);
@@ -798,223 +797,131 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);
 
     return (
-        <Pressable
-            accessibilityRole="button"
+        <QueueCardShell
+            tone={statusTone}
             onPress={() => {
                 if (place.audit_id !== null) {
                     router.push(`/report/${place.audit_id}` as Href);
                 }
             }}
-            style={({ pressed }) => ({
-                opacity: pressed ? 0.96 : 1,
-                transform: [{ scale: pressed ? 0.99 : 1 }],
-                flex: 1,
-            })}
         >
-            <YStack
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
-                bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
-                overflow="hidden"
-                style={{
-                    minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
-                    boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
-                }}
-            >
-                <XStack flex={1}>
-                    {/* Left Status Accent Bar */}
-                    <YStack width={4} style={{ backgroundColor: statusTone.accent }} />
+            <QueueCardHeader
+                title={place.place_name}
+                subtitle={place.project_name}
+                statusLabel={getPlaceStatusLabel(status, t)}
+                tone={statusTone}
+                trailing={
+                    hasScore ? (
+                        <Text
+                            color={ds.colors.primary}
+                            fontFamily={ds.fonts.headingBold}
+                            fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.titleSm.fontSize}
+                            numberOfLines={1}
+                        >
+                            {formatScorePair(effectiveScores)}
+                        </Text>
+                    ) : undefined
+                }
+            />
 
-                    <YStack flex={1} p={layout.cardPadding} gap="$4">
-                        {/* --- TOP SECTION: Header & Primary Status --- */}
-                        <XStack justify="space-between" items="flex-start" gap="$3">
-                            <YStack flex={1} gap="$1" style={{ minWidth: 0 }}>
-                                <Text
-                                    color={ds.colors.foreground}
-                                    fontFamily={ds.fonts.headingBold}
-                                    fontSize={
-                                        layout.isTablet
-                                            ? ds.typography.titleLg.fontSize
-                                            : ds.typography.titleMd.fontSize
-                                    }
-                                    lineHeight={
-                                        layout.isTablet
-                                            ? ds.typography.titleLg.lineHeight
-                                            : ds.typography.titleMd.lineHeight
-                                    }
-                                    numberOfLines={getCardTextLineLimit("title")}
-                                >
-                                    {place.place_name}
-                                </Text>
-                                <Paragraph
-                                    color={ds.colors.secondaryForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    lineHeight={ds.typography.bodySm.lineHeight}
-                                    numberOfLines={getCardTextLineLimit("supporting")}
-                                >
-                                    {place.project_name}
-                                </Paragraph>
-                            </YStack>
-
-                            <YStack items="flex-end" gap="$1.5">
-                                <YStack
-                                    accessible={true}
-                                    accessibilityLabel={getPlaceStatusLabel(status, t)}
-                                    rounded={ds.radii.full}
-                                    px="$2.5"
-                                    py="$1"
-                                    style={{ backgroundColor: statusTone.surface }}
-                                >
-                                    <Text
-                                        accessibilityElementsHidden={true}
-                                        importantForAccessibility="no"
-                                        style={{ color: statusTone.text }}
-                                        fontFamily={ds.fonts.bodyBold}
-                                        fontSize={ds.typography.labelSm.fontSize}
-                                        textTransform="uppercase"
-                                        letterSpacing={0.5}
-                                    >
-                                        {getPlaceStatusLabel(status, t)}
-                                    </Text>
-                                </YStack>
-                                {/* Adjusted Score Size to prevent competing with Title */}
-                                {hasScore && (
-                                    <Text
-                                        color={ds.colors.primary}
-                                        fontFamily={ds.fonts.headingBold}
-                                        fontSize={
-                                            layout.isTablet
-                                                ? ds.typography.titleMd.fontSize
-                                                : ds.typography.titleSm.fontSize
-                                        }
-                                        numberOfLines={1}
-                                    >
-                                        {formatScorePair(effectiveScores)}
-                                    </Text>
-                                )}
-                            </YStack>
-                        </XStack>
-
-                        {/* --- MIDDLE SECTION: Meta details --- */}
-                        <YStack gap="$1.5">
-                            <XStack items="center" gap="$2">
-                                <MapPin size={14} color={ds.colors.mutedForeground} opacity={0.8} />
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    numberOfLines={1}
-                                >
-                                    {locality}
-                                </Paragraph>
-                            </XStack>
-                            <XStack items="center" gap="$2">
-                                <Clock3 size={14} color={ds.colors.mutedForeground} opacity={0.8} />
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    numberOfLines={1}
-                                >
-                                    {updatedLabel}
-                                </Paragraph>
-                            </XStack>
-                            {executionModeLabel !== null && (
-                                <XStack items="center" gap="$2">
-                                    <YStack
-                                        rounded={ds.radii.sm}
-                                        px="$1.5"
-                                        py="$0.5"
-                                        style={{ backgroundColor: ds.colors.mutedSurface }}
-                                    >
-                                        <Text
-                                            color={ds.colors.mutedForeground}
-                                            fontFamily={ds.fonts.bodyBold}
-                                            fontSize={ds.typography.labelXs.fontSize}
-                                            textTransform="uppercase"
-                                            letterSpacing={0.4}
-                                        >
-                                            {executionModeLabel}
-                                        </Text>
-                                    </YStack>
-                                </XStack>
-                            )}
+            <YStack gap="$1.5">
+                <QueueCardMetaRow
+                    icon={<MapPin size={14} color={ds.colors.mutedForeground} opacity={0.8} />}
+                    text={locality}
+                />
+                <QueueCardMetaRow
+                    icon={<Clock3 size={14} color={ds.colors.mutedForeground} opacity={0.8} />}
+                    text={updatedLabel}
+                />
+                {executionModeLabel !== null && (
+                    <XStack items="center" gap="$2">
+                        <YStack
+                            rounded={ds.radii.sm}
+                            px="$1.5"
+                            py="$0.5"
+                            style={{ backgroundColor: ds.colors.mutedSurface }}
+                        >
+                            <Text
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.labelXs.fontSize}
+                                textTransform="uppercase"
+                                letterSpacing={0.4}
+                            >
+                                {executionModeLabel}
+                            </Text>
                         </YStack>
+                    </XStack>
+                )}
+            </YStack>
 
-                        {/* --- BOTTOM SECTION: Progress & Call to Action --- */}
-                        <YStack gap="$2">
-                            {hasScore ? (
-                                <YStack gap="$2" pt="$2" borderTopWidth={1} borderColor={ds.colors.border}>
-                                    <XStack items="center" justify="space-between">
-                                        <Paragraph
-                                            color={ds.colors.primary}
-                                            fontFamily={ds.fonts.bodyBold}
-                                            fontSize={ds.typography.bodyXs.fontSize}
-                                            numberOfLines={1}
-                                        >
-                                            {formatColumnSummary(place.score_totals, scoreSummaryLabels)}
-                                        </Paragraph>
-                                        {barPercent !== null && (
-                                            <Text
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.labelLg.fontSize}
-                                            >
-                                                {t("scoreShare", {
-                                                    ns: "reports",
-                                                    defaultValue: "{{percent}}% of max score",
-                                                    percent: barPercent,
-                                                })}
-                                            </Text>
-                                        )}
-                                    </XStack>
-                                    <YStack
-                                        height={layout.isTablet ? 6 : 4} // Slimmer progress bar for elegance
-                                        rounded={ds.radii.full}
-                                        bg={ds.colors.mutedSurface}
-                                        overflow="hidden"
-                                    >
-                                        <YStack
-                                            height="100%"
-                                            rounded={ds.radii.full}
-                                            bg={ds.colors.primary}
-                                            style={{ width: barWidth }}
-                                        />
-                                    </YStack>
-                                </YStack>
-                            ) : (
-                                <Paragraph
-                                    pt="$2"
-                                    borderTopWidth={1}
-                                    borderColor={ds.colors.border}
+            <YStack flex={1} justify="flex-end" gap="$2">
+                {hasScore ? (
+                    <YStack gap="$2" pt="$2" borderTopWidth={1} borderColor={ds.colors.border}>
+                        <XStack items="center" justify="space-between">
+                            <Paragraph
+                                color={ds.colors.primary}
+                                fontFamily={ds.fonts.bodyBold}
+                                fontSize={ds.typography.bodyXs.fontSize}
+                                numberOfLines={1}
+                            >
+                                {formatColumnSummary(place.score_totals, scoreSummaryLabels)}
+                            </Paragraph>
+                            {barPercent !== null && (
+                                <Text
                                     color={ds.colors.mutedForeground}
                                     fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
+                                    fontSize={ds.typography.labelLg.fontSize}
                                 >
-                                    {t("detail.scorePending", { ns: "reports" })}
-                                </Paragraph>
-                            )}
-
-                            {/* Decluttered, sleek View Details CTA */}
-                            <XStack justify="flex-end" items="center" gap="$1.5" mt="$1">
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelSm.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={0.5}
-                                >
-                                    {t("actions.viewDetails", { ns: "common" })}
+                                    {t("scoreShare", {
+                                        ns: "reports",
+                                        defaultValue: "{{percent}}% of max score",
+                                        percent: barPercent,
+                                    })}
                                 </Text>
-                                <ArrowRight size={14} color={ds.colors.primary} />
-                            </XStack>
+                            )}
+                        </XStack>
+                        <YStack
+                            height={layout.isTablet ? 6 : 4}
+                            rounded={ds.radii.full}
+                            bg={ds.colors.mutedSurface}
+                            overflow="hidden"
+                        >
+                            <YStack
+                                height="100%"
+                                rounded={ds.radii.full}
+                                bg={ds.colors.primary}
+                                style={{ width: barWidth }}
+                            />
                         </YStack>
                     </YStack>
+                ) : (
+                    <Paragraph
+                        pt="$2"
+                        borderTopWidth={1}
+                        borderColor={ds.colors.border}
+                        color={ds.colors.mutedForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {t("detail.scorePending", { ns: "reports" })}
+                    </Paragraph>
+                )}
+
+                <XStack justify="flex-end" items="center" gap="$1.5" mt="$1">
+                    <Text
+                        color={ds.colors.primary}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
+                    >
+                        {t("actions.viewDetails", { ns: "common" })}
+                    </Text>
+                    <ArrowRight size={14} color={ds.colors.primary} />
                 </XStack>
             </YStack>
-        </Pressable>
+        </QueueCardShell>
     );
 }
 

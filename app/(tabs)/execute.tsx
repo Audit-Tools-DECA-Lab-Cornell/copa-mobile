@@ -4,7 +4,8 @@ import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { Paragraph, Text, XStack, YStack } from "tamagui";
+import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
 import { ScreenHeader } from "components/ui/screen-header";
@@ -244,31 +245,16 @@ export default function ExecuteIndexScreen() {
                     <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                         {deriveLocality(featuredPlace, t("place.assignedPlace", { ns: "common" }))}
                     </Paragraph>
-                    <Button
-                        height={layout.isTablet ? layout.buttonHeight : 48}
-                        rounded={ds.radii.md}
-                        borderWidth={0}
-                        bg={ds.colors.primary}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    <AppButton
+                        variant="primary"
+                        label={t("executeLanding.openSelectedAudit", { ns: "audit" })}
+                        iconRight={<ArrowRight size={16} color={buttonForegroundColor("primary", ds.colors)} />}
                         onPress={() => {
                             router.push(
                                 `/execute/${featuredPlace.place_id}?projectId=${encodeURIComponent(featuredPlace.project_id)}`,
                             );
                         }}
-                    >
-                        <XStack items="center" gap="$2">
-                            <Text
-                                color={ds.colors.primaryForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelLg.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.2}
-                            >
-                                {t("executeLanding.openSelectedAudit", { ns: "audit" })}
-                            </Text>
-                            <ArrowRight size={16} color={ds.colors.primaryForeground} />
-                        </XStack>
-                    </Button>
+                    />
                 </FeaturedPlaceCard>
             )}
         </YStack>
@@ -377,10 +363,7 @@ function ExecuteQueueCard({
             p={layout.cardPadding}
             gap="$3.5"
             justify="space-between"
-            style={{
-                minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
-                boxShadow: ds.shadows.card,
-            }}
+            style={{ boxShadow: ds.shadows.card }}
         >
             <YStack gap="$2.5">
                 <Text
@@ -403,29 +386,17 @@ function ExecuteQueueCard({
                 </Paragraph>
             </YStack>
 
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : 42}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={onPress}
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    {hasActiveSession && flowSubject !== null
+            <AppButton
+                variant="secondary"
+                label={
+                    hasActiveSession && flowSubject !== null
                         ? t("copy.continueToSubject", { ns: "audit", subject: flowSubject })
                         : hasActiveSession
                           ? t("resumeAudit", { ns: "audit" })
-                          : t("startAudit", { ns: "audit" })}
-                </Text>
-            </Button>
+                          : t("startAudit", { ns: "audit" })
+                }
+                onPress={onPress}
+            />
         </YStack>
     );
 }

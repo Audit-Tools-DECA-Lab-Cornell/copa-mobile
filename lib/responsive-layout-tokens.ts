@@ -56,7 +56,6 @@ const PHONE_LAYOUT_TOKENS = {
     buttonHeight: 52,
     formOptionHeight: 42,
     compactControlHeight: 36,
-    queueCardMinHeight: 0,
     summaryCardMinHeight: 0,
     heroCardMinHeight: 0,
 } as const;
@@ -73,7 +72,6 @@ const TABLET_LAYOUT_TOKENS_MIN = {
     buttonHeight: 56,
     formOptionHeight: 48,
     compactControlHeight: 44,
-    queueCardMinHeight: 152,
     summaryCardMinHeight: 144,
     heroCardMinHeight: 192,
 } as const;
@@ -90,7 +88,6 @@ const TABLET_LAYOUT_TOKENS_MAX = {
     buttonHeight: 60,
     formOptionHeight: 52,
     compactControlHeight: 46,
-    queueCardMinHeight: 168,
     summaryCardMinHeight: 160,
     heroCardMinHeight: 208,
 } as const;
@@ -123,7 +120,6 @@ export interface ResponsiveLayoutTokens {
     readonly formOptionHeight: number;
     readonly controlHeight: number;
     readonly compactControlHeight: number;
-    readonly queueCardMinHeight: number;
     readonly summaryCardMinHeight: number;
     readonly heroCardMinHeight: number;
     readonly statCardMinHeight: number;
@@ -263,13 +259,6 @@ export function createResponsiveLayoutTokens(width: number): ResponsiveLayoutTok
                   tabletWidthProgress,
               )
             : PHONE_LAYOUT_TOKENS.compactControlHeight,
-        queueCardMinHeight: isTablet
-            ? interpolateLayoutValue(
-                  TABLET_LAYOUT_TOKENS_MIN.queueCardMinHeight,
-                  TABLET_LAYOUT_TOKENS_MAX.queueCardMinHeight,
-                  tabletWidthProgress,
-              )
-            : PHONE_LAYOUT_TOKENS.queueCardMinHeight,
         summaryCardMinHeight: isTablet
             ? interpolateLayoutValue(
                   TABLET_LAYOUT_TOKENS_MIN.summaryCardMinHeight,
