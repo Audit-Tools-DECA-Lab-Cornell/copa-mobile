@@ -945,7 +945,7 @@ export default function DashboardScreen() {
                         {priorityTaskBlock}
                         {activeWorkBlock}
                     </YStack>
-                    <YStack width={layout.homePageSupportRailWidth} gap="$5">
+                    <YStack width={layout.supportRailWidth} gap="$5">
                         {/* The rail avoids duplicating the main column: it shows
                             connectivity plus either a submitted-reports snapshot
                             or, for auditors with no submissions yet, a nudge to

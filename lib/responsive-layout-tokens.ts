@@ -1,6 +1,33 @@
 export const FALLBACK_WINDOW_WIDTH = 390;
 export const TABLET_BREAKPOINT = 600;
 export const WIDE_TABLET_BREAKPOINT = 960;
+
+/**
+ * Maximum line length for body copy (G9). Long-form text wider than this
+ * becomes hard to scan, so wizard/body paragraphs cap themselves here even
+ * when the surrounding content track is wider.
+ */
+export const READABLE_CONTENT_MAX_WIDTH = 720;
+
+/**
+ * Vertical geometry of the globally mounted bug-report FAB
+ * (`components/bug-report/BugReportFab.tsx`). Kept here so scroll containers
+ * can reserve matching clearance without importing from `components/`.
+ */
+export const GLOBAL_FAB_BOTTOM_OFFSET = 88;
+export const GLOBAL_FAB_DIAMETER = 56;
+
+/**
+ * Single source of truth for the tablet breakpoint test. Both the design
+ * system and the responsive layout tokens resolve "is this a tablet?" through
+ * this helper so the two can never drift apart.
+ *
+ * @param width Raw window width.
+ * @returns True when the viewport is tablet-sized.
+ */
+export function isTabletWidth(width: number): boolean {
+    return normalizeWindowWidth(width) >= TABLET_BREAKPOINT;
+}
 export const PHONE_CONTENT_MAX_WIDTH = 560;
 export const NARROW_TABLET_CONTENT_MAX_WIDTH = 1040;
 export const WIDE_TABLET_CONTENT_MAX_WIDTH = 1200;
@@ -23,7 +50,6 @@ const PHONE_LAYOUT_TOKENS = {
     contentMaxWidth: PHONE_CONTENT_MAX_WIDTH,
     formMaxWidth: PHONE_FORM_MAX_WIDTH,
     twoPaneGap: 20,
-    homePageSupportRailWidth: 0,
     supportRailWidth: 0,
     sectionGap: 20,
     cardPadding: 16,
@@ -41,7 +67,6 @@ const TABLET_LAYOUT_TOKENS_MIN = {
     contentMaxWidth: NARROW_TABLET_CONTENT_MAX_WIDTH,
     formMaxWidth: NARROW_TABLET_FORM_MAX_WIDTH,
     twoPaneGap: 24,
-    homePageSupportRailWidth: 250,
     supportRailWidth: 240,
     sectionGap: 28,
     cardPadding: 16,
@@ -59,8 +84,7 @@ const TABLET_LAYOUT_TOKENS_MAX = {
     contentMaxWidth: WIDE_TABLET_CONTENT_MAX_WIDTH,
     formMaxWidth: WIDE_TABLET_FORM_MAX_WIDTH,
     twoPaneGap: 32,
-    homePageSupportRailWidth: 290,
-    supportRailWidth: 300,
+    supportRailWidth: 290,
     sectionGap: 32,
     cardPadding: 16,
     buttonHeight: 60,
@@ -90,9 +114,10 @@ export interface ResponsiveLayoutTokens {
     readonly contentMaxWidth: number;
     readonly formMaxWidth: number;
     readonly twoPaneGap: number;
-    readonly homePageSupportRailWidth: number;
     readonly supportRailWidth: number;
     readonly sectionGap: number;
+    /** Max width for long-form body copy; see {@link READABLE_CONTENT_MAX_WIDTH}. */
+    readonly readableMaxWidth: number;
     readonly cardPadding: number;
     readonly buttonHeight: number;
     readonly formOptionHeight: number;
@@ -160,7 +185,7 @@ function clampNumber(value: number, minimum: number, maximum: number): number {
  */
 export function createResponsiveLayoutTokens(width: number): ResponsiveLayoutTokens {
     const windowWidth = normalizeWindowWidth(width);
-    const isTablet = windowWidth >= TABLET_BREAKPOINT;
+    const isTablet = isTabletWidth(windowWidth);
     const isWideTablet = windowWidth >= WIDE_TABLET_BREAKPOINT;
     const isNarrowTablet = isTablet && !isWideTablet;
     const tabletWidthProgress = getTabletWidthProgress(windowWidth);
@@ -200,13 +225,6 @@ export function createResponsiveLayoutTokens(width: number): ResponsiveLayoutTok
                   tabletWidthProgress,
               )
             : PHONE_LAYOUT_TOKENS.twoPaneGap,
-        homePageSupportRailWidth: isTablet
-            ? interpolateLayoutValue(
-                  TABLET_LAYOUT_TOKENS_MIN.homePageSupportRailWidth,
-                  TABLET_LAYOUT_TOKENS_MAX.homePageSupportRailWidth,
-                  tabletWidthProgress,
-              )
-            : PHONE_LAYOUT_TOKENS.homePageSupportRailWidth,
         supportRailWidth: isTablet
             ? interpolateLayoutValue(
                   TABLET_LAYOUT_TOKENS_MIN.supportRailWidth,
@@ -221,6 +239,7 @@ export function createResponsiveLayoutTokens(width: number): ResponsiveLayoutTok
                   tabletWidthProgress,
               )
             : PHONE_LAYOUT_TOKENS.sectionGap,
+        readableMaxWidth: READABLE_CONTENT_MAX_WIDTH,
         cardPadding: isTablet ? TABLET_LAYOUT_TOKENS_MIN.cardPadding : PHONE_LAYOUT_TOKENS.cardPadding,
         buttonHeight: isTablet
             ? interpolateLayoutValue(

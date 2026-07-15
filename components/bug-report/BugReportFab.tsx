@@ -31,6 +31,7 @@ import { isScreenshotUploadConfigured } from "lib/bug-report/screenshot";
 import type { BugReportSeverity, KnownIssueMatch } from "lib/bug-report/types";
 import { useDesignSystem } from "lib/design-system";
 import { logger } from "lib/logger";
+import { GLOBAL_FAB_BOTTOM_OFFSET } from "lib/responsive-layout";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 
@@ -310,7 +311,7 @@ export function BugReportFab() {
 
     return (
         <>
-            <YStack position="absolute" r="$4" b={insets.bottom + 88} z={50}>
+            <YStack position="absolute" r="$4" b={insets.bottom + GLOBAL_FAB_BOTTOM_OFFSET} z={50}>
                 <Button
                     size="$4"
                     circular
