@@ -162,3 +162,17 @@ export const usePreferencesStore = create<PreferencesStoreState>((set, get) => (
         persistState(get());
     },
 }));
+
+// Track live OS appearance changes so "system" mode follows the device the
+// moment it flips (e.g. sunset auto dark mode). Manual light/dark modes are
+// left untouched. Registered once at module scope for the app's lifetime.
+Appearance.addChangeListener(() => {
+    const { themeMode, resolvedTheme } = usePreferencesStore.getState();
+    if (themeMode !== "system") {
+        return;
+    }
+    const nextResolvedTheme = resolveThemeMode("system");
+    if (nextResolvedTheme !== resolvedTheme) {
+        usePreferencesStore.setState({ resolvedTheme: nextResolvedTheme });
+    }
+});

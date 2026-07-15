@@ -167,6 +167,7 @@
     "section": {
         "answeredCount": "{{answered}} / {{total}} répondues",
         "backToOverview": "Retour à l’aperçu",
+        "finalCommentsCta": "Continue",
         "followUpHidden": "Variété, sociabilité et défi n’apparaissent qu’après une réponse positive à la question sur la quantité.",
         "notesDefault": "Ajoutez des réflexions ou des recommandations pour cette section.",
         "notesPlaceholder": "Ajouter des notes ou des recommandations pour cette section...",
@@ -174,12 +175,13 @@
         "pendingSync": "Réponses enregistrées localement - elles seront synchronisées avec le serveur lorsque vous serez en ligne.",
         "preparingMessage": "Chargement de la section actuelle et des réponses précédemment enregistrées...",
         "preparingTitle": "Préparation de la section",
-        "reviewSection": "Passer en revue la section",
         "previousSection": "Précédent",
+        "reviewSection": "Passer en revue la section",
         "saveAndNext": "Section suivante",
         "saveSection": "Enregistrer la section",
-        "finalCommentsCta": "Continue",
         "sectionNotes": "Notes de section",
+        "stillPreparingMessage": "Cela prend plus de temps que prévu. Si vous êtes hors ligne, vos réponses enregistrées sont en sécurité. Vous pouvez réessayer ou revenir en arrière.",
+        "stillPreparingTitle": "La section se prépare encore",
         "table": {
             "followUpPending": "Choisissez une réponse de quantité positive pour déverrouiller cette échelle.",
             "itemColumn": "Question",
@@ -198,8 +200,9 @@
         "auditStart": "Début de l’audit",
         "execute": "Exécuter",
         "preAudit": "Pré-audit",
-        "spaceAudit": "Audit d’espace",
-        "section": "Section"
+        "section": "Section",
+        "sectionFallback": "Section",
+        "spaceAudit": "Audit d’espace"
     },
     "subjects": {
         "audit": "audit",

@@ -266,7 +266,7 @@ export const DomainScoreTable = memo(function DomainScoreTable({ scoreTotals, it
     if (layout.isTablet) {
         return (
             <YStack gap="$2" minW="100%">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <ScrollView horizontal showsHorizontalScrollIndicator>
                     <ScoreSubTable
                         columns={ALL_COLUMNS}
                         scoreTotals={scoreTotals}

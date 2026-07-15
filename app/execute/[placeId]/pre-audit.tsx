@@ -111,6 +111,13 @@ export default function PreAuditScreen() {
     });
 
     useLayoutEffect(() => {
+        // Unconditional localized fallback so the header never shows the raw
+        // route slug while audit data is still loading (G1).
+        navigation.setOptions({
+            ...themedHeaderOptions,
+            title: t("stack.preAudit", { ns: "audit" }),
+        });
+
         if (auditSession === undefined) {
             return;
         }
@@ -119,7 +126,7 @@ export default function PreAuditScreen() {
             ...themedHeaderOptions,
             headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
         });
-    }, [themedHeaderOptions, navigation, auditSession]);
+    }, [themedHeaderOptions, navigation, auditSession, t]);
 
     if (
         placeId === null ||

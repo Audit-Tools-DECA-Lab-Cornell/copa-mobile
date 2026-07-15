@@ -3,13 +3,14 @@
         "auditor": "Pruefperson"
     },
     "actions": {
+        "back": "Zurück",
         "openAudit": "Audit oeffnen",
         "openSubject": "{{subject}} oeffnen",
         "resume": "Fortsetzen",
         "retry": "Erneut versuchen",
         "seeAll": "Alle anzeigen",
-        "start": "Audit starten",
         "signOut": "Abmelden",
+        "start": "Audit starten",
         "viewDetails": "Details anzeigen",
         "viewReport": "Bericht anzeigen"
     },

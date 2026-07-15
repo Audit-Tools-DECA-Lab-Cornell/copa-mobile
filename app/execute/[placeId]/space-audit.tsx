@@ -169,13 +169,20 @@ export default function SpaceAuditScreen() {
     });
 
     useLayoutEffect(() => {
+        // Unconditional localized fallback so the header never shows the raw
+        // route slug while audit data is still loading (G1).
+        navigation.setOptions({
+            ...themedHeaderOptions,
+            title: t("stack.spaceAudit", { ns: "audit" }),
+        });
+
         if (auditSession !== undefined) {
             navigation.setOptions({
                 ...themedHeaderOptions,
                 headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
             });
         }
-    }, [themedHeaderOptions, navigation, auditSession]);
+    }, [themedHeaderOptions, navigation, auditSession, t]);
 
     const flushToStore = useCallback(() => {
         const latestAuditSession = latestAuditSessionRef.current;

@@ -337,7 +337,7 @@ export const DomainScoreDisplay = memo(function DomainScoreDisplay({
     if (layout.isTablet) {
         return (
             <YStack gap="$3" width="100%">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <ScrollView horizontal showsHorizontalScrollIndicator>
                     <BarBlock
                         metrics={ALL_BAR_METRICS}
                         scoreTotals={scoreTotals}

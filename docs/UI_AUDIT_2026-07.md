@@ -1,5 +1,11 @@
 # COPA Mobile — Brutal UI/UX Audit & Upgrade Plan
 
+> **SUPERSEDED** — this roadmap has been replaced by [`docs/PLAN.md`](./PLAN.md)
+> (COPA Mobile UI/UX Overhaul — Master Plan). Items already implemented from this
+> document (copy fixes, settings switches/sign-out/value-wrap, `AppButton` /
+> `typography.tsx` / `FilterChip` / `StatCard` primitives) remain in place; all
+> remaining work is tracked in the new plan.
+
 ## Context
 
 The COPA / Playspace mobile app (Expo ~55, RN 0.83, Tamagui, `playspace/copa-mobile`) is functionally complete — offline-first sync, full audit flow, scoring, exports — but the UI reads as developer-built: status is triple-encoded, screens repeat themselves, tablet layouts clip and stretch, jargon leaks everywhere ("COPA Scoring", "PV 171 | U 85", "Q 145 | V 49 | C 19", "preamble"), and several screens have outright visual bugs (clipped charts, truncated values, FABs covering controls, a typo on the most-seen screen of the audit flow). Users are field auditors: tired, outdoors, one-handed, interrupted, possibly offline. The app must be calm, scannable, and hard to mess up.

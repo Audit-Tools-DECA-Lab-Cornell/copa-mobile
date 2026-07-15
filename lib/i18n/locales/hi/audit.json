@@ -167,6 +167,7 @@
     "section": {
         "answeredCount": "{{answered}} / {{total}} उत्तर दिए गए",
         "backToOverview": "अवलोकन पर वापस जाएँ",
+        "finalCommentsCta": "Continue",
         "followUpHidden": "विविधता, सामाजिकता और चुनौती केवल Provision के सकारात्मक उत्तर के बाद दिखाई देते हैं।",
         "notesDefault": "इस सेक्शन के लिए कोई भी विचार या सिफारिशें जोड़ें।",
         "notesPlaceholder": "सेक्शन नोट्स या सिफारिशें जोड़ें...",
@@ -174,12 +175,13 @@
         "pendingSync": "उत्तर स्थानीय रूप से सहेजे गए हैं - ऑनलाइन होने पर सर्वर से सिंक हो जाएंगे।",
         "preparingMessage": "वर्तमान सेक्शन और पहले से सहेजे गए उत्तर लोड किए जा रहे हैं...",
         "preparingTitle": "सेक्शन तैयार किया जा रहा है",
-        "reviewSection": "सेक्शन की समीक्षा करें",
         "previousSection": "पिछला",
+        "reviewSection": "सेक्शन की समीक्षा करें",
         "saveAndNext": "अगला सेक्शन",
         "saveSection": "सेक्शन सहेजें",
-        "finalCommentsCta": "Continue",
         "sectionNotes": "सेक्शन नोट्स",
+        "stillPreparingMessage": "इसमें अपेक्षा से अधिक समय लग रहा है। यदि आप ऑफ़लाइन हैं, तो आपके सहेजे गए उत्तर सुरक्षित हैं। आप पुनः प्रयास कर सकते हैं या वापस जा सकते हैं।",
+        "stillPreparingTitle": "अनुभाग अभी भी तैयार हो रहा है",
         "table": {
             "followUpPending": "इस स्केल को अनलॉक करने के लिए सकारात्मक मात्रा वाला उत्तर चुनें।",
             "itemColumn": "प्रश्न आइटम",
@@ -198,8 +200,9 @@
         "auditStart": "ऑडिट शुरू",
         "execute": "निष्पादित करें",
         "preAudit": "प्री-ऑडिट",
-        "spaceAudit": "स्पेस ऑडिट",
-        "section": "सेक्शन"
+        "section": "सेक्शन",
+        "sectionFallback": "अनुभाग",
+        "spaceAudit": "स्पेस ऑडिट"
     },
     "subjects": {
         "audit": "ऑडिट",

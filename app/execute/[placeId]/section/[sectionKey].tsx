@@ -93,6 +93,8 @@ export default function ExecuteSectionScreen() {
 
     const [localNote, setLocalNote] = useState("");
     const [isNoteFocused, setIsNoteFocused] = useState(false);
+    const [hasPreparingTimedOut, setHasPreparingTimedOut] = useState(false);
+    const [preparingRetryNonce, setPreparingRetryNonce] = useState(0);
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
     const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
@@ -207,6 +209,13 @@ export default function ExecuteSectionScreen() {
     }, [flushNoteToStore, router]);
 
     useLayoutEffect(() => {
+        // Unconditional localized fallback so the header never shows the raw
+        // route slug while audit data is still loading (G1).
+        navigation.setOptions({
+            ...themedHeaderOptions,
+            animation: "ios_from_right",
+            title: t("stack.sectionFallback", { ns: "audit" }),
+        });
         if (activeSection !== undefined) {
             navigation.setOptions({
                 ...themedHeaderOptions,
@@ -253,6 +262,47 @@ export default function ExecuteSectionScreen() {
     const hasPendingLocalChanges =
         auditSession !== undefined && Object.keys(dirtySections[auditSession.audit_id] ?? {}).length > 0;
 
+    // "Preparing Section" must never spin forever (G2): after a timeout the
+    // wait state gains explicit Retry and Back exits. Sync itself is never
+    // aborted - retry only re-requests the audit session.
+    const isWaitingForAuditData =
+        placeId !== null &&
+        projectId !== null &&
+        sectionKey !== null &&
+        authSession !== null &&
+        errorMessage === null &&
+        (currentUserId !== authSession.user.id || auditSession === undefined || activeSection === undefined);
+
+    useEffect(() => {
+        if (!isWaitingForAuditData) {
+            setHasPreparingTimedOut(false);
+            return;
+        }
+        const timer = setTimeout(() => {
+            setHasPreparingTimedOut(true);
+        }, SECTION_PREPARING_TIMEOUT_MS);
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [isWaitingForAuditData, preparingRetryNonce]);
+
+    const handlePreparingRetry = useCallback(() => {
+        setHasPreparingTimedOut(false);
+        setPreparingRetryNonce((value) => value + 1);
+        if (authSession !== null && projectId !== null && placeId !== null) {
+            hydrate(authSession.user.id).catch(() => undefined);
+            ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
+        }
+    }, [authSession, ensurePlaceAudit, hydrate, placeId, projectId]);
+
+    const handlePreparingBack = useCallback(() => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        router.replace(buildHomeRoute() as Href);
+    }, [router]);
+
     if (
         placeId === null ||
         projectId === null ||
@@ -283,6 +333,19 @@ export default function ExecuteSectionScreen() {
                     onAction={() => {
                         ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
                     }}
+                />
+            );
+        }
+
+        if (hasPreparingTimedOut) {
+            return (
+                <CenteredMessageCard
+                    title={t("section.stillPreparingTitle", { ns: "audit" })}
+                    message={t("section.stillPreparingMessage", { ns: "audit" })}
+                    actionLabel={t("actions.retry", { ns: "common" })}
+                    onAction={handlePreparingRetry}
+                    secondaryActionLabel={t("actions.back", { ns: "common" })}
+                    onSecondaryAction={handlePreparingBack}
                 />
             );
         }
@@ -720,18 +783,30 @@ function isExecutionMode(value: string | null): value is ExecutionMode {
     return value === "audit" || value === "survey" || value === "both";
 }
 
+/** How long the "Preparing Section" wait may run before offering Retry/Back. */
+const SECTION_PREPARING_TIMEOUT_MS = 12000;
+
 interface CenteredMessageCardProps {
     readonly title: string;
     readonly message: string;
     readonly actionLabel?: string;
     readonly onAction?: () => void;
+    readonly secondaryActionLabel?: string;
+    readonly onSecondaryAction?: () => void;
 }
 
 /**
  * @param props Message card props.
  * @returns Centered loading/error card.
  */
-function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
+function CenteredMessageCard({
+    title,
+    message,
+    actionLabel,
+    onAction,
+    secondaryActionLabel,
+    onSecondaryAction,
+}: Readonly<CenteredMessageCardProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     return (
@@ -779,6 +854,26 @@ function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly
                             letterSpacing={1.1}
                         >
                             {actionLabel}
+                        </Text>
+                    </Button>
+                ) : null}
+                {secondaryActionLabel !== undefined && typeof onSecondaryAction === "function" ? (
+                    <Button
+                        mt="$1"
+                        height={44}
+                        rounded={ds.radii.md}
+                        chromeless
+                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        onPress={onSecondaryAction}
+                    >
+                        <Text
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyBold}
+                            fontSize={ds.typography.labelMd.fontSize}
+                            textTransform="uppercase"
+                            letterSpacing={1.1}
+                        >
+                            {secondaryActionLabel}
                         </Text>
                     </Button>
                 ) : null}
