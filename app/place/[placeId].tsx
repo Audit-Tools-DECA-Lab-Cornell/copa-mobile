@@ -468,20 +468,24 @@ function PlaceDetailContent({
                 </XStack>
             </YStack>
 
-            {mapPreviewCard}
-
+            {/* Tablet rebalance (5.2/G9): the rail keeps real supporting
+                content (quick actions + current audit) while the wide main
+                column carries the metrics and the map, so neither pane
+                starves. Phones keep the single-column order. */}
             {layout.isTablet ? (
                 <XStack gap={layout.twoPaneGap} items="flex-start">
                     <YStack flex={1} gap="$3">
                         {metricsGrid}
-                        {currentAuditCard}
+                        {mapPreviewCard}
                     </YStack>
                     <YStack width={layout.supportRailWidth} gap="$3">
                         {quickActionsCard}
+                        {currentAuditCard}
                     </YStack>
                 </XStack>
             ) : (
                 <YStack gap="$3">
+                    {mapPreviewCard}
                     {metricsGrid}
                     {currentAuditCard}
                     {quickActionsCard}

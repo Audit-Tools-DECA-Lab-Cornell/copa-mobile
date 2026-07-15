@@ -49,6 +49,7 @@ export function ScreenHeader({ title, subtitle, actions, aboveTitle }: Readonly<
                             fontFamily={ds.fonts.bodyMedium}
                             fontSize={ds.typography.bodyLg.fontSize}
                             lineHeight={ds.typography.bodyLg.lineHeight}
+                            style={{ maxWidth: layout.readableMaxWidth }}
                         >
                             {subtitle}
                         </Paragraph>

@@ -597,7 +597,8 @@ export default function ExecuteSectionScreen() {
                 })}
             >
                 <LoggedInAsNotice />
-                <YStack gap="$3">
+                {/* Long-form intro text is capped at a readable measure (G9). */}
+                <YStack gap="$3" style={{ maxWidth: layout.readableMaxWidth }}>
                     <Text
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.headingBold}

@@ -423,6 +423,7 @@ export default function ExecuteFinalCommentsScreen() {
                     color={ds.colors.mutedForeground}
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={ds.typography.bodySm.fontSize}
+                    style={{ maxWidth: layout.readableMaxWidth }}
                 >
                     {t("finalComments.helper", { ns: "audit" })}
                 </Paragraph>
