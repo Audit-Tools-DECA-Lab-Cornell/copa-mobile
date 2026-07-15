@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync, spawnSync } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import { copyFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
+import { copyFileSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -16,6 +16,12 @@ const DEFAULT_PLATFORM = "ios";
 const DEFAULT_SIMULATOR = "booted";
 const DEFAULT_ANDROID_DEVICE = "connected";
 const FIRST_SECTION_FALLBACK = "section_1_playspace_character_community";
+
+// Device commands must never hang the run. `am start -W` on a wedged emulator
+// blocks for minutes before failing, so every device command gets a hard
+// timeout and the run aborts once the device stops responding.
+const DEVICE_COMMAND_TIMEOUT_MS = 60000;
+const MAX_CONSECUTIVE_TARGET_FAILURES = 3;
 
 const IOS_DEVICE_TYPES = ["iphone", "ipad"];
 const ANDROID_DEVICE_TYPES = ["android-phone", "android-tablet"];
@@ -473,6 +479,24 @@ function resolveTargetAndroidDevices(options) {
     return firstDevicePerType(candidates);
 }
 
+/**
+ * Raised when the target device stops responding mid-run (frozen emulator,
+ * disconnected device). The run aborts instead of capturing stale frames.
+ */
+class DeviceUnresponsiveError extends Error {}
+
+/**
+ * Strip screenshot-account credentials from a message before it reaches the
+ * console or manifest. Failed device commands echo the full bootstrap deep
+ * link, which carries the email and password as query parameters.
+ *
+ * @param {string} message Raw error message.
+ * @returns {string} Message with credential query values redacted.
+ */
+function redactCredentials(message) {
+    return message.replace(/(email|password)=[^&'"\s]*/gi, "$1=REDACTED");
+}
+
 function firstDevicePerType(devices) {
     const byType = new Map();
     for (const device of devices) {
@@ -535,9 +559,20 @@ async function main() {
                 );
                 continue;
             }
-            const failed = await captureDeviceRun({ options, device, appearance, targets });
+            const { failed, deviceUnresponsive } = await captureDeviceRun({
+                options,
+                device,
+                appearance,
+                targets,
+            });
             if (failed) {
                 anyFailures = true;
+            }
+            if (deviceUnresponsive) {
+                console.error(
+                    `${device.deviceType} (${device.name}) stopped responding; skipping its remaining appearances. Cold-boot the device and rerun.`,
+                );
+                break;
             }
         }
     }
@@ -569,7 +604,7 @@ function printTargetList(deviceType, targets) {
  * @param {ReturnType<typeof resolveTargetDevices>[number]} input.device Target device.
  * @param {"light" | "dark"} input.appearance Device appearance.
  * @param {readonly object[]} input.targets Screenshot targets.
- * @returns {Promise<boolean>} True when any target failed.
+ * @returns {Promise<{ failed: boolean, deviceUnresponsive: boolean }>} Run outcome.
  */
 async function captureDeviceRun({ options, device, appearance, targets }) {
     const outputDir = path.resolve(
@@ -601,7 +636,17 @@ async function captureDeviceRun({ options, device, appearance, targets }) {
     // each pay a full logout→login round-trip.
     let hasResetThisRun = false;
 
-    for (const target of targets) {
+    // A wedged device keeps returning the last rendered frame, so a capture
+    // that "succeeds" can still be stale. Track the previous frame hash to
+    // catch a frozen display, the device clock to catch a frozen guest OS,
+    // and consecutive failures to stop hammering a device that is gone.
+    let previousFrameHash = null;
+    let consecutiveFailures = 0;
+    let deviceUnresponsive = false;
+    const clockCheck = createDeviceClockCheck(device);
+
+    for (let index = 0; index < targets.length; index += 1) {
+        const target = targets[index];
         try {
             if (target.requiresAuth && (options.email === null || options.password === null)) {
                 throw new Error("Protected target requires --email and --password.");
@@ -621,8 +666,18 @@ async function captureDeviceRun({ options, device, appearance, targets }) {
 
             console.log(`Opening ${target.route}${shouldReset ? " (reset + login)" : ""}`);
             openDeviceUrl(device, url);
+            clockCheck.begin();
             await sleep(waitMs);
+            clockCheck.assertAdvanced(waitMs);
             captureDeviceScreenshot(device, outputPath);
+
+            const frameHash = createHash("sha256").update(readFileSync(outputPath)).digest("hex");
+            if (previousFrameHash !== null && frameHash === previousFrameHash) {
+                throw new DeviceUnresponsiveError(
+                    "Captured frame is byte-identical to the previous target; the device display appears frozen.",
+                );
+            }
+            previousFrameHash = frameHash;
 
             manifest.successes.push({
                 file: target.file,
@@ -630,11 +685,35 @@ async function captureDeviceRun({ options, device, appearance, targets }) {
                 output_file: path.relative(process.cwd(), outputPath),
             });
             manifest.success_count += 1;
+            consecutiveFailures = 0;
         } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
+            const message = redactCredentials(
+                error instanceof Error ? error.message : String(error),
+            );
             console.error(`Failed ${target.file}: ${message}`);
             manifest.failures.push({ file: target.file, route: target.route, message });
             manifest.failure_count += 1;
+            consecutiveFailures += 1;
+
+            const failedTooOften = consecutiveFailures >= MAX_CONSECUTIVE_TARGET_FAILURES;
+            if (error instanceof DeviceUnresponsiveError || failedTooOften) {
+                deviceUnresponsive = true;
+                const abortReason =
+                    error instanceof DeviceUnresponsiveError
+                        ? message
+                        : `${consecutiveFailures} consecutive targets failed; the device appears unresponsive.`;
+                manifest.abort_reason = abortReason;
+                for (const remaining of targets.slice(index + 1)) {
+                    manifest.failures.push({
+                        file: remaining.file,
+                        route: remaining.route,
+                        message: `Skipped: run aborted (${abortReason})`,
+                    });
+                    manifest.failure_count += 1;
+                }
+                console.error(`Aborting ${device.deviceType}/${appearance} run: ${abortReason}`);
+                break;
+            }
         }
     }
 
@@ -643,7 +722,81 @@ async function captureDeviceRun({ options, device, appearance, targets }) {
         `${JSON.stringify(manifest, null, "\t")}\n`,
     );
 
-    return manifest.failure_count > 0;
+    return { failed: manifest.failure_count > 0, deviceUnresponsive };
+}
+
+/**
+ * Build a per-run device clock checker that detects a frozen guest OS.
+ *
+ * A dying emulator can keep serving adb screencaps of the last rendered frame
+ * while its guest clock stands still, so every capture "succeeds" with stale
+ * pixels. Comparing how far the device clock advanced against the host-side
+ * wait exposes that state. When the first probe fails the checker disables
+ * itself (the device may not support the probe); once a probe has succeeded,
+ * a later probe failure means the device stopped responding.
+ *
+ * @param {ReturnType<typeof resolveTargetDevices>[number]} device Target device.
+ * @returns {{ begin: () => void, assertAdvanced: (waitMs: number) => void }} Checker.
+ */
+function createDeviceClockCheck(device) {
+    let supported = null;
+    let epochAtBegin = null;
+
+    const probe = () => {
+        const [command, args] =
+            device.platform === "ios"
+                ? ["xcrun", ["simctl", "spawn", device.id, "date", "+%s"]]
+                : ["adb", ["-s", device.id, "shell", "date", "+%s"]];
+        const result = spawnSync(command, args, {
+            encoding: "utf8",
+            timeout: DEVICE_COMMAND_TIMEOUT_MS,
+        });
+        if (result.error || result.status !== 0) {
+            return null;
+        }
+        const parsed = Number(result.stdout.trim());
+        return Number.isSafeInteger(parsed) ? parsed : null;
+    };
+
+    return {
+        begin() {
+            if (supported === false) {
+                return;
+            }
+            epochAtBegin = probe();
+            if (supported === null) {
+                supported = epochAtBegin !== null;
+                if (!supported) {
+                    console.warn(
+                        `Device clock probe unavailable on ${device.name}; frozen-device detection is limited to frame comparison.`,
+                    );
+                }
+                return;
+            }
+            if (epochAtBegin === null) {
+                throw new DeviceUnresponsiveError(
+                    "Device clock probe stopped responding; the device appears unresponsive.",
+                );
+            }
+        },
+        assertAdvanced(waitMs) {
+            if (supported !== true || epochAtBegin === null) {
+                return;
+            }
+            const epochNow = probe();
+            if (epochNow === null) {
+                throw new DeviceUnresponsiveError(
+                    "Device clock probe stopped responding; the device appears unresponsive.",
+                );
+            }
+            const advancedMs = (epochNow - epochAtBegin) * 1000;
+            if (advancedMs < waitMs / 2) {
+                throw new DeviceUnresponsiveError(
+                    `Device clock advanced only ${Math.round(advancedMs / 1000)}s during a ${Math.round(waitMs / 1000)}s wait; the device appears frozen.`,
+                );
+            }
+        },
+    };
 }
 
 async function readFirstSectionKey() {
@@ -1067,6 +1220,7 @@ function setDeviceAppearance(device, appearance) {
     const mode = appearance === "dark" ? "yes" : "no";
     const result = spawnSync("adb", ["-s", device.id, "shell", "cmd", "uimode", "night", mode], {
         encoding: "utf8",
+        timeout: DEVICE_COMMAND_TIMEOUT_MS,
     });
     if (result.error || result.status !== 0) {
         console.warn(
@@ -1118,6 +1272,7 @@ function captureDeviceScreenshot(device, outputPath) {
     const result = spawnSync("adb", ["-s", device.id, "exec-out", "screencap", "-p"], {
         encoding: "buffer",
         maxBuffer: 50 * 1024 * 1024,
+        timeout: DEVICE_COMMAND_TIMEOUT_MS,
     });
     if (result.error || result.status !== 0) {
         throw new Error(`adb screencap failed for ${device.name}.`);
@@ -1127,7 +1282,7 @@ function captureDeviceScreenshot(device, outputPath) {
 }
 
 function run(command, args) {
-    execFileSync(command, args, { stdio: "inherit" });
+    execFileSync(command, args, { stdio: "inherit", timeout: DEVICE_COMMAND_TIMEOUT_MS });
 }
 
 main().catch((error) => {
