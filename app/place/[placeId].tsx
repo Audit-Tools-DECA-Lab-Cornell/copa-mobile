@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, Linking, Platform, ScrollView } from "react-native";
+import { Linking, Platform, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import type { TFunction } from "i18next";
@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { StatCard } from "components/ui/stat-card";
+import { SkeletonLine } from "components/ui/skeleton";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -693,7 +694,13 @@ function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailS
                 <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                     {message}
                 </Paragraph>
-                {isLoading ? <ActivityIndicator color={ds.colors.primary} /> : null}
+                {isLoading ? (
+                    <YStack gap="$2" pt="$2">
+                        <SkeletonLine width="86%" />
+                        <SkeletonLine width="70%" />
+                        <SkeletonLine width="78%" />
+                    </YStack>
+                ) : null}
             </YStack>
         </YStack>
     );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, ScrollView } from "react-native";
+import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
     ArrowRight,
@@ -16,6 +16,7 @@ import {
 } from "@tamagui/lucide-icons-2";
 import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
 import { ScreenHeader } from "components/ui/screen-header";
+import { TabListSkeleton } from "components/ui/skeleton";
 import { PendingUploadsBanner } from "components/playspace-audit/pending-uploads-banner";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
@@ -729,14 +730,7 @@ export default function DashboardScreen() {
     );
 
     if (isLoading && places.length === 0) {
-        return (
-            <YStack flex={1} items="center" justify="center" bg={ds.colors.background}>
-                <ActivityIndicator size="large" color={ds.colors.primary} />
-                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} mt="$4">
-                    {t("loadingPlaces", { ns: "dashboard" })}
-                </Paragraph>
-            </YStack>
-        );
+        return <TabListSkeleton />;
     }
 
     if (layout.isTablet) {

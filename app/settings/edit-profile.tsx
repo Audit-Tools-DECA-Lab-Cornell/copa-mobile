@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import { AppLoader } from "components/ui/app-loader";
+import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { ChevronDown } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, type ColorTokens, Input, Paragraph, Text, XStack, YStack } from "tamagui";
@@ -191,14 +192,7 @@ export default function EditProfileScreen() {
     );
 
     if (isLoading) {
-        return (
-            <YStack flex={1} bg={ds.colors.background} items="center" justify="center" gap="$3" px="$6">
-                <ActivityIndicator />
-                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                    {t("editProfile.loading", "Loading profile...")}
-                </Paragraph>
-            </YStack>
-        );
+        return <AppLoader message={t("editProfile.loading", "Loading profile...")} />;
     }
 
     return (

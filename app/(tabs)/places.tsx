@@ -4,6 +4,7 @@ import { ProjectFilterSelect } from "components/ui/project-filter-select";
 import { TypeFilterSelect } from "components/ui/type-filter-select";
 import { SearchInput } from "components/ui/search-input";
 import { ScreenHeader } from "components/ui/screen-header";
+import { TabListSkeleton } from "components/ui/skeleton";
 import { useRouter } from "expo-router";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
@@ -23,7 +24,7 @@ import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ActivityIndicator, Pressable } from "react-native";
+import { Pressable } from "react-native";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
 import { Paragraph, Text, XStack, YStack, type ColorTokens } from "tamagui";
@@ -224,14 +225,7 @@ export default function PlacesScreen() {
     );
 
     if (isLoading && places.length === 0) {
-        return (
-            <YStack flex={1} items="center" justify="center" bg={ds.colors.background}>
-                <ActivityIndicator size="large" color={ds.colors.primary} />
-                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} mt="$4">
-                    {t("loadingPlaces", { ns: "places" })}
-                </Paragraph>
-            </YStack>
-        );
+        return <TabListSkeleton />;
     }
 
     const headerComponent = (

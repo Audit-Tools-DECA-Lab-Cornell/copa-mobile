@@ -6,6 +6,7 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
+import { CenteredMessageCard } from "components/ui/centered-message-card";
 import { getQuestionAnswers, getVisibleSections, isInstrumentQuestionComplete } from "lib/audit/selectors";
 import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -614,82 +615,6 @@ export default function ExecuteFinalCommentsScreen() {
                 </Button>
             </XStack>
         </ScrollView>
-    );
-}
-
-interface CenteredMessageCardProps {
-    readonly title: string;
-    readonly message: string;
-    readonly actionLabel?: string;
-    readonly onAction?: () => void;
-    readonly actionTestID?: string;
-}
-
-/**
- * @param props Message card props.
- * @returns Centered loading or recovery card.
- */
-function CenteredMessageCard({
-    title,
-    message,
-    actionLabel,
-    onAction,
-    actionTestID,
-}: Readonly<CenteredMessageCardProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
-
-    return (
-        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
-            <YStack
-                width="100%"
-                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p="$4"
-                gap="$2"
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleLg.fontSize}
-                >
-                    {title}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                >
-                    {message}
-                </Paragraph>
-                {actionLabel !== undefined && typeof onAction === "function" ? (
-                    <Button
-                        {...(actionTestID !== undefined ? { testID: actionTestID } : {})}
-                        mt="$2"
-                        height={44}
-                        rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.input}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={onAction}
-                    >
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.1}
-                        >
-                            {actionLabel}
-                        </Text>
-                    </Button>
-                ) : null}
-            </YStack>
-        </YStack>
     );
 }
 

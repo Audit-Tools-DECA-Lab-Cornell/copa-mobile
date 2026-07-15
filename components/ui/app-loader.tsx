@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Text, View } from "react-native";
 import Animated, {
     cancelAnimation,
     Easing,
@@ -8,7 +9,6 @@ import Animated, {
     withRepeat,
     withTiming,
 } from "react-native-reanimated";
-import { Paragraph, YStack } from "tamagui";
 import { MOTION, useDesignSystem } from "lib/design-system";
 
 /**
@@ -21,8 +21,8 @@ const BRAND_MARK_SIZE = 96;
 
 export interface AppLoaderProps {
     /**
-     * Optional supporting line under the mark. Only pass this from screens
-     * that mount after fonts are loaded; root gates must omit it.
+     * Optional supporting line under the mark. Rendered with the system font
+     * so it is safe even before custom fonts load.
      */
     readonly message?: string;
 }
@@ -30,8 +30,10 @@ export interface AppLoaderProps {
 /**
  * Branded full-screen loader: the COPA mark pulsing gently on the app
  * background (G2 - every wait state visibly moves). Replaces ad-hoc
- * `ActivityIndicator`s and blank `return null` gates. Honors the OS
- * reduce-motion setting by holding a static frame.
+ * spinners and blank `return null` gates. Built from plain React Native
+ * primitives (no Tamagui) so it can render at the root gates before the
+ * Tamagui provider and custom fonts are ready. Honors the OS reduce-motion
+ * setting by holding a static frame.
  */
 export function AppLoader({ message }: Readonly<AppLoaderProps>) {
     const ds = useDesignSystem();
@@ -66,13 +68,15 @@ export function AppLoader({ message }: Readonly<AppLoaderProps>) {
     });
 
     return (
-        <YStack
-            flex={1}
-            items="center"
-            justify="center"
-            bg={ds.colors.background}
-            gap="$4"
+        <View
             accessibilityRole="progressbar"
+            style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 16,
+                backgroundColor: ds.colors.background,
+            }}
         >
             <Animated.Image
                 source={BRAND_MARK}
@@ -80,16 +84,18 @@ export function AppLoader({ message }: Readonly<AppLoaderProps>) {
                 resizeMode="contain"
             />
             {message !== undefined && message.length > 0 ? (
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                    lineHeight={ds.typography.bodyLg.lineHeight}
-                    text="center"
+                <Text
+                    style={{
+                        color: ds.colors.mutedForeground,
+                        fontSize: ds.typography.bodyLg.fontSize,
+                        lineHeight: ds.typography.bodyLg.lineHeight,
+                        textAlign: "center",
+                        paddingHorizontal: 24,
+                    }}
                 >
                     {message}
-                </Paragraph>
+                </Text>
             ) : null}
-        </YStack>
+        </View>
     );
 }

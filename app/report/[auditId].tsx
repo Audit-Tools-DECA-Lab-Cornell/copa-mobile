@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useToastController } from "@tamagui/toast";
 import { ChevronUp, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
@@ -9,6 +9,7 @@ import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { ActionButton } from "components/ui/action-button";
 import { SubmittedReportContent } from "components/reports/SubmittedReportContent";
 import { StatCard } from "components/ui/stat-card";
+import { SkeletonLine } from "components/ui/skeleton";
 import {
     buildDomainReportRows,
     countUniqueScaledQuestionsWithDomains,
@@ -1383,7 +1384,13 @@ function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailS
                 <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                     {message}
                 </Paragraph>
-                {isLoading ? <ActivityIndicator color={ds.colors.primary} /> : null}
+                {isLoading ? (
+                    <YStack gap="$2" pt="$2">
+                        <SkeletonLine width="86%" />
+                        <SkeletonLine width="70%" />
+                        <SkeletonLine width="78%" />
+                    </YStack>
+                ) : null}
             </YStack>
         </YStack>
     );

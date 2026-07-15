@@ -5,10 +5,12 @@ import { useResponsiveLayout } from "lib/responsive-layout";
 export interface CenteredMessageCardProps {
     readonly title: string;
     readonly message: string;
-    readonly actionLabel?: string;
-    readonly onAction?: () => void;
-    readonly secondaryActionLabel?: string;
-    readonly onSecondaryAction?: () => void;
+    readonly actionLabel?: string | undefined;
+    readonly onAction?: (() => void) | undefined;
+    /** Test identifier forwarded to the primary action button. */
+    readonly actionTestID?: string | undefined;
+    readonly secondaryActionLabel?: string | undefined;
+    readonly onSecondaryAction?: (() => void) | undefined;
 }
 
 /**
@@ -22,6 +24,7 @@ export function CenteredMessageCard({
     message,
     actionLabel,
     onAction,
+    actionTestID,
     secondaryActionLabel,
     onSecondaryAction,
 }: Readonly<CenteredMessageCardProps>) {
@@ -64,6 +67,7 @@ export function CenteredMessageCard({
                         bg={ds.colors.input}
                         pressStyle={{ opacity: 0.92, scale: 0.985 }}
                         onPress={onAction}
+                        testID={actionTestID}
                     >
                         <Text
                             color={ds.colors.foreground}

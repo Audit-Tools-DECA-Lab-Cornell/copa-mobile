@@ -16,6 +16,7 @@ import {
 import { useRouter } from "expo-router";
 import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { ScreenHeader } from "components/ui/screen-header";
+import { SkeletonBlock as PulsingSkeletonBlock } from "components/ui/skeleton";
 import { fetchMyAccount, fetchMyAuditorProfile, type MyAccount, type MyAuditorProfile } from "lib/audit/profile-api";
 import { getDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
@@ -916,20 +917,10 @@ interface SkeletonBlockProps {
 
 /**
  * Small reusable placeholder block used across the loading skeleton.
+ * Delegates to the shared pulsing skeleton primitive (G2/G10).
  */
-function SkeletonBlock({ ds, height, width, flex, rounded }: SkeletonBlockProps) {
-    return (
-        <YStack
-            height={height}
-            flex={flex}
-            rounded={rounded ?? ds.radii.md}
-            bg={ds.colors.surfaceMuted}
-            borderWidth={1}
-            borderColor={ds.colors.border}
-            opacity={0.9}
-            style={{ width }}
-        />
-    );
+function SkeletonBlock({ height, width, flex, rounded }: SkeletonBlockProps) {
+    return <PulsingSkeletonBlock height={height} width={width} flex={flex} rounded={rounded} />;
 }
 
 interface ProfileSkeletonRowProps {

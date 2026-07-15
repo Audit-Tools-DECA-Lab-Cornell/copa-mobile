@@ -18,6 +18,7 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { BugReportFab } from "components/bug-report/BugReportFab";
 import { Provider } from "components/Provider";
+import { AppLoader } from "components/ui/app-loader";
 import { ForceUpdateScreen, ReleasePolicyLoadingScreen } from "components/release-policy/ForceUpdateScreen";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
@@ -102,7 +103,10 @@ export default function RootLayout() {
     }, []);
 
     if ((!fontsLoaded && !fontError) || !isPreferencesHydrated) {
-        return null;
+        // Branded pulse instead of a blank frame (G2). AppLoader is built from
+        // plain RN primitives, so it is safe here before the Tamagui provider
+        // mounts and before custom fonts load.
+        return <AppLoader />;
     }
 
     return (
@@ -395,7 +399,7 @@ function ActiveRootLayoutNav() {
     }, [authSession, authStatus, router, segments, hasSeenIntro]);
 
     if (authStatus === "loading") {
-        return null;
+        return <AppLoader />;
     }
 
     return (

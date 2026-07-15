@@ -1,5 +1,8 @@
 import { useEffect } from "react";
-import type { DimensionValue } from "react-native";
+import { ScrollView, type DimensionValue } from "react-native";
+import { XStack, YStack } from "tamagui";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import Animated, {
     cancelAnimation,
     Easing,
@@ -48,9 +51,9 @@ function useSkeletonPulseStyle() {
 
 export interface SkeletonBlockProps {
     readonly height: number;
-    readonly width?: DimensionValue;
-    readonly flex?: number;
-    readonly rounded?: number;
+    readonly width?: DimensionValue | undefined;
+    readonly flex?: number | undefined;
+    readonly rounded?: number | undefined;
 }
 
 /**
@@ -81,9 +84,9 @@ export function SkeletonBlock({ height, width = "100%", flex, rounded }: Readonl
 }
 
 export interface SkeletonLineProps {
-    readonly width?: DimensionValue;
+    readonly width?: DimensionValue | undefined;
     /** Line height in pixels; defaults to a body-text line. */
-    readonly height?: number;
+    readonly height?: number | undefined;
 }
 
 /**
@@ -112,6 +115,47 @@ export function SkeletonLine({ width = "100%", height = 14 }: Readonly<SkeletonL
 
 export interface SkeletonCircleProps {
     readonly size: number;
+}
+
+/**
+ * Full-tab loading skeleton shared by the queue-style tab screens (Home,
+ * Places, Reports, Execute): title block, summary tile row, and a column of
+ * card-shaped placeholders. Shapes follow the same layout tokens as the real
+ * cards so content does not shift when data arrives (G2/G10).
+ */
+export function TabListSkeleton() {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const bottomPadding = useFabAwareBottomPadding();
+
+    const cardHeight = layout.isTablet ? 156 : 132;
+
+    return (
+        <ScrollView
+            style={{ backgroundColor: ds.colors.background }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding,
+                gap: layout.sectionGap,
+            })}
+            scrollEnabled={false}
+        >
+            <YStack gap="$3">
+                <SkeletonBlock width="42%" height={layout.isTablet ? 40 : 30} rounded={ds.radii.sm} />
+                <SkeletonLine width="64%" height={layout.isTablet ? 20 : 16} />
+            </YStack>
+            <XStack gap="$3">
+                <SkeletonBlock flex={1} height={layout.isTablet ? 96 : 72} />
+                <SkeletonBlock flex={1} height={layout.isTablet ? 96 : 72} />
+                <SkeletonBlock flex={1} height={layout.isTablet ? 96 : 72} />
+            </XStack>
+            <YStack gap="$3">
+                <SkeletonBlock height={cardHeight} rounded={ds.radii.lg} />
+                <SkeletonBlock height={cardHeight} rounded={ds.radii.lg} />
+                <SkeletonBlock height={cardHeight} rounded={ds.radii.lg} />
+                <SkeletonBlock height={cardHeight} rounded={ds.radii.lg} />
+            </YStack>
+        </ScrollView>
+    );
 }
 
 /**
