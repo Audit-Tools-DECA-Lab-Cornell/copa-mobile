@@ -15,12 +15,15 @@ import {
 } from "@tamagui/lucide-icons-2";
 import { useRouter } from "expo-router";
 import { AppButton, buttonForegroundColor } from "components/ui/app-button";
+import { ScreenHeader } from "components/ui/screen-header";
+import { SkeletonBlock as PulsingSkeletonBlock } from "components/ui/skeleton";
 import { fetchMyAccount, fetchMyAuditorProfile, type MyAccount, type MyAuditorProfile } from "lib/audit/profile-api";
 import { getDesignSystem, type DesignSystemTheme } from "lib/design-system";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import { getSettingsPageMaxWidth } from "lib/responsive";
 import { getResponsiveContentContainerStyle, ResponsiveLayout, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -91,6 +94,7 @@ function resolveAppLanguage(languageTag: string | undefined): ResolvedAppLanguag
  */
 export default function SettingsScreen() {
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const router = useRouter();
     const { t, i18n } = useTranslation(["settings", "common"]);
     const instrument = useLocalizedInstrument();
@@ -412,30 +416,12 @@ export default function SettingsScreen() {
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                     // Reserve extra room for the save bar so the last card stays reachable.
-                    bottomPadding: isDirty ? 168 : 92,
+                    bottomPadding: isDirty ? listBottomPadding + 76 : listBottomPadding,
                     gap: layout.isTablet ? 28 : 24,
                     maxWidth: settingsPageMaxWidth,
                 })}
             >
-                <YStack gap="$3">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.headingBold}
-                        fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                        lineHeight={
-                            layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
-                        }
-                    >
-                        {t("title", { ns: "settings" })}
-                    </Text>
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyLg.fontSize}
-                    >
-                        {t("subtitle", { ns: "settings" })}
-                    </Paragraph>
-                </YStack>
+                <ScreenHeader title={t("title", { ns: "settings" })} subtitle={t("subtitle", { ns: "settings" })} />
 
                 {/* Profile Card (read-only) */}
                 <SettingsCard ds={ds} label={t("profile.label", { ns: "settings" })} Icon={User}>
@@ -812,12 +798,13 @@ interface SettingsSkeletonScreenProps {
  */
 function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
     const layout = useResponsiveLayout();
+    const skeletonBottomPadding = useFabAwareBottomPadding();
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: skeletonBottomPadding,
                 gap: layout.isTablet ? 32 : 24,
                 maxWidth: getSettingsPageMaxWidth({
                     isTablet: layout.isTablet,
@@ -933,20 +920,10 @@ interface SkeletonBlockProps {
 
 /**
  * Small reusable placeholder block used across the loading skeleton.
+ * Delegates to the shared pulsing skeleton primitive (G2/G10).
  */
-function SkeletonBlock({ ds, height, width, flex, rounded }: SkeletonBlockProps) {
-    return (
-        <YStack
-            height={height}
-            flex={flex}
-            rounded={rounded ?? ds.radii.md}
-            bg={ds.colors.surfaceMuted}
-            borderWidth={1}
-            borderColor={ds.colors.border}
-            opacity={0.9}
-            style={{ width }}
-        />
-    );
+function SkeletonBlock({ height, width, flex, rounded }: SkeletonBlockProps) {
+    return <PulsingSkeletonBlock height={height} width={width} flex={flex} rounded={rounded} />;
 }
 
 interface ProfileSkeletonRowProps {

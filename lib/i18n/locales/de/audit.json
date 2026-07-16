@@ -167,19 +167,22 @@
     "section": {
         "answeredCount": "{{answered}} / {{total}} beantwortet",
         "backToOverview": "Zurueck zur Uebersicht",
+        "finalCommentsCta": "Continue",
         "followUpHidden": "Vielfalt, Geselligkeit und Herausforderung erscheinen erst nach einer positiven Antwort bei Quantitaet.",
+        "headerSecondary": "Abschnitt: {{title}}",
         "notesDefault": "Fuegen Sie Ueberlegungen oder Empfehlungen fuer diesen Abschnitt hinzu.",
         "notesPlaceholder": "Notizen oder Empfehlungen hinzufuegen...",
         "openSection": "Abschnitt oeffnen",
         "pendingSync": "Antworten wurden lokal gespeichert - sie werden synchronisiert, sobald Sie wieder online sind.",
         "preparingMessage": "Der aktuelle Abschnitt und zuvor gespeicherte Antworten werden geladen...",
         "preparingTitle": "Abschnitt wird vorbereitet",
-        "reviewSection": "Abschnitt pruefen",
         "previousSection": "Zurück",
+        "reviewSection": "Abschnitt pruefen",
         "saveAndNext": "Nächster Abschnitt",
         "saveSection": "Abschnitt speichern",
-        "finalCommentsCta": "Continue",
         "sectionNotes": "Abschnittsnotizen",
+        "stillPreparingMessage": "Das dauert länger als erwartet. Wenn Sie offline sind, sind Ihre gespeicherten Antworten sicher. Sie können es erneut versuchen oder zurückgehen.",
+        "stillPreparingTitle": "Abschnitt wird noch vorbereitet",
         "table": {
             "followUpPending": "Wählen Sie eine positive Mengenangabe, um diese Skala freizuschalten.",
             "itemColumn": "Fragenpunkt",
@@ -198,8 +201,9 @@
         "auditStart": "Audit-Start",
         "execute": "Durchfuehren",
         "preAudit": "Vor-Audit",
-        "spaceAudit": "Flächenprüfung",
-        "section": "Abschnitt"
+        "section": "Abschnitt",
+        "sectionFallback": "Abschnitt",
+        "spaceAudit": "Flächenprüfung"
     },
     "subjects": {
         "audit": "Audit",

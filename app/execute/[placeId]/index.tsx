@@ -11,10 +11,12 @@ import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { CollapsibleCard } from "components/ui/collapsible-card";
+import { CenteredMessageCard } from "components/ui/centered-message-card";
 import { AuditExportCard } from "components/playspace-audit/audit-export-card";
 import { AuditSyncStatusCard } from "components/playspace-audit/audit-sync-status-card";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getScaleAccentColor, getScaleSoftColor, useDesignSystem } from "lib/design-system";
+import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import type { ExecutionMode } from "lib/audit/types";
 import { getExecutionModeShortLabel } from "lib/i18n/format";
@@ -84,23 +86,7 @@ export default function ExecutePlaceScreen() {
         return places.find((place) => place.place_id === placeId) ?? null;
     }, [places, placeId]);
 
-    const themedHeaderOptions = useMemo(
-        () => ({
-            headerShown: true,
-            headerBackButtonMenuEnabled: true,
-            headerBackButtonDisplayMode: "generic",
-            headerBackVisible: true,
-            headerBlurEffect: "light",
-            headerStyle: { backgroundColor: ds.colors.surfaceMuted },
-            headerTintColor: ds.colors.primary,
-            contentStyle: { paddingTop: 20 },
-            headerTitleStyle: {
-                color: ds.colors.foreground,
-                fontFamily: ds.fonts.bodyBold,
-            },
-        }),
-        [ds],
-    );
+    const themedHeaderOptions = useThemedHeaderOptions();
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -115,20 +101,23 @@ export default function ExecutePlaceScreen() {
     }, [authSession, ensurePlaceAudit, isCurrentAuditUserReady, isHydrated, placeId, projectId]);
 
     useLayoutEffect(() => {
+        // Single setOptions per render: the localized fallback title always
+        // applies (G1) and the data-driven headerTitle is merged in once the
+        // session resolves. Two back-to-back calls previously caused a brief
+        // stale-title frame (suspected iPhone ghost-text artifact).
+        const mode =
+            auditSession === undefined ? "" : getExecutionModeShortLabel(auditSession.selected_execution_mode, t);
+        const suffix = mode.length > 0 ? mode : undefined;
         navigation.setOptions({
             ...themedHeaderOptions,
             title: t("overview.preparingAuditTitle", { ns: "audit" }),
+            ...(auditSession === undefined
+                ? {}
+                : {
+                      headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} secondary={suffix} />,
+                  }),
         });
-        if (auditSession !== undefined) {
-            const mode = getExecutionModeShortLabel(auditSession.selected_execution_mode, t);
-            const suffix = mode.length > 0 ? mode : undefined;
-
-            navigation.setOptions({
-                ...themedHeaderOptions,
-                headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} secondary={suffix} />,
-            });
-        }
-    }, [themedHeaderOptions, navigation, auditSession, router, t]);
+    }, [themedHeaderOptions, navigation, auditSession, t]);
 
     const pendingSectionCount =
         auditSession === undefined ? 0 : Object.keys(dirtySections[auditSession.audit_id] ?? {}).length;
@@ -815,71 +804,6 @@ function parsePreambleBlock(rawBlock: string): ParsedPreambleBlock {
         heading,
         lines: parsedLines,
     };
-}
-
-interface CenteredMessageCardProps {
-    readonly title: string;
-    readonly message: string;
-    readonly actionLabel?: string;
-    readonly onAction?: () => void;
-}
-
-/**
- * Compact centered placeholder for loading and invalid-route states.
- *
- * @param props Message card props.
- * @returns Full-screen centered message card.
- */
-function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
-    return (
-        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
-            <YStack
-                width="100%"
-                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p="$4"
-                gap="$2"
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleLg.fontSize}
-                >
-                    {title}
-                </Text>
-                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                    {message}
-                </Paragraph>
-                {actionLabel !== undefined && typeof onAction === "function" ? (
-                    <Button
-                        mt="$2"
-                        height={44}
-                        rounded={ds.radii.sm}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.input}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={onAction}
-                    >
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.1}
-                        >
-                            {actionLabel}
-                        </Text>
-                    </Button>
-                ) : null}
-            </YStack>
-        </YStack>
-    );
 }
 
 /**

@@ -52,6 +52,9 @@ The report-detail tail offsets are first-pass values. After the fresh capture ru
 | `17-report-detail-end.png`         | `/report/<auditId>`                                             |     3600 | End report frame; tune after capture if needed.                                                    | Yes            |
 | `18-settings.png`                  | `/settings`                                                     |        - | Settings top, renumbered from old 21.                                                              | Yes            |
 | `19-settings-scrolled.png`         | `/settings`                                                     |      950 | One settings scroll frame with a larger offset than old 22's 700px; old 23 removed.                | Yes            |
+| `21-execute-overview.png`          | `/execute/<placeId>/overview?projectId=<projectId>`             |        - | Execute section overview (added for the overhaul recapture).                                       | Yes            |
+| `22-execute-space-audit.png`       | `/execute/<placeId>/space-audit?projectId=<projectId>`          |        - | Execute space-audit setup (added).                                                                 | Yes            |
+| `23-execute-final-comments.png`    | `/execute/<placeId>/final-comments?projectId=<projectId>`       |        - | Execute final comments (added).                                                                    | Yes            |
 
 ## iPad targets
 
@@ -73,6 +76,17 @@ The report-detail tail offsets are first-pass values. After the fresh capture ru
 | `14-report-detail-end.png`      | `/report/<auditId>`                                             |     3200 | End report frame; tune after capture if needed.                                        | Yes            |
 | `15-settings.png`               | `/settings`                                                     |        - | Settings top, renumbered from old 21.                                                  | Yes            |
 | `16-settings-about.png`         | `/settings`                                                     |     1250 | Settings about retained from old 23; old preferences 22 removed.                       | Yes            |
+| `17-execute-overview.png`       | `/execute/<placeId>/overview?projectId=<projectId>`             |        - | Execute section overview (added for the overhaul recapture).                           | Yes            |
+| `18-execute-space-audit.png`    | `/execute/<placeId>/space-audit?projectId=<projectId>`          |        - | Execute space-audit setup (added).                                                     | Yes            |
+| `19-execute-final-comments.png` | `/execute/<placeId>/final-comments?projectId=<projectId>`       |        - | Execute final comments (added).                                                        | Yes            |
+
+## Warm-up ordering
+
+The execute-place target intentionally runs **before** the section deep-link
+targets so `ensurePlaceAudit` resolves during the earlier navigation; the first
+section target additionally carries `extraWaitMs: 4000` in the script. Per the
+approved overhaul scope, recapture **all sets except iPhone** (iPhone recapture
+is deferred).
 
 ## Removed old targets
 

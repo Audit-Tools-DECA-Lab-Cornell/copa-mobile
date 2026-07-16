@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Alert, ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowLeft, ArrowRight, LayoutDashboard } from "@tamagui/lucide-icons-2";
@@ -8,6 +8,7 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
+import { CenteredMessageCard } from "components/ui/centered-message-card";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
 import {
@@ -20,6 +21,7 @@ import {
 } from "lib/audit/section-navigation";
 import { canEditAuditInputs, shouldPersistCleanupWrite } from "lib/audit/store-sync-core";
 import { useDesignSystem } from "lib/design-system";
+import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
     getQuestionAnswers,
@@ -93,6 +95,8 @@ export default function ExecuteSectionScreen() {
 
     const [localNote, setLocalNote] = useState("");
     const [isNoteFocused, setIsNoteFocused] = useState(false);
+    const [hasPreparingTimedOut, setHasPreparingTimedOut] = useState(false);
+    const [preparingRetryNonce, setPreparingRetryNonce] = useState(0);
     const localNoteRef = useRef("");
     const noteInitializedRef = useRef(false);
     const latestAuditSessionRef = useRef<AuditSession | undefined>(auditSession);
@@ -100,23 +104,7 @@ export default function ExecuteSectionScreen() {
     const scrollViewRef = useRef<ScrollView | null>(null);
     const [scrollLayoutVersion, setScrollLayoutVersion] = useState(0);
 
-    const themedHeaderOptions = useMemo(
-        () => ({
-            headerShown: true,
-            headerBackButtonMenuEnabled: true,
-            headerBackButtonDisplayMode: "generic",
-            headerBackVisible: true,
-            headerBlurEffect: "light",
-            headerStyle: { backgroundColor: ds.colors.surfaceMuted },
-            headerTintColor: ds.colors.primary,
-            contentStyle: { paddingTop: 20 },
-            headerTitleStyle: {
-                color: ds.colors.foreground,
-                fontFamily: ds.fonts.bodyBold,
-            },
-        }),
-        [ds],
-    );
+    const themedHeaderOptions = useThemedHeaderOptions();
 
     useEffect(() => {
         hydrate(authSession?.user.id ?? null).catch(() => undefined);
@@ -207,34 +195,47 @@ export default function ExecuteSectionScreen() {
     }, [flushNoteToStore, router]);
 
     useLayoutEffect(() => {
-        if (activeSection !== undefined) {
-            navigation.setOptions({
-                ...themedHeaderOptions,
-                animation: "ios_from_right",
-                headerTitle: () => (
-                    <AuditHeaderTitle
-                        primary={auditSession?.place_name ?? ""}
-                        secondary={`Section: ${activeSection.title}`}
-                    />
-                ),
-                headerRight: () => (
-                    <Button chromeless onPress={handleReturnHome} accessibilityLabel={t("tabs.home", { ns: "common" })}>
-                        <XStack gap="$1.5" items="center">
-                            <LayoutDashboard size={16} color={ds.colors.primary} />
-                            <Text
-                                color={ds.colors.primary}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1}
-                            >
-                                {t("tabs.home", { ns: "common" })}
-                            </Text>
-                        </XStack>
-                    </Button>
-                ),
-            });
-        }
+        // Single setOptions per render: the localized fallback title always
+        // applies so the header never shows the raw route slug (G1), and the
+        // data-driven headerTitle/headerRight merge in once data resolves.
+        navigation.setOptions({
+            ...themedHeaderOptions,
+            animation: "ios_from_right",
+            title: t("stack.sectionFallback", { ns: "audit" }),
+            ...(activeSection === undefined
+                ? {}
+                : {
+                      headerTitle: () => (
+                          <AuditHeaderTitle
+                              primary={auditSession?.place_name ?? ""}
+                              secondary={t("section.headerSecondary", {
+                                  ns: "audit",
+                                  title: activeSection.title,
+                              })}
+                          />
+                      ),
+                      headerRight: () => (
+                          <Button
+                              chromeless
+                              onPress={handleReturnHome}
+                              accessibilityLabel={t("tabs.home", { ns: "common" })}
+                          >
+                              <XStack gap="$1.5" items="center">
+                                  <LayoutDashboard size={16} color={ds.colors.primary} />
+                                  <Text
+                                      color={ds.colors.primary}
+                                      fontFamily={ds.fonts.bodyBold}
+                                      fontSize={ds.typography.labelSm.fontSize}
+                                      textTransform="uppercase"
+                                      letterSpacing={1}
+                                  >
+                                      {t("tabs.home", { ns: "common" })}
+                                  </Text>
+                              </XStack>
+                          </Button>
+                      ),
+                  }),
+        });
     }, [themedHeaderOptions, navigation, activeSection, auditSession, handleReturnHome, t, ds]);
 
     const scrollSectionToOffset = useCallback((offset: number) => {
@@ -252,6 +253,47 @@ export default function ExecuteSectionScreen() {
 
     const hasPendingLocalChanges =
         auditSession !== undefined && Object.keys(dirtySections[auditSession.audit_id] ?? {}).length > 0;
+
+    // "Preparing Section" must never spin forever (G2): after a timeout the
+    // wait state gains explicit Retry and Back exits. Sync itself is never
+    // aborted - retry only re-requests the audit session.
+    const isWaitingForAuditData =
+        placeId !== null &&
+        projectId !== null &&
+        sectionKey !== null &&
+        authSession !== null &&
+        errorMessage === null &&
+        (currentUserId !== authSession.user.id || auditSession === undefined || activeSection === undefined);
+
+    useEffect(() => {
+        if (!isWaitingForAuditData) {
+            setHasPreparingTimedOut(false);
+            return;
+        }
+        const timer = setTimeout(() => {
+            setHasPreparingTimedOut(true);
+        }, SECTION_PREPARING_TIMEOUT_MS);
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [isWaitingForAuditData, preparingRetryNonce]);
+
+    const handlePreparingRetry = useCallback(() => {
+        setHasPreparingTimedOut(false);
+        setPreparingRetryNonce((value) => value + 1);
+        if (authSession !== null && projectId !== null && placeId !== null) {
+            hydrate(authSession.user.id).catch(() => undefined);
+            ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
+        }
+    }, [authSession, ensurePlaceAudit, hydrate, placeId, projectId]);
+
+    const handlePreparingBack = useCallback(() => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        router.replace(buildHomeRoute() as Href);
+    }, [router]);
 
     if (
         placeId === null ||
@@ -283,6 +325,19 @@ export default function ExecuteSectionScreen() {
                     onAction={() => {
                         ensurePlaceAudit(authSession, projectId, placeId).catch(() => undefined);
                     }}
+                />
+            );
+        }
+
+        if (hasPreparingTimedOut) {
+            return (
+                <CenteredMessageCard
+                    title={t("section.stillPreparingTitle", { ns: "audit" })}
+                    message={t("section.stillPreparingMessage", { ns: "audit" })}
+                    actionLabel={t("actions.retry", { ns: "common" })}
+                    onAction={handlePreparingRetry}
+                    secondaryActionLabel={t("actions.back", { ns: "common" })}
+                    onSecondaryAction={handlePreparingBack}
                 />
             );
         }
@@ -542,7 +597,8 @@ export default function ExecuteSectionScreen() {
                 })}
             >
                 <LoggedInAsNotice />
-                <YStack gap="$3">
+                {/* Long-form intro text is capped at a readable measure (G9). */}
+                <YStack gap="$3" style={{ maxWidth: layout.readableMaxWidth }}>
                     <Text
                         color={ds.colors.foreground}
                         fontFamily={ds.fonts.headingBold}
@@ -720,72 +776,8 @@ function isExecutionMode(value: string | null): value is ExecutionMode {
     return value === "audit" || value === "survey" || value === "both";
 }
 
-interface CenteredMessageCardProps {
-    readonly title: string;
-    readonly message: string;
-    readonly actionLabel?: string;
-    readonly onAction?: () => void;
-}
-
-/**
- * @param props Message card props.
- * @returns Centered loading/error card.
- */
-function CenteredMessageCard({ title, message, actionLabel, onAction }: Readonly<CenteredMessageCardProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
-    return (
-        <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
-            <YStack
-                width="100%"
-                style={{ maxWidth: layout.formMaxWidth, alignSelf: "center" }}
-                rounded={ds.radii.lg}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.surface}
-                p="$4"
-                gap="$2"
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.titleLg.fontSize}
-                >
-                    {title}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                >
-                    {message}
-                </Paragraph>
-                {actionLabel !== undefined && typeof onAction === "function" ? (
-                    <Button
-                        mt="$2"
-                        height={44}
-                        rounded={ds.radii.md}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.input}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                        onPress={onAction}
-                    >
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelMd.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1.1}
-                        >
-                            {actionLabel}
-                        </Text>
-                    </Button>
-                ) : null}
-            </YStack>
-        </YStack>
-    );
-}
+/** How long the "Preparing Section" wait may run before offering Retry/Back. */
+const SECTION_PREPARING_TIMEOUT_MS = 12000;
 
 /**
  * @param value Raw route parameter.

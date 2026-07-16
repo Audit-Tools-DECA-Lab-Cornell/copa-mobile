@@ -3,9 +3,10 @@ import * as WebBrowser from "expo-web-browser";
 import { Alert, ScrollView, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Spinner, Text, XStack, YStack } from "tamagui";
+import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
 import { AppButton, buttonForegroundColor } from "components/ui/app-button";
+import { AppLoader } from "components/ui/app-loader";
 import { useDesignSystem } from "lib/design-system";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import type { ReleasePolicyDecision } from "lib/release-policy-core";
@@ -129,15 +130,7 @@ export function ForceUpdateScreen({ decision, onRetry }: ForceUpdateScreenProps)
 }
 
 export function ReleasePolicyLoadingScreen() {
-    const ds = useDesignSystem();
     const { t } = useTranslation("common");
 
-    return (
-        <YStack flex={1} items="center" justify="center" gap="$3" bg={ds.colors.background}>
-            <Spinner size="large" color={ds.colors.primary} />
-            <Text color={ds.colors.secondaryForeground} fontFamily={ds.fonts.bodyMedium}>
-                {t("forceUpdate.loading")}
-            </Text>
-        </YStack>
-    );
+    return <AppLoader message={t("forceUpdate.loading")} />;
 }

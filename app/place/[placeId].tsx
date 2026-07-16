@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, Linking, Platform, ScrollView } from "react-native";
+import { Linking, Platform, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
 import type { TFunction } from "i18next";
@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { StatCard } from "components/ui/stat-card";
+import { SkeletonLine } from "components/ui/skeleton";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -24,6 +25,7 @@ import type { AuditorPlace } from "lib/audit/places-api";
 import type { AuditSession, ExecutionMode } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
+import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
@@ -39,7 +41,7 @@ const log = createModuleLogger("place-detail");
  * Full-screen place detail used from the places and execute flows.
  */
 export default function PlaceDetailScreen() {
-    const ds = useDesignSystem();
+    const themedHeaderOptions = useThemedHeaderOptions();
     const router = useRouter();
     const { t, i18n } = useTranslation(["places", "common", "reports"]);
     const params = useLocalSearchParams<{
@@ -77,24 +79,14 @@ export default function PlaceDetailScreen() {
         <>
             <Stack.Screen
                 options={{
-                    contentStyle: { paddingTop: 20 },
+                    ...themedHeaderOptions,
+                    title: t("detail.screenTitle", { ns: "places" }),
                     headerTitle: () => (
                         <AuditHeaderTitle
                             primary={place?.place_name ?? t("detail.screenTitle", { ns: "places" })}
                             size="lg"
                         />
                     ),
-                    headerShown: true,
-                    headerBackButtonDisplayMode: "generic",
-                    headerBackVisible: true,
-                    headerStyle: {
-                        backgroundColor: ds.colors.surface,
-                    },
-                    headerTintColor: ds.colors.primary,
-                    headerTitleStyle: {
-                        color: ds.colors.foreground,
-                        fontFamily: ds.fonts.bodyBold,
-                    },
                 }}
             />
 
@@ -160,6 +152,9 @@ function PlaceDetailContent({
     const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+    // One composed address line (G5): street + postal + city, falling back to
+    // the derived locality when structured fields are missing.
+    const addressLine = [place.address, place.postal_code, place.city].filter(Boolean).join(", ") || locality;
     const pendingScoreMessage = useMemo(() => {
         return resolvePendingScoreMessage({
             auditSession,
@@ -168,7 +163,7 @@ function PlaceDetailContent({
             t,
         });
     }, [auditSession, instrument, place, t]);
-    const summaryMetricValue = formatScorePair(place.overall_scores) ?? "Pending";
+    const summaryMetricValue = formatScorePair(place.overall_scores) ?? t("detail.scorePendingShort", { ns: "places" });
     const openAuditLabel =
         place.selected_execution_mode === null
             ? t("actions.openAudit", { ns: "common" })
@@ -245,7 +240,6 @@ function PlaceDetailContent({
                     value={updatedLabel}
                     minHeight={layout.summaryCardMinHeight}
                 />
-                <PlaceInfoCard label="Project" value={place.project_name} minHeight={layout.summaryCardMinHeight} />
             </XStack>
         </YStack>
     );
@@ -338,13 +332,13 @@ function PlaceDetailContent({
 
             <QuickActionButton
                 icon={<MapPin size={16} color={ds.colors.foreground} />}
-                label="Open in Apple Maps"
+                label={t("detail.openInAppleMaps", { ns: "places" })}
                 onPress={() => openUrl(`http://maps.apple.com/?q=${encodedMapsQuery}`)}
             />
 
             <QuickActionButton
                 icon={<MapPin size={16} color={ds.colors.foreground} />}
-                label="Open in Google Maps"
+                label={t("detail.openInGoogleMaps", { ns: "places" })}
                 onPress={() => openUrl(`https://www.google.com/maps/search/?api=1&query=${encodedMapsQuery}`)}
             />
         </YStack>
@@ -365,7 +359,7 @@ function PlaceDetailContent({
                     fontFamily={ds.fonts.bodyBold}
                     fontSize={ds.typography.titleMd.fontSize}
                 >
-                    Map
+                    {t("detail.mapTitle", { ns: "places" })}
                 </Text>
                 <Paragraph
                     color={ds.colors.mutedForeground}
@@ -376,25 +370,26 @@ function PlaceDetailContent({
                 </Paragraph>
             </YStack>
             {mapRegion === null || placeCoordinate === null ? (
-                <YStack
-                    height={layout.isTablet ? 280 : 220}
+                <XStack
                     rounded={ds.radii.md}
                     borderWidth={1}
                     borderColor={ds.colors.border}
                     bg={ds.colors.input}
-                    justify="center"
                     items="center"
-                    px="$4"
+                    gap="$2"
+                    px="$3"
+                    py="$2.5"
                 >
+                    <MapPin size={16} color={ds.colors.mutedForeground} />
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyMd.fontSize}
-                        style={{ textAlign: "center" }}
+                        flex={1}
                     >
-                        Map preview is unavailable for this place because coordinates are missing.
+                        {t("detail.mapUnavailable", { ns: "places" })}
                     </Paragraph>
-                </YStack>
+                </XStack>
             ) : (
                 <YStack
                     rounded={ds.radii.md}
@@ -433,55 +428,31 @@ function PlaceDetailContent({
                 includeTopPadding: false,
             })}
         >
+            {/* The native header already shows the place name (G5: say it
+                once), so the body leads with the project and one composed
+                address line instead of a duplicate H1 and four address rows. */}
             <YStack gap="$3">
                 <XStack justify="space-between" items="flex-start" gap="$3">
                     <YStack flex={1} gap="$1.5">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={
-                                layout.isTablet ? ds.typography.metricLg.fontSize : ds.typography.metricMd.fontSize
-                            }
-                            lineHeight={
-                                layout.isTablet ? ds.typography.metricLg.lineHeight : ds.typography.metricMd.lineHeight
-                            }
-                        >
-                            {place.place_name}
-                        </Text>
                         <Paragraph
-                            color={ds.colors.mutedForeground}
-                            fontFamily={ds.fonts.bodyMedium}
-                            fontSize={ds.typography.bodyMd.fontSize}
+                            color={ds.colors.foreground}
+                            fontFamily={ds.fonts.bodySemiBold}
+                            fontSize={ds.typography.titleMd.fontSize}
+                            lineHeight={ds.typography.titleMd.lineHeight}
                         >
                             {place.project_name}
                         </Paragraph>
-                        {place.address !== null && place.address !== undefined && (
+                        <XStack items="center" gap="$2">
+                            <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
                             <Paragraph
                                 color={ds.colors.mutedForeground}
                                 fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyMd.fontSize}
+                                fontSize={ds.typography.bodyLg.fontSize}
+                                flex={1}
                             >
-                                {place.address}
+                                {addressLine}
                             </Paragraph>
-                        )}
-                        {place.postal_code !== null && place.postal_code !== undefined && (
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyMd.fontSize}
-                            >
-                                {place.postal_code}
-                            </Paragraph>
-                        )}
-                        {place.city !== null && place.city !== undefined && (
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyMd.fontSize}
-                            >
-                                {place.city}
-                            </Paragraph>
-                        )}
+                        </XStack>
                     </YStack>
                     <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusTone.surface }}>
                         <Text
@@ -495,33 +466,26 @@ function PlaceDetailContent({
                         </Text>
                     </YStack>
                 </XStack>
-
-                <XStack items="center" gap="$2">
-                    <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
-                    <Paragraph
-                        color={ds.colors.mutedForeground}
-                        fontFamily={ds.fonts.bodyMedium}
-                        fontSize={ds.typography.bodyLg.fontSize}
-                    >
-                        {locality}
-                    </Paragraph>
-                </XStack>
             </YStack>
 
-            {mapPreviewCard}
-
+            {/* Tablet rebalance (5.2/G9): the rail keeps real supporting
+                content (quick actions + current audit) while the wide main
+                column carries the metrics and the map, so neither pane
+                starves. Phones keep the single-column order. */}
             {layout.isTablet ? (
                 <XStack gap={layout.twoPaneGap} items="flex-start">
                     <YStack flex={1} gap="$3">
                         {metricsGrid}
-                        {currentAuditCard}
+                        {mapPreviewCard}
                     </YStack>
                     <YStack width={layout.supportRailWidth} gap="$3">
                         {quickActionsCard}
+                        {currentAuditCard}
                     </YStack>
                 </XStack>
             ) : (
                 <YStack gap="$3">
+                    {mapPreviewCard}
                     {metricsGrid}
                     {currentAuditCard}
                     {quickActionsCard}
@@ -702,7 +666,13 @@ function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailS
                 <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                     {message}
                 </Paragraph>
-                {isLoading ? <ActivityIndicator color={ds.colors.primary} /> : null}
+                {isLoading ? (
+                    <YStack gap="$2" pt="$2">
+                        <SkeletonLine width="86%" />
+                        <SkeletonLine width="70%" />
+                        <SkeletonLine width="78%" />
+                    </YStack>
+                ) : null}
             </YStack>
         </YStack>
     );

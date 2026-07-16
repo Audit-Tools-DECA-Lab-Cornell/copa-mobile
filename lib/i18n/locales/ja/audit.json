@@ -167,19 +167,22 @@
     "section": {
         "answeredCount": "{{answered}} / {{total}} 回回答済み",
         "backToOverview": "概要へ戻る",
+        "finalCommentsCta": "Continue",
         "followUpHidden": "多様性、社交性、そして挑戦は、数量の肯定的な回答を得た後にのみ表示されます。",
+        "headerSecondary": "セクション：{{title}}",
         "notesDefault": "このセクションについての所感や推奨事項を追加してください。",
         "notesPlaceholder": "セクションのノートまたは推奨事項を追加...",
         "openSection": "セクションを開く",
         "pendingSync": "ローカルに保存済み - オンライン時にサーバーへ同期します。",
         "preparingMessage": "現在のセクションと以前に保存された回答を読み込み中...",
         "preparingTitle": "セクションを準備中",
-        "reviewSection": "セクションを確認",
         "previousSection": "前へ",
+        "reviewSection": "セクションを確認",
         "saveAndNext": "次のセクション",
         "saveSection": "セクションを保存",
-        "finalCommentsCta": "Continue",
         "sectionNotes": "セクションのノート",
+        "stillPreparingMessage": "予想より時間がかかっています。オフラインの場合でも、保存した回答は安全です。再試行するか、前の画面に戻ってください。",
+        "stillPreparingTitle": "セクションの準備に時間がかかっています",
         "table": {
             "followUpPending": "この尺度を有効にするには、数量の質問に肯定的な回答を選択してください。",
             "itemColumn": "質問項目",
@@ -198,8 +201,9 @@
         "auditStart": "監査開始",
         "execute": "実行",
         "preAudit": "事前監査",
-        "spaceAudit": "スペース監査",
-        "section": "セクション"
+        "section": "セクション",
+        "sectionFallback": "セクション",
+        "spaceAudit": "スペース監査"
     },
     "subjects": {
         "audit": "監査",

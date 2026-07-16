@@ -1,5 +1,5 @@
-import { memo, useMemo, type ReactNode } from "react";
-import { ScrollView } from "react-native";
+import { memo, useCallback, useMemo, useState, type ReactNode } from "react";
+import { ScrollView, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Text, XStack, YStack } from "tamagui";
 import { useTranslation } from "react-i18next";
 import type { DomainQuestionRow } from "lib/audit/report-helpers";
@@ -60,6 +60,25 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         () => computeItemsTableLayout(layout.isTablet, layout.isWideTablet),
         [layout.isTablet, layout.isWideTablet],
     );
+
+    // Edge-fade affordance: the table is ~1436px wide, so on every device some
+    // columns start off-screen. The fade signals hidden content (G8) and
+    // disappears once the user reaches the right edge (or content fits).
+    const [scrollX, setScrollX] = useState(0);
+    const [contentWidth, setContentWidth] = useState(0);
+    const [viewportWidth, setViewportWidth] = useState(0);
+
+    const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        setScrollX(event.nativeEvent.contentOffset.x);
+    }, []);
+    const handleContentSizeChange = useCallback((width: number) => {
+        setContentWidth(width);
+    }, []);
+    const handleViewportLayout = useCallback((event: LayoutChangeEvent) => {
+        setViewportWidth(event.nativeEvent.layout.width);
+    }, []);
+
+    const showEndFade = contentWidth - scrollX - viewportWidth > 12;
 
     const translatePv = {
         notApplicable: () => t("extendedTable.notApplicable"),
@@ -162,191 +181,392 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         return <DataText textAlign="center">{label ?? "-"}</DataText>;
     }
 
-    return (
-        <ScrollView horizontal showsHorizontalScrollIndicator>
-            <YStack
-                style={{
-                    minWidth: cols.minTableWidth,
-                    borderWidth: 1,
-                    borderColor: ds.colors.border,
-                    borderRadius: ds.radii.sm,
-                }}
-                overflow="hidden"
-            >
-                {/* Header */}
-                <XStack bg={ds.colors.primary} borderBottomWidth={1} borderColor={ds.colors.border}>
-                    <HeaderCell width={cols.idColWidth} isFirst>
-                        {t("extendedTable.columnQuestionId", { ns: "reports" })}
-                    </HeaderCell>
-                    <HeaderCell width={cols.itemColWidth}>
-                        {t("extendedTable.columnItems", { ns: "reports" })}
-                    </HeaderCell>
-                    <HeaderCell width={cols.scaleColWidth}>
-                        {t("extendedTable.columnProvision", { ns: "reports" })}
-                    </HeaderCell>
-                    <HeaderCell width={cols.scaleColWidth}>
-                        {t("extendedTable.columnVariety", { ns: "reports" })}
-                    </HeaderCell>
-                    <HeaderCell width={cols.scaleColWidth}>
-                        {t("extendedTable.columnChallenge", { ns: "reports" })}
-                    </HeaderCell>
-                    <HeaderCell width={cols.scaleColWidth}>
-                        {t("extendedTable.columnSociability", { ns: "reports" })}
-                    </HeaderCell>
-                    <HeaderCell width={cols.pvuColWidth}>
-                        {t("extendedTable.columnPlayValue", { ns: "reports" })}
-                    </HeaderCell>
-                    <HeaderCell width={cols.pvuColWidth}>
-                        {t("extendedTable.columnUsability", { ns: "reports" })}
-                    </HeaderCell>
-                </XStack>
+    // ── Phone layout (6.3/G8): priority-column rows instead of a ~1436px
+    // horizontal grid. Every value wraps into view - nothing hides off-screen.
+    if (!layout.isTablet) {
+        const formatPvuCompact = (score: number | null, max: number | null): string => {
+            if (score === null || max === null) {
+                return t("extendedTable.notApplicable");
+            }
+            return `${formatScoreValue(score)} / ${formatScoreValue(max)}`;
+        };
 
-                {/* Data rows */}
+        const scaleValueText = (options: {
+            label: string | null;
+            applicable: boolean;
+            isNotApplicable: boolean;
+            isUnsure: boolean;
+            followUpScalesAsked?: boolean;
+        }): { text: string; muted: boolean } => {
+            const { label, applicable, isNotApplicable, isUnsure, followUpScalesAsked = true } = options;
+            if (!applicable || !followUpScalesAsked) {
+                return { text: "-", muted: true };
+            }
+            if (isNotApplicable) {
+                return { text: t("extendedTable.notApplicableFull"), muted: false };
+            }
+            if (isUnsure) {
+                return { text: t("extendedTable.unsure"), muted: false };
+            }
+            return { text: label ?? "-", muted: label === null };
+        };
+
+        return (
+            <YStack width="100%" rounded={ds.radii.sm} borderWidth={1} borderColor={ds.colors.border} overflow="hidden">
                 {questions.map((question, index) => {
-                    const isEven = index % 2 === 0;
-                    const rowBg = isEven ? ds.colors.input : ds.colors.surface;
-                    const borderProps = {
-                        borderTopWidth: 1,
-                        borderColor: ds.colors.border,
-                    } as const;
-
-                    const CellWrapper = ({
-                        children,
-                        width,
-                        align = "center",
-                        first = false,
-                    }: {
-                        children: ReactNode;
-                        width: number;
-                        align?: "center" | "flex-start";
-                        first?: boolean;
-                    }) => (
-                        <YStack
-                            width={width}
-                            p="$2"
-                            items={align}
-                            justify="center"
-                            borderLeftWidth={first ? 0 : 1}
-                            borderColor={ds.colors.border}
-                            bg={rowBg}
-                        >
-                            {children}
-                        </YStack>
-                    );
+                    const rowBg = index % 2 === 0 ? ds.colors.input : ds.colors.surface;
+                    const scaleCells = [
+                        {
+                            label: t("extendedTable.columnProvision"),
+                            ...scaleValueText({
+                                label: question.provisionLabel,
+                                applicable: question.provisionApplicable,
+                                isNotApplicable: question.provisionIsNotApplicable,
+                                isUnsure: question.provisionIsUnsure,
+                            }),
+                        },
+                        {
+                            label: t("extendedTable.columnVariety"),
+                            ...scaleValueText({
+                                label: question.varietyLabel,
+                                applicable: question.varietyApplicable,
+                                isNotApplicable: question.varietyIsNotApplicable,
+                                isUnsure: question.varietyIsUnsure,
+                                followUpScalesAsked: question.followUpScalesAsked,
+                            }),
+                        },
+                        {
+                            label: t("extendedTable.columnChallenge"),
+                            ...scaleValueText({
+                                label: question.challengeLabel,
+                                applicable: question.challengeApplicable,
+                                isNotApplicable: question.challengeIsNotApplicable,
+                                isUnsure: question.challengeIsUnsure,
+                                followUpScalesAsked: question.followUpScalesAsked,
+                            }),
+                        },
+                        {
+                            label: t("extendedTable.columnSociability"),
+                            ...scaleValueText({
+                                label: question.sociabilityLabel,
+                                applicable: question.sociabilityApplicable,
+                                isNotApplicable: question.sociabilityIsNotApplicable,
+                                isUnsure: question.sociabilityIsUnsure,
+                                followUpScalesAsked: question.followUpScalesAsked,
+                            }),
+                        },
+                    ];
 
                     return (
-                        <XStack key={question.questionKey} {...borderProps} accessibilityRole="none">
-                            {/* Question ID */}
-                            <CellWrapper width={cols.idColWidth} first>
-                                <DataText textAlign="center" mono muted>
+                        <YStack
+                            key={question.questionKey}
+                            bg={rowBg}
+                            p="$3"
+                            gap="$2"
+                            borderTopWidth={index === 0 ? 0 : 1}
+                            borderColor={ds.colors.border}
+                        >
+                            <XStack justify="space-between" items="center" gap="$2">
+                                <Text
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.monoMedium}
+                                    fontSize={cellFont}
+                                >
                                     {formatQuestionKeyForDisplay(question.questionKey)}
-                                </DataText>
-                            </CellWrapper>
+                                </Text>
+                                <XStack gap="$3">
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={cellFont}
+                                    >
+                                        {`${t("extendedTable.columnPlayValue")}: ${formatPvuCompact(question.playValueScore, question.playValueMax)}`}
+                                    </Text>
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={cellFont}
+                                    >
+                                        {`${t("extendedTable.columnUsability")}: ${formatPvuCompact(question.usabilityScore, question.usabilityMax)}`}
+                                    </Text>
+                                </XStack>
+                            </XStack>
 
-                            {/* Prompt text */}
-                            <CellWrapper width={cols.itemColWidth} align="flex-start">
-                                <YStack gap="$1.5" width="100%">
-                                    <PromptRichText
-                                        raw={question.questionText}
+                            <PromptRichText raw={question.questionText} fontSize={cellFont} lineHeight={cellLine} />
+                            {question.checklistAnswerLabel !== null ? (
+                                <YStack
+                                    rounded={ds.radii.sm}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.mutedSurface}
+                                    px="$2"
+                                    py="$1"
+                                    self="flex-start"
+                                >
+                                    <Text
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
                                         fontSize={cellFont}
                                         lineHeight={cellLine}
-                                    />
-                                    {question.checklistAnswerLabel !== null ? (
-                                        <YStack
-                                            rounded={ds.radii.sm}
-                                            borderWidth={1}
-                                            borderColor={ds.colors.border}
-                                            bg={ds.colors.mutedSurface}
-                                            px="$2"
-                                            py="$1"
-                                        >
-                                            <Text
-                                                color={ds.colors.mutedForeground}
-                                                fontFamily={ds.fonts.bodyMedium}
-                                                fontSize={ds.typography.bodyXs.fontSize}
-                                                lineHeight={ds.typography.bodyXs.lineHeight}
-                                            >
-                                                <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold}>
-                                                    {t("extendedTable.selectedLabel", {
-                                                        ns: "reports",
-                                                        defaultValue: "Selected: ",
-                                                    })}
-                                                </Text>
-                                                {question.checklistAnswerLabel}
-                                            </Text>
-                                        </YStack>
-                                    ) : null}
+                                    >
+                                        <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold}>
+                                            {t("extendedTable.selectedLabel", { defaultValue: "Selected: " })}
+                                        </Text>
+                                        {question.checklistAnswerLabel}
+                                    </Text>
                                 </YStack>
-                            </CellWrapper>
+                            ) : null}
 
-                            {/* Provision */}
-                            <CellWrapper width={cols.scaleColWidth}>
-                                {renderScaleCellState({
-                                    label: question.provisionLabel,
-                                    applicable: question.provisionApplicable,
-                                    isNotApplicable: question.provisionIsNotApplicable,
-                                    isUnsure: question.provisionIsUnsure,
-                                })}
-                            </CellWrapper>
-
-                            {/* Variety */}
-                            <CellWrapper width={cols.scaleColWidth}>
-                                {renderScaleCellState({
-                                    label: question.varietyLabel,
-                                    applicable: question.varietyApplicable,
-                                    isNotApplicable: question.varietyIsNotApplicable,
-                                    isUnsure: question.varietyIsUnsure,
-                                    followUpScalesAsked: question.followUpScalesAsked,
-                                })}
-                            </CellWrapper>
-
-                            {/* Challenge */}
-                            <CellWrapper width={cols.scaleColWidth}>
-                                {renderScaleCellState({
-                                    label: question.challengeLabel,
-                                    applicable: question.challengeApplicable,
-                                    isNotApplicable: question.challengeIsNotApplicable,
-                                    isUnsure: question.challengeIsUnsure,
-                                    followUpScalesAsked: question.followUpScalesAsked,
-                                })}
-                            </CellWrapper>
-
-                            {/* Sociability */}
-                            <CellWrapper width={cols.scaleColWidth}>
-                                {renderScaleCellState({
-                                    label: question.sociabilityLabel,
-                                    applicable: question.sociabilityApplicable,
-                                    isNotApplicable: question.sociabilityIsNotApplicable,
-                                    isUnsure: question.sociabilityIsUnsure,
-                                    followUpScalesAsked: question.followUpScalesAsked,
-                                })}
-                            </CellWrapper>
-
-                            {/* Play value */}
-                            <CellWrapper width={cols.pvuColWidth} align="flex-start">
-                                <DataText textAlign="left">
-                                    {formatPlayUsabilityCell(
-                                        question.playValueScore,
-                                        question.playValueMax,
-                                        translatePv,
-                                    )}
-                                </DataText>
-                            </CellWrapper>
-
-                            {/* Usability */}
-                            <CellWrapper width={cols.pvuColWidth} align="flex-start">
-                                <DataText textAlign="left">
-                                    {formatPlayUsabilityCell(
-                                        question.usabilityScore,
-                                        question.usabilityMax,
-                                        translatePv,
-                                    )}
-                                </DataText>
-                            </CellWrapper>
-                        </XStack>
+                            <XStack flexWrap="wrap" gap="$2">
+                                {scaleCells.map((cell) => (
+                                    <YStack
+                                        key={cell.label}
+                                        rounded={ds.radii.sm}
+                                        bg={ds.colors.mutedSurface}
+                                        px="$2"
+                                        py="$1.5"
+                                        gap="$0.5"
+                                        style={{ minWidth: "47%", flexGrow: 1 }}
+                                    >
+                                        <Text
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelSm.fontSize}
+                                            textTransform="uppercase"
+                                            letterSpacing={0.5}
+                                        >
+                                            {cell.label}
+                                        </Text>
+                                        <Text
+                                            color={cell.muted ? ds.colors.mutedForeground : ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={cellFont}
+                                            lineHeight={cellLine}
+                                            opacity={cell.muted ? mutedDashOpacity : 1}
+                                        >
+                                            {cell.text}
+                                        </Text>
+                                    </YStack>
+                                ))}
+                            </XStack>
+                        </YStack>
                     );
                 })}
             </YStack>
-        </ScrollView>
+        );
+    }
+
+    return (
+        <YStack position="relative" width="100%">
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator
+                persistentScrollbar
+                onScroll={handleScroll}
+                scrollEventThrottle={32}
+                onContentSizeChange={handleContentSizeChange}
+                onLayout={handleViewportLayout}
+            >
+                <YStack
+                    style={{
+                        minWidth: cols.minTableWidth,
+                        borderWidth: 1,
+                        borderColor: ds.colors.border,
+                        borderRadius: ds.radii.sm,
+                    }}
+                    overflow="hidden"
+                >
+                    {/* Header */}
+                    <XStack bg={ds.colors.primary} borderBottomWidth={1} borderColor={ds.colors.border}>
+                        <HeaderCell width={cols.idColWidth} isFirst>
+                            {t("extendedTable.columnQuestionId", { ns: "reports" })}
+                        </HeaderCell>
+                        <HeaderCell width={cols.itemColWidth}>
+                            {t("extendedTable.columnItems", { ns: "reports" })}
+                        </HeaderCell>
+                        <HeaderCell width={cols.scaleColWidth}>
+                            {t("extendedTable.columnProvision", { ns: "reports" })}
+                        </HeaderCell>
+                        <HeaderCell width={cols.scaleColWidth}>
+                            {t("extendedTable.columnVariety", { ns: "reports" })}
+                        </HeaderCell>
+                        <HeaderCell width={cols.scaleColWidth}>
+                            {t("extendedTable.columnChallenge", { ns: "reports" })}
+                        </HeaderCell>
+                        <HeaderCell width={cols.scaleColWidth}>
+                            {t("extendedTable.columnSociability", { ns: "reports" })}
+                        </HeaderCell>
+                        <HeaderCell width={cols.pvuColWidth}>
+                            {t("extendedTable.columnPlayValue", { ns: "reports" })}
+                        </HeaderCell>
+                        <HeaderCell width={cols.pvuColWidth}>
+                            {t("extendedTable.columnUsability", { ns: "reports" })}
+                        </HeaderCell>
+                    </XStack>
+
+                    {/* Data rows */}
+                    {questions.map((question, index) => {
+                        const isEven = index % 2 === 0;
+                        const rowBg = isEven ? ds.colors.input : ds.colors.surface;
+                        const borderProps = {
+                            borderTopWidth: 1,
+                            borderColor: ds.colors.border,
+                        } as const;
+
+                        const CellWrapper = ({
+                            children,
+                            width,
+                            align = "center",
+                            first = false,
+                        }: {
+                            children: ReactNode;
+                            width: number;
+                            align?: "center" | "flex-start";
+                            first?: boolean;
+                        }) => (
+                            <YStack
+                                width={width}
+                                p="$2"
+                                items={align}
+                                justify="center"
+                                borderLeftWidth={first ? 0 : 1}
+                                borderColor={ds.colors.border}
+                                bg={rowBg}
+                            >
+                                {children}
+                            </YStack>
+                        );
+
+                        return (
+                            <XStack key={question.questionKey} {...borderProps} accessibilityRole="none">
+                                {/* Question ID */}
+                                <CellWrapper width={cols.idColWidth} first>
+                                    <DataText textAlign="center" mono muted>
+                                        {formatQuestionKeyForDisplay(question.questionKey)}
+                                    </DataText>
+                                </CellWrapper>
+
+                                {/* Prompt text */}
+                                <CellWrapper width={cols.itemColWidth} align="flex-start">
+                                    <YStack gap="$1.5" width="100%">
+                                        <PromptRichText
+                                            raw={question.questionText}
+                                            fontSize={cellFont}
+                                            lineHeight={cellLine}
+                                        />
+                                        {question.checklistAnswerLabel !== null ? (
+                                            <YStack
+                                                rounded={ds.radii.sm}
+                                                borderWidth={1}
+                                                borderColor={ds.colors.border}
+                                                bg={ds.colors.mutedSurface}
+                                                px="$2"
+                                                py="$1"
+                                            >
+                                                <Text
+                                                    color={ds.colors.mutedForeground}
+                                                    fontFamily={ds.fonts.bodyMedium}
+                                                    fontSize={ds.typography.bodyXs.fontSize}
+                                                    lineHeight={ds.typography.bodyXs.lineHeight}
+                                                >
+                                                    <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold}>
+                                                        {t("extendedTable.selectedLabel", {
+                                                            ns: "reports",
+                                                            defaultValue: "Selected: ",
+                                                        })}
+                                                    </Text>
+                                                    {question.checklistAnswerLabel}
+                                                </Text>
+                                            </YStack>
+                                        ) : null}
+                                    </YStack>
+                                </CellWrapper>
+
+                                {/* Provision */}
+                                <CellWrapper width={cols.scaleColWidth}>
+                                    {renderScaleCellState({
+                                        label: question.provisionLabel,
+                                        applicable: question.provisionApplicable,
+                                        isNotApplicable: question.provisionIsNotApplicable,
+                                        isUnsure: question.provisionIsUnsure,
+                                    })}
+                                </CellWrapper>
+
+                                {/* Variety */}
+                                <CellWrapper width={cols.scaleColWidth}>
+                                    {renderScaleCellState({
+                                        label: question.varietyLabel,
+                                        applicable: question.varietyApplicable,
+                                        isNotApplicable: question.varietyIsNotApplicable,
+                                        isUnsure: question.varietyIsUnsure,
+                                        followUpScalesAsked: question.followUpScalesAsked,
+                                    })}
+                                </CellWrapper>
+
+                                {/* Challenge */}
+                                <CellWrapper width={cols.scaleColWidth}>
+                                    {renderScaleCellState({
+                                        label: question.challengeLabel,
+                                        applicable: question.challengeApplicable,
+                                        isNotApplicable: question.challengeIsNotApplicable,
+                                        isUnsure: question.challengeIsUnsure,
+                                        followUpScalesAsked: question.followUpScalesAsked,
+                                    })}
+                                </CellWrapper>
+
+                                {/* Sociability */}
+                                <CellWrapper width={cols.scaleColWidth}>
+                                    {renderScaleCellState({
+                                        label: question.sociabilityLabel,
+                                        applicable: question.sociabilityApplicable,
+                                        isNotApplicable: question.sociabilityIsNotApplicable,
+                                        isUnsure: question.sociabilityIsUnsure,
+                                        followUpScalesAsked: question.followUpScalesAsked,
+                                    })}
+                                </CellWrapper>
+
+                                {/* Play value */}
+                                <CellWrapper width={cols.pvuColWidth} align="flex-start">
+                                    <DataText textAlign="left">
+                                        {formatPlayUsabilityCell(
+                                            question.playValueScore,
+                                            question.playValueMax,
+                                            translatePv,
+                                        )}
+                                    </DataText>
+                                </CellWrapper>
+
+                                {/* Usability */}
+                                <CellWrapper width={cols.pvuColWidth} align="flex-start">
+                                    <DataText textAlign="left">
+                                        {formatPlayUsabilityCell(
+                                            question.usabilityScore,
+                                            question.usabilityMax,
+                                            translatePv,
+                                        )}
+                                    </DataText>
+                                </CellWrapper>
+                            </XStack>
+                        );
+                    })}
+                </YStack>
+            </ScrollView>
+            {showEndFade ? (
+                <XStack position="absolute" t={0} b={0} r={0} pointerEvents="none">
+                    {END_FADE_OPACITIES.map((opacity, index) => (
+                        <YStack
+                            key={`fade-${index.toString()}`}
+                            width={5}
+                            height="100%"
+                            bg={ds.colors.background}
+                            opacity={opacity}
+                        />
+                    ))}
+                </XStack>
+            ) : null}
+        </YStack>
     );
 });
+
+/** Stepped strips approximating a right-edge fade without a gradient dependency. */
+const END_FADE_OPACITIES = [0.08, 0.16, 0.28, 0.42, 0.58, 0.72] as const;

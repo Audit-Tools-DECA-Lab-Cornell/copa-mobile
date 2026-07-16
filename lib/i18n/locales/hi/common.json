@@ -3,13 +3,14 @@
         "auditor": "ऑडिटर"
     },
     "actions": {
+        "back": "वापस",
         "openAudit": "ऑडिट खोलें",
         "openSubject": "{{subject}} खोलें",
         "resume": "फिर से शुरू करें",
         "retry": "पुनः प्रयास करें",
         "seeAll": "सभी देखें",
-        "start": "ऑडिट शुरू करें",
         "signOut": "साइन आउट",
+        "start": "ऑडिट शुरू करें",
         "viewDetails": "विवरण देखें",
         "viewReport": "रिपोर्ट देखें"
     },

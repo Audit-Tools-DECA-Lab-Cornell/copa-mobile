@@ -18,6 +18,7 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { BugReportFab } from "components/bug-report/BugReportFab";
 import { Provider } from "components/Provider";
+import { AppLoader } from "components/ui/app-loader";
 import { ForceUpdateScreen, ReleasePolicyLoadingScreen } from "components/release-policy/ForceUpdateScreen";
 import { TestingMigrationScreen } from "components/testing-migration/TestingMigrationScreen";
 import { useFonts } from "expo-font";
@@ -102,7 +103,10 @@ export default function RootLayout() {
     }, []);
 
     if ((!fontsLoaded && !fontError) || !isPreferencesHydrated) {
-        return null;
+        // Branded pulse instead of a blank frame (G2). AppLoader is built from
+        // plain RN primitives, so it is safe here before the Tamagui provider
+        // mounts and before custom fonts load.
+        return <AppLoader />;
     }
 
     return (
@@ -150,7 +154,7 @@ function ActiveRootLayoutNav() {
     const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     const hasSeenIntro = usePreferencesStore((state) => state.hasSeenIntro);
     const ds = useDesignSystem();
-    const { t } = useTranslation("audit");
+    const { t } = useTranslation(["audit", "settings"]);
 
     useHiddenAndroidNavBar(routeKey);
     const safeAreaInsets = useSafeAreaInsets();
@@ -395,7 +399,7 @@ function ActiveRootLayoutNav() {
     }, [authSession, authStatus, router, segments, hasSeenIntro]);
 
     if (authStatus === "loading") {
-        return null;
+        return <AppLoader />;
     }
 
     return (
@@ -412,12 +416,41 @@ function ActiveRootLayoutNav() {
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen
                         name="execute/[placeId]/index"
-                        options={{ headerShown: true, title: t("stack.execute") }}
+                        options={{ headerShown: true, title: t("stack.execute", { ns: "audit" }) }}
+                    />
+                    {/* Default localized titles guard every data-gated screen
+                        against flashing its raw route slug (G1). Screens
+                        override these once their data resolves. */}
+                    <Stack.Screen
+                        name="execute/[placeId]/overview"
+                        options={{ headerShown: true, title: t("overview.sections", { ns: "audit" }) }}
+                    />
+                    <Stack.Screen
+                        name="execute/[placeId]/pre-audit"
+                        options={{ headerShown: true, title: t("stack.preAudit", { ns: "audit" }) }}
+                    />
+                    <Stack.Screen
+                        name="execute/[placeId]/space-audit"
+                        options={{ headerShown: true, title: t("stack.spaceAudit", { ns: "audit" }) }}
+                    />
+                    <Stack.Screen
+                        name="execute/[placeId]/final-comments"
+                        options={{ headerShown: true, title: t("finalComments.title", { ns: "audit" }) }}
+                    />
+                    <Stack.Screen
+                        name="execute/[placeId]/section/[sectionKey]"
+                        options={{ headerShown: true, title: t("stack.sectionFallback", { ns: "audit" }) }}
                     />
                     <Stack.Screen name="place/[placeId]" options={{ headerShown: true }} />
                     <Stack.Screen name="report/[auditId]" options={{ headerShown: true }} />
-                    <Stack.Screen name="settings/change-password" options={{ headerShown: true }} />
-                    <Stack.Screen name="settings/edit-profile" options={{ headerShown: true }} />
+                    <Stack.Screen
+                        name="settings/change-password"
+                        options={{ headerShown: true, title: t("changePassword.title", { ns: "settings" }) }}
+                    />
+                    <Stack.Screen
+                        name="settings/edit-profile"
+                        options={{ headerShown: true, title: t("editProfile.title", { ns: "settings" }) }}
+                    />
                 </Stack>
             </KeyboardAvoidingView>
             <BugReportFab />

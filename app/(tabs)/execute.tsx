@@ -4,9 +4,11 @@ import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowRight, ClipboardCheck } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
-import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
+import { Paragraph, Text, XStack, YStack } from "tamagui";
+import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { FilterChip } from "components/ui/filter-chip";
 import { SearchInput } from "components/ui/search-input";
+import { ScreenHeader } from "components/ui/screen-header";
 import type { AuditorPlace } from "lib/audit/places-api";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, derivePlaceRequirementStatus, matchesPlaceSearch } from "lib/audit/place-helpers";
@@ -15,6 +17,7 @@ import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem } from "lib/design-system";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -29,6 +32,7 @@ type ExecuteFilter = "active" | "all";
 export default function ExecuteIndexScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const router = useRouter();
     const { t } = useTranslation(["audit", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -188,25 +192,10 @@ export default function ExecuteIndexScreen() {
 
     const headerComponent = (
         <YStack gap="$4">
-            <YStack gap="$3">
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.headingBold}
-                    fontSize={layout.isTablet ? ds.typography.displayLg.fontSize : ds.typography.displayMd.fontSize}
-                    lineHeight={
-                        layout.isTablet ? ds.typography.displayLg.lineHeight : ds.typography.displayMd.lineHeight
-                    }
-                >
-                    {t("executeLanding.title", { ns: "audit" })}
-                </Text>
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyLg.fontSize}
-                >
-                    {t("executeLanding.subtitle", { ns: "audit" })}
-                </Paragraph>
-            </YStack>
+            <ScreenHeader
+                title={t("executeLanding.title", { ns: "audit" })}
+                subtitle={t("executeLanding.subtitle", { ns: "audit" })}
+            />
 
             <SearchInput
                 value={searchQuery}
@@ -258,31 +247,16 @@ export default function ExecuteIndexScreen() {
                     <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                         {deriveLocality(featuredPlace, t("place.assignedPlace", { ns: "common" }))}
                     </Paragraph>
-                    <Button
-                        height={layout.isTablet ? layout.buttonHeight : 48}
-                        rounded={ds.radii.md}
-                        borderWidth={0}
-                        bg={ds.colors.primary}
-                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                    <AppButton
+                        variant="primary"
+                        label={t("executeLanding.openSelectedAudit", { ns: "audit" })}
+                        iconRight={<ArrowRight size={16} color={buttonForegroundColor("primary", ds.colors)} />}
                         onPress={() => {
                             router.push(
                                 `/execute/${featuredPlace.place_id}?projectId=${encodeURIComponent(featuredPlace.project_id)}`,
                             );
                         }}
-                    >
-                        <XStack items="center" gap="$2">
-                            <Text
-                                color={ds.colors.primaryForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelLg.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.2}
-                            >
-                                {t("executeLanding.openSelectedAudit", { ns: "audit" })}
-                            </Text>
-                            <ArrowRight size={16} color={ds.colors.primaryForeground} />
-                        </XStack>
-                    </Button>
+                    />
                 </FeaturedPlaceCard>
             )}
         </YStack>
@@ -321,7 +295,7 @@ export default function ExecuteIndexScreen() {
                 maintainVisibleContentPosition={{ disabled: true }}
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                    bottomPadding: 92,
+                    bottomPadding: listBottomPadding,
                 })}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={headerComponent}
@@ -342,7 +316,7 @@ export default function ExecuteIndexScreen() {
             maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: listBottomPadding,
             })}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={headerComponent}
@@ -391,10 +365,7 @@ function ExecuteQueueCard({
             p={layout.cardPadding}
             gap="$3.5"
             justify="space-between"
-            style={{
-                minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
-                boxShadow: ds.shadows.card,
-            }}
+            style={{ boxShadow: ds.shadows.card }}
         >
             <YStack gap="$2.5">
                 <Text
@@ -417,29 +388,17 @@ function ExecuteQueueCard({
                 </Paragraph>
             </YStack>
 
-            <Button
-                height={layout.isTablet ? layout.buttonHeight : 42}
-                rounded={ds.radii.md}
-                borderWidth={1}
-                borderColor={ds.colors.border}
-                bg={ds.colors.input}
-                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                onPress={onPress}
-            >
-                <Text
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.bodyBold}
-                    fontSize={ds.typography.labelMd.fontSize}
-                    textTransform="uppercase"
-                    letterSpacing={1.2}
-                >
-                    {hasActiveSession && flowSubject !== null
+            <AppButton
+                variant="secondary"
+                label={
+                    hasActiveSession && flowSubject !== null
                         ? t("copy.continueToSubject", { ns: "audit", subject: flowSubject })
                         : hasActiveSession
                           ? t("resumeAudit", { ns: "audit" })
-                          : t("startAudit", { ns: "audit" })}
-                </Text>
-            </Button>
+                          : t("startAudit", { ns: "audit" })
+                }
+                onPress={onPress}
+            />
         </YStack>
     );
 }

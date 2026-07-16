@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, ScrollView } from "react-native";
+import { ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import {
     ArrowRight,
@@ -7,14 +7,16 @@ import {
     Clock3,
     LogOut,
     MapPin,
-    MapPinned,
     Play,
-    ShieldCheck,
     SlidersHorizontal,
     UserRound,
     WifiOff,
 } from "@tamagui/lucide-icons-2";
+import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
+import { StatCard } from "components/ui/stat-card";
+import { ScreenHeader } from "components/ui/screen-header";
+import { TabListSkeleton } from "components/ui/skeleton";
 import { PendingUploadsBanner } from "components/playspace-audit/pending-uploads-banner";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
@@ -26,6 +28,7 @@ import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } fro
 import { getCardTextLineLimit } from "lib/responsive";
 import { buildPairGridRows } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
@@ -87,6 +90,7 @@ function derivePriorityDueLabelKey(place: AuditorPlace | undefined): PriorityDue
 export default function DashboardScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const router = useRouter();
     const { t, i18n } = useTranslation(["dashboard", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -637,35 +641,24 @@ export default function DashboardScreen() {
                                 {priorityProgressLabel}
                             </Text>
                         </YStack>
-                        <Button
-                            height={layout.isTablet ? layout.buttonHeight : 40}
+                        <AppButton
+                            variant="primary"
+                            size={layout.isTablet ? "regular" : "compact"}
                             px="$6"
-                            rounded={ds.radii.sm}
-                            borderWidth={0}
-                            bg={ds.colors.primary}
-                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                            // Verb must match the audit's actual state: "Resume"
+                            // on a not-started audit reads as a bug.
+                            label={
+                                priorityPlaceStatus === "not_started"
+                                    ? t("actions.start", { ns: "common" })
+                                    : t("actions.resume", { ns: "common" })
+                            }
+                            iconRight={<Play size={14} color={buttonForegroundColor("primary", ds.colors)} />}
                             onPress={() => {
                                 router.push(
                                     `/execute/${priorityPlace.place_id}?projectId=${encodeURIComponent(priorityPlace.project_id)}`,
                                 );
                             }}
-                        >
-                            <XStack items="center" gap="$2">
-                                <Text
-                                    color={ds.colors.primaryForeground}
-                                    fontFamily={ds.fonts.bodySemiBold}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    numberOfLines={1}
-                                >
-                                    {/* Verb must match the audit's actual state:
-                                        "Resume" on a not-started audit reads as a bug. */}
-                                    {priorityPlaceStatus === "not_started"
-                                        ? t("actions.start", { ns: "common" })
-                                        : t("actions.resume", { ns: "common" })}
-                                </Text>
-                                <Play size={14} color={ds.colors.primaryForeground} />
-                            </XStack>
-                        </Button>
+                        />
                     </XStack>
                 </YStack>
             )}
@@ -709,7 +702,7 @@ export default function DashboardScreen() {
                             <XStack key={row.id} gap="$3">
                                 <DashboardActiveWorkCard place={row.left} />
                                 {row.right === null ? (
-                                    <YStack width="48.5%" style={{ minHeight: layout.queueCardMinHeight }} />
+                                    <YStack width="48.5%" />
                                 ) : (
                                     <DashboardActiveWorkCard place={row.right} />
                                 )}
@@ -728,14 +721,7 @@ export default function DashboardScreen() {
     );
 
     if (isLoading && places.length === 0) {
-        return (
-            <YStack flex={1} items="center" justify="center" bg={ds.colors.background}>
-                <ActivityIndicator size="large" color={ds.colors.primary} />
-                <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium} mt="$4">
-                    {t("loadingPlaces", { ns: "dashboard" })}
-                </Paragraph>
-            </YStack>
-        );
+        return <TabListSkeleton />;
     }
 
     if (layout.isTablet) {
@@ -745,198 +731,97 @@ export default function DashboardScreen() {
                 contentInsetAdjustmentBehavior="automatic"
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                    bottomPadding: 92,
+                    bottomPadding: listBottomPadding,
                     gap: 32,
                 })}
             >
                 <YStack gap="$6">
                     <PendingUploadsBanner />
-                    <XStack justify="space-between" items="center" gap="$3">
-                        <XStack items="center" gap="$3" flex={1}>
-                            <YStack
-                                width={64}
-                                height={64}
-                                items="center"
-                                justify="center"
-                                rounded={ds.radii.md}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={ds.colors.surfaceMuted}
-                            >
-                                <UserRound size={32} color={ds.colors.primary} />
-                            </YStack>
-                            <YStack flex={1} gap="$1.5">
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelMd.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.4}
+                    {/* Merged single-row tablet header (2.2/G9): title + date on
+                        the left; auditor identity, bell, and sign-out on the
+                        right - replaces the old stacked double header. */}
+                    <ScreenHeader
+                        title={t("title", { ns: "dashboard" })}
+                        subtitle={dateLabel}
+                        actions={
+                            <>
+                                <XStack
+                                    items="center"
+                                    gap="$2.5"
+                                    rounded={ds.radii.full}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
+                                    pl="$1.5"
+                                    pr="$3.5"
+                                    py="$1.5"
                                 >
-                                    {t("activeAuditor", { ns: "dashboard" })}
-                                </Paragraph>
-                                <Text
-                                    color={ds.colors.foreground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.displaySm.fontSize}
-                                    lineHeight={ds.typography.displaySm.lineHeight}
-                                >
-                                    {activeAuditorName}
-                                </Text>
-                                {auditorOrganization !== null ? (
-                                    <Paragraph
-                                        color={ds.colors.mutedForeground}
-                                        fontFamily={ds.fonts.bodyMedium}
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                        numberOfLines={1}
+                                    <YStack
+                                        width={40}
+                                        height={40}
+                                        items="center"
+                                        justify="center"
+                                        rounded={ds.radii.full}
+                                        bg={ds.colors.primarySoft}
                                     >
-                                        {auditorOrganization}
-                                    </Paragraph>
-                                ) : null}
-                            </YStack>
-                        </XStack>
-
-                        <XStack gap="$2">
-                            <NotificationBellIcon />
-                            <Button
-                                width={46}
-                                height={46}
-                                p={0}
-                                rounded={ds.radii.full}
-                                borderWidth={1}
-                                borderColor={ds.colors.border}
-                                bg={ds.colors.surfaceMuted}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                onPress={logout}
-                            >
-                                <LogOut size={18} color={ds.colors.foreground} />
-                            </Button>
-                        </XStack>
-                    </XStack>
-
-                    <YStack gap="$1.5">
-                        <Text
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.displayLg.fontSize}
-                            lineHeight={ds.typography.displayLg.lineHeight}
-                            letterSpacing={-0.8}
-                        >
-                            {t("title", { ns: "dashboard" })}
-                        </Text>
-                        <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodySemiBold}>
-                            {dateLabel}
-                        </Paragraph>
-                    </YStack>
+                                        <UserRound size={20} color={ds.colors.primary} />
+                                    </YStack>
+                                    <YStack>
+                                        <Text
+                                            color={ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.bodyMd.fontSize}
+                                            numberOfLines={1}
+                                        >
+                                            {activeAuditorName}
+                                        </Text>
+                                        {auditorOrganization !== null ? (
+                                            <Paragraph
+                                                color={ds.colors.mutedForeground}
+                                                fontFamily={ds.fonts.bodyMedium}
+                                                fontSize={ds.typography.bodySm.fontSize}
+                                                numberOfLines={1}
+                                            >
+                                                {auditorOrganization}
+                                            </Paragraph>
+                                        ) : null}
+                                    </YStack>
+                                </XStack>
+                                <NotificationBellIcon />
+                                <Button
+                                    width={46}
+                                    height={46}
+                                    p={0}
+                                    rounded={ds.radii.full}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={logout}
+                                    accessibilityLabel={t("actions.signOut", { ns: "common" })}
+                                >
+                                    <LogOut size={18} color={ds.colors.foreground} />
+                                </Button>
+                            </>
+                        }
+                    />
 
                     <XStack gap="$3">
-                        <YStack
-                            flex={1}
-                            height={144}
-                            justify="space-between"
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            p={layout.cardPadding}
-                            style={{
-                                minHeight: layout.summaryCardMinHeight,
-                                boxShadow: ds.shadows.card,
-                            }}
-                        >
-                            <YStack gap="$1">
-                                <Text
-                                    color={ds.colors.primary}
-                                    fontFamily={ds.fonts.headingBold}
-                                    fontSize={ds.typography.displayLg.fontSize}
-                                    lineHeight={ds.typography.displayLg.lineHeight}
-                                >
-                                    {String(assignedCount)}
-                                </Text>
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelSm.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.5}
-                                >
-                                    {t("status.assigned", { ns: "common" })}
-                                </Paragraph>
-                            </YStack>
-                            <MapPinned size={32} color={ds.colors.primarySoft} />
-                        </YStack>
-
-                        <YStack
-                            flex={1}
-                            height={144}
-                            justify="space-between"
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            p={layout.cardPadding}
-                            style={{
-                                minHeight: layout.summaryCardMinHeight,
-                                boxShadow: ds.shadows.card,
-                            }}
-                        >
-                            <YStack gap="$1">
-                                <Text
-                                    color={ds.colors.success}
-                                    fontFamily={ds.fonts.headingBold}
-                                    fontSize={ds.typography.displayLg.fontSize}
-                                    lineHeight={ds.typography.displayLg.lineHeight}
-                                >
-                                    {String(completedCount)}
-                                </Text>
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelSm.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.5}
-                                >
-                                    {t("status.completed", { ns: "common" })}
-                                </Paragraph>
-                            </YStack>
-                            <ShieldCheck size={32} color={ds.colors.successSoft} />
-                        </YStack>
-
-                        <YStack
-                            flex={1}
-                            height={144}
-                            justify="space-between"
-                            rounded={ds.radii.lg}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surface}
-                            p={layout.cardPadding}
-                            style={{
-                                minHeight: layout.summaryCardMinHeight,
-                                boxShadow: ds.shadows.card,
-                            }}
-                        >
-                            <YStack gap="$1">
-                                <Text
-                                    color={ds.colors.warning}
-                                    fontFamily={ds.fonts.headingBold}
-                                    fontSize={ds.typography.displayLg.fontSize}
-                                    lineHeight={ds.typography.displayLg.lineHeight}
-                                >
-                                    {String(inProgressCount)}
-                                </Text>
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.labelSm.fontSize}
-                                    textTransform="uppercase"
-                                    letterSpacing={1.5}
-                                >
-                                    {t("status.inProgress", { ns: "common" })}
-                                </Paragraph>
-                            </YStack>
-                            <Play size={30} color={ds.colors.warningSoft} />
-                        </YStack>
+                        <StatCard
+                            label={t("status.assigned", { ns: "common" })}
+                            value={String(assignedCount)}
+                            accentColor={ds.colors.primary}
+                        />
+                        <StatCard
+                            label={t("status.completed", { ns: "common" })}
+                            value={String(completedCount)}
+                            accentColor={ds.colors.success}
+                        />
+                        <StatCard
+                            label={t("status.inProgress", { ns: "common" })}
+                            value={String(inProgressCount)}
+                            accentColor={ds.colors.warning}
+                        />
                     </XStack>
                 </YStack>
 
@@ -945,7 +830,7 @@ export default function DashboardScreen() {
                         {priorityTaskBlock}
                         {activeWorkBlock}
                     </YStack>
-                    <YStack width={layout.homePageSupportRailWidth} gap="$5">
+                    <YStack width={layout.supportRailWidth} gap="$5">
                         {/* The rail avoids duplicating the main column: it shows
                             connectivity plus either a submitted-reports snapshot
                             or, for auditors with no submissions yet, a nudge to
@@ -964,161 +849,92 @@ export default function DashboardScreen() {
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: listBottomPadding,
                 gap: 28,
             })}
         >
             <YStack gap="$6">
                 <PendingUploadsBanner />
-                <XStack justify="space-between" items="center" gap="$3">
-                    <XStack items="center" gap="$3" flex={1}>
-                        <YStack
-                            width={44}
-                            height={44}
-                            items="center"
-                            justify="center"
-                            rounded={ds.radii.md}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surfaceMuted}
-                        >
-                            <UserRound size={layout.isTablet ? 22 : 20} color={ds.colors.primary} />
-                        </YStack>
-                        <YStack flex={1} gap="$0.5">
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelXs.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.4}
-                            >
-                                {t("activeAuditor", { ns: "dashboard" })}
-                            </Paragraph>
-                            <Text
-                                color={ds.colors.foreground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.bodyLg.fontSize}
-                            >
-                                {activeAuditorName}
-                            </Text>
-                            {auditorOrganization !== null ? (
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    numberOfLines={1}
+                <ScreenHeader
+                    aboveTitle={
+                        <XStack justify="space-between" items="center" gap="$3">
+                            <XStack items="center" gap="$3" flex={1}>
+                                <YStack
+                                    width={44}
+                                    height={44}
+                                    items="center"
+                                    justify="center"
+                                    rounded={ds.radii.md}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
                                 >
-                                    {auditorOrganization}
-                                </Paragraph>
-                            ) : null}
-                        </YStack>
-                    </XStack>
+                                    <UserRound size={20} color={ds.colors.primary} />
+                                </YStack>
+                                <YStack flex={1} gap="$0.5">
+                                    <Paragraph
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.labelXs.fontSize}
+                                        textTransform="uppercase"
+                                        letterSpacing={1.4}
+                                    >
+                                        {t("activeAuditor", { ns: "dashboard" })}
+                                    </Paragraph>
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={ds.typography.bodyLg.fontSize}
+                                    >
+                                        {activeAuditorName}
+                                    </Text>
+                                    {auditorOrganization !== null ? (
+                                        <Paragraph
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={ds.typography.bodySm.fontSize}
+                                            numberOfLines={1}
+                                        >
+                                            {auditorOrganization}
+                                        </Paragraph>
+                                    ) : null}
+                                </YStack>
+                            </XStack>
 
-                    <XStack gap="$2">
-                        <NotificationBellIcon />
-                        <Button
-                            width={layout.isTablet ? 46 : 42}
-                            height={layout.isTablet ? 46 : 42}
-                            p={0}
-                            rounded={ds.radii.full}
-                            borderWidth={1}
-                            borderColor={ds.colors.border}
-                            bg={ds.colors.surfaceMuted}
-                            pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                            onPress={logout}
-                        >
-                            <LogOut size={layout.isTablet ? 18 : 16} color={ds.colors.foreground} />
-                        </Button>
-                    </XStack>
-                </XStack>
-
-                <YStack gap="$1.5">
-                    <Text
-                        color={ds.colors.foreground}
-                        fontFamily={ds.fonts.headingBold}
-                        fontSize={ds.typography.displayLg.fontSize}
-                        lineHeight={ds.typography.displayLg.lineHeight}
-                        letterSpacing={-0.8}
-                    >
-                        {t("title", { ns: "dashboard" })}
-                    </Text>
-                    <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodySemiBold}>
-                        {dateLabel}
-                    </Paragraph>
-                </YStack>
+                            <XStack gap="$2">
+                                <NotificationBellIcon />
+                                <Button
+                                    width={42}
+                                    height={42}
+                                    p={0}
+                                    rounded={ds.radii.full}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.surfaceMuted}
+                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                    onPress={logout}
+                                    accessibilityLabel={t("actions.signOut", { ns: "common" })}
+                                >
+                                    <LogOut size={16} color={ds.colors.foreground} />
+                                </Button>
+                            </XStack>
+                        </XStack>
+                    }
+                    title={t("title", { ns: "dashboard" })}
+                    subtitle={dateLabel}
+                />
 
                 <XStack gap="$3">
-                    <YStack
-                        flex={1}
-                        height={layout.isTablet ? 144 : 128}
-                        justify="space-between"
-                        rounded={ds.radii.lg}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
-                        p={layout.cardPadding}
-                        style={{
-                            minHeight: layout.isTablet ? layout.summaryCardMinHeight : undefined,
-                            boxShadow: ds.shadows.card,
-                        }}
-                    >
-                        <YStack gap="$1">
-                            <Text
-                                color={ds.colors.primary}
-                                fontFamily={ds.fonts.headingBold}
-                                fontSize={ds.typography.displayLg.fontSize}
-                                lineHeight={ds.typography.displayLg.lineHeight}
-                            >
-                                {String(assignedCount)}
-                            </Text>
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.5}
-                            >
-                                {t("status.assigned", { ns: "common" })}
-                            </Paragraph>
-                        </YStack>
-                        <MapPinned size={layout.isTablet ? 32 : 28} color={ds.colors.primarySoft} />
-                    </YStack>
-
-                    <YStack
-                        flex={1}
-                        height={layout.isTablet ? 144 : 128}
-                        justify="space-between"
-                        rounded={ds.radii.lg}
-                        borderWidth={1}
-                        borderColor={ds.colors.border}
-                        bg={ds.colors.surface}
-                        p={layout.cardPadding}
-                        style={{
-                            minHeight: layout.isTablet ? layout.summaryCardMinHeight : undefined,
-                            boxShadow: ds.shadows.card,
-                        }}
-                    >
-                        <YStack gap="$1">
-                            <Text
-                                color={ds.colors.success}
-                                fontFamily={ds.fonts.headingBold}
-                                fontSize={ds.typography.displayLg.fontSize}
-                                lineHeight={ds.typography.displayLg.lineHeight}
-                            >
-                                {String(completedCount)}
-                            </Text>
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.labelSm.fontSize}
-                                textTransform="uppercase"
-                                letterSpacing={1.5}
-                            >
-                                {t("status.completed", { ns: "common" })}
-                            </Paragraph>
-                        </YStack>
-                        <ShieldCheck size={layout.isTablet ? 32 : 28} color={ds.colors.successSoft} />
-                    </YStack>
+                    <StatCard
+                        label={t("status.assigned", { ns: "common" })}
+                        value={String(assignedCount)}
+                        accentColor={ds.colors.primary}
+                    />
+                    <StatCard
+                        label={t("status.completed", { ns: "common" })}
+                        value={String(completedCount)}
+                        accentColor={ds.colors.success}
+                    />
                 </XStack>
             </YStack>
 
@@ -1514,10 +1330,7 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
             p={layout.cardPadding}
             gap="$3"
             justify="space-between"
-            style={{
-                minHeight: layout.isTablet ? layout.queueCardMinHeight : undefined,
-                boxShadow: ds.shadows.card,
-            }}
+            style={{ boxShadow: ds.shadows.card }}
         >
             <YStack gap="$3">
                 <YStack
@@ -1608,30 +1421,17 @@ function DashboardActiveWorkCard({ place }: Readonly<DashboardActiveWorkCardProp
                         {updatedLabel}
                     </Paragraph>
                 </XStack>
-                <Button
-                    height={layout.isTablet ? 40 : 32}
-                    rounded={ds.radii.sm}
-                    borderWidth={0}
-                    bg={ds.colors.primary}
-                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                <AppButton
+                    variant="primary"
+                    size="compact"
+                    label={t("actions.openAudit", { ns: "common" })}
+                    // In-app navigation uses a plain right arrow; the
+                    // external-link arrow implies leaving the app.
+                    iconRight={<ArrowRight size={14} color={buttonForegroundColor("primary", ds.colors)} />}
                     onPress={() => {
                         router.push(`/execute/${place.place_id}?projectId=${encodeURIComponent(place.project_id)}`);
                     }}
-                >
-                    <XStack items="center" justify="center" gap="$1.5">
-                        <Text
-                            color={ds.colors.primaryForeground}
-                            fontFamily={ds.fonts.bodySemiBold}
-                            fontSize={ds.typography.bodySm.fontSize}
-                            numberOfLines={1}
-                        >
-                            {t("actions.openAudit", { ns: "common" })}
-                        </Text>
-                        {/* In-app navigation uses a plain right arrow; the
-                            external-link arrow implies leaving the app. */}
-                        <ArrowRight size={14} color={ds.colors.primaryForeground} />
-                    </XStack>
-                </Button>
+                />
             </YStack>
 
             <Separator borderColor={ds.colors.border} opacity={0} />

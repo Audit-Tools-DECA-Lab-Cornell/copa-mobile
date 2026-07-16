@@ -3,13 +3,14 @@
         "auditor": "Auditeur"
     },
     "actions": {
+        "back": "Retour",
         "openAudit": "Ouvrir l’audit",
         "openSubject": "Ouvrir {{subject}}",
         "resume": "Reprendre",
         "retry": "Réessayer",
         "seeAll": "Voir tout",
-        "start": "Commencer l’audit",
         "signOut": "Se déconnecter",
+        "start": "Commencer l’audit",
         "viewDetails": "Voir les détails",
         "viewReport": "Voir le rapport"
     },

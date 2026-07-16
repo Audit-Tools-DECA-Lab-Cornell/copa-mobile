@@ -1,6 +1,6 @@
 import { buildScaleColorFields, type ScaleColorFields } from "lib/audit/scale-colors";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
-import { TABLET_BREAKPOINT, TABLET_TYPOGRAPHY_BASE_SCALE } from "lib/responsive-layout-tokens";
+import { isTabletWidth, TABLET_TYPOGRAPHY_BASE_SCALE } from "lib/responsive-layout-tokens";
 import { useMemo } from "react";
 import { useWindowDimensions } from "react-native";
 import { usePreferencesStore, type ResolvedTheme } from "stores/preferences-store";
@@ -352,6 +352,35 @@ const RADII = {
     full: 999,
 } as const;
 
+/**
+ * Motion tokens shared by every animated surface (skeletons, the branded
+ * loader, small transitions) so the whole app pulses in one rhythm (G10).
+ * Durations are milliseconds. Components must honor the OS reduce-motion
+ * setting (via reanimated's `useReducedMotion`) and fall back to the static
+ * mid-value instead of animating.
+ */
+export const MOTION = {
+    /** Micro interactions: press feedback, chip toggles. */
+    durationFast: 120,
+    /** Standard UI transitions: fades, small layout shifts. */
+    durationBase: 200,
+    /** Larger transitions: sheet/loader entrances. */
+    durationSlow: 320,
+    /** One half-cycle of the skeleton opacity pulse. */
+    skeletonPulseDurationMs: 1100,
+    /** One half-cycle of the branded loader pulse. */
+    loaderPulseDurationMs: 1500,
+    /** Skeleton opacity range; the static reduced-motion value is the midpoint. */
+    skeletonOpacityMin: 0.45,
+    skeletonOpacityMax: 0.9,
+    /** Branded loader scale range. */
+    loaderScaleMin: 0.95,
+    loaderScaleMax: 1.04,
+    /** Branded loader opacity range. */
+    loaderOpacityMin: 0.7,
+    loaderOpacityMax: 1,
+} as const;
+
 const SPACING = {
     screenPaddingHorizontal: 15,
     screenPaddingVertical: 16,
@@ -500,7 +529,7 @@ export function useDesignSystem(): DesignSystemTheme {
     const dyslexicFont = usePreferencesStore((state) => state.dyslexicFont);
     const fieldMode = usePreferencesStore((state) => state.fieldMode);
     const { width } = useWindowDimensions();
-    const isTablet = width >= TABLET_BREAKPOINT;
+    const isTablet = isTabletWidth(width);
 
     return useMemo(() => {
         return getDesignSystem(resolvedTheme, {

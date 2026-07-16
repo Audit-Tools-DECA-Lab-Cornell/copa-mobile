@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Expand/collapse state for domain sections in submitted audit reports.
  * Keys include each `domainKey` plus `__overall__` when the overall card is listed.
  */
-export function useDomainExpansion(domainKeys: readonly string[]): {
+export function useDomainExpansion(
+    domainKeys: readonly string[],
+    defaultCollapsedKeys: readonly string[] = [],
+): {
     readonly expandedByKey: Readonly<Record<string, boolean>>;
     readonly expandAll: () => void;
     readonly collapseAll: () => void;
@@ -15,13 +18,21 @@ export function useDomainExpansion(domainKeys: readonly string[]): {
     const [expandedByKey, setExpandedByKey] = useState<Record<string, boolean>>({});
 
     const stableKeys = useMemo(() => [...domainKeys], [domainKeys]);
+    const stableDefaultCollapsedKeys = useMemo(() => [...defaultCollapsedKeys], [defaultCollapsedKeys]);
+    /** Default applied per key at the last seeding, so default changes re-seed. */
+    const seededDefaultsRef = useRef(new Map<string, boolean>());
 
     useEffect(() => {
         setExpandedByKey((previous) => {
             const next = { ...previous };
             for (const key of stableKeys) {
-                if (next[key] === undefined) {
-                    next[key] = true;
+                // Presentation-only default: domains flagged by the caller
+                // (e.g. fully N/A) start collapsed but stay expandable. When a
+                // key's underlying data flips scored <-> all-N/A, its default
+                // changes and is re-applied rather than keeping stale state.
+                const defaultExpanded = !stableDefaultCollapsedKeys.includes(key);
+                if (next[key] === undefined || seededDefaultsRef.current.get(key) !== defaultExpanded) {
+                    next[key] = defaultExpanded;
                 }
             }
 
@@ -33,7 +44,8 @@ export function useDomainExpansion(domainKeys: readonly string[]): {
 
             return next;
         });
-    }, [stableKeys]);
+        seededDefaultsRef.current = new Map(stableKeys.map((key) => [key, !stableDefaultCollapsedKeys.includes(key)]));
+    }, [stableKeys, stableDefaultCollapsedKeys]);
 
     const expandAll = useCallback(() => {
         setExpandedByKey(Object.fromEntries(stableKeys.map((key) => [key, true])));
@@ -52,9 +64,15 @@ export function useDomainExpansion(domainKeys: readonly string[]): {
 
     const isExpanded = useCallback(
         (key: string) => {
-            return expandedByKey[key] !== false;
+            const value = expandedByKey[key];
+            if (value === undefined) {
+                // Not yet seeded by the effect: mirror the seeded default so
+                // default-collapsed domains never flash open on first render.
+                return !stableDefaultCollapsedKeys.includes(key);
+            }
+            return value;
         },
-        [expandedByKey],
+        [expandedByKey, stableDefaultCollapsedKeys],
     );
 
     const allExpanded = useMemo(() => {

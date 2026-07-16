@@ -4,6 +4,9 @@ import { createResponsiveLayoutTokens, type ResponsiveLayoutTokens } from "lib/r
 
 export {
     FALLBACK_WINDOW_WIDTH,
+    GLOBAL_FAB_BOTTOM_OFFSET,
+    GLOBAL_FAB_DIAMETER,
+    READABLE_CONTENT_MAX_WIDTH,
     NARROW_TABLET_CONTENT_MAX_WIDTH,
     NARROW_TABLET_FORM_MAX_WIDTH,
     PHONE_CONTENT_MAX_WIDTH,
