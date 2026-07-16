@@ -151,7 +151,7 @@ function PlaceDetailContent({
     const instrument = useLocalizedInstrument(auditSession?.instrument);
     const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
-    const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+    const locality = deriveLocality(place, "");
     // One composed address line (G5): street + postal + city, falling back to
     // the derived locality when structured fields are missing.
     const addressLine = [place.address, place.postal_code, place.city].filter(Boolean).join(", ") || locality;
