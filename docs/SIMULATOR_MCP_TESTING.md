@@ -149,4 +149,3 @@ AVDs on this machine include `Pixel_9`, `Pixel_9_Pro`, `Pixel_9_Pro_Fold`,
 
 - `IOS_BUILD_TROUBLESHOOTING.md` — native iOS build fixes
 - `ANDROID_BUILD_TROUBLESHOOTING.md` — native Android build fixes
-- `../../yee/yee-mobile/docs/SIMULATOR_MCP_TESTING.md` — same workflow for YEE
