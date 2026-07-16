@@ -237,7 +237,7 @@ export function ConfirmDialog({
  * @returns The request function and the element to render.
  */
 export function useConfirmDialog(): {
-    requestConfirm: (options: ConfirmOptions) => Promise<boolean>;
+    requestConfirm: RequestConfirmFn;
     confirmDialog: ReactNode;
 } {
     const [active, setActive] = useState<PendingConfirm | null>(null);
@@ -247,19 +247,6 @@ export function useConfirmDialog(): {
     const queueRef = useRef<PendingConfirm[]>([]);
     const activeRef = useRef<PendingConfirm | null>(null);
     const nextIdRef = useRef(0);
-
-    const requestConfirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
-        return new Promise<boolean>((resolve) => {
-            nextIdRef.current += 1;
-            const entry: PendingConfirm = { id: nextIdRef.current, options, resolve };
-            if (activeRef.current === null) {
-                activeRef.current = entry;
-                setActive(entry);
-                return;
-            }
-            queueRef.current.push(entry);
-        });
-    }, []);
 
     // Settlement is id-checked: the outgoing dialog stays mounted until React
     // re-renders, so a duplicate dismissal (e.g. two rapid Android-back
@@ -275,6 +262,51 @@ export function useConfirmDialog(): {
         setActive(next);
         settled.resolve(value);
     }, []);
+
+    // Abort path: closes the dialog (or removes the queued request) and
+    // resolves `false` WITHOUT the user having chosen, so the caller can tell
+    // an aborted request apart from an acknowledged/confirmed one.
+    const abandon = useCallback(
+        (id: number) => {
+            if (activeRef.current !== null && activeRef.current.id === id) {
+                settle(id, false);
+                return;
+            }
+            const index = queueRef.current.findIndex((entry) => entry.id === id);
+            if (index >= 0) {
+                const [removed] = queueRef.current.splice(index, 1);
+                removed?.resolve(false);
+            }
+        },
+        [settle],
+    );
+
+    const requestConfirm = useCallback<RequestConfirmFn>(
+        (options, signal) => {
+            return new Promise<boolean>((resolve) => {
+                if (signal?.aborted === true) {
+                    resolve(false);
+                    return;
+                }
+                nextIdRef.current += 1;
+                const entry: PendingConfirm = { id: nextIdRef.current, options, resolve };
+                signal?.addEventListener(
+                    "abort",
+                    () => {
+                        abandon(entry.id);
+                    },
+                    { once: true },
+                );
+                if (activeRef.current === null) {
+                    activeRef.current = entry;
+                    setActive(entry);
+                    return;
+                }
+                queueRef.current.push(entry);
+            });
+        },
+        [abandon],
+    );
 
     // Keyed per request so each queued dialog remounts with a fresh entrance
     // animation instead of morphing the previous card's copy in place.
@@ -301,7 +333,14 @@ interface PendingConfirm {
     readonly resolve: (value: boolean) => void;
 }
 
-const ConfirmDialogContext = createContext<((options: ConfirmOptions) => Promise<boolean>) | null>(null);
+/**
+ * Opens the dialog and resolves the user's choice. The optional `signal`
+ * aborts the request (closing the dialog if it is showing): an aborted
+ * request resolves `false` without any user choice having been made.
+ */
+export type RequestConfirmFn = (options: ConfirmOptions, signal?: AbortSignal) => Promise<boolean>;
+
+const ConfirmDialogContext = createContext<RequestConfirmFn | null>(null);
 
 /**
  * Root-level host for the in-window confirm dialog. Mounting this once (in
@@ -323,10 +362,11 @@ export function ConfirmDialogProvider({ children }: Readonly<{ children: ReactNo
 
 /**
  * Confirm request backed by the root `ConfirmDialogProvider` overlay. Resolves
- * `true` when the primary action is chosen; `false` on cancel. Acknowledge-only
- * dialogs (no `cancelLabel`) always resolve `true`.
+ * `true` when the primary action is chosen; `false` on cancel or abort.
+ * Acknowledge-only dialogs (no `cancelLabel`) resolve `true` on every
+ * user-driven dismissal and `false` only when aborted via the signal.
  */
-export function useConfirm(): (options: ConfirmOptions) => Promise<boolean> {
+export function useConfirm(): RequestConfirmFn {
     const requestConfirm = useContext(ConfirmDialogContext);
     if (requestConfirm === null) {
         throw new Error("useConfirm must be used inside ConfirmDialogProvider");

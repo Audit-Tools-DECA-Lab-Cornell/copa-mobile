@@ -137,6 +137,7 @@ interface PlayspaceAuditStoreState {
     refreshInstrument: () => Promise<void>;
     processQueuedSubmits: (session: AuthSession) => Promise<void>;
     popSubmitFailureNotification: () => SubmitFailureNotification | null;
+    restoreSubmitFailureNotification: (notification: SubmitFailureNotification) => void;
     clearStoredState: (accountId?: string | null) => Promise<void>;
     /**
      * Detaches the in-memory store from the active user while keeping the
@@ -589,6 +590,20 @@ function popSubmitFailureNotification(): SubmitFailureNotification | null {
         /* best-effort */
     }
     return first;
+}
+
+/**
+ * Put back a notification that was popped but never acknowledged (its dialog
+ * was aborted by sign-out or an account switch), restoring it to the front so
+ * it is shown first on the next check.
+ */
+function restoreSubmitFailureNotification(notification: SubmitFailureNotification): void {
+    try {
+        const existing = readSubmitFailureNotifications();
+        mmkvStorage.set(SUBMIT_FAILURE_NOTIFICATIONS_KEY, JSON.stringify([notification, ...existing]));
+    } catch {
+        /* best-effort */
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2328,6 +2343,7 @@ const actions = {
     refreshInstrument,
     processQueuedSubmits,
     popSubmitFailureNotification,
+    restoreSubmitFailureNotification,
     clearStoredState,
     detachStoredState,
     hasUnsyncedAuditWork,

@@ -340,10 +340,10 @@ function ActiveRootLayoutNav() {
             return;
         }
 
-        // Flipped on cleanup (sign-out, account switch) so the loop stops
-        // popping: stale notices never show over the new auth state, and the
-        // unshown remainder stays persisted for the next session.
-        let cancelled = false;
+        // Aborted on cleanup (sign-out, account switch): the open dialog is
+        // dismissed so the previous account's place name never lingers over
+        // the new auth state, and the loop stops popping.
+        const cancellation = new AbortController();
 
         const checkFailures = () => {
             if (isAnnouncingSubmitFailuresRef.current) {
@@ -352,19 +352,28 @@ function ActiveRootLayoutNav() {
             isAnnouncingSubmitFailuresRef.current = true;
             void (async () => {
                 try {
-                    while (!cancelled) {
+                    while (!cancellation.signal.aborted) {
                         const notif = usePlayspaceAuditStore.getState().popSubmitFailureNotification();
                         if (notif === null) {
                             return;
                         }
-                        await requestConfirm({
-                            title: t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
-                            message: t("errors.queuedSubmitFailedMessage", {
-                                ns: "audit",
-                                placeName: notif.placeName,
-                            }),
-                            confirmLabel: t("actions.ok", { ns: "common" }),
-                        });
+                        const acknowledged = await requestConfirm(
+                            {
+                                title: t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
+                                message: t("errors.queuedSubmitFailedMessage", {
+                                    ns: "audit",
+                                    placeName: notif.placeName,
+                                }),
+                                confirmLabel: t("actions.ok", { ns: "common" }),
+                            },
+                            cancellation.signal,
+                        );
+                        if (!acknowledged) {
+                            // Aborted before the auditor saw it through: put it
+                            // back so it shows again on the next sign-in.
+                            usePlayspaceAuditStore.getState().restoreSubmitFailureNotification(notif);
+                            return;
+                        }
                     }
                 } finally {
                     isAnnouncingSubmitFailuresRef.current = false;
@@ -382,7 +391,7 @@ function ActiveRootLayoutNav() {
         });
 
         return () => {
-            cancelled = true;
+            cancellation.abort();
             subscription.remove();
         };
     }, [authSession, authStatus, isAuditHydrated, requestConfirm, t]);
