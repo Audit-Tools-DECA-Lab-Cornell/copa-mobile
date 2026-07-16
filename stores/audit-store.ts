@@ -100,7 +100,8 @@ export interface SubmitFailureNotification {
     /**
      * Owning account, so a notice queued by one account is never shown to
      * another on a shared device. Absent only on entries persisted by app
-     * versions that predate account scoping.
+     * versions that predate account scoping; those have no established owner
+     * and are discarded when encountered.
      */
     readonly accountId?: string | undefined;
 }
@@ -580,31 +581,26 @@ function appendSubmitFailureNotification(notification: SubmitFailureNotification
  * `accountId`. Popping one at a time (the caller shows them serially) keeps
  * every not-yet-shown notice persisted, so none are lost if the app is
  * terminated mid-batch. Notices belonging to other accounts stay untouched
- * until their owner signs back in; legacy entries persisted before account
- * scoping (no `accountId`) are shown to whichever account is signed in, as
- * they always were.
+ * until their owner signs back in. Legacy entries persisted before account
+ * scoping have no established owner and are discarded here instead of being
+ * shown to whichever account happens to be signed in.
  */
 function popSubmitFailureNotification(accountId: string): SubmitFailureNotification | null {
     const notifications = readSubmitFailureNotifications();
-    const index = notifications.findIndex(
-        (notification) => notification.accountId === accountId || notification.accountId === undefined,
-    );
-    if (index < 0) {
-        return null;
-    }
-    const popped = notifications[index];
-    if (popped === undefined) {
-        return null;
-    }
-    const rest = notifications.filter((_, notificationIndex) => notificationIndex !== index);
-    try {
-        if (rest.length === 0) {
-            mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
-        } else {
-            mmkvStorage.set(SUBMIT_FAILURE_NOTIFICATIONS_KEY, JSON.stringify(rest));
+    const owned = notifications.filter((notification) => notification.accountId !== undefined);
+    const index = owned.findIndex((notification) => notification.accountId === accountId);
+    const popped = index < 0 ? null : (owned[index] ?? null);
+    const rest = popped === null ? owned : owned.filter((_, ownedIndex) => ownedIndex !== index);
+    if (rest.length !== notifications.length) {
+        try {
+            if (rest.length === 0) {
+                mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
+            } else {
+                mmkvStorage.set(SUBMIT_FAILURE_NOTIFICATIONS_KEY, JSON.stringify(rest));
+            }
+        } catch {
+            /* best-effort */
         }
-    } catch {
-        /* best-effort */
     }
     return popped;
 }
