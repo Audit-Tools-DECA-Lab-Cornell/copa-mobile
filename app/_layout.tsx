@@ -332,25 +332,31 @@ function ActiveRootLayoutNav() {
     // Announce on foreground when a queued offline submit previously failed.
     // Uses the in-window acknowledge dialog (never a native Alert) and shows
     // one notification at a time: a single overlay cannot stack, so each is
-    // awaited before the next appears. Nothing is popped while a batch is
-    // showing, so no notification is ever dropped.
+    // awaited before the next appears. Each notice is popped from persistence
+    // only when it is about to be shown, so nothing not yet seen is lost if
+    // the app is terminated mid-batch, and none are dropped.
     useEffect(() => {
         if (authStatus !== "authenticated" || authSession === null || !isAuditHydrated) {
             return;
         }
 
+        // Flipped on cleanup (sign-out, account switch) so the loop stops
+        // popping: stale notices never show over the new auth state, and the
+        // unshown remainder stays persisted for the next session.
+        let cancelled = false;
+
         const checkFailures = () => {
             if (isAnnouncingSubmitFailuresRef.current) {
-                return;
-            }
-            const notifications = usePlayspaceAuditStore.getState().popSubmitFailureNotifications();
-            if (notifications.length === 0) {
                 return;
             }
             isAnnouncingSubmitFailuresRef.current = true;
             void (async () => {
                 try {
-                    for (const notif of notifications) {
+                    while (!cancelled) {
+                        const notif = usePlayspaceAuditStore.getState().popSubmitFailureNotification();
+                        if (notif === null) {
+                            return;
+                        }
                         await requestConfirm({
                             title: t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
                             message: t("errors.queuedSubmitFailedMessage", {
@@ -363,8 +369,6 @@ function ActiveRootLayoutNav() {
                 } finally {
                     isAnnouncingSubmitFailuresRef.current = false;
                 }
-                // Drain anything that queued up while the batch was showing.
-                checkFailures();
             })();
         };
 
@@ -378,6 +382,7 @@ function ActiveRootLayoutNav() {
         });
 
         return () => {
+            cancelled = true;
             subscription.remove();
         };
     }, [authSession, authStatus, isAuditHydrated, requestConfirm, t]);

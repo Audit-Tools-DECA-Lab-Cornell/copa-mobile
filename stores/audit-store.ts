@@ -136,7 +136,7 @@ interface PlayspaceAuditStoreState {
     hydrate: (accountId?: string | null) => Promise<void>;
     refreshInstrument: () => Promise<void>;
     processQueuedSubmits: (session: AuthSession) => Promise<void>;
-    popSubmitFailureNotifications: () => SubmitFailureNotification[];
+    popSubmitFailureNotification: () => SubmitFailureNotification | null;
     clearStoredState: (accountId?: string | null) => Promise<void>;
     /**
      * Detaches the in-memory store from the active user while keeping the
@@ -568,17 +568,27 @@ function appendSubmitFailureNotification(notification: SubmitFailureNotification
     }
 }
 
-/** Read and clear all pending submit-failure notifications in one atomic operation. */
-function popSubmitFailureNotifications(): SubmitFailureNotification[] {
+/**
+ * Read and remove the oldest pending submit-failure notification. Popping one
+ * at a time (the caller shows them serially) keeps every not-yet-shown notice
+ * persisted, so none are lost if the app is terminated mid-batch.
+ */
+function popSubmitFailureNotification(): SubmitFailureNotification | null {
     const notifications = readSubmitFailureNotifications();
-    if (notifications.length > 0) {
-        try {
-            mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
-        } catch {
-            /* best-effort */
-        }
+    const [first, ...rest] = notifications;
+    if (first === undefined) {
+        return null;
     }
-    return notifications;
+    try {
+        if (rest.length === 0) {
+            mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
+        } else {
+            mmkvStorage.set(SUBMIT_FAILURE_NOTIFICATIONS_KEY, JSON.stringify(rest));
+        }
+    } catch {
+        /* best-effort */
+    }
+    return first;
 }
 
 // ---------------------------------------------------------------------------
@@ -2317,7 +2327,7 @@ const actions = {
     hydrate,
     refreshInstrument,
     processQueuedSubmits,
-    popSubmitFailureNotifications,
+    popSubmitFailureNotification,
     clearStoredState,
     detachStoredState,
     hasUnsyncedAuditWork,

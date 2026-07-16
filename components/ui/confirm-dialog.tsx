@@ -261,27 +261,35 @@ export function useConfirmDialog(): {
         });
     }, []);
 
-    const settle = useCallback((value: boolean) => {
+    // Settlement is id-checked: the outgoing dialog stays mounted until React
+    // re-renders, so a duplicate dismissal (e.g. two rapid Android-back
+    // presses) could otherwise settle the NEXT queued request before its
+    // dialog was ever shown.
+    const settle = useCallback((id: number, value: boolean) => {
         const settled = activeRef.current;
+        if (settled === null || settled.id !== id) {
+            return;
+        }
         const next = queueRef.current.shift() ?? null;
         activeRef.current = next;
         setActive(next);
-        settled?.resolve(value);
+        settled.resolve(value);
     }, []);
-
-    const handleConfirm = useCallback(() => {
-        settle(true);
-    }, [settle]);
-
-    const handleCancel = useCallback(() => {
-        settle(false);
-    }, [settle]);
 
     // Keyed per request so each queued dialog remounts with a fresh entrance
     // animation instead of morphing the previous card's copy in place.
     const confirmDialog =
         active === null ? null : (
-            <ConfirmDialog key={active.id} {...active.options} onConfirm={handleConfirm} onCancel={handleCancel} />
+            <ConfirmDialog
+                key={active.id}
+                {...active.options}
+                onConfirm={() => {
+                    settle(active.id, true);
+                }}
+                onCancel={() => {
+                    settle(active.id, false);
+                }}
+            />
         );
 
     return { requestConfirm, confirmDialog };
