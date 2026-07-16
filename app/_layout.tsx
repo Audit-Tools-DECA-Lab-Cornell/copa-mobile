@@ -27,7 +27,7 @@ import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { registerAuditBackgroundTaskAsync, unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { useBugReportFlushPrompt } from "lib/bug-report/use-flush-prompt";
-import { useConfirmDialog } from "components/ui/confirm-dialog";
+import { ConfirmDialogProvider, useConfirm } from "components/ui/confirm-dialog";
 import { useDesignSystem } from "lib/design-system";
 import { useEasUpdateBootstrap } from "lib/eas-updates";
 import { applyLanguagePreference } from "lib/i18n";
@@ -36,9 +36,9 @@ import { computeNotificationPollIntervalMs } from "lib/notifications/polling";
 import { useReleasePolicyGate } from "lib/release-policy";
 import { useHiddenAndroidNavBar } from "lib/system-bars";
 import { useTestingMigrationGate } from "lib/testing-migration/config";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
+import { AppState, KeyboardAvoidingView, Platform, type AppStateStatus } from "react-native";
 import { usePlayspaceAuditStore } from "stores/audit-store";
 import { useAuthStore } from "stores/auth-store";
 import { useNotificationsStore } from "stores/notifications-store";
@@ -112,7 +112,12 @@ export default function RootLayout() {
 
     return (
         <Provider>
-            <RootLayoutNav />
+            {/* Root-mounted so the in-window confirm overlay covers every
+                screen (including the release-policy and testing-migration
+                gates) above tab bars and audit footers. */}
+            <ConfirmDialogProvider>
+                <RootLayoutNav />
+            </ConfirmDialogProvider>
         </Provider>
     );
 }
@@ -155,7 +160,7 @@ function ActiveRootLayoutNav() {
     const resolvedTheme = usePreferencesStore((state) => state.resolvedTheme);
     const hasSeenIntro = usePreferencesStore((state) => state.hasSeenIntro);
     const ds = useDesignSystem();
-    const { t } = useTranslation(["audit", "settings"]);
+    const { t } = useTranslation(["audit", "common", "settings"]);
 
     useHiddenAndroidNavBar(routeKey);
     const safeAreaInsets = useSafeAreaInsets();
@@ -163,8 +168,14 @@ function ActiveRootLayoutNav() {
     // Offer to submit any locally-queued bug reports once the device is online.
     // The confirm renders in-window (never a native Alert) so the hidden Android
     // navigation bar stays hidden.
-    const { requestConfirm, confirmDialog } = useConfirmDialog();
+    const requestConfirm = useConfirm();
     useBugReportFlushPrompt(authSession, authStatus === "authenticated" && isAuditHydrated, requestConfirm);
+    // Serializes queued-submit-failure announcement batches, including across
+    // effect re-runs (sign-out, account switch): each new check waits for the
+    // previous batch to wind down instead of being skipped while it does, so
+    // the new account's notices are never left hidden until the next
+    // foreground event.
+    const announceSubmitFailuresChainRef = useRef<Promise<void>>(Promise.resolve());
     const navigationTheme =
         resolvedTheme === "light"
             ? {
@@ -321,21 +332,54 @@ function ActiveRootLayoutNav() {
         };
     }, [authSession, authStatus, isAuditHydrated]);
 
-    // Show Alert on foreground when a queued offline submit previously failed.
+    // Announce on foreground when a queued offline submit previously failed.
+    // Uses the in-window acknowledge dialog (never a native Alert) and shows
+    // one notification at a time: a single overlay cannot stack, so each is
+    // awaited before the next appears. Each notice is popped from persistence
+    // only when it is about to be shown, so nothing not yet seen is lost if
+    // the app is terminated mid-batch, and none are dropped.
     useEffect(() => {
         if (authStatus !== "authenticated" || authSession === null || !isAuditHydrated) {
             return;
         }
 
-        const checkFailures = () => {
-            const notifications = usePlayspaceAuditStore.getState().popSubmitFailureNotifications();
-            for (const notif of notifications) {
-                Alert.alert(
-                    t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
-                    t("errors.queuedSubmitFailedMessage", { ns: "audit", placeName: notif.placeName }),
-                    [{ text: "OK", style: "default" }],
+        // Aborted on cleanup (sign-out, account switch): the open dialog is
+        // dismissed so the previous account's place name never lingers over
+        // the new auth state, and the loop stops popping.
+        const cancellation = new AbortController();
+
+        const announceFailures = async () => {
+            while (!cancellation.signal.aborted) {
+                const notif = usePlayspaceAuditStore.getState().popSubmitFailureNotification(authSession.user.id);
+                if (notif === null) {
+                    return;
+                }
+                const acknowledged = await requestConfirm(
+                    {
+                        title: t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
+                        message: t("errors.queuedSubmitFailedMessage", {
+                            ns: "audit",
+                            placeName: notif.placeName,
+                        }),
+                        confirmLabel: t("actions.ok", { ns: "common" }),
+                    },
+                    cancellation.signal,
                 );
+                if (!acknowledged) {
+                    // Aborted before the auditor saw it through: put it back
+                    // so it shows again on the next sign-in.
+                    usePlayspaceAuditStore.getState().restoreSubmitFailureNotification(notif);
+                    return;
+                }
             }
+        };
+
+        const checkFailures = () => {
+            // Redundant queued checks are cheap: a batch that finds nothing to
+            // pop returns immediately.
+            announceSubmitFailuresChainRef.current = announceSubmitFailuresChainRef.current
+                .then(announceFailures)
+                .catch(() => undefined);
         };
 
         // Check immediately when authenticated and hydrated.
@@ -348,9 +392,10 @@ function ActiveRootLayoutNav() {
         });
 
         return () => {
+            cancellation.abort();
             subscription.remove();
         };
-    }, [authSession, authStatus, isAuditHydrated, t]);
+    }, [authSession, authStatus, isAuditHydrated, requestConfirm, t]);
 
     useEffect(() => {
         if (authStatus === "loading") {
@@ -458,7 +503,6 @@ function ActiveRootLayoutNav() {
                 </Stack>
             </KeyboardAvoidingView>
             <BugReportFab />
-            {confirmDialog}
         </ThemeProvider>
     );
 }

@@ -2,11 +2,12 @@ import { ArrowRight, CheckCircle2, ExternalLink, ShieldCheck } from "@tamagui/lu
 import * as WebBrowser from "expo-web-browser";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, ScrollView, Share, useWindowDimensions } from "react-native";
+import { ScrollView, Share, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
+import { useConfirm } from "components/ui/confirm-dialog";
 import { useDesignSystem } from "lib/design-system";
 import { logger } from "lib/logger";
 import { usePreferencesStore } from "stores/preferences-store";
@@ -24,6 +25,7 @@ export function TestingMigrationScreen({ closedTestUrl }: Readonly<TestingMigrat
     const layout = useResponsiveLayout();
     const insets = useSafeAreaInsets();
     const { height } = useWindowDimensions();
+    const requestConfirm = useConfirm();
 
     useEffect(() => {
         recordTestingMigrationEvent(TESTING_MIGRATION_EVENTS.screenViewed);
@@ -66,7 +68,12 @@ ${body}`;
             },
         ).catch((error: unknown) => {
             logger.withError(error).warn("failed to open sharing options for testing migration support");
-            Alert.alert(t("testingMigration.shareTitle"), t("testingMigration.shareFailed"));
+            // Acknowledge-only: no cancelLabel renders a single OK button.
+            void requestConfirm({
+                title: t("testingMigration.shareTitle"),
+                message: t("testingMigration.shareFailed"),
+                confirmLabel: t("actions.ok"),
+            });
         });
     };
 

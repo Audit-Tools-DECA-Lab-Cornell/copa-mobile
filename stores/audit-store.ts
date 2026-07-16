@@ -97,6 +97,13 @@ export interface SubmitFailureNotification {
     readonly placeName: string;
     readonly message: string;
     readonly at: string;
+    /**
+     * Owning account, so a notice queued by one account is never shown to
+     * another on a shared device. Absent only on entries persisted by app
+     * versions that predate account scoping; those have no established owner
+     * and are discarded when encountered.
+     */
+    readonly accountId?: string | undefined;
 }
 
 interface FlushSingleAuditResult {
@@ -136,7 +143,8 @@ interface PlayspaceAuditStoreState {
     hydrate: (accountId?: string | null) => Promise<void>;
     refreshInstrument: () => Promise<void>;
     processQueuedSubmits: (session: AuthSession) => Promise<void>;
-    popSubmitFailureNotifications: () => SubmitFailureNotification[];
+    popSubmitFailureNotification: (accountId: string) => SubmitFailureNotification | null;
+    restoreSubmitFailureNotification: (notification: SubmitFailureNotification) => void;
     clearStoredState: (accountId?: string | null) => Promise<void>;
     /**
      * Detaches the in-memory store from the active user while keeping the
@@ -568,17 +576,47 @@ function appendSubmitFailureNotification(notification: SubmitFailureNotification
     }
 }
 
-/** Read and clear all pending submit-failure notifications in one atomic operation. */
-function popSubmitFailureNotifications(): SubmitFailureNotification[] {
+/**
+ * Read and remove the oldest pending submit-failure notification owned by
+ * `accountId`. Popping one at a time (the caller shows them serially) keeps
+ * every not-yet-shown notice persisted, so none are lost if the app is
+ * terminated mid-batch. Notices belonging to other accounts stay untouched
+ * until their owner signs back in. Legacy entries persisted before account
+ * scoping have no established owner and are discarded here instead of being
+ * shown to whichever account happens to be signed in.
+ */
+function popSubmitFailureNotification(accountId: string): SubmitFailureNotification | null {
     const notifications = readSubmitFailureNotifications();
-    if (notifications.length > 0) {
+    const owned = notifications.filter((notification) => notification.accountId !== undefined);
+    const index = owned.findIndex((notification) => notification.accountId === accountId);
+    const popped = index < 0 ? null : (owned[index] ?? null);
+    const rest = popped === null ? owned : owned.filter((_, ownedIndex) => ownedIndex !== index);
+    if (rest.length !== notifications.length) {
         try {
-            mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
+            if (rest.length === 0) {
+                mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
+            } else {
+                mmkvStorage.set(SUBMIT_FAILURE_NOTIFICATIONS_KEY, JSON.stringify(rest));
+            }
         } catch {
             /* best-effort */
         }
     }
-    return notifications;
+    return popped;
+}
+
+/**
+ * Put back a notification that was popped but never acknowledged (its dialog
+ * was aborted by sign-out or an account switch), restoring it to the front so
+ * it is shown first on the next check.
+ */
+function restoreSubmitFailureNotification(notification: SubmitFailureNotification): void {
+    try {
+        const existing = readSubmitFailureNotifications();
+        mmkvStorage.set(SUBMIT_FAILURE_NOTIFICATIONS_KEY, JSON.stringify([notification, ...existing]));
+    } catch {
+        /* best-effort */
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2230,6 +2268,7 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
                     placeName: session_?.place_name ?? auditId,
                     message,
                     at: new Date().toISOString(),
+                    accountId: session.user.id,
                 });
                 notifySubmitFailureAsync(session, auditId).catch(() => undefined);
             }
@@ -2317,7 +2356,8 @@ const actions = {
     hydrate,
     refreshInstrument,
     processQueuedSubmits,
-    popSubmitFailureNotifications,
+    popSubmitFailureNotification,
+    restoreSubmitFailureNotification,
     clearStoredState,
     detachStoredState,
     hasUnsyncedAuditWork,

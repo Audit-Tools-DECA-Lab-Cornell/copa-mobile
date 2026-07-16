@@ -14,7 +14,9 @@
         "refreshFallback": "Audit konnte nicht aktualisiert werden.",
         "submitFallback": "Audit konnte nicht eingereicht werden.",
         "submitNeedsUploadedDraft": "Stellen Sie die Verbindung wieder her und warten Sie, bis Ihre gespeicherten Aenderungen hochgeladen wurden, bevor Sie dieses Audit einreichen.",
-        "syncFallback": "Die Hintergrundsynchronisierung ist fehlgeschlagen."
+        "syncFallback": "Die Hintergrundsynchronisierung ist fehlgeschlagen.",
+        "queuedSubmitFailedTitle": "Einreichung konnte nicht gesendet werden",
+        "queuedSubmitFailedMessage": "Ihre Offline-Einreichung fuer {{placeName}} konnte nicht zugestellt werden. Bitte reichen Sie erneut ein oder kontaktieren Sie den Support."
     },
     "copy": {
         "continueToSubject": "Mit {{subject}} fortfahren",

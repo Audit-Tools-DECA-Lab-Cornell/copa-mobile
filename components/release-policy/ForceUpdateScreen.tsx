@@ -1,12 +1,13 @@
 import { ExternalLink, RefreshCw, ShieldAlert } from "@tamagui/lucide-icons-2";
 import * as WebBrowser from "expo-web-browser";
-import { Alert, ScrollView, useWindowDimensions } from "react-native";
+import { ScrollView, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
 import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { AppLoader } from "components/ui/app-loader";
+import { useConfirm } from "components/ui/confirm-dialog";
 import { useDesignSystem } from "lib/design-system";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import type { ReleasePolicyDecision } from "lib/release-policy-core";
@@ -23,10 +24,16 @@ export function ForceUpdateScreen({ decision, onRetry }: ForceUpdateScreenProps)
     const insets = useSafeAreaInsets();
     const { height } = useWindowDimensions();
     const primaryForeground = buttonForegroundColor("primary", ds.colors);
+    const requestConfirm = useConfirm();
 
     const handleOpenUpdate = (): void => {
         WebBrowser.openBrowserAsync(decision.updateUrl).catch(() => {
-            Alert.alert(t("forceUpdate.alertTitle"), t("forceUpdate.alertBody"));
+            // Acknowledge-only: no cancelLabel renders a single OK button.
+            void requestConfirm({
+                title: t("forceUpdate.alertTitle"),
+                message: t("forceUpdate.alertBody"),
+                confirmLabel: t("actions.ok"),
+            });
         });
     };
 

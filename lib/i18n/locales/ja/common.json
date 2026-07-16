@@ -4,6 +4,7 @@
     },
     "actions": {
         "back": "戻る",
+        "ok": "OK",
         "openAudit": "監査を開く",
         "openSubject": "{{subject}}を開く",
         "resume": "再開",

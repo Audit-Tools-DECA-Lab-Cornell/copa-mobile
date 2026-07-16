@@ -14,7 +14,9 @@
         "refreshFallback": "監査を更新できません。",
         "submitFallback": "監査を提出できません。",
         "submitNeedsUploadedDraft": "この監査を提出する前に、再接続して保存済みの変更がアップロードされるのを待ってください。",
-        "syncFallback": "バックグラウンド同期に失敗しました。"
+        "syncFallback": "バックグラウンド同期に失敗しました。",
+        "queuedSubmitFailedTitle": "送信を完了できませんでした",
+        "queuedSubmitFailedMessage": "{{placeName}}のオフライン送信を届けることができませんでした。再送信するか、サポートにお問い合わせください。"
     },
     "copy": {
         "continueToSubject": "{{subject}}に進む",
