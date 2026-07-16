@@ -4,6 +4,7 @@
     },
     "actions": {
         "back": "Zurück",
+        "ok": "OK",
         "openAudit": "Audit oeffnen",
         "openSubject": "{{subject}} oeffnen",
         "resume": "Fortsetzen",

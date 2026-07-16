@@ -1,8 +1,8 @@
-import { Alert } from "react-native";
 import { TriangleAlert } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 
+import { useConfirm } from "components/ui/confirm-dialog";
 import { useDesignSystem } from "lib/design-system";
 import { useResponsiveLayout } from "lib/responsive-layout";
 
@@ -39,6 +39,7 @@ export function AuditSyncStatusCard({
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const { t } = useTranslation("audit");
+    const requestConfirm = useConfirm();
 
     const isQueuedSubmit = phase === "queued_submit";
     const hasSyncFailure = lastSyncError !== null;
@@ -54,23 +55,18 @@ export function AuditSyncStatusCard({
         const cardBg = ds.colors.surfaceMuted;
 
         const handleEditSubmission = () => {
-            Alert.alert(
-                t("overview.syncStatus.editSubmissionConfirmTitle"),
-                t("overview.syncStatus.editSubmissionConfirmMessage"),
-                [
-                    {
-                        text: t("overview.syncStatus.editSubmissionConfirmCancel"),
-                        style: "cancel",
-                    },
-                    {
-                        text: t("overview.syncStatus.editSubmissionConfirmConfirm"),
-                        style: "destructive",
-                        onPress: () => {
-                            onReopenQueuedSubmit?.();
-                        },
-                    },
-                ],
-            );
+            void (async () => {
+                const confirmed = await requestConfirm({
+                    title: t("overview.syncStatus.editSubmissionConfirmTitle"),
+                    message: t("overview.syncStatus.editSubmissionConfirmMessage"),
+                    confirmLabel: t("overview.syncStatus.editSubmissionConfirmConfirm"),
+                    cancelLabel: t("overview.syncStatus.editSubmissionConfirmCancel"),
+                });
+                if (!confirmed) {
+                    return;
+                }
+                onReopenQueuedSubmit?.();
+            })();
         };
 
         return (

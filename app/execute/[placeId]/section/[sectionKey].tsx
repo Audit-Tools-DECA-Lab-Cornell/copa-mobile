@@ -9,7 +9,7 @@ import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { CenteredMessageCard } from "components/ui/centered-message-card";
-import { useConfirmDialog } from "components/ui/confirm-dialog";
+import { useConfirm } from "components/ui/confirm-dialog";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
 import {
@@ -64,7 +64,7 @@ export default function ExecuteSectionScreen() {
     const navigation = useNavigation();
     const router = useRouter();
     const { t } = useTranslation(["audit", "common"]);
-    const { requestConfirm, confirmDialog } = useConfirmDialog();
+    const requestConfirm = useConfirm();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -728,9 +728,6 @@ export default function ExecuteSectionScreen() {
                 )}
             </ScrollView>
             {actionFooter}
-            {/* Rendered last so the overlay covers the footer, and in-window so
-                the hidden Android navigation bar stays hidden. */}
-            {confirmDialog}
         </YStack>
     );
 }

@@ -4,6 +4,7 @@
     },
     "actions": {
         "back": "वापस",
+        "ok": "ठीक है",
         "openAudit": "ऑडिट खोलें",
         "openSubject": "{{subject}} खोलें",
         "resume": "फिर से शुरू करें",

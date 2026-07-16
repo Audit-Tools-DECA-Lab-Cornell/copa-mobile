@@ -14,7 +14,9 @@
         "refreshFallback": "ऑडिट रीफ़्रेश नहीं किया जा सका।",
         "submitFallback": "ऑडिट सबमिट नहीं किया जा सका।",
         "submitNeedsUploadedDraft": "इस ऑडिट को सबमिट करने से पहले फिर से कनेक्ट करें और अपने सहेजे गए बदलाव अपलोड होने तक प्रतीक्षा करें।",
-        "syncFallback": "बैकग्राउंड सिंक विफल हो गया।"
+        "syncFallback": "बैकग्राउंड सिंक विफल हो गया।",
+        "queuedSubmitFailedTitle": "सबमिशन नहीं भेजा जा सका",
+        "queuedSubmitFailedMessage": "{{placeName}} के लिए आपका ऑफ़लाइन सबमिशन नहीं पहुंचाया जा सका। कृपया फिर से सबमिट करें या सहायता से संपर्क करें।"
     },
     "copy": {
         "continueToSubject": "{{subject}} के साथ आगे बढ़ें",

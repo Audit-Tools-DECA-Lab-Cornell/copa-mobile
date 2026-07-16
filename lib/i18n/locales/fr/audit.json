@@ -14,7 +14,9 @@
         "refreshFallback": "Impossible d’actualiser l’audit.",
         "submitFallback": "Impossible d’envoyer l’audit.",
         "submitNeedsUploadedDraft": "Reconnectez-vous et attendez que vos modifications enregistrées soient téléversées avant d’envoyer cet audit.",
-        "syncFallback": "La synchronisation en arrière-plan a échoué."
+        "syncFallback": "La synchronisation en arrière-plan a échoué.",
+        "queuedSubmitFailedTitle": "Impossible d’envoyer la soumission",
+        "queuedSubmitFailedMessage": "Votre soumission hors ligne pour {{placeName}} n’a pas pu être transmise. Veuillez la soumettre à nouveau ou contacter l’assistance."
     },
     "copy": {
         "continueToSubject": "Continuer avec {{subject}}",

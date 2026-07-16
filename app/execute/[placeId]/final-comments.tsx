@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Alert, ScrollView, TextInput } from "react-native";
+import { ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
@@ -7,6 +7,7 @@ import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { CenteredMessageCard } from "components/ui/centered-message-card";
+import { useConfirm } from "components/ui/confirm-dialog";
 import { getQuestionAnswers, getVisibleSections, isInstrumentQuestionComplete } from "lib/audit/selectors";
 import { canEditAuditInputs } from "lib/audit/store-sync-core";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -29,6 +30,7 @@ export default function ExecuteFinalCommentsScreen() {
     const router = useRouter();
     const navigation = useNavigation();
     const { t } = useTranslation(["audit", "common"]);
+    const requestConfirm = useConfirm();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -255,23 +257,18 @@ export default function ExecuteFinalCommentsScreen() {
 
     if (auditPhase === "queued_submit") {
         const handleEditSubmission = () => {
-            Alert.alert(
-                t("overview.syncStatus.editSubmissionConfirmTitle", { ns: "audit" }),
-                t("overview.syncStatus.editSubmissionConfirmMessage", { ns: "audit" }),
-                [
-                    {
-                        text: t("overview.syncStatus.editSubmissionConfirmCancel", { ns: "audit" }),
-                        style: "cancel",
-                    },
-                    {
-                        text: t("overview.syncStatus.editSubmissionConfirmConfirm", { ns: "audit" }),
-                        style: "destructive",
-                        onPress: () => {
-                            reopenQueuedSubmit(auditSession.audit_id);
-                        },
-                    },
-                ],
-            );
+            void (async () => {
+                const confirmed = await requestConfirm({
+                    title: t("overview.syncStatus.editSubmissionConfirmTitle", { ns: "audit" }),
+                    message: t("overview.syncStatus.editSubmissionConfirmMessage", { ns: "audit" }),
+                    confirmLabel: t("overview.syncStatus.editSubmissionConfirmConfirm", { ns: "audit" }),
+                    cancelLabel: t("overview.syncStatus.editSubmissionConfirmCancel", { ns: "audit" }),
+                });
+                if (!confirmed) {
+                    return;
+                }
+                reopenQueuedSubmit(auditSession.audit_id);
+            })();
         };
 
         return (
@@ -302,37 +299,30 @@ export default function ExecuteFinalCommentsScreen() {
         if (!readyToSubmit) {
             return;
         }
-        Alert.alert(
-            t("finalComments.submitConfirmTitle", { ns: "audit" }),
-            t("finalComments.submitConfirmMessage", { ns: "audit" }),
-            [
-                {
-                    text: t("finalComments.submitConfirmCancel", { ns: "audit" }),
-                    style: "cancel",
-                },
-                {
-                    text: t("finalComments.submitConfirmSubmit", { ns: "audit" }),
-                    style: "destructive",
-                    onPress: () => {
-                        void (async () => {
-                            flushCommentsToStore();
-                            requestImmediateAuditSync("blur");
-                            try {
-                                const submittedSession = await submitAuditSession(authSession, auditSession.audit_id);
-                                await loadPlaces(authSession).catch(() => undefined);
-                                router.replace(
-                                    `/execute/${submittedSession.place_id}/overview?projectId=${encodeURIComponent(
-                                        submittedSession.project_id,
-                                    )}` as Href,
-                                );
-                            } catch {
-                                return;
-                            }
-                        })();
-                    },
-                },
-            ],
-        );
+        void (async () => {
+            const confirmed = await requestConfirm({
+                title: t("finalComments.submitConfirmTitle", { ns: "audit" }),
+                message: t("finalComments.submitConfirmMessage", { ns: "audit" }),
+                confirmLabel: t("finalComments.submitConfirmSubmit", { ns: "audit" }),
+                cancelLabel: t("finalComments.submitConfirmCancel", { ns: "audit" }),
+            });
+            if (!confirmed) {
+                return;
+            }
+            flushCommentsToStore();
+            requestImmediateAuditSync("blur");
+            try {
+                const submittedSession = await submitAuditSession(authSession, auditSession.audit_id);
+                await loadPlaces(authSession).catch(() => undefined);
+                router.replace(
+                    `/execute/${submittedSession.place_id}/overview?projectId=${encodeURIComponent(
+                        submittedSession.project_id,
+                    )}` as Href,
+                );
+            } catch {
+                return;
+            }
+        })();
     };
 
     return (

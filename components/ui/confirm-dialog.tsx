@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { BackHandler, Platform, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -16,7 +16,12 @@ export interface ConfirmOptions {
     readonly title: string;
     readonly message: string;
     readonly confirmLabel: string;
-    readonly cancelLabel: string;
+    /**
+     * Label for the secondary (cancel) button. When absent the dialog is an
+     * acknowledge-only notice: just the primary button renders, and dismissing
+     * via the scrim or Android back resolves the same as confirming.
+     */
+    readonly cancelLabel?: string | undefined;
     /** Optional heading for `items`, e.g. "Unanswered questions:". */
     readonly listLabel?: string | undefined;
     /** Optional detail lines rendered as a scrollable list under the message. */
@@ -70,8 +75,12 @@ export function ConfirmDialog({
         });
     }, [progress, reducedMotion]);
 
+    // Acknowledge-only dialogs (no cancel button) treat every dismissal -
+    // scrim tap, Android back - as the acknowledgement itself.
+    const dismiss = cancelLabel === undefined ? onConfirm : onCancel;
+
     /**
-     * The Android hardware back button must cancel the dialog rather than pop
+     * The Android hardware back button must dismiss the dialog rather than pop
      * the screen underneath it, which would strand the auditor mid-section (G2).
      */
     useEffect(() => {
@@ -80,14 +89,14 @@ export function ConfirmDialog({
         }
 
         const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-            onCancel();
+            dismiss();
             return true;
         });
 
         return () => {
             subscription.remove();
         };
-    }, [onCancel]);
+    }, [dismiss]);
 
     const scrimStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
     const cardStyle = useAnimatedStyle(() => ({
@@ -122,8 +131,8 @@ export function ConfirmDialog({
             {/* Tapping the scrim is the one-handed way out (G2/G3). */}
             <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={cancelLabel}
-                onPress={onCancel}
+                accessibilityLabel={cancelLabel ?? confirmLabel}
+                onPress={dismiss}
                 style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
             />
 
@@ -209,7 +218,9 @@ export function ConfirmDialog({
                     {/* Stacked full-width targets: glove-first, one-handed (G3). */}
                     <YStack gap="$2.5">
                         <AppButton variant="primary" label={confirmLabel} onPress={onConfirm} />
-                        <AppButton variant="secondary" label={cancelLabel} onPress={onCancel} />
+                        {cancelLabel === undefined ? null : (
+                            <AppButton variant="secondary" label={cancelLabel} onPress={onCancel} />
+                        )}
                     </YStack>
                 </YStack>
             </Animated.View>
@@ -229,21 +240,33 @@ export function useConfirmDialog(): {
     requestConfirm: (options: ConfirmOptions) => Promise<boolean>;
     confirmDialog: ReactNode;
 } {
-    const [pending, setPending] = useState<ConfirmOptions | null>(null);
-    const resolverRef = useRef<((value: boolean) => void) | null>(null);
+    const [active, setActive] = useState<PendingConfirm | null>(null);
+    // A single overlay cannot stack, so requests that arrive while another
+    // dialog is showing wait in FIFO order instead of replacing the active one
+    // (which would leave its promise unresolved forever).
+    const queueRef = useRef<PendingConfirm[]>([]);
+    const activeRef = useRef<PendingConfirm | null>(null);
+    const nextIdRef = useRef(0);
 
     const requestConfirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
         return new Promise<boolean>((resolve) => {
-            resolverRef.current = resolve;
-            setPending(options);
+            nextIdRef.current += 1;
+            const entry: PendingConfirm = { id: nextIdRef.current, options, resolve };
+            if (activeRef.current === null) {
+                activeRef.current = entry;
+                setActive(entry);
+                return;
+            }
+            queueRef.current.push(entry);
         });
     }, []);
 
     const settle = useCallback((value: boolean) => {
-        const resolve = resolverRef.current;
-        resolverRef.current = null;
-        setPending(null);
-        resolve?.(value);
+        const settled = activeRef.current;
+        const next = queueRef.current.shift() ?? null;
+        activeRef.current = next;
+        setActive(next);
+        settled?.resolve(value);
     }, []);
 
     const handleConfirm = useCallback(() => {
@@ -254,8 +277,51 @@ export function useConfirmDialog(): {
         settle(false);
     }, [settle]);
 
+    // Keyed per request so each queued dialog remounts with a fresh entrance
+    // animation instead of morphing the previous card's copy in place.
     const confirmDialog =
-        pending === null ? null : <ConfirmDialog {...pending} onConfirm={handleConfirm} onCancel={handleCancel} />;
+        active === null ? null : (
+            <ConfirmDialog key={active.id} {...active.options} onConfirm={handleConfirm} onCancel={handleCancel} />
+        );
 
     return { requestConfirm, confirmDialog };
+}
+
+interface PendingConfirm {
+    readonly id: number;
+    readonly options: ConfirmOptions;
+    readonly resolve: (value: boolean) => void;
+}
+
+const ConfirmDialogContext = createContext<((options: ConfirmOptions) => Promise<boolean>) | null>(null);
+
+/**
+ * Root-level host for the in-window confirm dialog. Mounting this once (in
+ * `app/_layout.tsx`, inside the Tamagui provider) renders the overlay after
+ * `children`, so it covers tab bars, audit footers, and screens that are bare
+ * `ScrollView`s - an overlay rendered inside those would scroll with the
+ * content instead of covering the screen.
+ */
+export function ConfirmDialogProvider({ children }: Readonly<{ children: ReactNode }>) {
+    const { requestConfirm, confirmDialog } = useConfirmDialog();
+
+    return (
+        <ConfirmDialogContext.Provider value={requestConfirm}>
+            {children}
+            {confirmDialog}
+        </ConfirmDialogContext.Provider>
+    );
+}
+
+/**
+ * Confirm request backed by the root `ConfirmDialogProvider` overlay. Resolves
+ * `true` when the primary action is chosen; `false` on cancel. Acknowledge-only
+ * dialogs (no `cancelLabel`) always resolve `true`.
+ */
+export function useConfirm(): (options: ConfirmOptions) => Promise<boolean> {
+    const requestConfirm = useContext(ConfirmDialogContext);
+    if (requestConfirm === null) {
+        throw new Error("useConfirm must be used inside ConfirmDialogProvider");
+    }
+    return requestConfirm;
 }
