@@ -97,20 +97,17 @@ export default function PreAuditScreen() {
     });
 
     useLayoutEffect(() => {
-        // Unconditional localized fallback so the header never shows the raw
-        // route slug while audit data is still loading (G1).
+        // Single setOptions per render: the localized fallback title always
+        // applies so the header never shows the raw route slug (G1), and the
+        // data-driven headerTitle merges in once the session resolves.
         navigation.setOptions({
             ...themedHeaderOptions,
             title: t("stack.preAudit", { ns: "audit" }),
-        });
-
-        if (auditSession === undefined) {
-            return;
-        }
-
-        navigation.setOptions({
-            ...themedHeaderOptions,
-            headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
+            ...(auditSession === undefined
+                ? {}
+                : {
+                      headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
+                  }),
         });
     }, [themedHeaderOptions, navigation, auditSession, t]);
 

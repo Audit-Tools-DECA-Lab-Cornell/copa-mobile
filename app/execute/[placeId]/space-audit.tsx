@@ -148,19 +148,18 @@ export default function SpaceAuditScreen() {
     });
 
     useLayoutEffect(() => {
-        // Unconditional localized fallback so the header never shows the raw
-        // route slug while audit data is still loading (G1).
+        // Single setOptions per render: the localized fallback title always
+        // applies so the header never shows the raw route slug (G1), and the
+        // data-driven headerTitle merges in once the session resolves.
         navigation.setOptions({
             ...themedHeaderOptions,
             title: t("stack.spaceAudit", { ns: "audit" }),
+            ...(auditSession === undefined
+                ? {}
+                : {
+                      headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
+                  }),
         });
-
-        if (auditSession !== undefined) {
-            navigation.setOptions({
-                ...themedHeaderOptions,
-                headerTitle: () => <AuditHeaderTitle primary={auditSession.place_name} size="lg" />,
-            });
-        }
     }, [themedHeaderOptions, navigation, auditSession, t]);
 
     const flushToStore = useCallback(() => {
