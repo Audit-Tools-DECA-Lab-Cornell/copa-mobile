@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
+import { Pressable, ScrollView, Share, View, type LayoutChangeEvent } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useToastController } from "@tamagui/toast";
-import { ChevronUp, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
+import { ChevronUp, FileBarChart, MapPin, Share2 } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
 import { type ColorTokens, Paragraph, Separator, Text, XStack, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
@@ -37,7 +38,11 @@ import { getPlaceStatusTone, getScaleAccentColor, getScaleSoftColor, useDesignSy
 import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import {
+    getResponsiveContentContainerStyle,
+    GLOBAL_FAB_BOTTOM_OFFSET,
+    useResponsiveLayout,
+} from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlacesStore } from "stores/places-store";
@@ -535,8 +540,8 @@ function SectionNavigatorCard({ sectionRows, onSectionPress }: Readonly<SectionN
                             }}
                         >
                             {({ pressed }) => (
-                                <YStack gap="$2" opacity={pressed ? 0.85 : 1} className="border-2 bg-accent m-4">
-                                    <YStack justify="center" gap="$2" className="border-2 bg-accent">
+                                <YStack gap="$2" opacity={pressed ? 0.85 : 1}>
+                                    <YStack justify="center" gap="$2">
                                         <Text
                                             color={ds.colors.foreground}
                                             fontFamily={ds.fonts.bodyBold}
@@ -617,6 +622,7 @@ export default function AuditReportDetailScreen() {
     const ds = useDesignSystem();
     const themedHeaderOptions = useThemedHeaderOptions();
     const layout = useResponsiveLayout();
+    const insets = useSafeAreaInsets();
     const { t } = useTranslation(["reports", "common", "places"]);
     const toast = useToastController();
     const params = useLocalSearchParams<{ auditId?: string | string[] }>();
@@ -839,13 +845,32 @@ export default function AuditReportDetailScreen() {
     }, []);
 
     const handleSectionLayout = useCallback((sectionKey: string, event: LayoutChangeEvent) => {
-        sectionOffsetsRef.current[sectionKey] = event.nativeEvent.layout.y + 2900;
+        // Measure each section row against the scroll content instead of the
+        // old hardcoded "+ 2900" guess, so navigator jumps stay accurate for
+        // any locale, font scale, or viewport (6.2).
+        const scrollView = scrollViewRef.current;
+        const innerViewNode: unknown = scrollView?.getInnerViewNode();
+        const target = event.currentTarget;
+        if (scrollView == null || innerViewNode == null) {
+            sectionOffsetsRef.current[sectionKey] = event.nativeEvent.layout.y;
+            return;
+        }
+        target.measureLayout(
+            innerViewNode as number,
+            (_x: number, y: number) => {
+                sectionOffsetsRef.current[sectionKey] = y;
+            },
+            () => {
+                sectionOffsetsRef.current[sectionKey] = event.nativeEvent.layout.y;
+            },
+        );
     }, []);
 
     const scrollToSection = useCallback((sectionKey: string) => {
         const offset = sectionOffsetsRef.current[sectionKey];
         if (typeof offset === "number") {
-            scrollViewRef.current?.scrollTo({ animated: true, x: 0, y: Math.max(0, offset) });
+            // Small breathing room so the row title is not glued to the header.
+            scrollViewRef.current?.scrollTo({ animated: true, x: 0, y: Math.max(0, offset - 12) });
         }
     }, []);
 
@@ -1032,9 +1057,11 @@ export default function AuditReportDetailScreen() {
                             style={{
                                 // Bottom-left keeps this clear of the global bug-report FAB
                                 // (bottom-right) and the right-aligned score values in tables.
+                                // Vertically aligned with the bug-report FAB via the shared
+                                // geometry constants (1.6/G8).
                                 position: "absolute",
                                 left: 16,
-                                bottom: 96,
+                                bottom: Math.max(insets.bottom, 0) + GLOBAL_FAB_BOTTOM_OFFSET,
                                 zIndex: 40,
                                 elevation: 8,
                             }}
@@ -1307,6 +1334,7 @@ interface MetadataRowProps {
  */
 function MetadataRow({ label, value, selectable = false, isCode = false }: Readonly<MetadataRowProps>) {
     const ds = useDesignSystem();
+    const { t } = useTranslation("reports");
     return (
         <XStack items="flex-start" gap="$3">
             <Paragraph
@@ -1319,17 +1347,32 @@ function MetadataRow({ label, value, selectable = false, isCode = false }: Reado
                 {label}
             </Paragraph>
             {isCode ? (
-                <Text
-                    selectable
-                    color={ds.colors.foreground}
-                    fontFamily={ds.fonts.monoMedium}
-                    fontSize={ds.typography.bodySm.fontSize}
-                    lineHeight={ds.typography.bodySm.lineHeight}
-                    flex={1}
-                    style={{ textAlign: "left" }}
-                >
-                    {value}
-                </Text>
+                <XStack flex={1} items="center" gap="$2">
+                    <Text
+                        selectable
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.monoMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                        lineHeight={ds.typography.bodySm.lineHeight}
+                        flex={1}
+                        style={{ textAlign: "left" }}
+                    >
+                        {formatCodeInChunks(value)}
+                    </Text>
+                    <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={t("detail.shareCode", { ns: "reports" })}
+                        onPress={() => {
+                            // The native share sheet includes "Copy" on both
+                            // platforms, giving a one-tap copy path without a
+                            // clipboard dependency.
+                            void Share.share({ message: value }).catch(() => undefined);
+                        }}
+                        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1, padding: 6 })}
+                    >
+                        <Share2 size={14} color={ds.colors.primary} />
+                    </Pressable>
+                </XStack>
             ) : (
                 <Text
                     selectable={selectable}
@@ -1438,4 +1481,12 @@ function formatDateTime(value: string): string {
         .replace(/\b(am|pm)\b/i, (match) => match.toUpperCase());
 
     return `${dateLabel}, ${timeLabel}`;
+}
+
+/**
+ * Break a long identifier into 4-character groups so field auditors can read
+ * it aloud or transcribe it without losing their place (6.4/G6).
+ */
+function formatCodeInChunks(code: string): string {
+    return code.replace(/(.{4})/g, "$1 ").trim();
 }

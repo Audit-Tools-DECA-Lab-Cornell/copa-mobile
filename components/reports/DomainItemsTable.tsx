@@ -181,6 +181,181 @@ export const DomainItemsTable = memo(function DomainItemsTable({ questions }: Do
         return <DataText textAlign="center">{label ?? "-"}</DataText>;
     }
 
+    // ── Phone layout (6.3/G8): priority-column rows instead of a ~1436px
+    // horizontal grid. Every value wraps into view - nothing hides off-screen.
+    if (!layout.isTablet) {
+        const formatPvuCompact = (score: number | null, max: number | null): string => {
+            if (score === null || max === null) {
+                return t("extendedTable.notApplicable");
+            }
+            return `${formatScoreValue(score)} / ${formatScoreValue(max)}`;
+        };
+
+        const scaleValueText = (options: {
+            label: string | null;
+            applicable: boolean;
+            isNotApplicable: boolean;
+            isUnsure: boolean;
+            followUpScalesAsked?: boolean;
+        }): { text: string; muted: boolean } => {
+            const { label, applicable, isNotApplicable, isUnsure, followUpScalesAsked = true } = options;
+            if (!applicable || !followUpScalesAsked) {
+                return { text: "-", muted: true };
+            }
+            if (isNotApplicable) {
+                return { text: t("extendedTable.notApplicableFull"), muted: false };
+            }
+            if (isUnsure) {
+                return { text: t("extendedTable.unsure"), muted: false };
+            }
+            return { text: label ?? "-", muted: label === null };
+        };
+
+        return (
+            <YStack width="100%" rounded={ds.radii.sm} borderWidth={1} borderColor={ds.colors.border} overflow="hidden">
+                {questions.map((question, index) => {
+                    const rowBg = index % 2 === 0 ? ds.colors.input : ds.colors.surface;
+                    const scaleCells = [
+                        {
+                            label: t("extendedTable.columnProvision"),
+                            ...scaleValueText({
+                                label: question.provisionLabel,
+                                applicable: question.provisionApplicable,
+                                isNotApplicable: question.provisionIsNotApplicable,
+                                isUnsure: question.provisionIsUnsure,
+                            }),
+                        },
+                        {
+                            label: t("extendedTable.columnVariety"),
+                            ...scaleValueText({
+                                label: question.varietyLabel,
+                                applicable: question.varietyApplicable,
+                                isNotApplicable: question.varietyIsNotApplicable,
+                                isUnsure: question.varietyIsUnsure,
+                                followUpScalesAsked: question.followUpScalesAsked,
+                            }),
+                        },
+                        {
+                            label: t("extendedTable.columnChallenge"),
+                            ...scaleValueText({
+                                label: question.challengeLabel,
+                                applicable: question.challengeApplicable,
+                                isNotApplicable: question.challengeIsNotApplicable,
+                                isUnsure: question.challengeIsUnsure,
+                                followUpScalesAsked: question.followUpScalesAsked,
+                            }),
+                        },
+                        {
+                            label: t("extendedTable.columnSociability"),
+                            ...scaleValueText({
+                                label: question.sociabilityLabel,
+                                applicable: question.sociabilityApplicable,
+                                isNotApplicable: question.sociabilityIsNotApplicable,
+                                isUnsure: question.sociabilityIsUnsure,
+                                followUpScalesAsked: question.followUpScalesAsked,
+                            }),
+                        },
+                    ];
+
+                    return (
+                        <YStack
+                            key={question.questionKey}
+                            bg={rowBg}
+                            p="$3"
+                            gap="$2"
+                            borderTopWidth={index === 0 ? 0 : 1}
+                            borderColor={ds.colors.border}
+                        >
+                            <XStack justify="space-between" items="center" gap="$2">
+                                <Text
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.monoMedium}
+                                    fontSize={cellFont}
+                                >
+                                    {formatQuestionKeyForDisplay(question.questionKey)}
+                                </Text>
+                                <XStack gap="$3">
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={cellFont}
+                                    >
+                                        {`${t("extendedTable.columnPlayValue")}: ${formatPvuCompact(question.playValueScore, question.playValueMax)}`}
+                                    </Text>
+                                    <Text
+                                        color={ds.colors.foreground}
+                                        fontFamily={ds.fonts.bodyBold}
+                                        fontSize={cellFont}
+                                    >
+                                        {`${t("extendedTable.columnUsability")}: ${formatPvuCompact(question.usabilityScore, question.usabilityMax)}`}
+                                    </Text>
+                                </XStack>
+                            </XStack>
+
+                            <PromptRichText raw={question.questionText} fontSize={cellFont} lineHeight={cellLine} />
+                            {question.checklistAnswerLabel !== null ? (
+                                <YStack
+                                    rounded={ds.radii.sm}
+                                    borderWidth={1}
+                                    borderColor={ds.colors.border}
+                                    bg={ds.colors.mutedSurface}
+                                    px="$2"
+                                    py="$1"
+                                    self="flex-start"
+                                >
+                                    <Text
+                                        color={ds.colors.mutedForeground}
+                                        fontFamily={ds.fonts.bodyMedium}
+                                        fontSize={cellFont}
+                                        lineHeight={cellLine}
+                                    >
+                                        <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold}>
+                                            {t("extendedTable.selectedLabel", { defaultValue: "Selected: " })}
+                                        </Text>
+                                        {question.checklistAnswerLabel}
+                                    </Text>
+                                </YStack>
+                            ) : null}
+
+                            <XStack flexWrap="wrap" gap="$2">
+                                {scaleCells.map((cell) => (
+                                    <YStack
+                                        key={cell.label}
+                                        rounded={ds.radii.sm}
+                                        bg={ds.colors.mutedSurface}
+                                        px="$2"
+                                        py="$1.5"
+                                        gap="$0.5"
+                                        style={{ minWidth: "47%", flexGrow: 1 }}
+                                    >
+                                        <Text
+                                            color={ds.colors.mutedForeground}
+                                            fontFamily={ds.fonts.bodyBold}
+                                            fontSize={ds.typography.labelSm.fontSize}
+                                            textTransform="uppercase"
+                                            letterSpacing={0.5}
+                                        >
+                                            {cell.label}
+                                        </Text>
+                                        <Text
+                                            color={cell.muted ? ds.colors.mutedForeground : ds.colors.foreground}
+                                            fontFamily={ds.fonts.bodyMedium}
+                                            fontSize={cellFont}
+                                            lineHeight={cellLine}
+                                            opacity={cell.muted ? mutedDashOpacity : 1}
+                                        >
+                                            {cell.text}
+                                        </Text>
+                                    </YStack>
+                                ))}
+                            </XStack>
+                        </YStack>
+                    );
+                })}
+            </YStack>
+        );
+    }
+
     return (
         <YStack position="relative" width="100%">
             <ScrollView

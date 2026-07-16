@@ -6,6 +6,7 @@ import { SearchInput } from "components/ui/search-input";
 import { ScreenHeader } from "components/ui/screen-header";
 import { QueueCardHeader, QueueCardMetaRow, QueueCardShell } from "components/ui/queue-card";
 import { TabListSkeleton } from "components/ui/skeleton";
+import { ScoreLegendInfo } from "components/reports/score-legend-info";
 import { useRouter } from "expo-router";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
 import {
@@ -231,7 +232,11 @@ export default function PlacesScreen() {
 
     const headerComponent = (
         <YStack gap="$4">
-            <ScreenHeader title={t("title", { ns: "places" })} subtitle={t("subtitle", { ns: "places" })} />
+            <ScreenHeader
+                title={t("title", { ns: "places" })}
+                subtitle={t("subtitle", { ns: "places" })}
+                actions={<ScoreLegendInfo />}
+            />
 
             <XStack gap="$3">
                 <Pressable

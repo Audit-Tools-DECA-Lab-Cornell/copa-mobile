@@ -9,6 +9,7 @@ import { SearchInput } from "components/ui/search-input";
 import { StatCard } from "components/ui/stat-card";
 import { ScreenHeader } from "components/ui/screen-header";
 import { QueueCardHeader, QueueCardMetaRow, QueueCardShell } from "components/ui/queue-card";
+import { ScoreLegendInfo } from "components/reports/score-legend-info";
 import { useRouter, type Href } from "expo-router";
 import type { AuditExportFormat, AuditExportPreview, ExportAuditorProfile } from "lib/exports/reports";
 import { buildAuditExportPreview, shareBulkAuditExport } from "lib/exports/reports";
@@ -379,7 +380,7 @@ export default function ReportsScreen() {
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
                 <YStack gap="$4">
-                    <ScreenHeader title={t("title")} subtitle={t("subtitle")} />
+                    <ScreenHeader title={t("title")} subtitle={t("subtitle")} actions={<ScoreLegendInfo />} />
 
                     {layout.isTablet ? (
                         <XStack gap="$3">

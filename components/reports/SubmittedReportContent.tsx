@@ -11,6 +11,7 @@ import { DomainCard } from "components/reports/DomainCard";
 import { DomainItemsTable } from "components/reports/DomainItemsTable";
 import { DomainScoreDisplay } from "components/reports/DomainScoreDisplay";
 import { DomainSectionHeader, ExpandCollapseControl } from "components/reports/DomainSectionHeader";
+import { ScoreLegendInfo } from "components/reports/score-legend-info";
 import { useDomainExpansion } from "components/reports/use-domain-expansion";
 
 export interface SubmittedReportContentProps {
@@ -33,13 +34,20 @@ export const SubmittedReportContent = memo(function SubmittedReportContent({
 
     const expansionKeys = useMemo(() => [...domainRows.map((row) => row.domainKey), "__overall__"], [domainRows]);
 
+    // Domains with no scoreable content (all N/A) start collapsed so scored
+    // results lead the report; they stay expandable (6.1, presentation only).
+    const defaultCollapsedKeys = useMemo(
+        () => domainRows.filter((row) => isUnscoredDomainRow(row)).map((row) => row.domainKey),
+        [domainRows],
+    );
+
     const {
         expandAll,
         collapseAll: collapseDomains,
         toggle,
         isExpanded,
         allExpanded,
-    } = useDomainExpansion(expansionKeys);
+    } = useDomainExpansion(expansionKeys, defaultCollapsedKeys);
 
     const collapseAll = useCallback(() => {
         collapseDomains();
@@ -56,7 +64,16 @@ export const SubmittedReportContent = memo(function SubmittedReportContent({
     return (
         <YStack gap="$4" width="100%">
             {domainRows.length > 0 ? (
-                <ExpandCollapseControl onExpandAll={expandAll} onCollapseAll={collapseAll} allExpanded={allExpanded} />
+                <XStack items="center" justify="space-between" gap="$2">
+                    <YStack flex={1}>
+                        <ExpandCollapseControl
+                            onExpandAll={expandAll}
+                            onCollapseAll={collapseAll}
+                            allExpanded={allExpanded}
+                        />
+                    </YStack>
+                    <ScoreLegendInfo />
+                </XStack>
             ) : null}
 
             {domainRows.map((row, index) => {
@@ -202,3 +219,22 @@ const AuditorNotes = memo(function AuditorNotes({ notes, domainKey }: AuditorNot
         </>
     );
 });
+
+/**
+ * A domain is "unscored" when every scale max is zero (all answers N/A) or it
+ * has no score totals at all.
+ */
+function isUnscoredDomainRow(row: DomainReportRow): boolean {
+    const totals = row.scoreTotals;
+    if (totals === null) {
+        return true;
+    }
+    return (
+        totals.play_value_total_max <= 0 &&
+        totals.usability_total_max <= 0 &&
+        totals.provision_total_max <= 0 &&
+        totals.variety_total_max <= 0 &&
+        totals.challenge_total_max <= 0 &&
+        totals.sociability_total_max <= 0
+    );
+}
