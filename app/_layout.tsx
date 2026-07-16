@@ -170,9 +170,12 @@ function ActiveRootLayoutNav() {
     // navigation bar stays hidden.
     const requestConfirm = useConfirm();
     useBugReportFlushPrompt(authSession, authStatus === "authenticated" && isAuditHydrated, requestConfirm);
-    // Guards the queued-submit-failure announcements: at most one batch of
-    // acknowledge dialogs runs at a time.
-    const isAnnouncingSubmitFailuresRef = useRef(false);
+    // Serializes queued-submit-failure announcement batches, including across
+    // effect re-runs (sign-out, account switch): each new check waits for the
+    // previous batch to wind down instead of being skipped while it does, so
+    // the new account's notices are never left hidden until the next
+    // foreground event.
+    const announceSubmitFailuresChainRef = useRef<Promise<void>>(Promise.resolve());
     const navigationTheme =
         resolvedTheme === "light"
             ? {
@@ -345,42 +348,38 @@ function ActiveRootLayoutNav() {
         // the new auth state, and the loop stops popping.
         const cancellation = new AbortController();
 
-        const checkFailures = () => {
-            if (isAnnouncingSubmitFailuresRef.current) {
-                return;
-            }
-            isAnnouncingSubmitFailuresRef.current = true;
-            void (async () => {
-                try {
-                    while (!cancellation.signal.aborted) {
-                        const notif = usePlayspaceAuditStore
-                            .getState()
-                            .popSubmitFailureNotification(authSession.user.id);
-                        if (notif === null) {
-                            return;
-                        }
-                        const acknowledged = await requestConfirm(
-                            {
-                                title: t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
-                                message: t("errors.queuedSubmitFailedMessage", {
-                                    ns: "audit",
-                                    placeName: notif.placeName,
-                                }),
-                                confirmLabel: t("actions.ok", { ns: "common" }),
-                            },
-                            cancellation.signal,
-                        );
-                        if (!acknowledged) {
-                            // Aborted before the auditor saw it through: put it
-                            // back so it shows again on the next sign-in.
-                            usePlayspaceAuditStore.getState().restoreSubmitFailureNotification(notif);
-                            return;
-                        }
-                    }
-                } finally {
-                    isAnnouncingSubmitFailuresRef.current = false;
+        const announceFailures = async () => {
+            while (!cancellation.signal.aborted) {
+                const notif = usePlayspaceAuditStore.getState().popSubmitFailureNotification(authSession.user.id);
+                if (notif === null) {
+                    return;
                 }
-            })();
+                const acknowledged = await requestConfirm(
+                    {
+                        title: t("errors.queuedSubmitFailedTitle", { ns: "audit" }),
+                        message: t("errors.queuedSubmitFailedMessage", {
+                            ns: "audit",
+                            placeName: notif.placeName,
+                        }),
+                        confirmLabel: t("actions.ok", { ns: "common" }),
+                    },
+                    cancellation.signal,
+                );
+                if (!acknowledged) {
+                    // Aborted before the auditor saw it through: put it back
+                    // so it shows again on the next sign-in.
+                    usePlayspaceAuditStore.getState().restoreSubmitFailureNotification(notif);
+                    return;
+                }
+            }
+        };
+
+        const checkFailures = () => {
+            // Redundant queued checks are cheap: a batch that finds nothing to
+            // pop returns immediately.
+            announceSubmitFailuresChainRef.current = announceSubmitFailuresChainRef.current
+                .then(announceFailures)
+                .catch(() => undefined);
         };
 
         // Check immediately when authenticated and hydrated.
