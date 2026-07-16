@@ -8,8 +8,8 @@ import Animated, {
     useSharedValue,
     withTiming,
 } from "react-native-reanimated";
-import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { AppButton } from "components/ui/app-button";
+import { Paragraph, Text, XStack, YStack } from "tamagui";
 import { MOTION, useDesignSystem } from "lib/design-system";
 
 export interface ConfirmOptions {
