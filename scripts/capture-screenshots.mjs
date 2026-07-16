@@ -662,7 +662,9 @@ async function captureDeviceRun({ options, device, appearance, targets }) {
 
             const outputPath = path.join(outputDir, target.file);
             const url = buildBootstrapUrl(target, options, shouldReset);
-            const waitMs = shouldReset ? options.loginWaitMs : options.waitMs;
+            // Per-target extra settle time (e.g. section deep links that need
+            // ensurePlaceAudit to resolve first).
+            const waitMs = (shouldReset ? options.loginWaitMs : options.waitMs) + (target.extraWaitMs ?? 0);
 
             console.log(`Opening ${target.route}${shouldReset ? " (reset + login)" : ""}`);
             openDeviceUrl(device, url);
@@ -909,8 +911,8 @@ function buildTargets(discovery, sectionKey, deviceType) {
 function buildPhoneTargets(discovery, sectionKey, deviceType = "iphone") {
     const routes = buildDynamicRoutes(discovery, sectionKey);
     const targets = [
-        // publicTarget("01-login.png", "/(auth)/login", "Login screen"),
-        // publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
+        publicTarget("01-login.png", "/(auth)/login", "Login screen"),
+        publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
         protectedTarget("03-home.png", "/", "Home top"),
         protectedTarget("04-home-queue.png", withScreenshotScroll("/", 780), "Home queue scroll"),
         protectedTarget("05-places.png", "/places", "Places list top"),
@@ -926,7 +928,14 @@ function buildPhoneTargets(discovery, sectionKey, deviceType = "iphone") {
             routes.preAudit,
             "Pre-audit top only; old scrolled variants removed",
         ),
-        dynamicPlaceTarget("10-execute-section.png", routes.section, "Execute section top"),
+        {
+            ...dynamicPlaceTarget(
+                "10-execute-section.png",
+                routes.section,
+                "Execute section top; extra settle time so ensurePlaceAudit resolves after the warm-up target",
+            ),
+            extraWaitMs: 4000,
+        },
         dynamicPlaceTarget(
             "11-execute-section-questions.png",
             withScreenshotScroll(routes.section, 780),
@@ -946,6 +955,9 @@ function buildPhoneTargets(discovery, sectionKey, deviceType = "iphone") {
             withScreenshotScroll("/settings", IPHONE_SETTINGS_SCROLL_Y),
             "Settings scrolled frame",
         ),
+        dynamicPlaceTarget("21-execute-overview.png", routes.overview, "Execute section overview"),
+        dynamicPlaceTarget("22-execute-space-audit.png", routes.spaceAudit, "Execute space-audit setup"),
+        dynamicPlaceTarget("23-execute-final-comments.png", routes.finalComments, "Execute final comments"),
     ];
     return assertUniqueTargetFiles(deviceType, targets);
 }
@@ -953,8 +965,8 @@ function buildPhoneTargets(discovery, sectionKey, deviceType = "iphone") {
 function buildTabletTargets(discovery, sectionKey, deviceType = "ipad") {
     const routes = buildDynamicRoutes(discovery, sectionKey);
     const targets = [
-        // publicTarget("01-login.png", "/(auth)/login", "Login screen"),
-        // publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
+        publicTarget("01-login.png", "/(auth)/login", "Login screen"),
+        publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
         protectedTarget("03-home.png", "/", "Home top; old home queue removed because tablet top frame fits it"),
         protectedTarget("04-places.png", "/places", "Places list top"),
         dynamicPlaceTarget("05-place-detail.png", routes.placeDetail, "Place detail"),
@@ -969,7 +981,14 @@ function buildTabletTargets(discovery, sectionKey, deviceType = "ipad") {
             withScreenshotScroll(routes.preAudit, IPAD_PRE_AUDIT_SCROLL_Y),
             "Single pre-audit frame with slight scroll to merge old top/questions coverage",
         ),
-        dynamicPlaceTarget("09-execute-section.png", routes.section, "Execute section top"),
+        {
+            ...dynamicPlaceTarget(
+                "09-execute-section.png",
+                routes.section,
+                "Execute section top; extra settle time so ensurePlaceAudit resolves after the warm-up target",
+            ),
+            extraWaitMs: 4000,
+        },
         dynamicPlaceTarget(
             "10-execute-section-notes.png",
             withScreenshotScroll(routes.section, 4000),
@@ -983,6 +1002,9 @@ function buildTabletTargets(discovery, sectionKey, deviceType = "ipad") {
             withScreenshotScroll("/settings", 1250),
             "Settings about; old preferences shot removed",
         ),
+        dynamicPlaceTarget("17-execute-overview.png", routes.overview, "Execute section overview"),
+        dynamicPlaceTarget("18-execute-space-audit.png", routes.spaceAudit, "Execute space-audit setup"),
+        dynamicPlaceTarget("19-execute-final-comments.png", routes.finalComments, "Execute final comments"),
     ];
     return assertUniqueTargetFiles(deviceType, targets);
 }
@@ -994,6 +1016,9 @@ function buildDynamicRoutes(discovery, sectionKey) {
         placeDetail: null,
         executePlace: null,
         preAudit: null,
+        spaceAudit: null,
+        overview: null,
+        finalComments: null,
         section: null,
         reportDetail: null,
     };
@@ -1002,6 +1027,9 @@ function buildDynamicRoutes(discovery, sectionKey) {
         routes.placeDetail = `/place/${encodeURIComponent(place.place_id)}?projectId=${encodeURIComponent(place.project_id)}`;
         routes.executePlace = `/execute/${encodeURIComponent(place.place_id)}?projectId=${encodeURIComponent(place.project_id)}`;
         routes.preAudit = `/execute/${encodeURIComponent(place.place_id)}/pre-audit?projectId=${encodeURIComponent(place.project_id)}`;
+        routes.spaceAudit = `/execute/${encodeURIComponent(place.place_id)}/space-audit?projectId=${encodeURIComponent(place.project_id)}`;
+        routes.overview = `/execute/${encodeURIComponent(place.place_id)}/overview?projectId=${encodeURIComponent(place.project_id)}`;
+        routes.finalComments = `/execute/${encodeURIComponent(place.place_id)}/final-comments?projectId=${encodeURIComponent(place.project_id)}`;
         routes.section = `/execute/${encodeURIComponent(place.place_id)}/section/${encodeURIComponent(sectionKey)}?projectId=${encodeURIComponent(place.project_id)}`;
     }
 

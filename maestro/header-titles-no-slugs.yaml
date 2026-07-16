@@ -1,0 +1,18 @@
+# Auditor-only native E2E flow for the Expo development build.
+# Android appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+# iOS bundleId: com.pratyush.sudhakar.audit-tools-playspace-mobile
+#
+# Guards plan task 0.1 (G1): every execute-flow screen must show a localized
+# header title from the first frame - never a raw route slug like
+# "[sectionKey]" or "[placeId]". The timeout/retry wait-state path (0.2)
+# still needs a manual airplane-mode pass (see docs/PLAN.md 8.5); toggling
+# connectivity mid-flow is too flaky for smoke CI.
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- runFlow: create-audit.yaml
+- assertNotVisible:
+      text: '.*\[placeId\].*'
+- assertNotVisible:
+      text: '.*\[sectionKey\].*'
+- assertNotVisible:
+      text: '.*\[auditId\].*'
