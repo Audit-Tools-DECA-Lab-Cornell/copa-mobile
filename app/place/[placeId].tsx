@@ -154,7 +154,7 @@ function PlaceDetailContent({
     const locality = deriveLocality(place, "");
     // One composed address line (G5): street + postal + city, falling back to
     // the derived locality when structured fields are missing.
-    const addressLine = [place.address, place.postal_code, place.city].filter(Boolean).join(", ") || locality;
+    const addressLine = [place.address, place.postal_code, place.city].filter(Boolean).join(", ");
     const pendingScoreMessage = useMemo(() => {
         return resolvePendingScoreMessage({
             auditSession,
@@ -442,17 +442,19 @@ function PlaceDetailContent({
                         >
                             {place.project_name}
                         </Paragraph>
-                        <XStack items="center" gap="$2">
-                            <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
-                            <Paragraph
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyMedium}
-                                fontSize={ds.typography.bodyLg.fontSize}
-                                flex={1}
-                            >
-                                {addressLine}
-                            </Paragraph>
-                        </XStack>
+                        {addressLine && (
+                            <XStack items="center" gap="$2">
+                                <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
+                                <Paragraph
+                                    color={ds.colors.mutedForeground}
+                                    fontFamily={ds.fonts.bodyMedium}
+                                    fontSize={ds.typography.bodyLg.fontSize}
+                                    flex={1}
+                                >
+                                    {addressLine}
+                                </Paragraph>
+                            </XStack>
+                        )}
                     </YStack>
                     <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusTone.surface }}>
                         <Text

@@ -19,7 +19,7 @@ export default {
             },
         },
         android: {
-            icon: "./assets/android-icons/icon.png",
+            icon: "./assets/android-icons/favicon.png",
             softwareKeyboardLayoutMode: "pan",
             adaptiveIcon: {
                 foregroundImage: "./assets/android-icons/adaptive-icon.png",
