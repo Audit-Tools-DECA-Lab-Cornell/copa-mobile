@@ -353,7 +353,9 @@ function ActiveRootLayoutNav() {
             void (async () => {
                 try {
                     while (!cancellation.signal.aborted) {
-                        const notif = usePlayspaceAuditStore.getState().popSubmitFailureNotification();
+                        const notif = usePlayspaceAuditStore
+                            .getState()
+                            .popSubmitFailureNotification(authSession.user.id);
                         if (notif === null) {
                             return;
                         }

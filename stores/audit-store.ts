@@ -97,6 +97,12 @@ export interface SubmitFailureNotification {
     readonly placeName: string;
     readonly message: string;
     readonly at: string;
+    /**
+     * Owning account, so a notice queued by one account is never shown to
+     * another on a shared device. Absent only on entries persisted by app
+     * versions that predate account scoping.
+     */
+    readonly accountId?: string | undefined;
 }
 
 interface FlushSingleAuditResult {
@@ -136,7 +142,7 @@ interface PlayspaceAuditStoreState {
     hydrate: (accountId?: string | null) => Promise<void>;
     refreshInstrument: () => Promise<void>;
     processQueuedSubmits: (session: AuthSession) => Promise<void>;
-    popSubmitFailureNotification: () => SubmitFailureNotification | null;
+    popSubmitFailureNotification: (accountId: string) => SubmitFailureNotification | null;
     restoreSubmitFailureNotification: (notification: SubmitFailureNotification) => void;
     clearStoredState: (accountId?: string | null) => Promise<void>;
     /**
@@ -570,16 +576,27 @@ function appendSubmitFailureNotification(notification: SubmitFailureNotification
 }
 
 /**
- * Read and remove the oldest pending submit-failure notification. Popping one
- * at a time (the caller shows them serially) keeps every not-yet-shown notice
- * persisted, so none are lost if the app is terminated mid-batch.
+ * Read and remove the oldest pending submit-failure notification owned by
+ * `accountId`. Popping one at a time (the caller shows them serially) keeps
+ * every not-yet-shown notice persisted, so none are lost if the app is
+ * terminated mid-batch. Notices belonging to other accounts stay untouched
+ * until their owner signs back in; legacy entries persisted before account
+ * scoping (no `accountId`) are shown to whichever account is signed in, as
+ * they always were.
  */
-function popSubmitFailureNotification(): SubmitFailureNotification | null {
+function popSubmitFailureNotification(accountId: string): SubmitFailureNotification | null {
     const notifications = readSubmitFailureNotifications();
-    const [first, ...rest] = notifications;
-    if (first === undefined) {
+    const index = notifications.findIndex(
+        (notification) => notification.accountId === accountId || notification.accountId === undefined,
+    );
+    if (index < 0) {
         return null;
     }
+    const popped = notifications[index];
+    if (popped === undefined) {
+        return null;
+    }
+    const rest = notifications.filter((_, notificationIndex) => notificationIndex !== index);
     try {
         if (rest.length === 0) {
             mmkvStorage.remove(SUBMIT_FAILURE_NOTIFICATIONS_KEY);
@@ -589,7 +606,7 @@ function popSubmitFailureNotification(): SubmitFailureNotification | null {
     } catch {
         /* best-effort */
     }
-    return first;
+    return popped;
 }
 
 /**
@@ -2255,6 +2272,7 @@ async function processQueuedSubmits(session: AuthSession): Promise<void> {
                     placeName: session_?.place_name ?? auditId,
                     message,
                     at: new Date().toISOString(),
+                    accountId: session.user.id,
                 });
                 notifySubmitFailureAsync(session, auditId).catch(() => undefined);
             }
