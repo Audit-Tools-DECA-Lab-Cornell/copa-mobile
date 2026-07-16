@@ -17,6 +17,7 @@ import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
 import { useDesignSystem } from "lib/design-system";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useAuthStore } from "stores/auth-store";
 import { usePlayspaceAuditStore } from "stores/audit-store";
@@ -31,6 +32,7 @@ type ExecuteFilter = "active" | "all";
 export default function ExecuteIndexScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const router = useRouter();
     const { t } = useTranslation(["audit", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -293,7 +295,7 @@ export default function ExecuteIndexScreen() {
                 maintainVisibleContentPosition={{ disabled: true }}
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                    bottomPadding: 92,
+                    bottomPadding: listBottomPadding,
                 })}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={headerComponent}
@@ -314,7 +316,7 @@ export default function ExecuteIndexScreen() {
             maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: listBottomPadding,
             })}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={headerComponent}

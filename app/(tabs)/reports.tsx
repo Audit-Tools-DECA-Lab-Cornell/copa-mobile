@@ -35,6 +35,7 @@ import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem } from "lib/desig
 import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -59,6 +60,7 @@ export default function ReportsScreen() {
     const ds = useDesignSystem();
     const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const { t } = useTranslation(["reports", "common"]);
     const instrument = useLocalizedInstrument();
     const toast = useToastController();
@@ -375,7 +377,7 @@ export default function ReportsScreen() {
             maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: listBottomPadding,
             })}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={

@@ -28,6 +28,7 @@ import { formatLongDateLabel, formatRelativeTimeLabel, getPlaceStatusLabel } fro
 import { getCardTextLineLimit } from "lib/responsive";
 import { buildPairGridRows } from "lib/ui/pair-grid";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
@@ -89,6 +90,7 @@ function derivePriorityDueLabelKey(place: AuditorPlace | undefined): PriorityDue
 export default function DashboardScreen() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const router = useRouter();
     const { t, i18n } = useTranslation(["dashboard", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -729,7 +731,7 @@ export default function DashboardScreen() {
                 contentInsetAdjustmentBehavior="automatic"
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                    bottomPadding: 92,
+                    bottomPadding: listBottomPadding,
                     gap: 32,
                 })}
             >
@@ -847,7 +849,7 @@ export default function DashboardScreen() {
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: listBottomPadding,
                 gap: 28,
             })}
         >

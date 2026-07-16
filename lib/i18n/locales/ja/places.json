@@ -14,6 +14,7 @@
         "openInGoogleMaps": "Googleマップで開く",
         "quickActions": "クイック操作",
         "reportUnavailable": "監査が開始され、採点されると、ここに場所レポートが表示されます。",
+        "scorePendingShort": "保留中",
         "screenTitle": "場所の詳細",
         "waitingForAuditAndSurveyCompletion": "スコアが表示されるまで、残りの監査および調査の質問への回答をお待ちください。",
         "waitingForAuditAndSurveySubmission": "スコアが表示されるまで、完了した監査と調査の送信をお待ちください。",

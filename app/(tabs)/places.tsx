@@ -22,6 +22,7 @@ import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem, type DesignTone 
 import { formatRelativeTimeLabel, getPlaceStatusLabel, type LocalizedPlaceStatus } from "lib/i18n/format";
 import { getCardTextLineLimit } from "lib/responsive";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { buildPairGridRows, type PairGridRow } from "lib/ui/pair-grid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -44,6 +45,7 @@ export default function PlacesScreen() {
     const ds = useDesignSystem();
     const isGlassEnabled = isGlassUiEnabled();
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const router = useRouter();
     const { t } = useTranslation(["places", "common"]);
     const session = useAuthStore((state) => state.session);
@@ -359,7 +361,7 @@ export default function PlacesScreen() {
                 maintainVisibleContentPosition={{ disabled: true }}
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                    bottomPadding: 92,
+                    bottomPadding: listBottomPadding,
                 })}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={headerComponent}
@@ -380,7 +382,7 @@ export default function PlacesScreen() {
             maintainVisibleContentPosition={{ disabled: true }}
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: listBottomPadding,
             })}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={headerComponent}

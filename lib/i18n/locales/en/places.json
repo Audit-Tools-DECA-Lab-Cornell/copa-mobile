@@ -14,6 +14,7 @@
         "openInGoogleMaps": "Open in Google Maps",
         "quickActions": "Quick actions",
         "reportUnavailable": "A place report will appear here after an audit is started and scored.",
+        "scorePendingShort": "Pending",
         "screenTitle": "Place detail",
         "waitingForAuditAndSurveyCompletion": "Waiting for the remaining audit and survey questions before a score can appear.",
         "waitingForAuditAndSurveySubmission": "Waiting for the completed audit and survey to be submitted before a score can appear.",

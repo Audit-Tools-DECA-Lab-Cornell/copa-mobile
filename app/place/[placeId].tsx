@@ -163,7 +163,7 @@ function PlaceDetailContent({
             t,
         });
     }, [auditSession, instrument, place, t]);
-    const summaryMetricValue = formatScorePair(place.overall_scores) ?? "Pending";
+    const summaryMetricValue = formatScorePair(place.overall_scores) ?? t("detail.scorePendingShort", { ns: "places" });
     const openAuditLabel =
         place.selected_execution_mode === null
             ? t("actions.openAudit", { ns: "common" })

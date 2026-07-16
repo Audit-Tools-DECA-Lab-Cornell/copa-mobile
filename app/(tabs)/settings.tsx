@@ -23,6 +23,7 @@ import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import { getSettingsPageMaxWidth } from "lib/responsive";
 import { getResponsiveContentContainerStyle, ResponsiveLayout, useResponsiveLayout } from "lib/responsive-layout";
+import { useFabAwareBottomPadding } from "lib/responsive-insets";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { useCallback, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -93,6 +94,7 @@ function resolveAppLanguage(languageTag: string | undefined): ResolvedAppLanguag
  */
 export default function SettingsScreen() {
     const layout = useResponsiveLayout();
+    const listBottomPadding = useFabAwareBottomPadding();
     const router = useRouter();
     const { t, i18n } = useTranslation(["settings", "common"]);
     const instrument = useLocalizedInstrument();
@@ -414,7 +416,7 @@ export default function SettingsScreen() {
                 style={{ backgroundColor: ds.colors.background }}
                 contentContainerStyle={getResponsiveContentContainerStyle(layout, {
                     // Reserve extra room for the save bar so the last card stays reachable.
-                    bottomPadding: isDirty ? 168 : 92,
+                    bottomPadding: isDirty ? listBottomPadding + 76 : listBottomPadding,
                     gap: layout.isTablet ? 28 : 24,
                     maxWidth: settingsPageMaxWidth,
                 })}
@@ -796,12 +798,13 @@ interface SettingsSkeletonScreenProps {
  */
 function SettingsSkeletonScreen({ ds }: SettingsSkeletonScreenProps) {
     const layout = useResponsiveLayout();
+    const skeletonBottomPadding = useFabAwareBottomPadding();
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             style={{ backgroundColor: ds.colors.background }}
             contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 92,
+                bottomPadding: skeletonBottomPadding,
                 gap: layout.isTablet ? 32 : 24,
                 maxWidth: getSettingsPageMaxWidth({
                     isTablet: layout.isTablet,
