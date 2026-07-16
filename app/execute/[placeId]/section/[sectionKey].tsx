@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Alert, ScrollView, TextInput } from "react-native";
+import { ScrollView, TextInput } from "react-native";
 import { type Href, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { ArrowLeft, ArrowRight, LayoutDashboard } from "@tamagui/lucide-icons-2";
 import { useTranslation } from "react-i18next";
@@ -9,6 +9,7 @@ import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
 import { LoggedInAsNotice } from "components/ui/logged-in-as-notice";
 import { CenteredMessageCard } from "components/ui/centered-message-card";
+import { useConfirmDialog } from "components/ui/confirm-dialog";
 import { QuestionCard } from "components/playspace-audit/question-card";
 import { SectionQuestionTable } from "components/playspace-audit/section-question-table";
 import {
@@ -63,6 +64,7 @@ export default function ExecuteSectionScreen() {
     const navigation = useNavigation();
     const router = useRouter();
     const { t } = useTranslation(["audit", "common"]);
+    const { requestConfirm, confirmDialog } = useConfirmDialog();
     const params = useLocalSearchParams<{
         placeId?: string | string[];
         projectId?: string | string[];
@@ -399,25 +401,18 @@ export default function ExecuteSectionScreen() {
         });
 
         if (unansweredQuestions.length > 0) {
-            const questionList = unansweredQuestions.map((q) => formatQuestionKey(q.question_key)).join(", ");
+            const shouldContinue = await requestConfirm({
+                title: t("section.incompleteTitle", { ns: "audit" }),
+                message: t("section.incompleteMessage", { ns: "audit" }),
+                listLabel: t("section.incompleteListLabel", { ns: "audit" }),
+                items: unansweredQuestions.map((q) => formatQuestionKey(q.question_key)),
+                confirmLabel: t("section.incompleteConfirmContinue", { ns: "audit" }),
+                cancelLabel: t("section.incompleteGoBack", { ns: "audit" }),
+            });
 
-            Alert.alert(
-                t("section.incompleteTitle", { ns: "audit" }),
-                `${t("section.incompleteMessage", { ns: "audit" })}\n\n${t("section.incompleteListLabel", { ns: "audit" })} ${questionList}`,
-                [
-                    {
-                        text: t("section.incompleteGoBack", { ns: "audit" }),
-                        style: "cancel",
-                    },
-                    {
-                        text: t("section.incompleteConfirmContinue", { ns: "audit" }),
-                        onPress: () => {
-                            void proceedToNextStep();
-                        },
-                    },
-                ],
-            );
-            return;
+            if (!shouldContinue) {
+                return;
+            }
         }
 
         await proceedToNextStep();
@@ -733,6 +728,9 @@ export default function ExecuteSectionScreen() {
                 )}
             </ScrollView>
             {actionFooter}
+            {/* Rendered last so the overlay covers the footer, and in-window so
+                the hidden Android navigation bar stays hidden. */}
+            {confirmDialog}
         </YStack>
     );
 }

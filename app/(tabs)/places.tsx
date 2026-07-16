@@ -406,7 +406,7 @@ function PlaceQueueCard({ place, onPress }: Readonly<PlaceQueueCardProps>) {
 
     const status = derivePlaceRequirementStatus(place);
     const placeTone = getPlaceStatusTone(status, ds.colors);
-    const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+    const locality = deriveLocality(place, "");
     const auditScoreLabel = formatScorePair(getEffectivePlaceScores(place));
     const progressPercent = place.progress_percent ?? 0;
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, i18n.language, t);

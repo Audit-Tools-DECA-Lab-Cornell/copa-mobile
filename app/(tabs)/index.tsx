@@ -15,7 +15,7 @@ import {
 import { AppButton, buttonForegroundColor } from "components/ui/app-button";
 import { NotificationBellIcon } from "components/ui/NotificationBellIcon";
 import { StatCard } from "components/ui/stat-card";
-import { ScreenHeader } from "components/ui/screen-header";
+import { DashboardHeader, ScreenHeader } from "components/ui/screen-header";
 import { TabListSkeleton } from "components/ui/skeleton";
 import { PendingUploadsBanner } from "components/playspace-audit/pending-uploads-banner";
 import { useTranslation } from "react-i18next";
@@ -344,12 +344,12 @@ export default function DashboardScreen() {
                     >
                         <BarChart3 size={layout.isTablet ? 24 : 22} color={ds.colors.primary} />
                     </YStack>
-                    <YStack flex={1} gap="$0.5">
+                    <XStack flex={1} gap="$2.5">
                         <Text
                             color={ds.colors.foreground}
                             fontFamily={ds.fonts.headingBold}
-                            fontSize={ds.typography.metricMd.fontSize}
-                            lineHeight={ds.typography.metricMd.lineHeight}
+                            fontSize={ds.typography.displayLg.fontSize}
+                            lineHeight={ds.typography.displayLg.lineHeight}
                         >
                             {String(submittedCount)}
                         </Text>
@@ -362,7 +362,7 @@ export default function DashboardScreen() {
                         >
                             {t("reportsSummary.submitted", { ns: "dashboard" })}
                         </Paragraph>
-                    </YStack>
+                    </XStack>
                 </XStack>
 
                 {submittedScoreSummary === null ? (
@@ -539,26 +539,23 @@ export default function DashboardScreen() {
             </XStack>
 
             {priorityPlace === undefined ? null : (
+                // Same frame and rhythm as the active-work card, with the urgent
+                // and location labels stacked above the place name. The primary
+                // border is what still marks this card as the one to act on.
                 <YStack
                     rounded={ds.radii.lg}
-                    gap="$4"
                     borderWidth={2}
                     borderColor={ds.colors.primary}
                     bg={ds.colors.surface}
-                    overflow="hidden"
+                    p={layout.cardPadding}
+                    gap="$3"
+                    justify="space-between"
                     style={{
                         minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
                         boxShadow: ds.shadows.card,
                     }}
                 >
-                    <YStack
-                        p="$4"
-                        gap="$3"
-                        bg={ds.colors.surface}
-                        style={{
-                            backgroundColor: ds.colors.surface,
-                        }}
-                    >
+                    <YStack gap="$3">
                         <XStack gap="$2" items="center" flexWrap="wrap">
                             {showPriorityUrgentBadge ? (
                                 <YStack rounded={ds.radii.sm} px="$2" py="$2" bg={ds.colors.primary}>
@@ -590,17 +587,23 @@ export default function DashboardScreen() {
                                     letterSpacing={1.3}
                                     numberOfLines={getCardTextLineLimit("meta")}
                                 >
-                                    {deriveLocality(priorityPlace, t("place.assignedPlace", { ns: "common" }))}
+                                    {deriveLocality(priorityPlace, "")}
                                 </Text>
                             </XStack>
                         </XStack>
 
-                        <YStack gap="$1.5" style={{ minWidth: 0 }}>
+                        <YStack gap="$2" pb="$4" style={{ minWidth: 0 }}>
                             <Text
                                 color={ds.colors.foreground}
                                 fontFamily={ds.fonts.headingBold}
-                                fontSize={ds.typography.titleLg.fontSize}
-                                lineHeight={ds.typography.titleLg.lineHeight}
+                                fontSize={
+                                    layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize
+                                }
+                                lineHeight={
+                                    layout.isTablet
+                                        ? ds.typography.titleLg.lineHeight
+                                        : ds.typography.titleMd.lineHeight
+                                }
                                 numberOfLines={getCardTextLineLimit("title")}
                             >
                                 {priorityPlace.place_name}
@@ -614,37 +617,29 @@ export default function DashboardScreen() {
                                 {priorityPlace.project_name}
                             </Paragraph>
                         </YStack>
+
+                        <YStack height={6} rounded={ds.radii.full} bg={ds.colors.mutedSurface} overflow="hidden">
+                            <YStack
+                                height={6}
+                                rounded={ds.radii.full}
+                                bg={ds.colors.primary}
+                                width={priorityProgressBarWidth}
+                            />
+                        </YStack>
                     </YStack>
 
-                    <XStack
-                        items="center"
-                        gap="$4"
-                        p={layout.cardPadding}
-                        borderTopWidth={1}
-                        borderTopColor={ds.colors.border}
-                    >
-                        <YStack flex={1} gap="$2">
-                            <YStack height={6} rounded={ds.radii.full} bg={ds.colors.mutedSurface} overflow="hidden">
-                                <YStack
-                                    height={6}
-                                    rounded={ds.radii.full}
-                                    bg={ds.colors.primary}
-                                    width={priorityProgressBarWidth}
-                                />
-                            </YStack>
-                            <Text
-                                color={ds.colors.mutedForeground}
-                                fontFamily={ds.fonts.bodyBold}
-                                fontSize={ds.typography.bodySm.fontSize}
-                                lineHeight={ds.typography.bodySm.lineHeight}
-                            >
-                                {priorityProgressLabel}
-                            </Text>
-                        </YStack>
+                    <YStack gap="$3">
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyMd.fontSize}
+                            numberOfLines={getCardTextLineLimit("meta")}
+                        >
+                            {priorityProgressLabel}
+                        </Paragraph>
                         <AppButton
                             variant="primary"
                             size={layout.isTablet ? "regular" : "compact"}
-                            px="$6"
                             // Verb must match the audit's actual state: "Resume"
                             // on a not-started audit reads as a bug.
                             label={
@@ -659,7 +654,7 @@ export default function DashboardScreen() {
                                 );
                             }}
                         />
-                    </XStack>
+                    </YStack>
                 </YStack>
             )}
         </YStack>
@@ -737,14 +732,11 @@ export default function DashboardScreen() {
             >
                 <YStack gap="$6">
                     <PendingUploadsBanner />
-                    {/* Merged single-row tablet header (2.2/G9): title + date on
-                        the left; auditor identity, bell, and sign-out on the
-                        right - replaces the old stacked double header. */}
-                    <ScreenHeader
+                    <DashboardHeader
                         title={t("title", { ns: "dashboard" })}
                         subtitle={dateLabel}
                         actions={
-                            <>
+                            <XStack items="center" flex={1} justify="space-between">
                                 <XStack
                                     items="center"
                                     gap="$2.5"
@@ -787,22 +779,24 @@ export default function DashboardScreen() {
                                         ) : null}
                                     </YStack>
                                 </XStack>
-                                <NotificationBellIcon />
-                                <Button
-                                    width={46}
-                                    height={46}
-                                    p={0}
-                                    rounded={ds.radii.full}
-                                    borderWidth={1}
-                                    borderColor={ds.colors.border}
-                                    bg={ds.colors.surfaceMuted}
-                                    pressStyle={{ opacity: 0.92, scale: 0.985 }}
-                                    onPress={logout}
-                                    accessibilityLabel={t("actions.signOut", { ns: "common" })}
-                                >
-                                    <LogOut size={18} color={ds.colors.foreground} />
-                                </Button>
-                            </>
+                                <XStack items="center" gap="$2">
+                                    <NotificationBellIcon />
+                                    <Button
+                                        width={46}
+                                        height={46}
+                                        p={0}
+                                        rounded={ds.radii.full}
+                                        borderWidth={1}
+                                        borderColor={ds.colors.border}
+                                        bg={ds.colors.surfaceMuted}
+                                        pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                                        onPress={logout}
+                                        accessibilityLabel={t("actions.signOut", { ns: "common" })}
+                                    >
+                                        <LogOut size={18} color={ds.colors.foreground} />
+                                    </Button>
+                                </XStack>
+                            </XStack>
                         }
                     />
 
@@ -963,25 +957,23 @@ export default function DashboardScreen() {
                 </XStack>
 
                 {priorityPlace === undefined ? null : (
+                    // Same frame and rhythm as the active-work card, with the
+                    // urgent and location labels stacked above the place name.
+                    // The primary border still marks this as the card to act on.
                     <YStack
                         rounded={ds.radii.lg}
                         borderWidth={2}
                         borderColor={ds.colors.primary}
                         bg={ds.colors.surface}
-                        overflow="hidden"
+                        p={layout.cardPadding}
+                        gap="$3"
+                        justify="space-between"
                         style={{
                             minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
                             boxShadow: ds.shadows.card,
                         }}
                     >
-                        <YStack
-                            p="$4"
-                            gap="$3"
-                            bg={ds.colors.surface}
-                            style={{
-                                backgroundColor: ds.colors.surface,
-                            }}
-                        >
+                        <YStack gap="$3">
                             <XStack gap="$2" items="center" flexWrap="wrap">
                                 {showPriorityUrgentBadge ? (
                                     <YStack rounded={ds.radii.sm} px="$2" py="$2" bg={ds.colors.primary}>
@@ -1012,17 +1004,26 @@ export default function DashboardScreen() {
                                         textTransform="uppercase"
                                         letterSpacing={1.3}
                                     >
-                                        {deriveLocality(priorityPlace, t("place.assignedPlace", { ns: "common" }))}
+                                        {deriveLocality(priorityPlace, "")}
                                     </Text>
                                 </XStack>
                             </XStack>
 
-                            <YStack gap="$1.5">
+                            <YStack gap="$2" pb="$4" style={{ minWidth: 0 }}>
                                 <Text
                                     color={ds.colors.foreground}
                                     fontFamily={ds.fonts.headingBold}
-                                    fontSize={ds.typography.titleLg.fontSize}
-                                    lineHeight={ds.typography.titleLg.lineHeight}
+                                    fontSize={
+                                        layout.isTablet
+                                            ? ds.typography.titleLg.fontSize
+                                            : ds.typography.titleMd.fontSize
+                                    }
+                                    lineHeight={
+                                        layout.isTablet
+                                            ? ds.typography.titleLg.lineHeight
+                                            : ds.typography.titleMd.lineHeight
+                                    }
+                                    numberOfLines={getCardTextLineLimit("title")}
                                 >
                                     {priorityPlace.place_name}
                                 </Text>
@@ -1030,72 +1031,49 @@ export default function DashboardScreen() {
                                     color={ds.colors.mutedForeground}
                                     fontFamily={ds.fonts.bodyMedium}
                                     fontSize={ds.typography.bodySm.fontSize}
-                                    numberOfLines={1}
-                                    ellipsizeMode="tail"
+                                    numberOfLines={getCardTextLineLimit("supporting")}
                                 >
                                     {priorityPlace.project_name}
                                 </Paragraph>
                             </YStack>
-                        </YStack>
 
-                        <XStack
-                            items="center"
-                            gap="$4"
-                            p={layout.cardPadding}
-                            borderTopWidth={1}
-                            borderTopColor={ds.colors.border}
-                        >
-                            <YStack flex={1} gap="$2">
+                            <YStack height={6} rounded={ds.radii.full} bg={ds.colors.mutedSurface} overflow="hidden">
                                 <YStack
                                     height={6}
                                     rounded={ds.radii.full}
-                                    bg={ds.colors.mutedSurface}
-                                    overflow="hidden"
-                                >
-                                    <YStack
-                                        height={6}
-                                        rounded={ds.radii.full}
-                                        bg={ds.colors.primary}
-                                        width={priorityProgressBarWidth}
-                                    />
-                                </YStack>
-                                <Text
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyBold}
-                                    fontSize={ds.typography.bodySm.fontSize}
-                                    lineHeight={ds.typography.bodySm.lineHeight}
-                                >
-                                    {priorityProgressLabel}
-                                </Text>
+                                    bg={ds.colors.primary}
+                                    width={priorityProgressBarWidth}
+                                />
                             </YStack>
-                            <Button
-                                height={layout.isTablet ? 46 : 40}
-                                px="$4"
-                                rounded={ds.radii.sm}
-                                borderWidth={0}
-                                bg={ds.colors.primary}
-                                pressStyle={{ opacity: 0.92, scale: 0.985 }}
+                        </YStack>
+
+                        <YStack gap="$3">
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={ds.typography.bodyMd.fontSize}
+                                numberOfLines={getCardTextLineLimit("meta")}
+                            >
+                                {priorityProgressLabel}
+                            </Paragraph>
+                            <AppButton
+                                variant="primary"
+                                size={layout.isTablet ? "regular" : "compact"}
+                                // Verb must match the audit's actual state: "Resume"
+                                // on a not-started audit reads as a bug.
+                                label={
+                                    priorityPlaceStatus === "not_started"
+                                        ? t("actions.start", { ns: "common" })
+                                        : t("actions.resume", { ns: "common" })
+                                }
+                                iconRight={<Play size={14} color={buttonForegroundColor("primary", ds.colors)} />}
                                 onPress={() => {
                                     router.push(
                                         `/execute/${priorityPlace.place_id}?projectId=${encodeURIComponent(priorityPlace.project_id)}`,
                                     );
                                 }}
-                            >
-                                <XStack items="center" gap="$2">
-                                    <Text
-                                        color={ds.colors.primaryForeground}
-                                        fontFamily={ds.fonts.bodySemiBold}
-                                        fontSize={ds.typography.bodySm.fontSize}
-                                        numberOfLines={1}
-                                    >
-                                        {priorityPlaceStatus === "not_started"
-                                            ? t("actions.start", { ns: "common" })
-                                            : t("actions.resume", { ns: "common" })}
-                                    </Text>
-                                    <Play size={14} color={ds.colors.primaryForeground} />
-                                </XStack>
-                            </Button>
-                        </XStack>
+                            />
+                        </YStack>
                     </YStack>
                 )}
             </YStack>

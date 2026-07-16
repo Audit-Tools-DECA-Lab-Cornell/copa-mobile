@@ -26,6 +26,7 @@ import { resolveAuditScopedInstrument } from "lib/audit/instrument-resolution";
 import {
     formatColumnSummary,
     formatScorePair,
+    formatScorePairStacked,
     formatScoreValue,
     getEffectivePlaceScores,
     type ScoreSummaryLabels,
@@ -390,7 +391,7 @@ export default function ReportsScreen() {
                                 label={t("averageConstructScore")}
                                 value={
                                     averageCombinedConstructScore
-                                        ? (formatScorePair(averageCombinedConstructScore) ?? "--")
+                                        ? (formatScorePairStacked(averageCombinedConstructScore) ?? "--")
                                         : "--"
                                 }
                                 accentColor={ds.colors.primary}
@@ -412,7 +413,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : (formatScorePair(topScoringPlace.overall_scores) ?? "Pending")
+                                        : (formatScorePairStacked(topScoringPlace.overall_scores) ?? "Pending")
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -426,7 +427,7 @@ export default function ReportsScreen() {
                                     label={t("averageConstructScore")}
                                     value={
                                         averageCombinedConstructScore
-                                            ? (formatScorePair(averageCombinedConstructScore) ?? "--")
+                                            ? (formatScorePairStacked(averageCombinedConstructScore) ?? "--")
                                             : "--"
                                     }
                                     accentColor={ds.colors.primary}
@@ -449,7 +450,7 @@ export default function ReportsScreen() {
                                 value={
                                     topScoringPlace === null
                                         ? "Pending"
-                                        : (formatScorePair(topScoringPlace.overall_scores) ?? "Pending")
+                                        : (formatScorePairStacked(topScoringPlace.overall_scores) ?? "Pending")
                                 }
                                 accentColor={ds.colors.warning}
                                 helperText={topScoringPlace?.place_name ?? t("noScoredPlacesYet")}
@@ -774,7 +775,7 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
 
     const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
-    const locality = deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+    const locality = deriveLocality(place, "");
     const effectiveScores = getEffectivePlaceScores(place);
     const hasScore = effectiveScores !== null;
     const combinedConstructScore = effectiveScores === null ? null : effectiveScores.pv + effectiveScores.u;
@@ -828,10 +829,12 @@ function ReportQueueCard({ place }: Readonly<ReportQueueCardProps>) {
             />
 
             <YStack gap="$1.5">
-                <QueueCardMetaRow
-                    icon={<MapPin size={14} color={ds.colors.mutedForeground} opacity={0.8} />}
-                    text={locality}
-                />
+                {locality !== null && locality.length > 0 && (
+                    <QueueCardMetaRow
+                        icon={<MapPin size={14} color={ds.colors.mutedForeground} opacity={0.8} />}
+                        text={locality}
+                    />
+                )}
                 <QueueCardMetaRow
                     icon={<Clock3 size={14} color={ds.colors.mutedForeground} opacity={0.8} />}
                     text={updatedLabel}

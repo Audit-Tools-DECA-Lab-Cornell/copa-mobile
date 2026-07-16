@@ -2,7 +2,7 @@ import { useToastController } from "@tamagui/toast";
 import * as Network from "expo-network";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, AppState, type AppStateStatus } from "react-native";
+import { AppState, type AppStateStatus } from "react-native";
 
 import type { AuthSession } from "lib/auth/types";
 
@@ -10,6 +10,19 @@ import { isDeviceOnline } from "lib/bug-report/context";
 import { isBugReportingEnabled } from "lib/bug-report/feature";
 import { flushPendingBugReports } from "lib/bug-report/flush";
 import { countPendingBugReports } from "lib/bug-report/queue";
+
+/**
+ * Confirm request injected by the caller. Declared structurally so this hook
+ * stays free of UI-layer imports; the caller owns rendering the dialog.
+ */
+type RequestConfirm = (
+    options: Readonly<{
+        title: string;
+        message: string;
+        confirmLabel: string;
+        cancelLabel: string;
+    }>,
+) => Promise<boolean>;
 
 /**
  * Ask the auditor whether to submit queued bug reports when the app returns
@@ -21,8 +34,13 @@ import { countPendingBugReports } from "lib/bug-report/queue";
  *
  * @param session The active auth session, or null if signed out.
  * @param isReady Whether auth and local storage are ready for submission.
+ * @param requestConfirm Opens the in-window confirm dialog and resolves the choice.
  */
-export function useBugReportFlushPrompt(session: AuthSession | null, isReady: boolean): void {
+export function useBugReportFlushPrompt(
+    session: AuthSession | null,
+    isReady: boolean,
+    requestConfirm: RequestConfirm,
+): void {
     const { t } = useTranslation("bugReport");
     const toast = useToastController();
     // Guards against stacking prompts: at most one prompt is live at a time.
@@ -46,32 +64,27 @@ export function useBugReportFlushPrompt(session: AuthSession | null, isReady: bo
                     return;
                 }
                 isPromptingRef.current = true;
-                Alert.alert(t("queue.promptTitle"), t("queue.promptMessage", { count }), [
-                    {
-                        text: t("queue.promptLater"),
-                        style: "cancel",
-                        onPress: () => {
-                            isPromptingRef.current = false;
-                        },
-                    },
-                    {
-                        text: t("queue.promptSubmit"),
-                        onPress: () => {
-                            void flushPendingBugReports(session)
-                                .then((result) => {
-                                    if (result.submitted > 0) {
-                                        toast.show(t("queue.flushed", { count: result.submitted }));
-                                    }
-                                    if (result.failed > 0) {
-                                        toast.show(t("queue.flushPartial"));
-                                    }
-                                })
-                                .finally(() => {
-                                    isPromptingRef.current = false;
-                                });
-                        },
-                    },
-                ]);
+                try {
+                    const shouldSubmit = await requestConfirm({
+                        title: t("queue.promptTitle"),
+                        message: t("queue.promptMessage", { count }),
+                        confirmLabel: t("queue.promptSubmit"),
+                        cancelLabel: t("queue.promptLater"),
+                    });
+                    if (!shouldSubmit) {
+                        return;
+                    }
+
+                    const result = await flushPendingBugReports(session);
+                    if (result.submitted > 0) {
+                        toast.show(t("queue.flushed", { count: result.submitted }));
+                    }
+                    if (result.failed > 0) {
+                        toast.show(t("queue.flushPartial"));
+                    }
+                } finally {
+                    isPromptingRef.current = false;
+                }
             })();
         };
 
@@ -93,5 +106,5 @@ export function useBugReportFlushPrompt(session: AuthSession | null, isReady: bo
             networkSubscription.remove();
             appStateSubscription.remove();
         };
-    }, [session, isReady, t, toast]);
+    }, [session, isReady, requestConfirm, t, toast]);
 }

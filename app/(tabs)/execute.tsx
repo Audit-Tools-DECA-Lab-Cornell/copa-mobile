@@ -245,7 +245,7 @@ export default function ExecuteIndexScreen() {
                     </Text>
 
                     <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
-                        {deriveLocality(featuredPlace, t("place.assignedPlace", { ns: "common" }))}
+                        {deriveLocality(featuredPlace, "")}
                     </Paragraph>
                     <AppButton
                         variant="primary"
@@ -384,7 +384,7 @@ function ExecuteQueueCard({
                     fontFamily={ds.fonts.bodyMedium}
                     fontSize={ds.typography.bodySm.fontSize}
                 >
-                    {deriveLocality(place, t("place.assignedPlace", { ns: "common" }))}
+                    {deriveLocality(place, "")}
                 </Paragraph>
             </YStack>
 

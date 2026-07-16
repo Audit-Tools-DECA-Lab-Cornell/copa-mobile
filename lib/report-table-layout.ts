@@ -7,7 +7,7 @@ const RIGHT_COLUMN_COUNT = 2; // play_value, usability
 /** Former fixed phone sizes - only proportions matter; widths scale to the content track. */
 const NOMINAL_PHONE = { label: 160, leftData: 72, rightData: 108 } as const;
 /** Former fixed tablet sizes - proportions preserved on wide slates. */
-const NOMINAL_TABLET = { label: 150, leftData: 88, rightData: 125 } as const;
+const NOMINAL_TABLET = { label: 130, leftData: 155, rightData: 130 } as const;
 
 function nominalJoinedTotal(nominal: { label: number; leftData: number; rightData: number }): number {
     return nominal.label + nominal.leftData * LEFT_COLUMN_COUNT + nominal.rightData * RIGHT_COLUMN_COUNT;

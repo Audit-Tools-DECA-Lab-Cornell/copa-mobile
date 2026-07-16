@@ -81,6 +81,23 @@ export function formatScorePair(value: ScorePair | null | undefined): string | n
 }
 
 /**
+ * Format a PV/U score pair stacked one score per line.
+ *
+ * Used by the report stat cards, where each construct reads as its own metric
+ * line instead of a single inline pair.
+ *
+ * @param value Score pair or null.
+ * @returns `PV x\nU y` or `null` when unavailable.
+ */
+export function formatScorePairStacked(value: ScorePair | null | undefined): string | null {
+    if (value === null || value === undefined) {
+        return null;
+    }
+
+    return `PV ${formatScoreValue(value.pv)}\nU ${formatScoreValue(value.u)}`;
+}
+
+/**
  * Returns the score totals that correspond to what the auditor actually completed.
  * For audit-only sessions use the `audit` scores; for survey-only use `survey`;
  * for combined ("both") or unknown fall back to `overall`.

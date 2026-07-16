@@ -23,7 +23,7 @@ import type { AuditorPlace } from "lib/audit/places-api";
 import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import {
     formatPercentage,
-    formatScorePair,
+    formatScorePairStacked,
     formatScoreValue,
     formatScoreWithPercentage,
     getEffectiveAuditScoreTotals,
@@ -940,7 +940,6 @@ export default function AuditReportDetailScreen() {
                                     label={t("detail.auditCode", { ns: "reports" })}
                                     value={auditSession.audit_code}
                                     selectable
-                                    isCode
                                 />
                                 <MetadataRow
                                     label={t("detail.status", { ns: "reports" })}
@@ -1102,7 +1101,7 @@ function AuditHeader({ auditSession, place }: Readonly<AuditHeaderProps>) {
     const { t } = useTranslation(["reports", "common"]);
     const status = derivePlaceRequirementStatus(place!);
     const statusTone = getPlaceStatusTone(status, ds.colors);
-    const locality = place === undefined ? null : deriveLocality(place, t("place.assignedPlace", { ns: "common" }));
+    const locality = place === undefined ? null : deriveLocality(place, "");
 
     return (
         <YStack gap="$3">
@@ -1147,7 +1146,7 @@ function AuditHeader({ auditSession, place }: Readonly<AuditHeaderProps>) {
                     </Text>
                 </YStack>
             </XStack>
-            {locality === null ? null : (
+            {locality === null || locality.length <= 0 ? null : (
                 <XStack items="center" gap="$2">
                     <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
                     <Paragraph
@@ -1204,7 +1203,7 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const overallMetricValue =
         overall === null || overallMaximum === null
             ? pendingMetricText
-            : (formatScorePair({
+            : (formatScorePairStacked({
                   pv: overall.play_value_total,
                   u: overall.usability_total,
               }) ?? pendingMetricText);
@@ -1224,7 +1223,7 @@ function AuditMetrics({ auditSession }: Readonly<AuditMetricsProps>) {
     const overallHelperText =
         overall === null || overallMaximum === null
             ? undefined
-            : `${t("detail.overallScoreHint", { ns: "reports" })}\n${formatScorePair(overallMaximum)}`;
+            : `${t("detail.overallScoreHint", { ns: "reports" })}\n${formatScorePairStacked(overallMaximum)}`;
     const summaryCardMinHeight = layout.isTablet
         ? Math.max(140, layout.summaryCardMinHeight - 18)
         : layout.summaryCardMinHeight;
@@ -1363,9 +1362,6 @@ function MetadataRow({ label, value, selectable = false, isCode = false }: Reado
                         accessibilityRole="button"
                         accessibilityLabel={t("detail.shareCode", { ns: "reports" })}
                         onPress={() => {
-                            // The native share sheet includes "Copy" on both
-                            // platforms, giving a one-tap copy path without a
-                            // clipboard dependency.
                             void Share.share({ message: value }).catch(() => undefined);
                         }}
                         style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1, padding: 6 })}

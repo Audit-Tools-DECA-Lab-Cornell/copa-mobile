@@ -64,3 +64,50 @@ export function ScreenHeader({ title, subtitle, actions, aboveTitle }: Readonly<
         </YStack>
     );
 }
+
+/**
+ * Dashboard header for the main screen,
+ * one subtitle treatment, one actions row - replacing five ad-hoc versions.
+ */
+export function DashboardHeader({ title, subtitle, actions, aboveTitle }: Readonly<ScreenHeaderProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+
+    const titleTypography = layout.isTablet ? ds.typography.displayLg : ds.typography.displayMd;
+
+    return (
+        <YStack gap="$4">
+            {aboveTitle}
+            <YStack justify="space-between" flex={1} items={subtitle === undefined ? "stretch" : "flex-start"} gap="$4">
+                {actions === undefined ? null : (
+                    <XStack gap="$2" items="stretch" flex={1}>
+                        {actions}
+                    </XStack>
+                )}
+                <YStack gap="$1.5" flex={1}>
+                    <Text
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={titleTypography.fontSize}
+                        lineHeight={titleTypography.lineHeight}
+                        letterSpacing={-0.7}
+                        accessibilityRole="header"
+                    >
+                        {title}
+                    </Text>
+                    {subtitle === undefined ? null : (
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyLg.fontSize}
+                            lineHeight={ds.typography.bodyLg.lineHeight}
+                            style={{ maxWidth: layout.readableMaxWidth }}
+                        >
+                            {subtitle}
+                        </Paragraph>
+                    )}
+                </YStack>
+            </YStack>
+        </YStack>
+    );
+}

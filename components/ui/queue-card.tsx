@@ -64,16 +64,43 @@ export interface QueueCardHeaderProps {
 }
 
 /**
- * Shared queue-card header: title + subtitle on the left, status pill (and
- * optional trailing block) on the right.
+ * Shared queue-card header: status pill sits on its own row at the top (with
+ * an optional trailing block, e.g. a score, aligned to the right), and the
+ * title + subtitle span the full card width below. Stacking the status above
+ * the name - rather than beside it - lets long place and project names breathe
+ * across the whole card (G5/G10), matching the dashboard's active-work card.
  */
 export function QueueCardHeader({ title, subtitle, statusLabel, tone, trailing }: Readonly<QueueCardHeaderProps>) {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
 
     return (
-        <XStack justify="space-between" items="flex-start" gap="$3">
-            <YStack flex={1} gap="$1" style={{ minWidth: 0 }}>
+        <YStack gap="$3">
+            <XStack items="center" justify="space-between" gap="$3">
+                <YStack
+                    accessible={true}
+                    accessibilityLabel={statusLabel}
+                    self="flex-start"
+                    rounded={ds.radii.full}
+                    px="$2.5"
+                    py="$1"
+                    style={{ backgroundColor: tone.surface }}
+                >
+                    <Text
+                        accessibilityElementsHidden={true}
+                        importantForAccessibility="no"
+                        style={{ color: tone.text }}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelSm.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
+                    >
+                        {statusLabel}
+                    </Text>
+                </YStack>
+                {trailing}
+            </XStack>
+            <YStack gap="$1" style={{ minWidth: 0 }}>
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.headingBold}
@@ -93,30 +120,7 @@ export function QueueCardHeader({ title, subtitle, statusLabel, tone, trailing }
                     {subtitle}
                 </Paragraph>
             </YStack>
-            <YStack items="flex-end" gap="$1.5">
-                <YStack
-                    accessible={true}
-                    accessibilityLabel={statusLabel}
-                    rounded={ds.radii.full}
-                    px="$2.5"
-                    py="$1"
-                    style={{ backgroundColor: tone.surface }}
-                >
-                    <Text
-                        accessibilityElementsHidden={true}
-                        importantForAccessibility="no"
-                        style={{ color: tone.text }}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.labelSm.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={0.5}
-                    >
-                        {statusLabel}
-                    </Text>
-                </YStack>
-                {trailing}
-            </YStack>
-        </XStack>
+        </YStack>
     );
 }
 

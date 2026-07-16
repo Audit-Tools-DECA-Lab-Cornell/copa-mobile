@@ -27,6 +27,7 @@ import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { registerAuditBackgroundTaskAsync, unregisterAuditBackgroundTaskAsync } from "lib/audit/background-sync";
 import { useBugReportFlushPrompt } from "lib/bug-report/use-flush-prompt";
+import { useConfirmDialog } from "components/ui/confirm-dialog";
 import { useDesignSystem } from "lib/design-system";
 import { useEasUpdateBootstrap } from "lib/eas-updates";
 import { applyLanguagePreference } from "lib/i18n";
@@ -160,7 +161,10 @@ function ActiveRootLayoutNav() {
     const safeAreaInsets = useSafeAreaInsets();
 
     // Offer to submit any locally-queued bug reports once the device is online.
-    useBugReportFlushPrompt(authSession, authStatus === "authenticated" && isAuditHydrated);
+    // The confirm renders in-window (never a native Alert) so the hidden Android
+    // navigation bar stays hidden.
+    const { requestConfirm, confirmDialog } = useConfirmDialog();
+    useBugReportFlushPrompt(authSession, authStatus === "authenticated" && isAuditHydrated, requestConfirm);
     const navigationTheme =
         resolvedTheme === "light"
             ? {
@@ -454,6 +458,7 @@ function ActiveRootLayoutNav() {
                 </Stack>
             </KeyboardAvoidingView>
             <BugReportFab />
+            {confirmDialog}
         </ThemeProvider>
     );
 }
