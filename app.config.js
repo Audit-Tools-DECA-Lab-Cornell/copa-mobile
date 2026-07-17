@@ -89,7 +89,9 @@ export default {
                 projectId: "2e559376-25f3-44e1-88bf-00eeaf9fb763",
             },
         },
-        runtimeVersion: "677f1014ebae82ca53223116b57750255d7254fa",
+        runtimeVersion: {
+            policy: "fingerprint",
+        },
         owner: "copa-decalab-cornell",
         githubUrl: "https://github.com/audit-tools-deca-lab-cornell/copa-mobile",
         updates: {
