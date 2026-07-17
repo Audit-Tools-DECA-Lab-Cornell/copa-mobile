@@ -37,7 +37,11 @@ import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem } from "lib/desig
 import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { formatLocalizedDate, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
+import {
+    getContentTrackInnerWidth,
+    getResponsiveContentContainerStyle,
+    useResponsiveLayout,
+} from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { createModuleLogger } from "lib/logger";
 import { useAuthStore } from "stores/auth-store";
@@ -206,7 +210,8 @@ function PlaceDetailContent({
         };
     }, [placeCoordinate]);
     const usesIpadDashboard = Platform.OS === "ios" && layout.isTablet;
-    const usesTabletGrid = layout.isTablet && !usesIpadDashboard;
+    const contentTrackWidth = getContentTrackInnerWidth(layout);
+    const usesTabletGrid = layout.isTablet && !usesIpadDashboard && contentTrackWidth >= 760;
 
     const openUrl = useCallback((url: string) => {
         Linking.openURL(url);
@@ -1154,7 +1159,8 @@ function PlaceDetailSkeleton() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
     const usesIpadDashboard = Platform.OS === "ios" && layout.isTablet;
-    const usesTabletGrid = layout.isTablet && !usesIpadDashboard;
+    const contentTrackWidth = getContentTrackInnerWidth(layout);
+    const usesTabletGrid = layout.isTablet && !usesIpadDashboard && contentTrackWidth >= 760;
 
     return (
         <ScrollView
