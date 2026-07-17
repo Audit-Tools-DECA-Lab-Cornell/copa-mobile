@@ -1,14 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Linking, Platform, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowRight, ClipboardCheck, FileBarChart, MapPin } from "@tamagui/lucide-icons-2";
+import {
+    ArrowRight,
+    ClipboardCheck,
+    Clock3,
+    FileBarChart,
+    Folder,
+    Info,
+    MapPin,
+    ShieldCheck,
+} from "@tamagui/lucide-icons-2";
 import type { TFunction } from "i18next";
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
+import Svg, { Circle } from "react-native-svg";
 import { useTranslation } from "react-i18next";
 import { Button, Paragraph, Text, XStack, YStack } from "tamagui";
 import { AuditHeaderTitle } from "components/ui/audit-header-title";
-import { StatCard } from "components/ui/stat-card";
-import { SkeletonLine } from "components/ui/skeleton";
+import { SkeletonBlock, SkeletonCircle, SkeletonLine } from "components/ui/skeleton";
 import { getExecuteFlowSubject } from "lib/audit/execute-flow";
 import { deriveLocality, derivePlaceRequirementStatus } from "lib/audit/place-helpers";
 import { getProjectPlaceKey } from "lib/audit/pair-key";
@@ -20,13 +29,13 @@ import {
     isInstrumentQuestionComplete,
     isPreAuditQuestionComplete,
 } from "lib/audit/selectors";
-import { formatScorePair } from "lib/audit/score-helpers";
+import { formatScorePair, getEffectivePlaceScores } from "lib/audit/score-helpers";
 import type { AuditorPlace } from "lib/audit/places-api";
 import type { AuditSession, ExecutionMode } from "lib/audit/types";
 import { useLocalFirstPlaces } from "lib/audit/use-local-first-places";
-import { getPlaceStatusTone, useDesignSystem } from "lib/design-system";
+import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem } from "lib/design-system";
 import { useThemedHeaderOptions } from "lib/ui/themed-header";
-import { formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
+import { formatLocalizedDate, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
 import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
@@ -95,11 +104,12 @@ export default function PlaceDetailScreen() {
                     title={t("detail.screenTitle", { ns: "places" })}
                     message={t("emptyMessage", { ns: "places" })}
                 />
+            ) : place === undefined && isLoading ? (
+                <PlaceDetailSkeleton />
             ) : place === undefined ? (
                 <DetailStateCard
                     title={t("detail.screenTitle", { ns: "places" })}
-                    message={isLoading ? t("loadingPlaces", { ns: "places" }) : t("emptyMessage", { ns: "places" })}
-                    isLoading={isLoading}
+                    message={t("emptyMessage", { ns: "places" })}
                 />
             ) : (
                 <PlaceDetailContent
@@ -152,8 +162,6 @@ function PlaceDetailContent({
     const status = derivePlaceRequirementStatus(place);
     const statusTone = getPlaceStatusTone(status, ds.colors);
     const locality = deriveLocality(place, "");
-    // One composed address line (G5): street + postal + city, falling back to
-    // the derived locality when structured fields are missing.
     const addressLine = [place.address, place.postal_code, place.city].filter(Boolean).join(", ");
     const pendingScoreMessage = useMemo(() => {
         return resolvePendingScoreMessage({
@@ -163,7 +171,14 @@ function PlaceDetailContent({
             t,
         });
     }, [auditSession, instrument, place, t]);
-    const summaryMetricValue = formatScorePair(place.overall_scores) ?? t("detail.scorePendingShort", { ns: "places" });
+    const scorePair = getEffectivePlaceScores(place);
+    const summaryMetricValue = formatScorePair(scorePair) ?? t("detail.scorePendingShort", { ns: "places" });
+    const scoreAvailable = scorePair !== null;
+    const scoreHelperText = scoreAvailable
+        ? `${t("detail.playValueCardLabel", { ns: "reports" })} | ${t("detail.usabilityCardLabel", {
+              ns: "reports",
+          })}`
+        : pendingScoreMessage;
     const openAuditLabel =
         place.selected_execution_mode === null
             ? t("actions.openAudit", { ns: "common" })
@@ -174,6 +189,9 @@ function PlaceDetailContent({
                   }),
               });
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, language, t);
+    const updatedTimestamp = place.submitted_at ?? place.started_at;
+    const updatedDateLabel = updatedTimestamp == null ? "" : formatLocalizedDate(updatedTimestamp, language);
+    const progressPercent = clampPercent(place.progress_percent ?? 0);
     const mapsQuery = encodeURIComponent(`${place.place_name}, ${locality}`);
     const placeCoordinate = useMemo(() => getPlaceCoordinate(place.lat, place.lng), [place.lat, place.lng]);
     const scrollViewRef = useRef<ScrollView | null>(null);
@@ -187,8 +205,9 @@ function PlaceDetailContent({
             longitudeDelta: 0.01,
         };
     }, [placeCoordinate]);
+    const usesIpadDashboard = Platform.OS === "ios" && layout.isTablet;
+    const usesTabletGrid = layout.isTablet && !usesIpadDashboard;
 
-    const encodedMapsQuery = encodeURIComponent(mapsQuery);
     const openUrl = useCallback((url: string) => {
         Linking.openURL(url);
     }, []);
@@ -217,143 +236,698 @@ function PlaceDetailContent({
         rerunKey: place.place_id,
         scrollToOffset: scrollPlaceDetailToOffset,
     });
-    const metricsGrid = (
-        <YStack gap="$3">
-            <XStack gap="$3">
-                <StatCard
-                    label={t("mandatoryCompletion", { ns: "places" })}
-                    value={`${place.progress_percent ?? 0}%`}
-                    accentColor={ds.colors.primary}
-                    minHeight={layout.summaryCardMinHeight}
-                />
-                <StatCard
-                    label={t("scoreSummary", { ns: "places" })}
-                    value={summaryMetricValue}
-                    accentColor={ds.colors.primary}
-                    helperText={place.overall_scores === null ? pendingScoreMessage : undefined}
-                    minHeight={layout.summaryCardMinHeight}
-                />
-            </XStack>
-            <XStack gap="$3">
-                <PlaceInfoCard
-                    label={t("detail.lastUpdated", { ns: "places" })}
-                    value={updatedLabel}
-                    minHeight={layout.summaryCardMinHeight}
-                />
-            </XStack>
-        </YStack>
+
+    const quickActionsCard = (
+        <QuickActionsCard
+            openAuditLabel={openAuditLabel}
+            onOpenAudit={onOpenAudit}
+            onOpenReport={onOpenReport}
+            onOpenAppleMaps={() => openUrl(`http://maps.apple.com/?q=${mapsQuery}`)}
+            onOpenGoogleMaps={() => openUrl(`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`)}
+        />
     );
-    const currentAuditCard = (
-        <YStack
-            rounded={ds.radii.lg}
-            borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
-            p={layout.cardPadding}
-            gap="$3"
-            style={{
-                minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
-                boxShadow: ds.shadows.card,
-            }}
+    const mapPreviewCard = (
+        <MapPreviewCard
+            place={place}
+            locality={locality}
+            coordinate={placeCoordinate}
+            region={mapRegion}
+            provider={mapProvider}
+            onMapReady={handleMapReady}
+            onMapLoaded={handleMapLoaded}
+        />
+    );
+
+    return (
+        <ScrollView
+            ref={scrollViewRef}
+            contentInsetAdjustmentBehavior="automatic"
+            style={{ backgroundColor: ds.colors.background }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 112,
+                gap: layout.sectionGap,
+                includeTopPadding: false,
+            })}
         >
-            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleMd.fontSize}>
-                {t("detail.currentAudit", { ns: "places" })}
-            </Text>
-            {place.audit_id === null ? (
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                >
-                    {t("detail.auditUnavailable", { ns: "places" })}
-                </Paragraph>
-            ) : place.overall_scores === null ? (
-                <Paragraph
-                    color={ds.colors.mutedForeground}
-                    fontFamily={ds.fonts.bodyMedium}
-                    fontSize={ds.typography.bodyMd.fontSize}
-                >
-                    {pendingScoreMessage}
-                </Paragraph>
+            <PlaceSummaryHeader
+                projectName={place.project_name}
+                addressLine={addressLine}
+                locality={locality}
+                statusLabel={getPlaceStatusLabel(status, t)}
+                statusSurface={statusTone.surface}
+                statusText={statusTone.text}
+            />
+
+            <AuditOverviewCard
+                progressPercent={progressPercent}
+                scoreValue={summaryMetricValue}
+                scoreHelperText={scoreHelperText}
+                scoreAvailable={scoreAvailable}
+                updatedLabel={updatedLabel}
+                updatedDateLabel={updatedDateLabel}
+                showUpdatedMetric={usesIpadDashboard}
+            />
+
+            {usesIpadDashboard ? (
+                <XStack gap={layout.twoPaneGap} items="stretch">
+                    <YStack width={Math.max(layout.supportRailWidth, 260)}>{quickActionsCard}</YStack>
+                    <YStack flex={1} gap="$3">
+                        <ProjectInfoCard projectName={place.project_name} />
+                        {mapPreviewCard}
+                    </YStack>
+                </XStack>
             ) : (
-                <YStack gap="$2">
-                    <Paragraph
-                        color={ds.colors.primary}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={ds.typography.titleLg.fontSize}
-                    >
-                        {formatScorePair(place.overall_scores) ?? pendingScoreMessage}
-                    </Paragraph>
+                <YStack gap="$3">
+                    <XStack gap="$3" items="stretch">
+                        <CompactInfoCard
+                            icon={<Clock3 size={20} color={ds.colors.primary} />}
+                            label={t("detail.lastUpdated", { ns: "places" })}
+                            value={updatedLabel}
+                            helperText={updatedDateLabel}
+                        />
+                        <CompactInfoCard
+                            icon={<Folder size={20} color={ds.colors.primary} />}
+                            label={t("detail.project", { ns: "reports" })}
+                            value={place.project_name}
+                        />
+                    </XStack>
+                    {usesTabletGrid ? (
+                        <XStack gap={layout.twoPaneGap} items="stretch">
+                            <YStack width={Math.max(layout.supportRailWidth, 280)}>{quickActionsCard}</YStack>
+                            <YStack flex={1}>{mapPreviewCard}</YStack>
+                        </XStack>
+                    ) : (
+                        <>
+                            {quickActionsCard}
+                            {mapPreviewCard}
+                        </>
+                    )}
                 </YStack>
             )}
+
+            <InfoBanner
+                message={scoreAvailable ? t("detail.compactScoreSummary", { ns: "places" }) : pendingScoreMessage}
+            />
+        </ScrollView>
+    );
+}
+
+interface PlaceSummaryHeaderProps {
+    readonly projectName: string;
+    readonly addressLine: string;
+    readonly locality: string;
+    readonly statusLabel: string;
+    readonly statusSurface: string;
+    readonly statusText: string;
+}
+
+function PlaceSummaryHeader({
+    projectName,
+    addressLine,
+    locality,
+    statusLabel,
+    statusSurface,
+    statusText,
+}: Readonly<PlaceSummaryHeaderProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+
+    return (
+        <YStack gap="$3">
+            <XStack justify="space-between" items="flex-start" gap="$3">
+                <YStack flex={1} gap="$1.5">
+                    <Paragraph
+                        color={ds.colors.foreground}
+                        fontFamily={ds.fonts.headingBold}
+                        fontSize={layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize}
+                        lineHeight={
+                            layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.titleMd.lineHeight
+                        }
+                    >
+                        {projectName}
+                    </Paragraph>
+                    {addressLine.length > 0 ? (
+                        <XStack items="flex-start" gap="$2">
+                            <MapPin
+                                size={layout.isTablet ? 20 : 17}
+                                color={ds.colors.mutedForeground}
+                                style={{ marginTop: 2 }}
+                            />
+                            <Paragraph
+                                color={ds.colors.mutedForeground}
+                                fontFamily={ds.fonts.bodyMedium}
+                                fontSize={
+                                    layout.isTablet ? ds.typography.bodyLg.fontSize : ds.typography.bodyMd.fontSize
+                                }
+                                lineHeight={
+                                    layout.isTablet ? ds.typography.bodyLg.lineHeight : ds.typography.bodyMd.lineHeight
+                                }
+                                flex={1}
+                            >
+                                {addressLine}
+                            </Paragraph>
+                        </XStack>
+                    ) : null}
+                </YStack>
+                <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusSurface }}>
+                    <Text
+                        style={{ color: statusText }}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.labelXs.fontSize}
+                        textTransform="uppercase"
+                        letterSpacing={1}
+                    >
+                        {statusLabel}
+                    </Text>
+                </YStack>
+            </XStack>
+
+            {locality.length > 0 ? (
+                <XStack
+                    alignSelf="flex-start"
+                    items="center"
+                    gap="$2"
+                    rounded={ds.radii.full}
+                    borderWidth={1}
+                    borderColor={ds.colors.border}
+                    bg={ds.colors.input}
+                    px="$3"
+                    py="$1.5"
+                >
+                    <MapPin size={15} color={ds.colors.mutedForeground} />
+                    <Paragraph
+                        color={ds.colors.secondaryForeground}
+                        fontFamily={ds.fonts.bodyMedium}
+                        fontSize={ds.typography.bodySm.fontSize}
+                    >
+                        {locality}
+                    </Paragraph>
+                </XStack>
+            ) : null}
         </YStack>
     );
-    const quickActionsCard = (
+}
+
+interface AuditOverviewCardProps {
+    readonly progressPercent: number;
+    readonly scoreValue: string;
+    readonly scoreHelperText: string;
+    readonly scoreAvailable: boolean;
+    readonly updatedLabel: string;
+    readonly updatedDateLabel: string;
+    readonly showUpdatedMetric: boolean;
+}
+
+function AuditOverviewCard({
+    progressPercent,
+    scoreValue,
+    scoreHelperText,
+    scoreAvailable,
+    updatedLabel,
+    updatedDateLabel,
+    showUpdatedMetric,
+}: Readonly<AuditOverviewCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["places"]);
+    const isGlassEnabled = isGlassUiEnabled();
+    const cardPadding = layout.isTablet ? 22 : 16;
+
+    return (
         <YStack
             rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
-            p={layout.cardPadding}
-            gap="$2.5"
-            justify="space-between"
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
+            p={cardPadding}
+            gap="$3"
             style={{
-                minHeight: layout.isTablet ? layout.heroCardMinHeight : undefined,
-                boxShadow: ds.shadows.card,
+                boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
             }}
         >
-            <Text color={ds.colors.foreground} fontFamily={ds.fonts.bodyBold} fontSize={ds.typography.titleMd.fontSize}>
-                {t("detail.quickActions", { ns: "places" })}
+            <Text
+                color={ds.colors.foreground}
+                fontFamily={ds.fonts.bodyBold}
+                fontSize={layout.isTablet ? ds.typography.titleMd.fontSize : ds.typography.bodyLg.fontSize}
+            >
+                {t("detail.currentAudit", { ns: "places" })}
             </Text>
 
+            <XStack items="stretch">
+                <CompletionMetric progressPercent={progressPercent} />
+                <VerticalDivider />
+                <ScoreMetric
+                    scoreValue={scoreValue}
+                    helperText={scoreHelperText}
+                    scoreAvailable={scoreAvailable}
+                />
+                {showUpdatedMetric ? (
+                    <>
+                        <VerticalDivider />
+                        <UpdatedMetric updatedLabel={updatedLabel} updatedDateLabel={updatedDateLabel} />
+                    </>
+                ) : null}
+            </XStack>
+        </YStack>
+    );
+}
+
+interface CompletionMetricProps {
+    readonly progressPercent: number;
+}
+
+function CompletionMetric({ progressPercent }: Readonly<CompletionMetricProps>) {
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["places"]);
+    const ringSize = layout.isTablet ? 138 : 112;
+
+    return (
+        <YStack flex={1} items="center" justify="center" gap="$2.5" px={layout.isTablet ? "$3" : "$1.5"}>
+            <MetricLabel>{t("mandatoryCompletion", { ns: "places" })}</MetricLabel>
+            <ProgressRing size={ringSize} progressPercent={progressPercent} />
+        </YStack>
+    );
+}
+
+interface ScoreMetricProps {
+    readonly scoreValue: string;
+    readonly helperText: string;
+    readonly scoreAvailable: boolean;
+}
+
+function ScoreMetric({ scoreValue, helperText, scoreAvailable }: Readonly<ScoreMetricProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["places"]);
+
+    return (
+        <YStack flex={1} items="center" justify="center" gap="$2.5" px={layout.isTablet ? "$4" : "$2"}>
+            <MetricLabel>{t("scoreSummary", { ns: "places" })}</MetricLabel>
+            <IconBadge>
+                {scoreAvailable ? (
+                    <ShieldCheck size={layout.isTablet ? 25 : 21} color={ds.colors.primary} />
+                ) : (
+                    <ClipboardCheck size={layout.isTablet ? 25 : 21} color={ds.colors.primary} />
+                )}
+            </IconBadge>
+            <Text
+                color={ds.colors.primary}
+                fontFamily={ds.fonts.headingBold}
+                fontSize={layout.isTablet ? ds.typography.metricXs.fontSize : ds.typography.titleLg.fontSize}
+                lineHeight={layout.isTablet ? ds.typography.metricXs.lineHeight : ds.typography.titleLg.lineHeight}
+                textAlign="center"
+                numberOfLines={2}
+                adjustsFontSizeToFit
+            >
+                {scoreValue}
+            </Text>
             <Paragraph
                 color={ds.colors.mutedForeground}
                 fontFamily={ds.fonts.bodyMedium}
-                fontSize={ds.typography.bodyMd.fontSize}
+                fontSize={layout.isTablet ? ds.typography.bodySm.fontSize : ds.typography.bodyXs.fontSize}
+                lineHeight={layout.isTablet ? ds.typography.bodySm.lineHeight : ds.typography.bodyXs.lineHeight}
+                textAlign="center"
+                style={{ maxWidth: layout.isTablet ? 300 : 180 }}
             >
-                {t("detail.openAuditHelper", { ns: "places" })}
+                {helperText}
             </Paragraph>
+        </YStack>
+    );
+}
+
+interface UpdatedMetricProps {
+    readonly updatedLabel: string;
+    readonly updatedDateLabel: string;
+}
+
+function UpdatedMetric({ updatedLabel, updatedDateLabel }: Readonly<UpdatedMetricProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["places"]);
+
+    return (
+        <YStack flex={1} items="center" justify="center" gap="$2.5" px="$3">
+            <MetricLabel>{t("detail.lastUpdated", { ns: "places" })}</MetricLabel>
+            <IconBadge>
+                <Clock3 size={25} color={ds.colors.primary} />
+            </IconBadge>
+            <Text
+                color={ds.colors.primary}
+                fontFamily={ds.fonts.headingBold}
+                fontSize={ds.typography.titleLg.fontSize}
+                lineHeight={ds.typography.titleLg.lineHeight}
+                textAlign="center"
+            >
+                {updatedLabel}
+            </Text>
+            {updatedDateLabel.length > 0 ? (
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={layout.isTablet ? ds.typography.bodySm.fontSize : ds.typography.bodyXs.fontSize}
+                >
+                    {updatedDateLabel}
+                </Paragraph>
+            ) : null}
+        </YStack>
+    );
+}
+
+interface ProgressRingProps {
+    readonly size: number;
+    readonly progressPercent: number;
+}
+
+function ProgressRing({ size, progressPercent }: Readonly<ProgressRingProps>) {
+    const ds = useDesignSystem();
+    const strokeWidth = Math.max(9, Math.round(size * 0.075));
+    const radius = (size - strokeWidth) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const dashOffset = circumference * (1 - progressPercent / 100);
+
+    return (
+        <YStack width={size} height={size} position="relative" items="center" justify="center">
+            <Svg width={size} height={size} style={{ transform: [{ rotate: "-90deg" }] }}>
+                <Circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="transparent"
+                    stroke={ds.colors.surfaceMuted}
+                    strokeWidth={strokeWidth}
+                />
+                <Circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={radius}
+                    fill="transparent"
+                    stroke={ds.colors.primary}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeDasharray={`${circumference} ${circumference}`}
+                    strokeDashoffset={dashOffset}
+                />
+            </Svg>
+            <YStack position="absolute" top={0} right={0} bottom={0} left={0} items="center" justify="center">
+                <Text
+                    color={ds.colors.primary}
+                    fontFamily={ds.fonts.headingBold}
+                    fontSize={size >= 130 ? ds.typography.metricSm.fontSize : ds.typography.metricXs.fontSize}
+                    lineHeight={size >= 130 ? ds.typography.metricSm.lineHeight : ds.typography.metricXs.lineHeight}
+                >
+                    {progressPercent}%
+                </Text>
+            </YStack>
+        </YStack>
+    );
+}
+
+interface MetricLabelProps {
+    readonly children: React.ReactNode;
+    readonly align?: "center" | "left";
+}
+
+function MetricLabel({ children, align = "center" }: Readonly<MetricLabelProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+
+    return (
+        <Paragraph
+            color={ds.colors.mutedForeground}
+            fontFamily={ds.fonts.bodyBold}
+            fontSize={layout.isTablet ? ds.typography.labelMd.fontSize : ds.typography.labelXs.fontSize}
+            lineHeight={layout.isTablet ? ds.typography.labelMd.lineHeight : ds.typography.labelXs.lineHeight}
+            textTransform="uppercase"
+            letterSpacing={layout.isTablet ? 1 : 0.7}
+            textAlign={align}
+        >
+            {children}
+        </Paragraph>
+    );
+}
+
+function VerticalDivider() {
+    const ds = useDesignSystem();
+
+    return <YStack width={1} self="stretch" bg={ds.colors.border} opacity={0.7} />;
+}
+
+function IconBadge({ children }: Readonly<{ children: React.ReactNode }>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const size = layout.isTablet ? 54 : 44;
+
+    return (
+        <YStack
+            width={size}
+            height={size}
+            rounded={ds.radii.full}
+            items="center"
+            justify="center"
+            bg={ds.colors.primarySoft}
+            borderWidth={1}
+            borderColor={ds.colors.border}
+        >
+            {children}
+        </YStack>
+    );
+}
+
+interface CompactInfoCardProps {
+    readonly icon: React.ReactNode;
+    readonly label: string;
+    readonly value: string;
+    readonly helperText?: string;
+}
+
+function CompactInfoCard({ icon, label, value, helperText }: Readonly<CompactInfoCardProps>) {
+    const ds = useDesignSystem();
+    const isGlassEnabled = isGlassUiEnabled();
+
+    return (
+        <YStack
+            flex={1}
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
+            p="$3"
+            gap="$2"
+            style={{
+                minHeight: 118,
+                boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+            }}
+        >
+            <XStack items="center" gap="$2">
+                <YStack
+                    width={40}
+                    height={40}
+                    rounded={ds.radii.full}
+                    items="center"
+                    justify="center"
+                    bg={ds.colors.primarySoft}
+                >
+                    {icon}
+                </YStack>
+                <YStack flex={1} gap="$1">
+                    <MetricLabel align="left">{label}</MetricLabel>
+                    <Text
+                        color={ds.colors.primary}
+                        fontFamily={ds.fonts.bodyBold}
+                        fontSize={ds.typography.titleMd.fontSize}
+                        lineHeight={ds.typography.titleMd.lineHeight}
+                        numberOfLines={3}
+                    >
+                        {value}
+                    </Text>
+                    {helperText === undefined || helperText.length === 0 ? null : (
+                        <Paragraph
+                            color={ds.colors.mutedForeground}
+                            fontFamily={ds.fonts.bodyMedium}
+                            fontSize={ds.typography.bodyXs.fontSize}
+                        >
+                            {helperText}
+                        </Paragraph>
+                    )}
+                </YStack>
+            </XStack>
+        </YStack>
+    );
+}
+
+interface ProjectInfoCardProps {
+    readonly projectName: string;
+}
+
+function ProjectInfoCard({ projectName }: Readonly<ProjectInfoCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["reports"]);
+    const isGlassEnabled = isGlassUiEnabled();
+
+    return (
+        <XStack
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
+            p={layout.cardPadding}
+            items="center"
+            gap="$3"
+            style={{
+                boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+            }}
+        >
+            <IconBadge>
+                <Folder size={24} color={ds.colors.primary} />
+            </IconBadge>
+            <YStack flex={1} gap="$1">
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodySm.fontSize}
+                >
+                    {t("detail.project", { ns: "reports" })}
+                </Paragraph>
+                <Text
+                    color={ds.colors.primary}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
+                    lineHeight={ds.typography.titleMd.lineHeight}
+                >
+                    {projectName}
+                </Text>
+            </YStack>
+        </XStack>
+    );
+}
+
+interface QuickActionsCardProps {
+    readonly openAuditLabel: string;
+    readonly onOpenAudit: () => void;
+    readonly onOpenReport: (() => void) | undefined;
+    readonly onOpenAppleMaps: () => void;
+    readonly onOpenGoogleMaps: () => void;
+}
+
+function QuickActionsCard({
+    openAuditLabel,
+    onOpenAudit,
+    onOpenReport,
+    onOpenAppleMaps,
+    onOpenGoogleMaps,
+}: Readonly<QuickActionsCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["places", "common"]);
+    const isGlassEnabled = isGlassUiEnabled();
+
+    return (
+        <YStack
+            flex={1}
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
+            p={layout.cardPadding}
+            gap="$3"
+            style={{
+                minHeight: layout.isTablet ? 360 : undefined,
+                boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+            }}
+        >
+            <YStack gap="$1.5">
+                <Text
+                    color={ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={ds.typography.titleMd.fontSize}
+                >
+                    {t("detail.quickActions", { ns: "places" })}
+                </Text>
+                <Paragraph
+                    color={ds.colors.mutedForeground}
+                    fontFamily={ds.fonts.bodyMedium}
+                    fontSize={ds.typography.bodyMd.fontSize}
+                >
+                    {t("detail.openAuditHelper", { ns: "places" })}
+                </Paragraph>
+            </YStack>
 
             <QuickActionButton
                 variant="primary"
-                icon={<ClipboardCheck size={16} color={ds.colors.primaryForeground} />}
+                icon={<ClipboardCheck size={18} color={ds.colors.primaryForeground} />}
                 label={openAuditLabel}
                 onPress={onOpenAudit}
             />
 
-            {onOpenReport && (
+            {onOpenReport === undefined ? null : (
                 <QuickActionButton
-                    icon={<FileBarChart size={16} color={ds.colors.foreground} />}
+                    icon={<FileBarChart size={18} color={ds.colors.foreground} />}
                     label={t("actions.viewReport", { ns: "common" })}
                     onPress={onOpenReport}
-                    rightIcon={<ArrowRight size={14} color={ds.colors.foreground} />}
+                    rightIcon={<ArrowRight size={15} color={ds.colors.foreground} />}
                 />
             )}
 
             <QuickActionButton
-                icon={<MapPin size={16} color={ds.colors.foreground} />}
+                icon={<MapPin size={18} color={ds.colors.foreground} />}
                 label={t("detail.openInAppleMaps", { ns: "places" })}
-                onPress={() => openUrl(`http://maps.apple.com/?q=${encodedMapsQuery}`)}
+                onPress={onOpenAppleMaps}
             />
 
             <QuickActionButton
-                icon={<MapPin size={16} color={ds.colors.foreground} />}
+                icon={<MapPin size={18} color={ds.colors.foreground} />}
                 label={t("detail.openInGoogleMaps", { ns: "places" })}
-                onPress={() => openUrl(`https://www.google.com/maps/search/?api=1&query=${encodedMapsQuery}`)}
+                onPress={onOpenGoogleMaps}
             />
         </YStack>
     );
-    const mapPreviewCard = (
+}
+
+interface MapPreviewCardProps {
+    readonly place: AuditorPlace;
+    readonly locality: string;
+    readonly coordinate: PlaceCoordinate | null;
+    readonly region:
+        | (PlaceCoordinate & {
+              readonly latitudeDelta: number;
+              readonly longitudeDelta: number;
+          })
+        | null;
+    readonly provider: typeof PROVIDER_DEFAULT | typeof PROVIDER_GOOGLE;
+    readonly onMapReady: () => void;
+    readonly onMapLoaded: () => void;
+}
+
+function MapPreviewCard({
+    place,
+    locality,
+    coordinate,
+    region,
+    provider,
+    onMapReady,
+    onMapLoaded,
+}: Readonly<MapPreviewCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const { t } = useTranslation(["places"]);
+    const isGlassEnabled = isGlassUiEnabled();
+    const mapHeight = layout.isTablet ? 280 : 240;
+
+    return (
         <YStack
+            flex={1}
             rounded={ds.radii.lg}
             borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
             p={layout.cardPadding}
             gap="$3"
-            style={{ boxShadow: ds.shadows.card }}
+            style={{
+                boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+            }}
         >
-            <YStack gap="$1.5">
+            <YStack gap="$1">
                 <Text
                     color={ds.colors.foreground}
                     fontFamily={ds.fonts.bodyBold}
@@ -369,27 +943,35 @@ function PlaceDetailContent({
                     {locality}
                 </Paragraph>
             </YStack>
-            {mapRegion === null || placeCoordinate === null ? (
-                <XStack
+
+            {region === null || coordinate === null ? (
+                <YStack
+                    minHeight={mapHeight}
                     rounded={ds.radii.md}
                     borderWidth={1}
                     borderColor={ds.colors.border}
                     bg={ds.colors.input}
                     items="center"
-                    gap="$2"
-                    px="$3"
-                    py="$2.5"
+                    justify="center"
+                    gap="$3"
+                    px="$4"
+                    py="$4"
+                    style={{ borderStyle: "dashed" }}
                 >
-                    <MapPin size={16} color={ds.colors.mutedForeground} />
+                    <IconBadge>
+                        <MapPin size={26} color={ds.colors.mutedForeground} />
+                    </IconBadge>
                     <Paragraph
                         color={ds.colors.mutedForeground}
                         fontFamily={ds.fonts.bodyMedium}
                         fontSize={ds.typography.bodyMd.fontSize}
-                        flex={1}
+                        lineHeight={ds.typography.bodyMd.lineHeight}
+                        textAlign="center"
+                        style={{ maxWidth: 460 }}
                     >
                         {t("detail.mapUnavailable", { ns: "places" })}
                     </Paragraph>
-                </XStack>
+                </YStack>
             ) : (
                 <YStack
                     rounded={ds.radii.md}
@@ -398,120 +980,72 @@ function PlaceDetailContent({
                     style={{ overflow: "hidden" }}
                 >
                     <MapView
-                        style={{ width: "100%", height: layout.isTablet ? 360 : 280 }}
-                        region={mapRegion}
-                        provider={mapProvider}
+                        style={{ width: "100%", height: mapHeight }}
+                        region={region}
+                        provider={provider}
                         pointerEvents="auto"
-                        scrollEnabled={true}
-                        zoomEnabled={true}
-                        rotateEnabled={true}
-                        pitchEnabled={true}
-                        toolbarEnabled={true}
-                        onMapLoaded={handleMapLoaded}
-                        onMapReady={handleMapReady}
+                        scrollEnabled
+                        zoomEnabled
+                        rotateEnabled
+                        pitchEnabled
+                        toolbarEnabled
+                        onMapLoaded={onMapLoaded}
+                        onMapReady={onMapReady}
                     >
-                        <Marker coordinate={placeCoordinate} title={place.place_name} description={locality} />
+                        <Marker coordinate={coordinate} title={place.place_name} description={locality} />
                     </MapView>
                 </YStack>
             )}
         </YStack>
     );
+}
+
+interface InfoBannerProps {
+    readonly message: string;
+}
+
+function InfoBanner({ message }: Readonly<InfoBannerProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+    const isGlassEnabled = isGlassUiEnabled();
 
     return (
-        <ScrollView
-            ref={scrollViewRef}
-            contentInsetAdjustmentBehavior="automatic"
-            style={{ backgroundColor: ds.colors.background }}
-            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
-                bottomPadding: 112,
-                gap: layout.sectionGap,
-                includeTopPadding: false,
-            })}
+        <XStack
+            width="100%"
+            rounded={ds.radii.lg}
+            borderWidth={1}
+            borderColor={isGlassEnabled ? ds.glass.elevatedBorder : ds.colors.border}
+            bg={isGlassEnabled ? ds.glass.elevatedSurface : ds.colors.surface}
+            p={layout.cardPadding}
+            items="center"
+            gap="$3"
+            style={{
+                boxShadow: isGlassEnabled ? ds.glass.elevatedShadow : ds.shadows.card,
+            }}
         >
-            {/* The native header already shows the place name (G5: say it
-                once), so the body leads with the project and one composed
-                address line instead of a duplicate H1 and four address rows. */}
-            <YStack gap="$3">
-                <XStack justify="space-between" items="flex-start" gap="$3">
-                    <YStack flex={1} gap="$1.5">
-                        <Paragraph
-                            color={ds.colors.foreground}
-                            fontFamily={ds.fonts.bodySemiBold}
-                            fontSize={ds.typography.titleMd.fontSize}
-                            lineHeight={ds.typography.titleMd.lineHeight}
-                        >
-                            {place.project_name}
-                        </Paragraph>
-                        {addressLine && (
-                            <XStack items="center" gap="$2">
-                                <MapPin size={layout.isTablet ? 18 : 16} color={ds.colors.mutedForeground} />
-                                <Paragraph
-                                    color={ds.colors.mutedForeground}
-                                    fontFamily={ds.fonts.bodyMedium}
-                                    fontSize={ds.typography.bodyLg.fontSize}
-                                    flex={1}
-                                >
-                                    {addressLine}
-                                </Paragraph>
-                            </XStack>
-                        )}
-                    </YStack>
-                    <YStack rounded={ds.radii.full} px="$3" py="$1" style={{ backgroundColor: statusTone.surface }}>
-                        <Text
-                            style={{ color: statusTone.text }}
-                            fontFamily={ds.fonts.bodyBold}
-                            fontSize={ds.typography.labelXs.fontSize}
-                            textTransform="uppercase"
-                            letterSpacing={1}
-                        >
-                            {getPlaceStatusLabel(status, t)}
-                        </Text>
-                    </YStack>
-                </XStack>
+            <YStack
+                width={40}
+                height={40}
+                rounded={ds.radii.full}
+                items="center"
+                justify="center"
+                bg={ds.colors.primarySoft}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+            >
+                <Info size={20} color={ds.colors.primary} />
             </YStack>
-
-            {/* Tablet rebalance (5.2/G9): the rail keeps real supporting
-                content (quick actions + current audit) while the wide main
-                column carries the metrics and the map, so neither pane
-                starves. Phones keep the single-column order. */}
-            {layout.isTablet ? (
-                <XStack gap={layout.twoPaneGap} items="flex-start">
-                    <YStack flex={1} gap="$3">
-                        {metricsGrid}
-                        {mapPreviewCard}
-                    </YStack>
-                    <YStack width={layout.supportRailWidth} gap="$3">
-                        {quickActionsCard}
-                        {currentAuditCard}
-                    </YStack>
-                </XStack>
-            ) : (
-                <YStack gap="$3">
-                    {mapPreviewCard}
-                    {metricsGrid}
-                    {currentAuditCard}
-                    {quickActionsCard}
-                </YStack>
-            )}
-        </ScrollView>
+            <Paragraph
+                flex={1}
+                color={ds.colors.mutedForeground}
+                fontFamily={ds.fonts.bodyMedium}
+                fontSize={ds.typography.bodyMd.fontSize}
+                lineHeight={ds.typography.bodyMd.lineHeight}
+            >
+                {message}
+            </Paragraph>
+        </XStack>
     );
-}
-
-interface DetailStateCardProps {
-    readonly title: string;
-    readonly message: string;
-    readonly isLoading?: boolean;
-}
-
-interface PlaceCoordinate {
-    readonly latitude: number;
-    readonly longitude: number;
-}
-
-interface PlaceInfoCardProps {
-    readonly label: string;
-    readonly value: string;
-    readonly minHeight?: number;
 }
 
 interface QuickActionButtonProps {
@@ -533,11 +1067,10 @@ function QuickActionButton({
     const layout = useResponsiveLayout();
     const isPrimary = variant === "primary";
 
-    const buttonHeight = layout.isTablet ? layout.buttonHeight : layout.controlHeight;
-
     return (
         <Button
-            height={buttonHeight}
+            width="100%"
+            height={layout.isTablet ? layout.buttonHeight : layout.controlHeight}
             rounded={ds.radii.md}
             borderWidth={isPrimary ? 0 : 1}
             borderColor={isPrimary ? "transparent" : ds.colors.border}
@@ -545,25 +1078,24 @@ function QuickActionButton({
             pressStyle={{ opacity: 0.92, scale: 0.985 }}
             onPress={onPress}
         >
-            <XStack flex={1} items="center" gap="$2">
-                <XStack width={20} items="center" justify="flex-start">
+            <XStack width="100%" items="center">
+                <XStack width={24} items="center" justify="flex-start">
                     {icon}
                 </XStack>
-
-                <XStack items="center">
-                    <Text
-                        color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
-                        fontFamily={ds.fonts.bodyBold}
-                        fontSize={isPrimary ? ds.typography.labelLg.fontSize : ds.typography.labelMd.fontSize}
-                        textTransform="uppercase"
-                        letterSpacing={1.2}
-                        numberOfLines={1}
-                    >
-                        {label}
-                    </Text>
-                </XStack>
-
-                <XStack items="center" width={20}>
+                <Text
+                    flex={1}
+                    color={isPrimary ? ds.colors.primaryForeground : ds.colors.foreground}
+                    fontFamily={ds.fonts.bodyBold}
+                    fontSize={isPrimary ? ds.typography.labelLg.fontSize : ds.typography.labelMd.fontSize}
+                    textTransform="uppercase"
+                    letterSpacing={1.1}
+                    textAlign="center"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                >
+                    {label}
+                </Text>
+                <XStack width={24} items="center" justify="flex-end">
                     {rightIcon ?? null}
                 </XStack>
             </XStack>
@@ -571,43 +1103,14 @@ function QuickActionButton({
     );
 }
 
-function PlaceInfoCard({ label, value, minHeight }: Readonly<PlaceInfoCardProps>) {
-    const ds = useDesignSystem();
-    const layout = useResponsiveLayout();
+interface DetailStateCardProps {
+    readonly title: string;
+    readonly message: string;
+}
 
-    return (
-        <YStack
-            flex={1}
-            rounded={ds.radii.lg}
-            borderWidth={1}
-            borderColor={ds.colors.border}
-            bg={ds.colors.surface}
-            justify="space-between"
-            p={layout.cardPadding}
-            style={{
-                minHeight,
-                boxShadow: ds.shadows.card,
-            }}
-        >
-            <Paragraph
-                color={ds.colors.mutedForeground}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={ds.typography.labelMd.fontSize}
-                textTransform="uppercase"
-                letterSpacing={1}
-            >
-                {label}
-            </Paragraph>
-            <Text
-                color={ds.colors.primary}
-                fontFamily={ds.fonts.bodyBold}
-                fontSize={layout.isTablet ? ds.typography.titleLg.fontSize : ds.typography.titleMd.fontSize}
-                lineHeight={layout.isTablet ? ds.typography.titleLg.lineHeight : ds.typography.titleMd.lineHeight}
-            >
-                {value}
-            </Text>
-        </YStack>
-    );
+interface PlaceCoordinate {
+    readonly latitude: number;
+    readonly longitude: number;
 }
 
 /**
@@ -637,15 +1140,107 @@ function getPlaceCoordinate(lat: AuditorPlace["lat"], lng: AuditorPlace["lng"]):
     };
 }
 
+function clampPercent(value: number): number {
+    if (!Number.isFinite(value)) {
+        return 0;
+    }
+    return Math.min(100, Math.max(0, Math.round(value)));
+}
+
 /**
- * Compact placeholder state used while a detail route is loading or missing.
- *
- * @param props Placeholder title, message, and loading state.
- * @returns Full-screen centered message card.
+ * Loading state shaped like the responsive dashboard to avoid layout shift.
  */
-function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailStateCardProps>) {
+function PlaceDetailSkeleton() {
     const ds = useDesignSystem();
     const layout = useResponsiveLayout();
+    const usesIpadDashboard = Platform.OS === "ios" && layout.isTablet;
+    const usesTabletGrid = layout.isTablet && !usesIpadDashboard;
+
+    return (
+        <ScrollView
+            scrollEnabled={false}
+            style={{ backgroundColor: ds.colors.background }}
+            contentContainerStyle={getResponsiveContentContainerStyle(layout, {
+                bottomPadding: 112,
+                gap: layout.sectionGap,
+                includeTopPadding: false,
+            })}
+        >
+            <YStack gap="$3">
+                <XStack justify="space-between" items="flex-start" gap="$3">
+                    <YStack flex={1} gap="$2">
+                        <SkeletonLine width="54%" height={layout.isTablet ? 28 : 22} />
+                        <SkeletonLine width="72%" />
+                        <SkeletonLine width="40%" />
+                    </YStack>
+                    <SkeletonBlock width={104} height={28} rounded={ds.radii.full} />
+                </XStack>
+                <SkeletonBlock width={layout.isTablet ? 280 : "72%"} height={34} rounded={ds.radii.full} />
+            </YStack>
+
+            <SkeletonBlock height={layout.isTablet ? 250 : 230} rounded={ds.radii.lg} />
+
+            {usesIpadDashboard ? (
+                <XStack gap={layout.twoPaneGap} items="stretch">
+                    <SkeletonBlock width={Math.max(layout.supportRailWidth, 260)} height={390} rounded={ds.radii.lg} />
+                    <YStack flex={1} gap="$3">
+                        <SkeletonBlock height={88} rounded={ds.radii.lg} />
+                        <SkeletonBlock height={330} rounded={ds.radii.lg} />
+                    </YStack>
+                </XStack>
+            ) : (
+                <YStack gap="$3">
+                    <XStack gap="$3">
+                        <SkeletonBlock flex={1} height={118} rounded={ds.radii.lg} />
+                        <SkeletonBlock flex={1} height={118} rounded={ds.radii.lg} />
+                    </XStack>
+                    {usesTabletGrid ? (
+                        <XStack gap={layout.twoPaneGap}>
+                            <SkeletonBlock
+                                width={Math.max(layout.supportRailWidth, 280)}
+                                height={340}
+                                rounded={ds.radii.lg}
+                            />
+                            <SkeletonBlock flex={1} height={340} rounded={ds.radii.lg} />
+                        </XStack>
+                    ) : (
+                        <>
+                            <SkeletonBlock height={260} rounded={ds.radii.lg} />
+                            <SkeletonBlock height={300} rounded={ds.radii.lg} />
+                        </>
+                    )}
+                </YStack>
+            )}
+
+            <XStack
+                rounded={ds.radii.lg}
+                borderWidth={1}
+                borderColor={ds.colors.border}
+                bg={ds.colors.surface}
+                p={layout.cardPadding}
+                items="center"
+                gap="$3"
+            >
+                <SkeletonCircle size={40} />
+                <YStack flex={1} gap="$2">
+                    <SkeletonLine width="84%" />
+                    <SkeletonLine width="58%" />
+                </YStack>
+            </XStack>
+        </ScrollView>
+    );
+}
+
+/**
+ * Compact placeholder state used when a detail route is missing.
+ *
+ * @param props Placeholder title and message.
+ * @returns Full-screen centered message card.
+ */
+function DetailStateCard({ title, message }: Readonly<DetailStateCardProps>) {
+    const ds = useDesignSystem();
+    const layout = useResponsiveLayout();
+
     return (
         <YStack flex={1} justify="center" px={layout.screenPaddingHorizontal} bg={ds.colors.background}>
             <YStack
@@ -668,13 +1263,6 @@ function DetailStateCard({ title, message, isLoading = false }: Readonly<DetailS
                 <Paragraph color={ds.colors.mutedForeground} fontFamily={ds.fonts.bodyMedium}>
                     {message}
                 </Paragraph>
-                {isLoading ? (
-                    <YStack gap="$2" pt="$2">
-                        <SkeletonLine width="86%" />
-                        <SkeletonLine width="70%" />
-                        <SkeletonLine width="78%" />
-                    </YStack>
-                ) : null}
             </YStack>
         </YStack>
     );
