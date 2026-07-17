@@ -127,12 +127,12 @@ export default function PlaceDetailScreen() {
                     }}
                     onOpenReport={
                         place.audit_id === null ||
-                            ((localAuditSession?.scores.overall ?? place.score_totals) === null &&
-                                place.summary_score === null)
+                        ((localAuditSession?.scores.overall ?? place.score_totals) === null &&
+                            place.summary_score === null)
                             ? undefined
                             : () => {
-                                router.push(`/report/${place.audit_id}`);
-                            }
+                                  router.push(`/report/${place.audit_id}`);
+                              }
                     }
                     language={i18n.language}
                     auditSession={localAuditSession}
@@ -184,18 +184,18 @@ function PlaceDetailContent({
     const scoreAvailable = scorePair !== null;
     const scoreHelperText = scoreAvailable
         ? `${t("detail.playValueCardLabel", { ns: "reports" })} | ${t("detail.usabilityCardLabel", {
-            ns: "reports",
-        })}`
+              ns: "reports",
+          })}`
         : pendingScoreMessage;
     const openAuditLabel =
         place.selected_execution_mode === null
             ? t("actions.openAudit", { ns: "common" })
             : t("actions.openSubject", {
-                ns: "common",
-                subject: t(`subjects.${getExecuteFlowSubject(place.selected_execution_mode)}`, {
-                    ns: "audit",
-                }),
-            });
+                  ns: "common",
+                  subject: t(`subjects.${getExecuteFlowSubject(place.selected_execution_mode)}`, {
+                      ns: "audit",
+                  }),
+              });
     const updatedLabel = formatRelativeTimeLabel(place.started_at, place.submitted_at, language, t);
     const updatedTimestamp = place.submitted_at ?? place.started_at;
     const updatedDateLabel = updatedTimestamp == null ? "" : formatLocalizedDate(updatedTimestamp, language);
@@ -982,11 +982,11 @@ interface MapPreviewCardProps {
     readonly locality: string;
     readonly coordinate: PlaceCoordinate | null;
     readonly region:
-    | (PlaceCoordinate & {
-        readonly latitudeDelta: number;
-        readonly longitudeDelta: number;
-    })
-    | null;
+        | (PlaceCoordinate & {
+              readonly latitudeDelta: number;
+              readonly longitudeDelta: number;
+          })
+        | null;
     readonly provider: typeof PROVIDER_DEFAULT | typeof PROVIDER_GOOGLE;
     readonly onMapReady: () => void;
     readonly onMapLoaded: () => void;
@@ -1190,8 +1190,8 @@ function QuickActionButton({
                         usesGrid
                             ? ds.typography.labelMd.fontSize
                             : isPrimary
-                                ? ds.typography.labelLg.fontSize
-                                : ds.typography.labelMd.fontSize
+                              ? ds.typography.labelLg.fontSize
+                              : ds.typography.labelMd.fontSize
                     }
                     textTransform="uppercase"
                     letterSpacing={usesGrid ? 0.8 : 1.1}
