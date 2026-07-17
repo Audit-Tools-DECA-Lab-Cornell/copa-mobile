@@ -37,11 +37,7 @@ import { getPlaceStatusTone, isGlassUiEnabled, useDesignSystem } from "lib/desig
 import { useThemedHeaderOptions } from "lib/ui/themed-header";
 import { formatLocalizedDate, formatRelativeTimeLabel, getPlaceStatusLabel } from "lib/i18n/format";
 import { useLocalizedInstrument } from "lib/i18n/instrument-translations";
-import {
-    getContentTrackInnerWidth,
-    getResponsiveContentContainerStyle,
-    useResponsiveLayout,
-} from "lib/responsive-layout";
+import { getResponsiveContentContainerStyle, useResponsiveLayout } from "lib/responsive-layout";
 import { useScreenshotScrollAutomation } from "lib/screenshot-automation";
 import { createModuleLogger } from "lib/logger";
 import { useAuthStore } from "stores/auth-store";
