@@ -125,7 +125,7 @@ export function QuickActionButton({
     return (
         <Button
             flex={fill ? 1 : undefined}
-            minWidth={fill ? (layout.isTablet ? 210 : 150) : undefined}
+            minW={fill ? (layout.isTablet ? 210 : 150) : undefined}
             height={buttonHeight}
             rounded={ds.radii.md}
             borderWidth={isPrimary ? 0 : 1}
