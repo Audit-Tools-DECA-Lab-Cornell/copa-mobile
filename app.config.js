@@ -2,7 +2,7 @@ export default {
     expo: {
         name: "COPA",
         slug: "audit-tools-playspace-mobile",
-        version: "0.7.1",
+        version: "0.7.2",
         orientation: "portrait",
         scheme: "copa-mobile",
         icon: "./assets/icon.png",
@@ -89,9 +89,7 @@ export default {
                 projectId: "2e559376-25f3-44e1-88bf-00eeaf9fb763",
             },
         },
-        runtimeVersion: {
-            policy: "fingerprint",
-        },
+        runtimeVersion: "677f1014ebae82ca53223116b57750255d7254fa",
         owner: "copa-decalab-cornell",
         githubUrl: "https://github.com/audit-tools-deca-lab-cornell/copa-mobile",
         updates: {
