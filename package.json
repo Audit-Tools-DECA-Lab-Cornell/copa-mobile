@@ -92,7 +92,7 @@
         "i18next": "^25.10.10",
         "loglayer": "^9.3.0",
         "patch-package": "^8.0.1",
-        "react": "19.2.0",
+        "react": "19.2.7",
         "react-dom": "19.2.0",
         "react-i18next": "^16.6.6",
         "react-native": "0.83.6",
