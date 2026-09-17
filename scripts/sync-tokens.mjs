@@ -108,7 +108,110 @@ ${ramp(tokens.mobile.tamaguiRamp.light)},
 `;
 }
 
+/**
+ * Recognised CSS colour forms. The generator emits these verbatim into TypeScript
+ * and, on web, into CSS custom properties - where a malformed value fails silently
+ * (the declaration is dropped and the element inherits). Nothing downstream can
+ * catch that: `tsc` sees a string, and the baseline tests only reject empty values.
+ * Phase 3 hand-edits ~300 of these, so the gate belongs here.
+ * Kept identical to copa-frontend's copy - both scripts read the same token file.
+ */
+const HEX = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+const FUNCTIONAL = /^(rgb|rgba|hsl|hsla)\(([^()]*)\)$/;
+
+/** @returns An error string when `value` is not a usable CSS colour, else null. */
+function colorError(value) {
+    if (typeof value !== "string") return `expected a string, got ${typeof value}`;
+    const trimmed = value.trim();
+    if (trimmed === "") return "empty string";
+    if (trimmed !== value) return "has leading or trailing whitespace";
+    if (HEX.test(trimmed)) return null;
+
+    const functional = FUNCTIONAL.exec(trimmed);
+    if (!functional) return "not a hex or rgb()/rgba()/hsl()/hsla() colour";
+
+    const [, fn, body] = functional;
+    const parts = body
+        .split(/[,/]/)
+        .map((part) => part.trim())
+        .filter((part) => part !== "");
+    if (parts.length < 3 || parts.length > 4) return `${fn}() needs 3 or 4 components, got ${parts.length}`;
+    for (const part of parts) {
+        if (!/^[+-]?(?:\d+\.?\d*|\.\d+)%?$/.test(part)) return `${fn}() component "${part}" is not a number`;
+    }
+    if (fn.startsWith("hsl") && !parts[1].endsWith("%")) return "hsl() saturation must be a percentage";
+    if (fn.startsWith("hsl") && !parts[2].endsWith("%")) return "hsl() lightness must be a percentage";
+    return null;
+}
+
+/**
+ * Validates the whole token file - shape and colour syntax - before anything is
+ * generated from it. Runs in both modes, so a malformed token can neither be
+ * built nor pass CI.
+ */
+function validate(tokens) {
+    const errors = [];
+    const check = (path, value) => {
+        const error = colorError(value);
+        if (error) errors.push(`${path}: ${JSON.stringify(value)} - ${error}`);
+    };
+
+    const web = tokens.web?.palettes ?? {};
+    let webKeys = null;
+    for (const [theme, contrasts] of Object.entries(web)) {
+        for (const [contrast, palette] of Object.entries(contrasts)) {
+            const keys = Object.keys(palette).sort();
+            if (webKeys === null) webKeys = keys;
+            else if (keys.join() !== webKeys.join()) {
+                errors.push(`web.palettes.${theme}.${contrast}: token set differs from the other modes`);
+            }
+            for (const [token, value] of Object.entries(palette)) {
+                check(`web.palettes.${theme}.${contrast}.${token}`, value);
+            }
+        }
+    }
+
+    const mobile = tokens.mobile?.palettes ?? {};
+    let mobileKeys = null;
+    for (const [mode, palette] of Object.entries(mobile)) {
+        const keys = Object.keys(palette).sort();
+        if (mobileKeys === null) mobileKeys = keys;
+        else if (keys.join() !== mobileKeys.join()) {
+            errors.push(`mobile.palettes.${mode}: token set differs from the other modes`);
+        }
+        for (const [token, value] of Object.entries(palette)) {
+            check(`mobile.palettes.${mode}.${token}`, value);
+        }
+    }
+
+    for (const [name, ramp] of Object.entries(tokens.mobile?.tamaguiRamp ?? {})) {
+        if (!Array.isArray(ramp) || ramp.length !== 12) {
+            errors.push(`mobile.tamaguiRamp.${name}: expected 12 steps, got ${ramp?.length ?? "none"}`);
+        }
+        (ramp ?? []).forEach((value, index) => check(`mobile.tamaguiRamp.${name}[${index}]`, value));
+    }
+
+    for (const [token, value] of Object.entries(tokens.scales?.shared ?? {})) {
+        check(`scales.shared.${token}`, value);
+    }
+    for (const [token, platforms] of Object.entries(tokens.scales?.platformOverrides ?? {})) {
+        for (const [platform, value] of Object.entries(platforms)) {
+            if (value !== null && value !== undefined) check(`scales.platformOverrides.${token}.${platform}`, value);
+        }
+    }
+    for (const [token, value] of Object.entries(tokens.scales?.constructs ?? {})) {
+        check(`scales.constructs.${token}`, value);
+    }
+
+    if (errors.length > 0) {
+        console.error(`tokens: brand/tokens.json has ${errors.length} invalid token(s):`);
+        for (const error of errors) console.error(`  ${error}`);
+        process.exit(1);
+    }
+}
+
 const tokens = JSON.parse(readFileSync(TOKENS, "utf8"));
+validate(tokens);
 const expected = checksum(tokens);
 
 // This repo does not own brand/tokens.json, so a payload that disagrees with its
