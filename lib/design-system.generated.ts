@@ -1,0 +1,168 @@
+/**
+ * GENERATED FILE - DO NOT EDIT.
+ *
+ * Source:      brand/tokens.json (checksum f73b24a4ccaadac5)
+ * Regenerate:  bun run tokens:build
+ * Verify:      bun run tokens:check
+ *
+ * brand/tokens.json here is a VENDORED copy of copa-frontend/brand/tokens.json.
+ * Colour is defined once, for both clients. Editing this file by hand will be
+ * reverted by the next generator run and will fail CI.
+ */
+
+export const GENERATED_PALETTES = {
+    dark: {
+        background: "#161311",
+        foreground: "#E7DED3",
+        primary: "#C58A5C",
+        primaryForeground: "#FFFFFF",
+        surface: "#24201D",
+        surfaceMuted: "#2E2824",
+        mutedSurface: "#352E2A",
+        input: "#201C19",
+        border: "#5A514A",
+        mutedForeground: "#B8AEA3",
+        secondaryForeground: "#DED3C6",
+        success: "#6F9A7F",
+        warning: "#B99A5A",
+        danger: "#C98472",
+        info: "#7B90B8",
+        violet: "#9B86B2",
+        overlay: "rgba(22, 19, 17, 0.92)",
+        primarySoft: "rgba(197, 138, 92, 0.14)",
+        successSoft: "rgba(111, 154, 127, 0.16)",
+        warningSoft: "rgba(185, 154, 90, 0.16)",
+        dangerSoft: "rgba(201, 132, 114, 0.18)",
+        infoSoft: "rgba(123, 144, 184, 0.16)",
+        violetSoft: "rgba(155, 134, 178, 0.16)",
+        amber: "rgba(255, 180, 0, 0.1)",
+        amberSoft: "rgba(255, 180, 0, 0.1)",
+        placeholderColor: "#B8AEA3"
+    },
+    light: {
+        background: "#FDFAF7",
+        foreground: "#2A231E",
+        primary: "#A66334",
+        primaryForeground: "#FFFFFF",
+        surface: "#FFFCF8",
+        surfaceMuted: "#F4EEE7",
+        mutedSurface: "#E9E2DB",
+        input: "#FFFFFF",
+        border: "#C8BCB0",
+        mutedForeground: "#645A52",
+        secondaryForeground: "#423831",
+        success: "#3D6B4F",
+        warning: "#9A7A3F",
+        danger: "#B54A38",
+        info: "#4A619A",
+        violet: "#6B5A8A",
+        amber: "#FFB400",
+        overlay: "rgba(255, 255, 255, 0.56)",
+        primarySoft: "rgba(166, 99, 52, 0.12)",
+        successSoft: "rgba(61, 107, 79, 0.12)",
+        warningSoft: "rgba(154, 122, 63, 0.12)",
+        dangerSoft: "rgba(181, 74, 56, 0.12)",
+        infoSoft: "rgba(74, 97, 154, 0.12)",
+        violetSoft: "rgba(107, 90, 138, 0.12)",
+        amberSoft: "rgba(204, 136, 0, 0.1)",
+        placeholderColor: "#645A52"
+    },
+    lightField: {
+        background: "#FAFAF8",
+        foreground: "#1F1A16",
+        primary: "#965424",
+        primaryForeground: "#FFFFFF",
+        surface: "#FFFFFF",
+        surfaceMuted: "#F2F3EF",
+        mutedSurface: "#EAEBE6",
+        input: "#FFFFFF",
+        border: "#91857A",
+        mutedForeground: "#413A34",
+        secondaryForeground: "#241E19",
+        success: "#28573A",
+        warning: "#705700",
+        danger: "#96392B",
+        info: "#234A83",
+        violet: "#5A467D",
+        overlay: "rgba(255, 255, 255, 0.62)",
+        primarySoft: "rgba(150, 84, 36, 0.16)",
+        successSoft: "rgba(40, 87, 58, 0.16)",
+        warningSoft: "rgba(112, 87, 0, 0.16)",
+        dangerSoft: "rgba(150, 57, 43, 0.16)",
+        infoSoft: "rgba(35, 74, 131, 0.16)",
+        violetSoft: "rgba(90, 70, 125, 0.16)",
+        amber: "rgba(255, 180, 0, 0.1)",
+        amberSoft: "rgba(204, 136, 0, 0.1)",
+        placeholderColor: "#413A34"
+    },
+    darkHighContrast: {
+        background: "#000000",
+        foreground: "#FFFFFF",
+        primary: "#FFD0A8",
+        primaryForeground: "#000000",
+        surface: "#0F0F0F",
+        surfaceMuted: "#141414",
+        mutedSurface: "#1A1A1A",
+        input: "#050505",
+        border: "#8E8E8E",
+        mutedForeground: "#E7E7E7",
+        secondaryForeground: "#F7F7F7",
+        success: "#91D4A7",
+        warning: "#F1CF6A",
+        danger: "#F2A392",
+        info: "#A8C2F5",
+        violet: "#D0B8F4",
+        overlay: "rgba(0, 0, 0, 0.94)",
+        primarySoft: "rgba(255, 208, 168, 0.2)",
+        successSoft: "rgba(145, 212, 167, 0.2)",
+        warningSoft: "rgba(241, 207, 106, 0.2)",
+        dangerSoft: "rgba(242, 163, 146, 0.2)",
+        infoSoft: "rgba(168, 194, 245, 0.2)",
+        violetSoft: "rgba(208, 184, 244, 0.2)",
+        amber: "rgba(255, 180, 0, 0.1)",
+        amberSoft: "rgba(255, 180, 0, 0.1)",
+        placeholderColor: "#8E8E8E"
+    },
+    lightHighContrast: {
+        background: "#FFFFFF",
+        foreground: "#111111",
+        primary: "#8A4A1B",
+        primaryForeground: "#FFFFFF",
+        surface: "#FFFFFF",
+        surfaceMuted: "#FAFAFA",
+        mutedSurface: "#F3F3F3",
+        input: "#FFFFFF",
+        border: "#57504A",
+        mutedForeground: "#39332E",
+        secondaryForeground: "#1D1916",
+        success: "#1F5B33",
+        warning: "#6F5600",
+        danger: "#8E231A",
+        info: "#163A70",
+        violet: "#4D3A70",
+        overlay: "rgba(17, 17, 17, 0.68)",
+        primarySoft: "rgba(138, 74, 27, 0.16)",
+        successSoft: "rgba(31, 91, 51, 0.16)",
+        warningSoft: "rgba(111, 86, 0, 0.16)",
+        dangerSoft: "rgba(142, 35, 26, 0.16)",
+        infoSoft: "rgba(22, 58, 112, 0.16)",
+        violetSoft: "rgba(77, 58, 112, 0.16)",
+        amber: "rgba(255, 180, 0, 0.1)",
+        amberSoft: "rgba(255, 180, 0, 0.1)",
+        placeholderColor: "#D1C4B6"
+    },
+} as const;
+
+/** Canonical PV scale accents for this platform, resolved from brand/tokens.json. */
+export const GENERATED_SCALE_ACCENTS = {
+    provision: "#566E3D",
+    variety: "#D2691E",
+    challenge: "#0C4767",
+    sociability: "#754170",
+} as const;
+
+/** Headline construct accents (Play Value / Usability). Mobile-only today - see knownDrift. */
+export const GENERATED_CONSTRUCT_ACCENTS = {
+    playValue: "#2E7D78",
+    usability: "#C7972F",
+} as const;

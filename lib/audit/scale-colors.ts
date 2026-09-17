@@ -7,17 +7,23 @@
 
 import type { ColorTokens } from "tamagui";
 
+import { GENERATED_CONSTRUCT_ACCENTS, GENERATED_SCALE_ACCENTS } from "lib/design-system.generated";
+
 export const PV_SCALE_KEYS = ["provision", "variety", "challenge", "sociability"] as const;
 
 export type PvScaleKey = (typeof PV_SCALE_KEYS)[number];
 
-/** Canonical accent hex colours for each PV scale (aligned with web). */
-export const SCALE_ACCENT_COLORS: Record<PvScaleKey, string> = {
-    provision: "#566E3D",
-    variety: "#D2691E",
-    challenge: "#0C4767",
-    sociability: "#754170",
-};
+/**
+ * Canonical accent hex colours for each PV scale.
+ *
+ * Values come from `brand/tokens.json` via the generated module - the same
+ * source copa-frontend reads, so a scale cannot drift between the two clients.
+ *
+ * NOTE: `challenge` currently still differs from web. That divergence predates
+ * the token pipeline and is recorded verbatim under `knownDrift` in
+ * brand/tokens.json; phase 4 of the colour migration unifies it.
+ */
+export const SCALE_ACCENT_COLORS: Record<PvScaleKey, string> = GENERATED_SCALE_ACCENTS;
 
 /**
  * Soft fills are blended from each accent toward white so column backgrounds
@@ -42,10 +48,7 @@ export interface ScaleColorFields {
  * Headline construct colours (Play Value / Usability) - a balanced teal/gold
  * pair, co-equal peers, distinct from the four scale colours and brand clay.
  */
-export const CONSTRUCT_ACCENT_COLORS: Record<"playValue" | "usability", string> = {
-    playValue: "#2E7D78",
-    usability: "#C7972F",
-};
+export const CONSTRUCT_ACCENT_COLORS: Record<"playValue" | "usability", string> = GENERATED_CONSTRUCT_ACCENTS;
 
 function parseHexColor(hex: string): [number, number, number] {
     const normalized = hex.replace("#", "").trim();

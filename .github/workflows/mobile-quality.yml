@@ -38,5 +38,20 @@ jobs:
             - name: Run quality checks
               run: bun run check
 
+            # Colour is defined once, in copa-frontend/brand/tokens.json, and vendored
+            # into this repo. `bun run check` proves the generated modules match the
+            # local copy; this step proves the local copy still matches copa-frontend.
+            # Skipped when no cross-repo token is configured, so forks stay green.
+            - name: Verify token sync with copa-frontend
+              env:
+                  GITHUB_TOKEN: ${{ secrets.TOKENS_SYNC_TOKEN }}
+              run: |
+                  if [ -z "$GITHUB_TOKEN" ]; then
+                    echo "TOKENS_SYNC_TOKEN not configured - skipping cross-repo token sync check."
+                    exit 0
+                  fi
+                  node scripts/verify-token-sync.mjs --url \
+                    "https://api.github.com/repos/${{ github.repository_owner }}/copa-frontend/contents/brand/tokens.json?ref=master"
+
             - name: Run Expo doctor
               run: bun run doctor

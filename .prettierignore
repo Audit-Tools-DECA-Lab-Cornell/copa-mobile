@@ -20,3 +20,8 @@ tamagui-web.css
 .claude/
 .tamagui/
 scripts/
+# Generated from brand/tokens.json - the generator owns the formatting.
+# Reformatting these makes `tokens:check` fail; edit brand/tokens.json instead.
+*.generated.ts
+brand/tokens.json
+tests/fixtures/design-tokens-baseline.json
