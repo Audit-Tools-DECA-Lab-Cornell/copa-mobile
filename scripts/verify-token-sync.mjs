@@ -3,6 +3,9 @@
  * Verifies this repo's vendored `brand/tokens.json` still matches the canonical
  * copy in copa-frontend.
  *
+ * Compares the FILE BYTES: the vendored copy is meant to be verbatim, so metadata
+ * and formatting count too, not only the colour payload.
+ *
  * Colour is defined once, in copa-frontend/brand/tokens.json, and vendored here.
  * Nothing about a vendored file stops it going stale on its own, so this is the
  * check that catches it - the failure mode otherwise is the two apps quietly
@@ -40,11 +43,11 @@ if (!localPath && !remoteUrl) {
     process.exit(2);
 }
 
-const mine = JSON.parse(readFileSync(resolve(ROOT, "brand/tokens.json"), "utf8"));
+const mineRaw = readFileSync(resolve(ROOT, "brand/tokens.json"), "utf8");
 
-let theirs;
+let theirsRaw;
 if (localPath) {
-    theirs = JSON.parse(readFileSync(resolve(process.cwd(), localPath), "utf8"));
+    theirsRaw = readFileSync(resolve(process.cwd(), localPath), "utf8");
 } else {
     const headers = { Accept: "application/vnd.github.raw" };
     if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
@@ -54,20 +57,37 @@ if (localPath) {
         console.error(`verify-token-sync: could not fetch canonical tokens (HTTP ${response.status}).`);
         process.exit(2);
     }
-    theirs = JSON.parse(await response.text());
+    theirsRaw = await response.text();
 }
 
-const mineSum = checksum(mine);
-const theirsSum = checksum(theirs);
-
-if (mineSum !== theirsSum) {
-    console.error(
-        `verify-token-sync: FAILED.\n` +
-            `  copa-mobile   brand/tokens.json -> ${mineSum}\n` +
-            `  copa-frontend brand/tokens.json -> ${theirsSum}\n` +
-            `Copy the canonical file over and run \`bun run tokens:build\`.`,
-    );
-    process.exit(1);
+// Compare the FILE BYTES, not just the colour payload. The vendored copy is meant
+// to be verbatim, so `meta` (version, phase, the canonical checksum) and formatting
+// are part of the contract: a payload-only comparison would call the files in sync
+// while `meta.version` or `meta.phase` disagreed.
+if (mineRaw === theirsRaw) {
+    const mine = JSON.parse(mineRaw);
+    console.log(`verify-token-sync: in sync with copa-frontend (checksum ${checksum(mine)}).`);
+    process.exit(0);
 }
 
-console.log(`verify-token-sync: in sync with copa-frontend (checksum ${mineSum}).`);
+// They differ. Say HOW, so the message points at the actual remedy.
+let detail;
+try {
+    const mine = JSON.parse(mineRaw);
+    const theirs = JSON.parse(theirsRaw);
+    const mineSum = checksum(mine);
+    const theirsSum = checksum(theirs);
+    detail =
+        mineSum === theirsSum
+            ? `Colour values are identical (payload ${mineSum}); the files differ in metadata or formatting.\n` +
+              `  copa-mobile   meta: ${JSON.stringify(mine.meta)}\n` +
+              `  copa-frontend meta: ${JSON.stringify(theirs.meta)}`
+            : `Colour values DIFFER.\n` +
+              `  copa-mobile   payload -> ${mineSum}\n` +
+              `  copa-frontend payload -> ${theirsSum}`;
+} catch {
+    detail = "One of the files is not valid JSON.";
+}
+
+console.error(`verify-token-sync: FAILED - the vendored copy is not verbatim.\n  ${detail}\nCopy the canonical file over and run \`bun run tokens:build\`.`);
+process.exit(1);

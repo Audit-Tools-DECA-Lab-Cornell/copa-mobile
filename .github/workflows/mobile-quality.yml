@@ -38,6 +38,12 @@ jobs:
             - name: Run quality checks
               run: bun run check
 
+            # `bun run check` does not run vitest, so the design-token tests - which are
+            # what prove the generated theme modules still match the frozen palette -
+            # would never execute in CI. Run them explicitly.
+            - name: Design token tests
+              run: bunx vitest run tests/design-tokens.spec.ts
+
             # Colour is defined once, in copa-frontend/brand/tokens.json, and vendored
             # into this repo. `bun run check` proves the generated modules match the
             # local copy; this step proves the local copy still matches copa-frontend.
