@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -10,6 +11,11 @@ import { GENERATED_DARK_RAMP, GENERATED_LIGHT_RAMP } from "../themes.generated";
 import baseline from "./fixtures/design-tokens-baseline.json";
 
 const ROOT = path.resolve(__dirname, "..");
+
+/** @returns The checksum copa-frontend stamped into the token file, if any. */
+function metaChecksum(tokens: { meta?: { checksum?: string } }): string | undefined {
+    return tokens.meta?.checksum;
+}
 
 /**
  * Phase 1 of the colour migration moved every palette value into
@@ -61,6 +67,23 @@ describe("generated design tokens", () => {
  * quietly diverging between the two apps.
  */
 describe("vendored token file", () => {
+    /**
+     * copa-frontend owns brand/tokens.json and stamps meta.checksum with a hash of
+     * the token payload. Without this assertion, colour could be edited in this
+     * repo, regenerated, and sail through CI green while shipping a different
+     * value than the web app - which is exactly how `challenge` drifted.
+     */
+    it("carries a stamp that matches its own payload", () => {
+        const tokens = JSON.parse(readFileSync(path.join(ROOT, "brand/tokens.json"), "utf8"));
+        const { meta: _meta, ...payload } = tokens;
+        const actual = createHash("sha256").update(JSON.stringify(payload)).digest("hex").slice(0, 16);
+
+        expect(
+            metaChecksum(tokens),
+            "brand/tokens.json was edited in this repo - colour is owned by copa-frontend",
+        ).toBe(actual);
+    });
+
     it("matches the checksum stamped into the generated modules", () => {
         const stamped = readFileSync(path.join(ROOT, "lib/design-system.generated.ts"), "utf8").match(
             /checksum ([0-9a-f]{16})/,
@@ -68,9 +91,11 @@ describe("vendored token file", () => {
         const themeStamped = readFileSync(path.join(ROOT, "themes.generated.ts"), "utf8").match(
             /checksum ([0-9a-f]{16})/,
         );
+        const tokens = JSON.parse(readFileSync(path.join(ROOT, "brand/tokens.json"), "utf8"));
 
         expect(stamped?.[1]).toBeDefined();
         expect(themeStamped?.[1]).toBe(stamped?.[1]);
+        expect(stamped?.[1]).toBe(metaChecksum(tokens));
     });
 
     it("records the known cross-client divergences instead of hiding them", () => {

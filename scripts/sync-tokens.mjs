@@ -3,13 +3,22 @@
  * Generates `lib/design-system.generated.ts` and `themes.generated.ts` from
  * `brand/tokens.json`.
  *
- * `brand/tokens.json` in THIS repo is a vendored copy. The canonical file lives
- * at `copa-frontend/brand/tokens.json`; the two must stay byte-identical, which
- * `--check` verifies via the `meta.checksum` written into each generated file.
+ * `brand/tokens.json` in THIS repo is a VENDORED copy; copa-frontend owns the
+ * canonical file and stamps `meta.checksum` with a hash of the token payload.
+ * This script refuses to build or pass when the stamp does not match the copy's
+ * own contents, so editing colour here - rather than in copa-frontend - is a
+ * hard failure instead of a silent divergence between the two apps.
+ *
+ * What each layer catches:
+ *   - this script      : a locally edited vendored copy, or stale generated TS
+ *   - verify-token-sync: a vendored copy that is simply out of date
+ *
+ * To change a colour: change it in copa-frontend, run its `tokens:build`, copy
+ * the stamped file here, then run `bun run tokens:build`.
  *
  * Usage:
  *   bun run tokens:build   # write the generated files
- *   bun run tokens:check   # fail if they are stale (CI)
+ *   bun run tokens:check   # fail if they are stale or tampered with (CI)
  */
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -21,7 +30,10 @@ const TOKENS = resolve(ROOT, "brand/tokens.json");
 const CHECK = process.argv.includes("--check");
 const INDENT = "    ";
 
-/** Stable checksum over the token payload, ignoring `meta`. Must match copa-frontend's. */
+/**
+ * Stable checksum over the token payload, ignoring `meta` - which is where
+ * copa-frontend stamps the checksum. Must match copa-frontend's implementation.
+ */
 function checksum(tokens) {
     const { meta: _meta, ...payload } = tokens;
     return createHash("sha256").update(JSON.stringify(payload)).digest("hex").slice(0, 16);
@@ -97,6 +109,22 @@ ${ramp(tokens.mobile.tamaguiRamp.light)},
 }
 
 const tokens = JSON.parse(readFileSync(TOKENS, "utf8"));
+const expected = checksum(tokens);
+
+// This repo does not own brand/tokens.json, so a payload that disagrees with its
+// stamp means the copy was edited here. Refuse in BOTH modes: building from it
+// would bake a colour into the app that copa-frontend never published.
+if (tokens.meta?.checksum !== expected) {
+    console.error(
+        `tokens: brand/tokens.json is not a faithful copy of copa-frontend's canonical file.\n` +
+            `  stamped meta.checksum : ${tokens.meta?.checksum ?? "none"}\n` +
+            `  actual payload hash   : ${expected}\n` +
+            `Colour is owned by copa-frontend. Change it there, run its tokens:build, copy the\n` +
+            `stamped file here, then run \`bun run tokens:build\`.`,
+    );
+    process.exit(1);
+}
+
 const outputs = [
     [resolve(ROOT, "lib/design-system.generated.ts"), renderDesignSystem(tokens)],
     [resolve(ROOT, "themes.generated.ts"), renderThemes(tokens)],
