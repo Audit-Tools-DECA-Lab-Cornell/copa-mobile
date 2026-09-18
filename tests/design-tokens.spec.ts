@@ -8,6 +8,7 @@ import { SCALE_ACCENT_COLORS, CONSTRUCT_ACCENT_COLORS } from "lib/audit/scale-co
 import {
     GENERATED_CONSTRUCT_ACCENTS,
     GENERATED_EXPORT_DOCUMENT_COLORS,
+    GENERATED_MOBILE_SURFACE_COLORS,
     GENERATED_NATIVE_SPLASH_COLORS,
     GENERATED_PALETTES,
     GENERATED_SCALE_ACCENTS,
@@ -169,6 +170,35 @@ describe("phase 2 token groups", () => {
             light: "#F7F1EB",
             dark: "#0E0E0E",
             adaptiveIconBackground: "#F7F1EB",
+        });
+    });
+});
+
+/**
+ * Shadows, glass and the modal scrim are mostly warm-tinted, not neutral black or
+ * white - the dark glass is rgba(36,32,29) and the light accent glow is terracotta.
+ * Nothing rendered would error if a recolour skipped them; the app would just keep
+ * brown edges on every elevated surface and on the tab bar, which is exactly the
+ * kind of leftover this phase exists to prevent.
+ */
+describe("mobile surface tokens", () => {
+    it("preserves the shadow, glass and scrim values verbatim", () => {
+        expect(GENERATED_MOBILE_SURFACE_COLORS).toEqual({
+            darkShadowCard: "rgba(0, 0, 0, 0.14)",
+            darkShadowAccent: "rgba(197, 138, 92, 0.12)",
+            darkGlassSurface: "rgba(36, 32, 29, 0.74)",
+            darkGlassBorder: "rgba(231, 222, 211, 0.2)",
+            darkGlassShadow: "rgba(0, 0, 0, 0.24)",
+            darkTabBarSurface: "rgba(22, 19, 17, 0.84)",
+            darkTabBarBorder: "rgba(231, 222, 211, 0.14)",
+            lightShadowCard: "rgba(60, 48, 42, 0.08)",
+            lightShadowAccent: "rgba(176, 106, 56, 0.2)",
+            lightGlassSurface: "rgba(255, 255, 255, 0.76)",
+            lightGlassBorder: "rgba(42, 35, 30, 0.12)",
+            lightGlassShadow: "rgba(60, 48, 42, 0.12)",
+            lightTabBarSurface: "rgba(255, 255, 255, 0.72)",
+            lightTabBarBorder: "rgba(42, 35, 30, 0.1)",
+            modalScrim: "rgba(7, 9, 11, 0.55)",
         });
     });
 });

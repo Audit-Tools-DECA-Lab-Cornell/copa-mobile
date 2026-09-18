@@ -1,7 +1,7 @@
 /**
  * GENERATED FILE - DO NOT EDIT.
  *
- * Source:      brand/tokens.json (checksum 7f74a8f67b9b20fd)
+ * Source:      brand/tokens.json (checksum 2a6888bfb75725f2)
  * Regenerate:  bun run tokens:build
  * Verify:      bun run tokens:check
  *
@@ -195,4 +195,23 @@ export const GENERATED_NATIVE_SPLASH_COLORS = {
     light: "#F7F1EB",
     dark: "#0E0E0E",
     adaptiveIconBackground: "#F7F1EB",
+} as const;
+
+/** Shadow, glass (blur overlay) and modal scrim values. Mostly warm-tinted, not neutral. */
+export const GENERATED_MOBILE_SURFACE_COLORS = {
+    darkShadowCard: "rgba(0, 0, 0, 0.14)",
+    darkShadowAccent: "rgba(197, 138, 92, 0.12)",
+    darkGlassSurface: "rgba(36, 32, 29, 0.74)",
+    darkGlassBorder: "rgba(231, 222, 211, 0.2)",
+    darkGlassShadow: "rgba(0, 0, 0, 0.24)",
+    darkTabBarSurface: "rgba(22, 19, 17, 0.84)",
+    darkTabBarBorder: "rgba(231, 222, 211, 0.14)",
+    lightShadowCard: "rgba(60, 48, 42, 0.08)",
+    lightShadowAccent: "rgba(176, 106, 56, 0.2)",
+    lightGlassSurface: "rgba(255, 255, 255, 0.76)",
+    lightGlassBorder: "rgba(42, 35, 30, 0.12)",
+    lightGlassShadow: "rgba(60, 48, 42, 0.12)",
+    lightTabBarSurface: "rgba(255, 255, 255, 0.72)",
+    lightTabBarBorder: "rgba(42, 35, 30, 0.1)",
+    modalScrim: "rgba(7, 9, 11, 0.55)",
 } as const;

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { GENERATED_MOBILE_SURFACE_COLORS } from "lib/design-system.generated";
 import { BackHandler, Platform, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -123,7 +124,7 @@ export function ConfirmDialog({
                     paddingBottom: insets.bottom + 24,
                     paddingLeft: 24,
                     paddingRight: 24,
-                    backgroundColor: "rgba(7, 9, 11, 0.55)",
+                    backgroundColor: GENERATED_MOBILE_SURFACE_COLORS.modalScrim,
                 },
                 scrimStyle,
             ]}

@@ -1,5 +1,5 @@
 import { buildScaleColorFields, type ScaleColorFields } from "lib/audit/scale-colors";
-import { GENERATED_PALETTES } from "lib/design-system.generated";
+import { GENERATED_MOBILE_SURFACE_COLORS, GENERATED_PALETTES } from "lib/design-system.generated";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import { isTabletWidth, TABLET_TYPOGRAPHY_BASE_SCALE } from "lib/responsive-layout-tokens";
 import { useMemo } from "react";
@@ -110,16 +110,16 @@ interface GlassPalette {
 const DARK_COLORS = assembleColorPalette(toColorTokens(GENERATED_PALETTES.dark), "dark") satisfies ColorPalette;
 
 const DARK_SHADOWS = {
-    card: `0 10px 24px ${createColorToken("rgba(0, 0, 0, 0.14)")}` as ColorTokens,
-    accent: `0 0 14px ${createColorToken("rgba(197, 138, 92, 0.12)")}` as ColorTokens,
+    card: `0 10px 24px ${GENERATED_MOBILE_SURFACE_COLORS.darkShadowCard}` as ColorTokens,
+    accent: `0 0 14px ${GENERATED_MOBILE_SURFACE_COLORS.darkShadowAccent}` as ColorTokens,
 } as const satisfies ShadowPalette;
 
 const DARK_GLASS = {
-    elevatedSurface: createColorToken("rgba(36, 32, 29, 0.74)"),
-    elevatedBorder: createColorToken("rgba(231, 222, 211, 0.2)"),
-    elevatedShadow: `0 14px 28px ${createColorToken("rgba(0, 0, 0, 0.24)")}` as ColorTokens,
-    tabBarSurface: createColorToken("rgba(22, 19, 17, 0.84)"),
-    tabBarBorder: createColorToken("rgba(231, 222, 211, 0.14)"),
+    elevatedSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkGlassSurface),
+    elevatedBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkGlassBorder),
+    elevatedShadow: `0 14px 28px ${GENERATED_MOBILE_SURFACE_COLORS.darkGlassShadow}` as ColorTokens,
+    tabBarSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkTabBarSurface),
+    tabBarBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkTabBarBorder),
 } as const satisfies GlassPalette;
 
 const LIGHT_COLORS = assembleColorPalette(toColorTokens(GENERATED_PALETTES.light)) satisfies ColorPalette;
@@ -127,16 +127,16 @@ const LIGHT_COLORS = assembleColorPalette(toColorTokens(GENERATED_PALETTES.light
 const LIGHT_FIELD_COLORS = assembleColorPalette(toColorTokens(GENERATED_PALETTES.lightField)) satisfies ColorPalette;
 
 const LIGHT_SHADOWS = {
-    card: `0 10px 24px ${createColorToken("rgba(60, 48, 42, 0.08)")}` as ColorTokens,
-    accent: `0 0 14px ${createColorToken("rgba(176, 106, 56, 0.2)")}` as ColorTokens,
+    card: `0 10px 24px ${GENERATED_MOBILE_SURFACE_COLORS.lightShadowCard}` as ColorTokens,
+    accent: `0 0 14px ${GENERATED_MOBILE_SURFACE_COLORS.lightShadowAccent}` as ColorTokens,
 } as const satisfies ShadowPalette;
 
 const LIGHT_GLASS = {
-    elevatedSurface: createColorToken("rgba(255, 255, 255, 0.76)"),
-    elevatedBorder: createColorToken("rgba(42, 35, 30, 0.12)"),
-    elevatedShadow: `0 14px 28px ${createColorToken("rgba(60, 48, 42, 0.12)")}` as ColorTokens,
-    tabBarSurface: createColorToken("rgba(255, 255, 255, 0.72)"),
-    tabBarBorder: createColorToken("rgba(42, 35, 30, 0.1)"),
+    elevatedSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightGlassSurface),
+    elevatedBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightGlassBorder),
+    elevatedShadow: `0 14px 28px ${GENERATED_MOBILE_SURFACE_COLORS.lightGlassShadow}` as ColorTokens,
+    tabBarSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightTabBarSurface),
+    tabBarBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightTabBarBorder),
 } as const satisfies GlassPalette;
 
 const DARK_HIGH_CONTRAST_COLORS = assembleColorPalette(
