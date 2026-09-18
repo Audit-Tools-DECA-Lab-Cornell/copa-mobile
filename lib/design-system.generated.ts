@@ -1,7 +1,7 @@
 /**
  * GENERATED FILE - DO NOT EDIT.
  *
- * Source:      brand/tokens.json (checksum f73b24a4ccaadac5)
+ * Source:      brand/tokens.json (checksum 5eecda8d5ace97dd)
  * Regenerate:  bun run tokens:build
  * Verify:      bun run tokens:check
  *
