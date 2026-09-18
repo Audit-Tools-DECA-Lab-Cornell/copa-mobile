@@ -171,7 +171,7 @@ body { margin: 0; background: #fff; color: var(--body-text); font-family: -apple
 .generic-page { break-before: page; }
 .audit-header { background: var(--header-fill); color: var(--header-text); margin: -14mm -14mm 8mm; padding: 7mm 14mm 5mm; }
 .audit-header h1 { margin: 0 0 2mm; font-size: 18px; }
-.audit-header p { margin: 0; color: #cbd5e1; font-size: 10px; }
+.audit-header p { margin: 0; color: ${WEB_AUDIT_EXPORT_PALETTE.subtitleText}; font-size: 10px; }
 h2 { margin: 0 0 5mm; color: var(--header-fill); font-size: 13px; }
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-bottom: 8mm; }
 table { border-collapse: collapse; width: 100%; table-layout: fixed; }

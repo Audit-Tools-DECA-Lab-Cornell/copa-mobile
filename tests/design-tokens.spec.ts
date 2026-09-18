@@ -5,7 +5,14 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { SCALE_ACCENT_COLORS, CONSTRUCT_ACCENT_COLORS } from "lib/audit/scale-colors";
-import { GENERATED_CONSTRUCT_ACCENTS, GENERATED_PALETTES, GENERATED_SCALE_ACCENTS } from "lib/design-system.generated";
+import {
+    GENERATED_CONSTRUCT_ACCENTS,
+    GENERATED_EXPORT_DOCUMENT_COLORS,
+    GENERATED_NATIVE_SPLASH_COLORS,
+    GENERATED_PALETTES,
+    GENERATED_SCALE_ACCENTS,
+} from "lib/design-system.generated";
+import { WEB_AUDIT_EXPORT_PALETTE } from "lib/exports/reports/types";
 
 import { GENERATED_DARK_RAMP, GENERATED_LIGHT_RAMP } from "../themes.generated";
 import baseline from "./fixtures/design-tokens-baseline.json";
@@ -110,5 +117,58 @@ describe("vendored token file", () => {
             mobile: "#0C4767",
         });
         expect(SCALE_ACCENT_COLORS.challenge).toBe(tokens.scales.platformOverrides.challenge.mobile);
+    });
+});
+
+/**
+ * Phase 2 moved colour literals that were scattered across the export pipeline
+ * and the native config into `brand/tokens.json`. Like phase 1, it is meant to be
+ * a no-op: the tokens must still resolve to exactly what those files hard-coded.
+ *
+ * The literals below are transcribed from the pre-phase-2 source and are expected
+ * to change in phase 3, deliberately, alongside the tokens.
+ */
+describe("phase 2 token groups", () => {
+    it("preserves the export document palette verbatim", () => {
+        expect(GENERATED_EXPORT_DOCUMENT_COLORS).toEqual({
+            headerFill: "#1F2937",
+            headerText: "#FFFFFF",
+            sectionFill: "#E2E8F0",
+            sectionTitleText: "#0F172A",
+            sectionText: "#0F172A",
+            sectionInstructionText: "#4B5362",
+            sectionNotesText: "#6B7280",
+            rowEven: "#F8FAFC",
+            rowOdd: "#FFFFFF",
+            bodyText: "#1F2937",
+            sheetBodyText: "#334155",
+            mutedText: "#6B7280",
+            border: "#E2E8F0",
+            borderStrong: "#94A3B8",
+            summaryFill: "#333F55",
+            summaryText: "#FFFFFF",
+            summaryNeutralFill: "#F1F5F9",
+            scoreAccentText: "#1F2937",
+            subtitleText: "#cbd5e1",
+        });
+    });
+
+    it("keeps the live export palette wired to those tokens", () => {
+        expect(WEB_AUDIT_EXPORT_PALETTE.headerFill).toBe(GENERATED_EXPORT_DOCUMENT_COLORS.headerFill);
+        expect(WEB_AUDIT_EXPORT_PALETTE.subtitleText).toBe(GENERATED_EXPORT_DOCUMENT_COLORS.subtitleText);
+        expect(WEB_AUDIT_EXPORT_PALETTE.summaryFill).toBe(GENERATED_EXPORT_DOCUMENT_COLORS.summaryFill);
+    });
+
+    /**
+     * The splash screen and adaptive-icon background render before any JS runs,
+     * so app.config.js bakes these into the native build. A recolour that misses
+     * them leaves the app launching in the old palette.
+     */
+    it("preserves the native launch colours verbatim", () => {
+        expect(GENERATED_NATIVE_SPLASH_COLORS).toEqual({
+            light: "#F7F1EB",
+            dark: "#0E0E0E",
+            adaptiveIconBackground: "#F7F1EB",
+        });
     });
 });

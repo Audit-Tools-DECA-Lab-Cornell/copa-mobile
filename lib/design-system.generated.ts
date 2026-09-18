@@ -1,7 +1,7 @@
 /**
  * GENERATED FILE - DO NOT EDIT.
  *
- * Source:      brand/tokens.json (checksum 5eecda8d5ace97dd)
+ * Source:      brand/tokens.json (checksum f2e1fb89252141cf)
  * Regenerate:  bun run tokens:build
  * Verify:      bun run tokens:check
  *
@@ -161,8 +161,38 @@ export const GENERATED_SCALE_ACCENTS = {
     sociability: "#754170",
 } as const;
 
-/** Headline construct accents (Play Value / Usability). Mobile-only today - see knownDrift. */
+/** Headline construct accents (Play Value / Usability). Shared verbatim with copa-frontend. */
 export const GENERATED_CONSTRUCT_ACCENTS = {
     playValue: "#2E7D78",
     usability: "#C7972F",
+} as const;
+
+/** Colours for generated PDF/XLSX documents. Documents print on white, so they do not follow the app theme. */
+export const GENERATED_EXPORT_DOCUMENT_COLORS = {
+    headerFill: "#1F2937",
+    headerText: "#FFFFFF",
+    sectionFill: "#E2E8F0",
+    sectionTitleText: "#0F172A",
+    sectionText: "#0F172A",
+    sectionInstructionText: "#4B5362",
+    sectionNotesText: "#6B7280",
+    rowEven: "#F8FAFC",
+    rowOdd: "#FFFFFF",
+    bodyText: "#1F2937",
+    sheetBodyText: "#334155",
+    mutedText: "#6B7280",
+    border: "#E2E8F0",
+    borderStrong: "#94A3B8",
+    summaryFill: "#333F55",
+    summaryText: "#FFFFFF",
+    summaryNeutralFill: "#F1F5F9",
+    scoreAccentText: "#1F2937",
+    subtitleText: "#cbd5e1",
+} as const;
+
+/** Native launch surfaces, read by app.config.js before any JS runs. */
+export const GENERATED_NATIVE_SPLASH_COLORS = {
+    light: "#F7F1EB",
+    dark: "#0E0E0E",
+    adaptiveIconBackground: "#F7F1EB",
 } as const;

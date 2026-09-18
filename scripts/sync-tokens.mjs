@@ -65,6 +65,13 @@ function renderDesignSystem(tokens) {
         .map(([name, palette]) => `${INDENT}${name}: {\n${entries(palette, 2)}\n${INDENT}}`)
         .join(",\n");
 
+    /** Serialise a token group, dropping the `_note` prose key. */
+    const group = (name) =>
+        entries(
+            Object.fromEntries(Object.entries(tokens[name] ?? {}).filter(([key]) => !key.startsWith("_"))),
+            1,
+        );
+
     const scales = { ...tokens.scales.shared };
     for (const [key, value] of Object.entries(tokens.scales.platformOverrides ?? {})) {
         if (value.mobile !== null && value.mobile !== undefined) scales[key] = value.mobile;
@@ -86,9 +93,19 @@ export const GENERATED_SCALE_ACCENTS = {
 ${scaleEntries},
 } as const;
 
-/** Headline construct accents (Play Value / Usability). Mobile-only today - see knownDrift. */
+/** Headline construct accents (Play Value / Usability). Shared verbatim with copa-frontend. */
 export const GENERATED_CONSTRUCT_ACCENTS = {
 ${entries(tokens.scales.constructs, 1)},
+} as const;
+
+/** Colours for generated PDF/XLSX documents. Documents print on white, so they do not follow the app theme. */
+export const GENERATED_EXPORT_DOCUMENT_COLORS = {
+${group("exportDocument")},
+} as const;
+
+/** Native launch surfaces, read by app.config.js before any JS runs. */
+export const GENERATED_NATIVE_SPLASH_COLORS = {
+${group("nativeSplash")},
 } as const;
 `;
 }
@@ -201,6 +218,14 @@ function validate(tokens) {
     }
     for (const [token, value] of Object.entries(tokens.scales?.constructs ?? {})) {
         check(`scales.constructs.${token}`, value);
+    }
+
+    // Groups added in phase 2. `_note` keys carry prose, not colour, so they are skipped.
+    for (const group of ["feedback", "reportSource", "mapPlaceholder", "exportDocument", "nativeSplash"]) {
+        for (const [token, value] of Object.entries(tokens[group] ?? {})) {
+            if (token.startsWith("_")) continue;
+            check(`${group}.${token}`, value);
+        }
     }
 
     if (errors.length > 0) {

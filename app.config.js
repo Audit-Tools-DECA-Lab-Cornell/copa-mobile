@@ -1,3 +1,20 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+/**
+ * Native launch colours come from `brand/tokens.json`, the same source the app's
+ * theme is generated from.
+ *
+ * This file is evaluated by Node before any app code runs, so it cannot import
+ * the generated TypeScript module - it reads the token file directly instead.
+ * These values are baked into the native build: the splash screen and the
+ * Android adaptive-icon background are the first thing a user sees, and the
+ * easiest surface to miss when the palette changes.
+ */
+const tokens = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "brand/tokens.json"), "utf8"));
+const nativeSplash = tokens.nativeSplash;
+
 export default {
     expo: {
         name: "COPA",
@@ -23,7 +40,7 @@ export default {
             softwareKeyboardLayoutMode: "pan",
             adaptiveIcon: {
                 foregroundImage: "./assets/android-icons/adaptive-icon.png",
-                backgroundColor: "#F7F1EB",
+                backgroundColor: nativeSplash.adaptiveIconBackground,
                 monochromeImage: "./assets/android-icons/adaptive-monochrome.png",
             },
             package: "com.pratyush.sudhakar.audittoolsplayspacemobile",
@@ -34,11 +51,11 @@ export default {
             [
                 "expo-splash-screen",
                 {
-                    backgroundColor: "#F7F1EB",
+                    backgroundColor: nativeSplash.light,
                     image: "./assets/splash-icon.png",
                     imageWidth: 200,
                     dark: {
-                        backgroundColor: "#0E0E0E",
+                        backgroundColor: nativeSplash.dark,
                         image: "./assets/splash-icon.png",
                     },
                 },

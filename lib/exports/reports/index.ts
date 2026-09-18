@@ -25,7 +25,7 @@ export type {
     WorkbookTable,
 } from "./types";
 
-export { MOBILE_EXPORT_PALETTE, SINGLE_RESPONSE_HEADERS, WEB_AUDIT_EXPORT_PALETTE } from "./types";
+export { SINGLE_RESPONSE_HEADERS, WEB_AUDIT_EXPORT_PALETTE } from "./types";
 
 /**
  * Build a small workbook-like preview table for one submitted audit.
