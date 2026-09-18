@@ -1,19 +1,32 @@
 import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 /**
  * Native launch colours come from `brand/tokens.json`, the same source the app's
  * theme is generated from.
  *
- * This file is evaluated by Node before any app code runs, so it cannot import
- * the generated TypeScript module - it reads the token file directly instead.
+ * Read with `fs` rather than an import: this file is evaluated before any app
+ * code runs, and Expo may transpile it to CommonJS (package.json has no
+ * `"type": "module"`). A JSON `import` needs import attributes under real ESM,
+ * and `import.meta.url` does not survive transpilation to CJS - `process.cwd()`
+ * behaves identically either way, and Expo always loads the config from the
+ * project root.
+ *
  * These values are baked into the native build: the splash screen and the
  * Android adaptive-icon background are the first thing a user sees, and the
  * easiest surface to miss when the palette changes.
  */
-const tokens = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "brand/tokens.json"), "utf8"));
-const nativeSplash = tokens.nativeSplash;
+const tokensPath = resolve(process.cwd(), "brand/tokens.json");
+let nativeSplash;
+try {
+    nativeSplash = JSON.parse(readFileSync(tokensPath, "utf8")).nativeSplash;
+} catch (error) {
+    throw new Error(
+        `app.config.js could not read native colours from ${tokensPath}. ` +
+            `Run it from the project root, or regenerate the token file with \`bun run tokens:build\`. ` +
+            `Original error: ${error.message}`,
+    );
+}
 
 export default {
     expo: {

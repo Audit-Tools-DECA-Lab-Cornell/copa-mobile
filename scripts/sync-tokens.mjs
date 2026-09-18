@@ -141,6 +141,17 @@ ${ramp(tokens.mobile.tamaguiRamp.light)},
 const HEX = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 const FUNCTIONAL = /^(rgb|rgba|hsl|hsla)\(([^()]*)\)$/;
 
+/**
+ * Groups whose consumers parse the value as hex rather than handing it to CSS.
+ *
+ * `hexToXlsxRgb()` in the XLSX export, the hex blend helpers in scale-colors,
+ * and the native config all assume `#RRGGBB`. Accepting `rgb()` or `hsl()` here
+ * would let a future palette change pass `tokens:check` and then throw at render
+ * time, inside the export paths - exactly where a failure is least visible.
+ * Kept identical to copa-frontend's copy; both scripts read the same token file.
+ */
+const HEX_ONLY_GROUPS = new Set(["feedback", "reportSource", "exportDocument", "nativeSplash"]);
+
 /** @returns An error string when `value` is not a usable CSS colour, else null. */
 function colorError(value) {
     if (typeof value !== "string") return `expected a string, got ${typeof value}`;
@@ -173,9 +184,14 @@ function colorError(value) {
  */
 function validate(tokens) {
     const errors = [];
-    const check = (path, value) => {
+    const check = (path, value, hexOnly = false) => {
         const error = colorError(value);
         if (error) errors.push(`${path}: ${JSON.stringify(value)} - ${error}`);
+        else if (hexOnly && !HEX.test(value.trim())) {
+            errors.push(
+                `${path}: ${JSON.stringify(value)} - must be a hex colour; this group is parsed as hex by its consumers, not handed to CSS`,
+            );
+        }
     };
 
     const web = tokens.web?.palettes ?? {};
@@ -214,22 +230,23 @@ function validate(tokens) {
     }
 
     for (const [token, value] of Object.entries(tokens.scales?.shared ?? {})) {
-        check(`scales.shared.${token}`, value);
+        check(`scales.shared.${token}`, value, true);
     }
     for (const [token, platforms] of Object.entries(tokens.scales?.platformOverrides ?? {})) {
         for (const [platform, value] of Object.entries(platforms)) {
-            if (value !== null && value !== undefined) check(`scales.platformOverrides.${token}.${platform}`, value);
+            if (value !== null && value !== undefined)
+                check(`scales.platformOverrides.${token}.${platform}`, value, true);
         }
     }
     for (const [token, value] of Object.entries(tokens.scales?.constructs ?? {})) {
-        check(`scales.constructs.${token}`, value);
+        check(`scales.constructs.${token}`, value, true);
     }
 
     // Groups added in phase 2. `_note` keys carry prose, not colour, so they are skipped.
     for (const group of ["feedback", "reportSource", "mapPlaceholder", "exportDocument", "nativeSplash", "landing", "mobileSurface", "uploadWidget"]) {
         for (const [token, value] of Object.entries(tokens[group] ?? {})) {
             if (token.startsWith("_")) continue;
-            check(`${group}.${token}`, value);
+            check(`${group}.${token}`, value, HEX_ONLY_GROUPS.has(group));
         }
     }
 
