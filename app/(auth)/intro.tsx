@@ -26,12 +26,17 @@ import { usePreferencesStore } from "stores/preferences-store";
 type IntroIcon = (props: IconProps) => JSX.Element;
 
 const CLOUDINARY_BASE = `https://res.cloudinary.com/${process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto,w_900`;
+const COPA_CLOUDINARY_FOLDER = "copa";
 
 const SLIDE_IMAGES = {
-    identity: { uri: `${CLOUDINARY_BASE}/iphone-light/framed/03-home-portrait` },
-    offline: { uri: `${CLOUDINARY_BASE}/iphone-dark/framed/03-home-portrait` },
-    speed: { uri: `${CLOUDINARY_BASE}/iphone-light/framed/11-execute-section-questions-portrait` },
-    privacy: { uri: `${CLOUDINARY_BASE}/iphone-light/framed/15-report-detail-top-portrait` },
+    identity: { uri: `${CLOUDINARY_BASE}/${COPA_CLOUDINARY_FOLDER}/iphone-light/framed/03-home-portrait` },
+    offline: { uri: `${CLOUDINARY_BASE}/${COPA_CLOUDINARY_FOLDER}/iphone-dark/framed/03-home-portrait` },
+    speed: {
+        uri: `${CLOUDINARY_BASE}/${COPA_CLOUDINARY_FOLDER}/iphone-light/framed/11-execute-section-questions-portrait`,
+    },
+    privacy: {
+        uri: `${CLOUDINARY_BASE}/${COPA_CLOUDINARY_FOLDER}/iphone-light/framed/15-report-detail-top-portrait`,
+    },
 } as const;
 
 interface IntroSlide {
