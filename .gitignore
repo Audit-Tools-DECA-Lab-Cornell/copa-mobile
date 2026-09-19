@@ -16,7 +16,10 @@ coverage/
 dist/
 web-build/
 expo-env.d.ts
-build-*
+# Expo build output lands at the repo root. Unanchored, this also swallowed
+# scripts/build-token-baseline.mjs, which was written, referenced by the test
+# fixture, and silently never committed.
+/build-*
 
 # Native
 *.orig.*
