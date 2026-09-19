@@ -44,6 +44,22 @@ jobs:
             - name: Design token tests
               run: bunx vitest run tests/design-tokens.spec.ts
 
+            # `tamagui.generated.css` is a committed build artifact of themes.ts, and
+            # nothing else covers it: it is excluded from eslint and prettier, and
+            # `tokens:check` only knows about the modules the token generator writes.
+            # It went stale during the Coastal Blues migration - the palette moved and
+            # the committed stylesheet kept the warm ramp - so regenerate it here and
+            # fail if the result differs from what is checked in.
+            - name: Tamagui CSS is in sync with themes.ts
+              run: |
+                  bunx tamagui generate-css
+                  if ! git diff --quiet -- tamagui.generated.css; then
+                    echo "tamagui.generated.css is stale. Run 'bunx tamagui generate-css' and commit the result."
+                    git --no-pager diff --stat -- tamagui.generated.css
+                    exit 1
+                  fi
+                  echo "tamagui.generated.css matches themes.ts."
+
             # Colour is defined once, in copa-frontend/brand/tokens.json, and vendored
             # into this repo. `bun run check` proves the generated modules match the
             # local copy; this step proves the local copy still matches copa-frontend.

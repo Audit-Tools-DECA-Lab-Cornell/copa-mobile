@@ -77,8 +77,14 @@ module.exports = defineConfig([
     // into phase 2. Mirrors the rule in copa-frontend/eslint.config.mjs; pure black and
     // white are allowed because they carry no hue to drift.
     {
-        files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}", "stores/**/*.{ts,tsx}"],
-        ignores: ["**/*.generated.ts"],
+        // Every source file, including the repo root - `themes.ts`, `tamagui.config.ts`
+        // and `app.config.js` are where the ramp steps and the native launch colours
+        // lived, so leaving the root uncovered left the rule blind to the files most
+        // likely to be hand-edited during a palette tweak. `tests/**` is excluded for
+        // the same reason copa-frontend scopes its rule to `src/**`: assertions have to
+        // name concrete values to be worth anything.
+        files: ["**/*.{ts,tsx,js,mjs}"],
+        ignores: ["**/*.generated.ts", "tests/**"],
         rules: {
             "no-restricted-syntax": [
                 "error",

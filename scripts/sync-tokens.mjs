@@ -159,7 +159,16 @@ const FUNCTIONAL = /^(rgb|rgba|hsl|hsla)\(([^()]*)\)$/;
  * time, inside the export paths - exactly where a failure is least visible.
  * Kept identical to copa-frontend's copy; both scripts read the same token file.
  */
-const HEX_ONLY_GROUPS = new Set(["feedback", "reportSource", "exportDocument", "nativeSplash"]);
+const HEX_ONLY_GROUPS = new Set(["reportSource", "exportDocument", "nativeSplash"]);
+
+/**
+ * Exactly six digits. The general HEX matcher above also admits 3-, 4- and 8-digit
+ * forms, which are valid CSS but not valid input to the consumers of the groups in
+ * HEX_ONLY_GROUPS: the hex blend helpers throw on anything but six, and the XLSX
+ * writer silently produces a wrong fill from eight.
+ * Kept identical to copa-frontend's copy; both scripts read the same token file.
+ */
+const HEX6 = /^#[0-9a-fA-F]{6}$/;
 
 /** @returns An error string when `value` is not a usable CSS colour, else null. */
 function colorError(value) {
@@ -196,9 +205,9 @@ function validate(tokens) {
     const check = (path, value, hexOnly = false) => {
         const error = colorError(value);
         if (error) errors.push(`${path}: ${JSON.stringify(value)} - ${error}`);
-        else if (hexOnly && !HEX.test(value.trim())) {
+        else if (hexOnly && !HEX6.test(value.trim())) {
             errors.push(
-                `${path}: ${JSON.stringify(value)} - must be a hex colour; this group is parsed as hex by its consumers, not handed to CSS`,
+                `${path}: ${JSON.stringify(value)} - must be a six-digit hex colour; this group is parsed as hex by its consumers, not handed to CSS`,
             );
         }
     };

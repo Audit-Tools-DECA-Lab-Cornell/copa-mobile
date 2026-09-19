@@ -19,9 +19,10 @@ export type PvScaleKey = (typeof PV_SCALE_KEYS)[number];
  * Values come from `brand/tokens.json` via the generated module - the same
  * source copa-frontend reads, so a scale cannot drift between the two clients.
  *
- * NOTE: `challenge` currently still differs from web. That divergence predates
- * the token pipeline and is recorded verbatim under `knownDrift` in
- * brand/tokens.json; phase 4 of the colour migration unifies it.
+ * `challenge` used to differ between the two clients - the same semantic token in
+ * two colours, in reports. Phase 3 gave both `#26708F`, so the value no longer
+ * drifts and `tests/design-tokens.spec.ts` asserts they stay equal. What phase 4
+ * removes is the now-redundant `scales.platformOverrides` block, not a divergence.
  */
 export const SCALE_ACCENT_COLORS: Record<PvScaleKey, string> = GENERATED_SCALE_ACCENTS;
 

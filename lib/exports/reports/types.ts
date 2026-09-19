@@ -115,7 +115,6 @@ export const GUIDANCE_COLUMN_WIDTHS = [24, 64, 56] as const;
 export const SINGLE_RESPONSE_COLUMN_WIDTHS = [14, 14, 16, 24, 44, 42, 72, 22, 22, 22, 22, 22, 22, 24, 16, 16] as const;
 export const BULK_RESPONSE_COLUMN_WIDTHS = SINGLE_RESPONSE_COLUMN_WIDTHS;
 
-/** Shared export palette matched to the web audit PDF/XLSX export. */
 /**
  * Shared export palette for generated PDF/XLSX documents.
  *
