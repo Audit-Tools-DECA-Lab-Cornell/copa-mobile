@@ -27,7 +27,7 @@ find screenshots/android-phone screenshots/android-tablet -type f -name '*.png' 
 bun run screenshots:android -- --email "$SCREENSHOT_EMAIL" --password "$SCREENSHOT_PASSWORD"
 ```
 
-The report-detail tail offsets are first-pass values. After the fresh capture run, check the near-end/end frames and tune the values in `REPORT_DETAIL_SCROLLS` if either frame is still too similar or misses the report footer.
+The report-detail tail offsets are first-pass values. After the fresh capture run, check the near-end/end frames and tune the values in `REPORT_DETAIL_SCROLLS` if either frame is still too similar or misses the report footer. Dynamic report-detail routes wait `--report-wait-ms` (default 35000) before capture and `--report-scroll-delay-ms` (default 12000) in-app before scrolling, so generated report height exists before the tail frames jump.
 
 ## iPhone targets
 
@@ -84,9 +84,10 @@ The report-detail tail offsets are first-pass values. After the fresh capture ru
 
 The execute-place target intentionally runs **before** the section deep-link
 targets so `ensurePlaceAudit` resolves during the earlier navigation; the first
-section target additionally carries `extraWaitMs: 4000` in the script. Per the
-approved overhaul scope, recapture **all sets except iPhone** (iPhone recapture
-is deferred).
+section target additionally carries `extraWaitMs: 4000` in the script. Report-detail
+targets use `--report-wait-ms` plus `--report-scroll-delay-ms` so the generated
+report can finish laying out before capture. Per the approved overhaul scope,
+recapture **all sets except iPhone** (iPhone recapture is deferred).
 
 ## Removed old targets
 

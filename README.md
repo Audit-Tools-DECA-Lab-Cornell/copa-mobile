@@ -273,6 +273,8 @@ Useful options:
 
 - `--api-base-url <url>` points the ID discovery step at a seeded Playspace backend.
 - `--login-wait-ms <ms>` overrides the wait used after the first login (default 20000 ms).
+- `--report-wait-ms <ms>` overrides the wait used for dynamic report-detail routes while the report generates (default 35000 ms).
+- `--report-scroll-delay-ms <ms>` overrides the in-app delay before scrolling a generated report (default 12000 ms).
 - `--target public` captures only login/signup. Use a comma-separated list of PNG names for a smaller protected subset.
 - `--output-dir <path>` writes a one-off run outside the default screenshot folders.
 

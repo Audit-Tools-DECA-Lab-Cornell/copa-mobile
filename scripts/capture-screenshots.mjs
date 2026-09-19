@@ -12,6 +12,10 @@ const DEFAULT_API_BASE_URL = "https://audit-tools-backend-zyde.onrender.com";
 const DEFAULT_WAIT_MS = 20000;
 const DEFAULT_LOGIN_WAIT_MS = 20000;
 const DEFAULT_SCROLL_DELAY_MS = 450;
+// Report detail mounts a long generated document. Host capture and in-app
+// scroll both wait for that layout so tail frames are not clamped mid-report.
+const DEFAULT_REPORT_WAIT_MS = 35000;
+const DEFAULT_REPORT_SCROLL_DELAY_MS = 12000;
 const DEFAULT_PLATFORM = "ios";
 const DEFAULT_SIMULATOR = "booted";
 const DEFAULT_ANDROID_DEVICE = "connected";
@@ -37,6 +41,8 @@ const IPAD_PRE_AUDIT_SCROLL_Y = 250;
 // Report detail is long on every device. The early frame is slightly above the
 // old 700px shot to avoid repeated content; tail frames are first-pass values
 // and should be tuned after a fresh capture run if the report content changes.
+// Scrolled frames also wait DEFAULT_REPORT_SCROLL_DELAY_MS in-app so generated
+// report height exists before the automation jumps to these offsets.
 const REPORT_DETAIL_SCROLLS = {
     iphone: { early: 950, nearEnd: 20500, end: 22000 },
     ipad: { early: 850, end: 19000 },
@@ -62,6 +68,8 @@ function parseArgs(argv) {
         simulator: DEFAULT_SIMULATOR,
         waitMs: DEFAULT_WAIT_MS,
         loginWaitMs: DEFAULT_LOGIN_WAIT_MS,
+        reportWaitMs: DEFAULT_REPORT_WAIT_MS,
+        reportScrollDelayMs: DEFAULT_REPORT_SCROLL_DELAY_MS,
         list: false,
         outputDir: null,
         platform: DEFAULT_PLATFORM,
@@ -101,6 +109,10 @@ function parseArgs(argv) {
         else if (arg === "--wait-ms") options.waitMs = parsePositiveInteger(next, "--wait-ms");
         else if (arg === "--login-wait-ms")
             options.loginWaitMs = parsePositiveInteger(next, "--login-wait-ms");
+        else if (arg === "--report-wait-ms")
+            options.reportWaitMs = parsePositiveInteger(next, "--report-wait-ms");
+        else if (arg === "--report-scroll-delay-ms")
+            options.reportScrollDelayMs = parsePositiveInteger(next, "--report-scroll-delay-ms");
         else if (arg === "--output-dir") options.outputDir = next;
         else if (arg === "--target") options.target = next;
         else throw new Error(`Unknown argument: ${arg}`);
@@ -171,6 +183,8 @@ Options:
   --login-wait-ms N    Extra wait after the first login target. Default: ${DEFAULT_LOGIN_WAIT_MS}
   --output-dir PATH    Output directory. Default: screenshots/<device>/<appearance>
   --platform VALUE     ios or android. Default: ${DEFAULT_PLATFORM}
+  --report-scroll-delay-ms N  In-app delay before scrolling a generated report. Default: ${DEFAULT_REPORT_SCROLL_DELAY_MS}
+  --report-wait-ms N   Wait after each dynamic report-detail route while the report generates. Default: ${DEFAULT_REPORT_WAIT_MS}
   --scheme VALUE       App URL scheme. Default: ${DEFAULT_SCHEME}
   --simulator VALUE    iOS simctl device target. Default: booted
   --target VALUE       all, public, protected, or a comma-separated list of PNG names
@@ -483,7 +497,7 @@ function resolveTargetAndroidDevices(options) {
  * Raised when the target device stops responding mid-run (frozen emulator,
  * disconnected device). The run aborts instead of capturing stale frames.
  */
-class DeviceUnresponsiveError extends Error {}
+class DeviceUnresponsiveError extends Error { }
 
 /**
  * Strip screenshot-account credentials from a message before it reaches the
@@ -518,7 +532,7 @@ async function main() {
         const deviceTypes = options.device !== null ? [options.device] : defaultDeviceTypes;
         for (const deviceType of deviceTypes) {
             const targets = selectTargets(
-                buildTargets(discovery, sectionKey, deviceType),
+                buildTargets(discovery, sectionKey, deviceType, options),
                 options.target,
             );
             printTargetList(deviceType, targets);
@@ -550,7 +564,7 @@ async function main() {
     for (const device of devices) {
         for (const appearance of appearances) {
             const targets = selectTargets(
-                buildTargets(discovery, sectionKey, device.deviceType),
+                buildTargets(discovery, sectionKey, device.deviceType, options),
                 options.target,
             );
             if (targets.length === 0) {
@@ -662,11 +676,28 @@ async function captureDeviceRun({ options, device, appearance, targets }) {
 
             const outputPath = path.join(outputDir, target.file);
             const url = buildBootstrapUrl(target, options, shouldReset);
-            // Per-target extra settle time (e.g. section deep links that need
-            // ensurePlaceAudit to resolve first).
-            const waitMs = (shouldReset ? options.loginWaitMs : options.waitMs) + (target.extraWaitMs ?? 0);
+            // Login wait replaces the generic wait on the first protected
+            // target. Report-detail routes use the longer report-generation
+            // wait so capture happens after the document has laid out.
+            let waitMs = shouldReset ? options.loginWaitMs : options.waitMs;
+            if (target.isReport === true) {
+                // Keep host capture after the in-app report scroll window
+                // (delay + last retry at 4200ms, plus a short settle buffer).
+                const reportScrollSettleMs = options.reportScrollDelayMs + 5000;
+                waitMs = Math.max(waitMs, options.reportWaitMs, reportScrollSettleMs);
+            }
+            waitMs += target.extraWaitMs ?? 0;
 
-            console.log(`Opening ${target.route}${shouldReset ? " (reset + login)" : ""}`);
+            const waitReasons = [];
+            if (shouldReset) {
+                waitReasons.push("reset + login");
+            }
+            if (target.isReport === true) {
+                waitReasons.push("report generation");
+            }
+            console.log(
+                `Opening ${target.route}${waitReasons.length > 0 ? ` (${waitReasons.join(", ")})` : ""}`,
+            );
             openDeviceUrl(device, url);
             clockCheck.begin();
             await sleep(waitMs);
@@ -898,21 +929,36 @@ function isSubmittedAuditPlace(place) {
     return typeof place.submitted_at === "string" && place.submitted_at.length > 0;
 }
 
-function buildTargets(discovery, sectionKey, deviceType) {
+/**
+ * Build the screenshot target list for one device type.
+ *
+ * @param {object} discovery Resolved place/report IDs from the backend.
+ * @param {string} sectionKey First instrument section key for execute routes.
+ * @param {string} deviceType Target device type.
+ * @param {ReturnType<typeof parseArgs>} options Parsed CLI options, including report delays.
+ * @returns {object[]} Screenshot targets for this device type.
+ */
+function buildTargets(discovery, sectionKey, deviceType, options) {
+    const reportScrollDelayMs = options.reportScrollDelayMs ?? DEFAULT_REPORT_SCROLL_DELAY_MS;
     if (deviceType === "iphone" || deviceType === "android-phone") {
-        return buildPhoneTargets(discovery, sectionKey, deviceType);
+        return buildPhoneTargets(discovery, sectionKey, deviceType, reportScrollDelayMs);
     }
     if (deviceType === "ipad" || deviceType === "android-tablet") {
-        return buildTabletTargets(discovery, sectionKey, deviceType);
+        return buildTabletTargets(discovery, sectionKey, deviceType, reportScrollDelayMs);
     }
     throw new Error(`Unknown device type: ${deviceType}`);
 }
 
-function buildPhoneTargets(discovery, sectionKey, deviceType = "iphone") {
+function buildPhoneTargets(
+    discovery,
+    sectionKey,
+    deviceType = "iphone",
+    reportScrollDelayMs = DEFAULT_REPORT_SCROLL_DELAY_MS,
+) {
     const routes = buildDynamicRoutes(discovery, sectionKey);
     const targets = [
-        publicTarget("01-login.png", "/(auth)/login", "Login screen"),
-        publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
+        // publicTarget("01-login.png", "/(auth)/login", "Login screen"),
+        // publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
         protectedTarget("03-home.png", "/", "Home top"),
         protectedTarget("04-home-queue.png", withScreenshotScroll("/", 780), "Home queue scroll"),
         protectedTarget("05-places.png", "/places", "Places list top"),
@@ -934,7 +980,7 @@ function buildPhoneTargets(discovery, sectionKey, deviceType = "iphone") {
                 routes.section,
                 "Execute section top; extra settle time so ensurePlaceAudit resolves after the warm-up target",
             ),
-            extraWaitMs: 4000,
+            extraWaitMs: 10000,
         },
         dynamicPlaceTarget(
             "11-execute-section-questions.png",
@@ -946,27 +992,29 @@ function buildPhoneTargets(discovery, sectionKey, deviceType = "iphone") {
             withScreenshotScroll(routes.section, 4000),
             "Execute section notes",
         ),
-        protectedTarget("13-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
-        protectedTarget("14-reports-list.png", withScreenshotScroll("/reports", 700), "Reports list"),
-        ...buildReportDetailTargets(deviceType, "15", routes.reportDetail),
-        protectedTarget("19-settings.png", "/settings", "Settings top"),
-        protectedTarget(
-            "20-settings-scrolled.png",
-            withScreenshotScroll("/settings", IPHONE_SETTINGS_SCROLL_Y),
-            "Settings scrolled frame",
-        ),
-        dynamicPlaceTarget("21-execute-overview.png", routes.overview, "Execute section overview"),
-        dynamicPlaceTarget("22-execute-space-audit.png", routes.spaceAudit, "Execute space-audit setup"),
-        dynamicPlaceTarget("23-execute-final-comments.png", routes.finalComments, "Execute final comments"),
+        dynamicPlaceTarget("13-execute-overview.png", routes.overview, "Execute section overview"),
+        dynamicPlaceTarget("14-execute-space-audit.png", routes.spaceAudit, "Execute space-audit setup"),
+        dynamicPlaceTarget("15-execute-final-comments.png", routes.finalComments, "Execute final comments"),
+
+        protectedTarget("16-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
+        protectedTarget("17-reports-list.png", withScreenshotScroll("/reports", 700), "Reports list"),
+        ...buildReportDetailTargets(deviceType, "18", routes.reportDetail, reportScrollDelayMs),
+        protectedTarget("21-settings.png", "/settings", "Settings top"),
+        protectedTarget("22-settings-about.png", withScreenshotScroll("/settings", 1250), "Settings about"),
     ];
     return assertUniqueTargetFiles(deviceType, targets);
 }
 
-function buildTabletTargets(discovery, sectionKey, deviceType = "ipad") {
+function buildTabletTargets(
+    discovery,
+    sectionKey,
+    deviceType = "ipad",
+    reportScrollDelayMs = DEFAULT_REPORT_SCROLL_DELAY_MS,
+) {
     const routes = buildDynamicRoutes(discovery, sectionKey);
     const targets = [
-        publicTarget("01-login.png", "/(auth)/login", "Login screen"),
-        publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
+        // publicTarget("01-login.png", "/(auth)/login", "Login screen"),
+        // publicTarget("02-signup.png", "/(auth)/signup", "Signup screen"),
         protectedTarget("03-home.png", "/", "Home top; old home queue removed because tablet top frame fits it"),
         protectedTarget("04-places.png", "/places", "Places list top"),
         dynamicPlaceTarget("05-place-detail.png", routes.placeDetail, "Place detail"),
@@ -987,24 +1035,20 @@ function buildTabletTargets(discovery, sectionKey, deviceType = "ipad") {
                 routes.section,
                 "Execute section top; extra settle time so ensurePlaceAudit resolves after the warm-up target",
             ),
-            extraWaitMs: 4000,
+            extraWaitMs: 10000,
         },
         dynamicPlaceTarget(
             "10-execute-section-notes.png",
             withScreenshotScroll(routes.section, 4000),
             "Execute section notes only",
         ),
-        protectedTarget("11-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
-        ...buildReportDetailTargets(deviceType, "12", routes.reportDetail),
-        protectedTarget("15-settings.png", "/settings", "Settings top"),
-        protectedTarget(
-            "16-settings-about.png",
-            withScreenshotScroll("/settings", 1250),
-            "Settings about; old preferences shot removed",
-        ),
-        dynamicPlaceTarget("17-execute-overview.png", routes.overview, "Execute section overview"),
-        dynamicPlaceTarget("18-execute-space-audit.png", routes.spaceAudit, "Execute space-audit setup"),
-        dynamicPlaceTarget("19-execute-final-comments.png", routes.finalComments, "Execute final comments"),
+        dynamicPlaceTarget("11-execute-overview.png", routes.overview, "Execute section overview"),
+        dynamicPlaceTarget("12-execute-space-audit.png", routes.spaceAudit, "Execute space-audit setup"),
+        dynamicPlaceTarget("13-execute-final-comments.png", routes.finalComments, "Execute final comments"),
+        protectedTarget("14-reports.png", "/reports", "Reports list top; old list/preview scrolls removed"),
+        ...buildReportDetailTargets(deviceType, "15", routes.reportDetail, reportScrollDelayMs),
+        protectedTarget("18-settings.png", "/settings", "Settings top"),
+        protectedTarget("19-settings-about.png", withScreenshotScroll("/settings", 1250), "Settings about"),
     ];
     return assertUniqueTargetFiles(deviceType, targets);
 }
@@ -1040,42 +1084,35 @@ function buildDynamicRoutes(discovery, sectionKey) {
     return routes;
 }
 
-function buildReportDetailTargets(deviceType, startNumber, reportRoute) {
+/**
+ * Build the report-detail screenshot frames for one device type.
+ *
+ * Scrolled frames wait `reportScrollDelayMs` in-app so the generated report
+ * can finish laying out before the automation jumps to the requested offset.
+ *
+ * @param {string} deviceType Target device type.
+ * @param {string} startNumber Starting file number for this device's report frames.
+ * @param {string | null} reportRoute Resolved report-detail route, or null when skipped.
+ * @param {number} reportScrollDelayMs In-app delay before scrolling generated report content.
+ * @returns {object[]} Report-detail screenshot targets.
+ */
+function buildReportDetailTargets(deviceType, startNumber, reportRoute, reportScrollDelayMs) {
     const base = Number(startNumber);
     const scrolls = REPORT_DETAIL_SCROLLS[deviceType];
-    const isPhone = deviceType === "iphone" || deviceType === "android-phone";
     const targets = [
         dynamicReportTarget(`${pad2(base)}-report-detail-top.png`, reportRoute, "Report detail top"),
         dynamicReportTarget(
             `${pad2(base + 1)}-report-detail-early.png`,
-            withScreenshotScroll(reportRoute, scrolls.early),
+            withScreenshotScroll(reportRoute, scrolls.early, reportScrollDelayMs),
             "Report detail early scroll; slightly less than old 700px shot",
         ),
+        dynamicReportTarget(
+            `${pad2(base + 2)}-report-detail-end.png`,
+            withScreenshotScroll(reportRoute, scrolls.end, reportScrollDelayMs),
+            "Report detail end frame; tune after capture if needed",
+        ),
     ];
-    if (isPhone) {
-        targets.push(
-            dynamicReportTarget(
-                `${pad2(base + 2)}-report-detail-near-end.png`,
-                withScreenshotScroll(reportRoute, scrolls.nearEnd),
-                "Report detail near-end frame; tune after capture if needed",
-            ),
-        );
-        targets.push(
-            dynamicReportTarget(
-                `${pad2(base + 3)}-report-detail-end.png`,
-                withScreenshotScroll(reportRoute, scrolls.end),
-                "Report detail end frame; tune after capture if needed",
-            ),
-        );
-    } else {
-        targets.push(
-            dynamicReportTarget(
-                `${pad2(base + 2)}-report-detail-end.png`,
-                withScreenshotScroll(reportRoute, scrolls.end),
-                "Report detail end frame; tune after capture if needed",
-            ),
-        );
-    }
+
     return targets;
 }
 
@@ -1096,17 +1133,25 @@ function dynamicPlaceTarget(file, route, note) {
 function dynamicReportTarget(file, route, note) {
     return route === null
         ? unresolved(
-              file,
-              "No submitted audit with audit_id was returned by the assigned places API.",
-              note,
-          )
-        : protectedTarget(file, route, note);
+            file,
+            "No submitted audit with audit_id was returned by the assigned places API.",
+            note,
+        )
+        : { ...protectedTarget(file, route, note), isReport: true };
 }
 
 function unresolved(file, reason = "No assigned place was returned by the assigned places API.", note = "") {
     return { file, route: "", requiresAuth: true, skipReason: reason, note };
 }
 
+/**
+ * Attach screenshot scroll automation params to a target route.
+ *
+ * @param {string | null} route Target route, or null when the dynamic ID is unresolved.
+ * @param {number} scrollY Absolute Y offset to scroll before capture.
+ * @param {number | null} [scrollDelayMs=null] Optional in-app delay before the first scroll.
+ * @returns {string | null} Route with screenshot scroll query params, or null.
+ */
 function withScreenshotScroll(route, scrollY, scrollDelayMs = null) {
     if (route === null) {
         return null;
@@ -1167,9 +1212,13 @@ function buildBootstrapUrl(target, options, shouldReset) {
     if (normalizedTarget.scrollY !== null) {
         url.searchParams.set("__screenshotScrollY", normalizedTarget.scrollY);
     }
+    const fallbackScrollDelayMs =
+        target.isReport === true
+            ? String(options.reportScrollDelayMs)
+            : String(DEFAULT_SCROLL_DELAY_MS);
     url.searchParams.set(
         "__screenshotScrollDelayMs",
-        normalizedTarget.scrollDelayMs ?? String(DEFAULT_SCROLL_DELAY_MS),
+        normalizedTarget.scrollDelayMs ?? fallbackScrollDelayMs,
     );
     if (target.skipLogin) {
         url.searchParams.set("skipLogin", "1");
