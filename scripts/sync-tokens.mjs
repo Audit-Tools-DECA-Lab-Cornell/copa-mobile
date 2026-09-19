@@ -84,6 +84,15 @@ function renderDesignSystem(tokens) {
 
     return `${header(tokens, "bun run tokens:build")}
 
+/**
+ * Default appearance for this platform, resolved from brand/tokens.json. The palette
+ * a first-time user sees is part of the brand, so it lives with the colours rather
+ * than as a literal in the preferences store.
+ */
+export const GENERATED_DEFAULTS: { readonly theme: "light" | "dark" } = {
+    theme: ${JSON.stringify(tokens.mobile.defaultTheme)}
+};
+
 export const GENERATED_PALETTES = {
 ${palettes},
 } as const;
@@ -194,6 +203,23 @@ function validate(tokens) {
         }
     };
 
+    // Mirrors copa-frontend: the defaults are emitted into TypeScript as a narrow
+    // union, so a typo would produce a file that does not compile rather than one that
+    // renders the wrong theme. Both scripts read the same token file, so both check it.
+    if (!["light", "dark"].includes(tokens.web?.defaultTheme)) {
+        errors.push(`web.defaultTheme: ${JSON.stringify(tokens.web?.defaultTheme)} - must be "light" or "dark"`);
+    }
+    if (!["standard", "high"].includes(tokens.web?.defaultContrast)) {
+        errors.push(
+            `web.defaultContrast: ${JSON.stringify(tokens.web?.defaultContrast)} - must be "standard" or "high"`
+        );
+    }
+    if (!["light", "dark"].includes(tokens.mobile?.defaultTheme)) {
+        errors.push(
+            `mobile.defaultTheme: ${JSON.stringify(tokens.mobile?.defaultTheme)} - must be "light" or "dark"`
+        );
+    }
+
     const web = tokens.web?.palettes ?? {};
     let webKeys = null;
     for (const [theme, contrasts] of Object.entries(web)) {
@@ -243,7 +269,17 @@ function validate(tokens) {
     }
 
     // Groups added in phase 2. `_note` keys carry prose, not colour, so they are skipped.
-    for (const group of ["feedback", "reportSource", "mapPlaceholder", "exportDocument", "nativeSplash", "landing", "mobileSurface", "uploadWidget"]) {
+    for (const group of [
+        "feedback",
+        "reportSource",
+        "mapPlaceholder",
+        "exportDocument",
+        "codeViewer",
+        "nativeSplash",
+        "landing",
+        "mobileSurface",
+        "uploadWidget"
+    ]) {
         for (const [token, value] of Object.entries(tokens[group] ?? {})) {
             if (token.startsWith("_")) continue;
             check(`${group}.${token}`, value, HEX_ONLY_GROUPS.has(group));

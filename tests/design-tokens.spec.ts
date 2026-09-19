@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { SCALE_ACCENT_COLORS, CONSTRUCT_ACCENT_COLORS } from "lib/audit/scale-colors";
 import {
     GENERATED_CONSTRUCT_ACCENTS,
+    GENERATED_DEFAULTS,
     GENERATED_EXPORT_DOCUMENT_COLORS,
     GENERATED_MOBILE_SURFACE_COLORS,
     GENERATED_NATIVE_SPLASH_COLORS,
@@ -26,16 +27,13 @@ function metaChecksum(tokens: { meta?: { checksum?: string } }): string | undefi
 }
 
 /**
- * Phase 1 of the colour migration moved every palette value into
- * `brand/tokens.json` and generates the theme modules from it.
- *
- * These tests are what make that refactor provable rather than hopeful: the
- * generated tokens must resolve to exactly the values the hand-written palettes
- * produced before the move. They are expected - and required - to fail when the
- * palette itself changes; update the fixture in the same commit as the tokens.
+ * The fixture is a drift guard: the generated modules must resolve to exactly the
+ * values the palette shipped with. It is expected - and required - to fail when the
+ * palette changes on purpose; re-vendor brand/tokens.json from copa-frontend and
+ * regenerate it with `node scripts/build-token-baseline.mjs` in the same commit.
  */
 describe("generated design tokens", () => {
-    it("reproduces the frozen pre-migration palettes for every mode", () => {
+    it("reproduces the committed palettes for every mode", () => {
         expect(Object.keys(GENERATED_PALETTES).sort()).toEqual(Object.keys(baseline.palettes).sort());
 
         for (const [mode, palette] of Object.entries(baseline.palettes)) {
@@ -51,6 +49,16 @@ describe("generated design tokens", () => {
         for (const mode of Object.keys(GENERATED_PALETTES) as (keyof typeof GENERATED_PALETTES)[]) {
             expect(Object.keys(GENERATED_PALETTES[mode]).sort(), `${mode} is missing tokens`).toEqual(expected);
         }
+    });
+
+    /**
+     * The theme the app opens on when the system expresses no preference. It used to
+     * be a literal in the preferences store, which meant the default and the palettes
+     * that default resolves to could drift apart; it is generated now.
+     */
+    it("opens on the theme the token file names", () => {
+        expect(GENERATED_DEFAULTS.theme).toBe(baseline.defaultTheme);
+        expect(GENERATED_PALETTES[GENERATED_DEFAULTS.theme]).toBeDefined();
     });
 
     it("reproduces the Tamagui ramps that drive every $1-$12 token", () => {
@@ -110,95 +118,160 @@ describe("vendored token file", () => {
         const tokens = JSON.parse(readFileSync(path.join(ROOT, "brand/tokens.json"), "utf8"));
         const drifted = tokens.knownDrift.map((entry: { token: string }) => entry.token);
 
-        // `challenge` ships a different colour on each client today. Phase 4 unifies
-        // it; until then the divergence must stay declared, not silently inherited.
+        // `challenge` used to ship a different colour on each client. Phase 3 gave both
+        // the same value; the entry stays until phase 4 removes the override block
+        // itself, and this asserts the two sides cannot drift apart again in between.
         expect(drifted).toContain("scales.challenge");
-        expect(tokens.scales.platformOverrides.challenge).toEqual({
-            web: "#B45309",
-            mobile: "#0C4767",
-        });
+        expect(tokens.scales.platformOverrides.challenge.mobile).toBe(tokens.scales.platformOverrides.challenge.web);
         expect(SCALE_ACCENT_COLORS.challenge).toBe(tokens.scales.platformOverrides.challenge.mobile);
     });
 });
 
 /**
- * Phase 2 moved colour literals that were scattered across the export pipeline
- * and the native config into `brand/tokens.json`. Like phase 1, it is meant to be
- * a no-op: the tokens must still resolve to exactly what those files hard-coded.
+ * Phases 1-2 froze the pre-migration literals to prove the token pipeline was a
+ * no-op refactor. Phase 3 changed them all on purpose, so transcribing the new
+ * values here would only assert that the generator agrees with itself.
  *
- * The literals below are transcribed from the pre-phase-2 source and are expected
- * to change in phase 3, deliberately, alongside the tokens.
+ * What is worth pinning is the intent: these groups have to stay wired to the
+ * token file, and the palettes have to stay readable. Neither is satisfiable by
+ * accident.
  */
-describe("phase 2 token groups", () => {
-    it("preserves the export document palette verbatim", () => {
-        expect(GENERATED_EXPORT_DOCUMENT_COLORS).toEqual({
-            headerFill: "#1F2937",
-            headerText: "#FFFFFF",
-            sectionFill: "#E2E8F0",
-            sectionTitleText: "#0F172A",
-            sectionText: "#0F172A",
-            sectionInstructionText: "#4B5362",
-            sectionNotesText: "#6B7280",
-            rowEven: "#F8FAFC",
-            rowOdd: "#FFFFFF",
-            bodyText: "#1F2937",
-            sheetBodyText: "#334155",
-            mutedText: "#6B7280",
-            border: "#E2E8F0",
-            borderStrong: "#94A3B8",
-            summaryFill: "#333F55",
-            summaryText: "#FFFFFF",
-            summaryNeutralFill: "#F1F5F9",
-            scoreAccentText: "#1F2937",
-            subtitleText: "#cbd5e1",
-        });
-    });
+const CONTRAST_FLOOR = 4.5;
 
-    it("keeps the live export palette wired to those tokens", () => {
+/** Channel values of an opaque `#rrggbb`, 0-255. */
+function channels(hex: string): [number, number, number] {
+    return [1, 3, 5].map((offset) => Number.parseInt(hex.slice(offset, offset + 2), 16)) as [number, number, number];
+}
+
+function relativeLuminance(hex: string): number {
+    const [red, green, blue] = channels(hex).map((value) => {
+        const c = value / 255;
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    }) as [number, number, number];
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+/** WCAG 2.x contrast ratio. Both arguments must be opaque `#rrggbb`. */
+function contrastRatio(a: string, b: string): number {
+    const luminances = [relativeLuminance(a), relativeLuminance(b)];
+    const high = Math.max(...luminances);
+    const low = Math.min(...luminances);
+    return (high + 0.05) / (low + 0.05);
+}
+
+describe("palette legibility", () => {
+    const TEXT = ["foreground", "mutedForeground", "secondaryForeground", "placeholderColor"] as const;
+    const SURFACES = ["background", "surface", "surfaceMuted", "mutedSurface", "input"] as const;
+
+    it.each(Object.keys(GENERATED_PALETTES) as (keyof typeof GENERATED_PALETTES)[])(
+        "%s keeps text readable on every one of its own surfaces",
+        (mode) => {
+            const palette = GENERATED_PALETTES[mode];
+
+            for (const text of TEXT) {
+                for (const surface of SURFACES) {
+                    const ratio = contrastRatio(palette[text], palette[surface]);
+                    expect(ratio, `${mode}: ${text} on ${surface}`).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+                }
+            }
+        },
+    );
+
+    it.each(Object.keys(GENERATED_PALETTES) as (keyof typeof GENERATED_PALETTES)[])(
+        "%s keeps its status and accent colours readable",
+        (mode) => {
+            const palette = GENERATED_PALETTES[mode];
+
+            for (const token of ["primary", "success", "warning", "danger", "info", "violet"] as const) {
+                for (const surface of ["background", "surface"] as const) {
+                    const ratio = contrastRatio(palette[token], palette[surface]);
+                    expect(ratio, `${mode}: ${token} on ${surface}`).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+                }
+            }
+
+            const onPrimary = contrastRatio(palette.primaryForeground, palette.primary);
+            expect(onPrimary, `${mode}: primaryForeground on primary`).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+        },
+    );
+
+    /**
+     * `amber` is a border colour (the login notice draws its outline with it) and
+     * `amberSoft` the fill behind it. Before phase 3 every palette but `light` set
+     * `amber` to a 10% tint, so the outline was invisible in the app's default theme.
+     */
+    it.each(Object.keys(GENERATED_PALETTES) as (keyof typeof GENERATED_PALETTES)[])(
+        "%s gives the amber notice a border you can actually see",
+        (mode) => {
+            const palette = GENERATED_PALETTES[mode];
+            expect(palette.amber, `${mode}: amber must be an opaque border colour`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+            expect(contrastRatio(palette.amber, palette.surface), `${mode}: amber on surface`).toBeGreaterThanOrEqual(
+                3,
+            );
+        },
+    );
+});
+
+describe("token groups stay wired", () => {
+    it("keeps the live export palette reading the export document tokens", () => {
         expect(WEB_AUDIT_EXPORT_PALETTE.headerFill).toBe(GENERATED_EXPORT_DOCUMENT_COLORS.headerFill);
         expect(WEB_AUDIT_EXPORT_PALETTE.subtitleText).toBe(GENERATED_EXPORT_DOCUMENT_COLORS.subtitleText);
         expect(WEB_AUDIT_EXPORT_PALETTE.summaryFill).toBe(GENERATED_EXPORT_DOCUMENT_COLORS.summaryFill);
     });
 
-    /**
-     * The splash screen and adaptive-icon background render before any JS runs,
-     * so app.config.js bakes these into the native build. A recolour that misses
-     * them leaves the app launching in the old palette.
-     */
-    it("preserves the native launch colours verbatim", () => {
-        expect(GENERATED_NATIVE_SPLASH_COLORS).toEqual({
-            light: "#F7F1EB",
-            dark: "#0E0E0E",
-            adaptiveIconBackground: "#F7F1EB",
-        });
-    });
-});
+    /** Documents print on white and are read outside the app, so they do not follow the theme. */
+    it("keeps export document text readable on the page it prints on", () => {
+        const doc = GENERATED_EXPORT_DOCUMENT_COLORS;
+        const pairs: readonly (readonly [keyof typeof doc, keyof typeof doc])[] = [
+            ["headerText", "headerFill"],
+            ["subtitleText", "headerFill"],
+            ["summaryText", "summaryFill"],
+            ["sectionTitleText", "sectionFill"],
+            ["sectionText", "sectionFill"],
+            ["bodyText", "rowEven"],
+            ["bodyText", "rowOdd"],
+            ["sheetBodyText", "rowEven"],
+            ["mutedText", "rowEven"],
+            ["scoreAccentText", "summaryNeutralFill"],
+        ];
 
-/**
- * Shadows, glass and the modal scrim are mostly warm-tinted, not neutral black or
- * white - the dark glass is rgba(36,32,29) and the light accent glow is terracotta.
- * Nothing rendered would error if a recolour skipped them; the app would just keep
- * brown edges on every elevated surface and on the tab bar, which is exactly the
- * kind of leftover this phase exists to prevent.
- */
-describe("mobile surface tokens", () => {
-    it("preserves the shadow, glass and scrim values verbatim", () => {
-        expect(GENERATED_MOBILE_SURFACE_COLORS).toEqual({
-            darkShadowCard: "rgba(0, 0, 0, 0.14)",
-            darkShadowAccent: "rgba(197, 138, 92, 0.12)",
-            darkGlassSurface: "rgba(36, 32, 29, 0.74)",
-            darkGlassBorder: "rgba(231, 222, 211, 0.2)",
-            darkGlassShadow: "rgba(0, 0, 0, 0.24)",
-            darkTabBarSurface: "rgba(22, 19, 17, 0.84)",
-            darkTabBarBorder: "rgba(231, 222, 211, 0.14)",
-            lightShadowCard: "rgba(60, 48, 42, 0.08)",
-            lightShadowAccent: "rgba(176, 106, 56, 0.2)",
-            lightGlassSurface: "rgba(255, 255, 255, 0.76)",
-            lightGlassBorder: "rgba(42, 35, 30, 0.12)",
-            lightGlassShadow: "rgba(60, 48, 42, 0.12)",
-            lightTabBarSurface: "rgba(255, 255, 255, 0.72)",
-            lightTabBarBorder: "rgba(42, 35, 30, 0.1)",
-            modalScrim: "rgba(7, 9, 11, 0.55)",
-        });
+        for (const [text, fill] of pairs) {
+            expect(contrastRatio(doc[text], doc[fill]), `${text} on ${fill}`).toBeGreaterThanOrEqual(CONTRAST_FLOOR);
+        }
+    });
+
+    /**
+     * The splash screen and adaptive-icon background render before any JS runs, so
+     * app.config.js bakes these into the native build. A recolour that misses them
+     * leaves the app launching in the old palette and then flipping.
+     */
+    it("launches on the same colours the app then renders", () => {
+        expect(GENERATED_NATIVE_SPLASH_COLORS.dark).toBe(GENERATED_PALETTES.dark.background);
+        expect(GENERATED_NATIVE_SPLASH_COLORS.light).toBe(GENERATED_PALETTES.light.background);
+        // The adaptive-icon background is deliberately still the light plate the
+        // current foreground mark was drawn for - see knownDrift, phase 5.
+        expect(GENERATED_NATIVE_SPLASH_COLORS.adaptiveIconBackground).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    });
+
+    /**
+     * Shadows, glass and the modal scrim were warm-tinted rather than neutral - the
+     * dark glass was rgba(36,32,29) and the light accent glow terracotta. Nothing
+     * would error if a recolour skipped them; the app would just keep brown edges on
+     * every elevated surface and on the tab bar. So they are asserted against the
+     * palette they are meant to be tints of, not against transcribed values.
+     */
+    it("derives the tinted surfaces from the palette they sit on", () => {
+        const rgb = (hex: string) => channels(hex).join(", ");
+        const surfaces = GENERATED_MOBILE_SURFACE_COLORS;
+
+        expect(surfaces.darkGlassSurface).toContain(rgb(GENERATED_PALETTES.dark.surface));
+        expect(surfaces.darkTabBarSurface).toContain(rgb(GENERATED_PALETTES.dark.background));
+        expect(surfaces.darkGlassBorder).toContain(rgb(GENERATED_PALETTES.dark.foreground));
+        expect(surfaces.darkShadowAccent).toContain(rgb(GENERATED_PALETTES.dark.primary));
+        expect(surfaces.lightShadowAccent).toContain(rgb(GENERATED_PALETTES.light.primary));
+        expect(surfaces.lightGlassBorder).toContain(rgb(GENERATED_PALETTES.light.foreground));
+
+        for (const [name, value] of Object.entries(surfaces)) {
+            expect(value, `${name} must be a colour`).toMatch(/^(#[0-9A-Fa-f]{6}|rgba?\()/);
+        }
     });
 });

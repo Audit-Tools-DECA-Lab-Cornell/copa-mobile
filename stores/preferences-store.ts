@@ -1,5 +1,6 @@
 import { Appearance } from "react-native";
 import { create } from "zustand";
+import { GENERATED_DEFAULTS } from "lib/design-system.generated";
 import {
     readPersistedPreferences,
     savePersistedPreferences,
@@ -64,8 +65,14 @@ export function resolveThemeMode(mode: ThemeMode): ResolvedTheme {
     if (mode === "light" || mode === "dark") {
         return mode;
     }
+    // The app's own default when the system expresses no preference. It lives in
+    // brand/tokens.json next to the palettes, so the default and the colours that
+    // default resolves to cannot drift apart.
     const systemScheme = Appearance.getColorScheme();
-    return systemScheme === "light" ? "light" : "dark";
+    if (systemScheme === "light" || systemScheme === "dark") {
+        return systemScheme;
+    }
+    return GENERATED_DEFAULTS.theme;
 }
 
 /**
