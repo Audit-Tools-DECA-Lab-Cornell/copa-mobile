@@ -7,17 +7,24 @@
 
 import type { ColorTokens } from "tamagui";
 
+import { GENERATED_CONSTRUCT_ACCENTS, GENERATED_SCALE_ACCENTS } from "lib/design-system.generated";
+
 export const PV_SCALE_KEYS = ["provision", "variety", "challenge", "sociability"] as const;
 
 export type PvScaleKey = (typeof PV_SCALE_KEYS)[number];
 
-/** Canonical accent hex colours for each PV scale (aligned with web). */
-export const SCALE_ACCENT_COLORS: Record<PvScaleKey, string> = {
-    provision: "#566E3D",
-    variety: "#D2691E",
-    challenge: "#0C4767",
-    sociability: "#754170",
-};
+/**
+ * Canonical accent hex colours for each PV scale.
+ *
+ * Values come from `brand/tokens.json` via the generated module - the same
+ * source copa-frontend reads, so a scale cannot drift between the two clients.
+ *
+ * `challenge` used to differ between the two clients - the same semantic token in
+ * two colours, in reports. Phase 3 gave both `#26708F`, so the value no longer
+ * drifts and `tests/design-tokens.spec.ts` asserts they stay equal. What phase 4
+ * removes is the now-redundant `scales.platformOverrides` block, not a divergence.
+ */
+export const SCALE_ACCENT_COLORS: Record<PvScaleKey, string> = GENERATED_SCALE_ACCENTS;
 
 /**
  * Soft fills are blended from each accent toward white so column backgrounds
@@ -42,10 +49,7 @@ export interface ScaleColorFields {
  * Headline construct colours (Play Value / Usability) - a balanced teal/gold
  * pair, co-equal peers, distinct from the four scale colours and brand clay.
  */
-export const CONSTRUCT_ACCENT_COLORS: Record<"playValue" | "usability", string> = {
-    playValue: "#2E7D78",
-    usability: "#C7972F",
-};
+export const CONSTRUCT_ACCENT_COLORS: Record<"playValue" | "usability", string> = GENERATED_CONSTRUCT_ACCENTS;
 
 function parseHexColor(hex: string): [number, number, number] {
     const normalized = hex.replace("#", "").trim();

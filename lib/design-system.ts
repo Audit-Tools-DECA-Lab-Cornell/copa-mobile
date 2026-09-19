@@ -1,4 +1,5 @@
 import { buildScaleColorFields, type ScaleColorFields } from "lib/audit/scale-colors";
+import { GENERATED_MOBILE_SURFACE_COLORS, GENERATED_PALETTES } from "lib/design-system.generated";
 import { resolveFieldModePresentation } from "lib/preferences/field-mode";
 import { isTabletWidth, TABLET_TYPOGRAPHY_BASE_SCALE } from "lib/responsive-layout-tokens";
 import { useMemo } from "react";
@@ -36,6 +37,16 @@ function createTypographyToken(fontSize: number, lineHeight: number): Typography
  */
 function createColorToken(value: string): ColorTokens {
     return value as ColorTokens;
+}
+
+/**
+ * @param palette Raw hex/rgba strings from the generated token module.
+ * @returns The same map with each value typed as a Tamagui colour token.
+ */
+function toColorTokens<T extends Record<string, string>>(palette: T): { [K in keyof T]: ColorTokens } {
+    return Object.fromEntries(Object.entries(palette).map(([key, value]) => [key, createColorToken(value)])) as {
+        [K in keyof T]: ColorTokens;
+    };
 }
 
 function assembleColorPalette<T extends Record<string, ColorTokens>>(
@@ -96,182 +107,46 @@ interface GlassPalette {
     readonly tabBarBorder: ColorTokens;
 }
 
-const DARK_COLORS = assembleColorPalette(
-    {
-        background: createColorToken("#161311"),
-        foreground: createColorToken("#E7DED3"),
-        primary: createColorToken("#C58A5C"),
-        primaryForeground: createColorToken("#FFFFFF"),
-        surface: createColorToken("#24201D"),
-        surfaceMuted: createColorToken("#2E2824"),
-        mutedSurface: createColorToken("#352E2A"),
-        input: createColorToken("#201C19"),
-        border: createColorToken("#5A514A"),
-        mutedForeground: createColorToken("#B8AEA3"),
-        secondaryForeground: createColorToken("#DED3C6"),
-        success: createColorToken("#6F9A7F"),
-        warning: createColorToken("#B99A5A"),
-        danger: createColorToken("#C98472"),
-        info: createColorToken("#7B90B8"),
-        violet: createColorToken("#9B86B2"),
-        overlay: createColorToken("rgba(22, 19, 17, 0.92)"),
-        primarySoft: createColorToken("rgba(197, 138, 92, 0.14)"),
-        successSoft: createColorToken("rgba(111, 154, 127, 0.16)"),
-        warningSoft: createColorToken("rgba(185, 154, 90, 0.16)"),
-        dangerSoft: createColorToken("rgba(201, 132, 114, 0.18)"),
-        infoSoft: createColorToken("rgba(123, 144, 184, 0.16)"),
-        violetSoft: createColorToken("rgba(155, 134, 178, 0.16)"),
-        amber: createColorToken("rgba(255, 180, 0, 0.1)"),
-        amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
-        placeholderColor: createColorToken("#B8AEA3"),
-    },
-    "dark",
-) satisfies ColorPalette;
+const DARK_COLORS = assembleColorPalette(toColorTokens(GENERATED_PALETTES.dark), "dark") satisfies ColorPalette;
 
 const DARK_SHADOWS = {
-    card: `0 10px 24px ${createColorToken("rgba(0, 0, 0, 0.14)")}` as ColorTokens,
-    accent: `0 0 14px ${createColorToken("rgba(197, 138, 92, 0.12)")}` as ColorTokens,
+    card: `0 10px 24px ${GENERATED_MOBILE_SURFACE_COLORS.darkShadowCard}` as ColorTokens,
+    accent: `0 0 14px ${GENERATED_MOBILE_SURFACE_COLORS.darkShadowAccent}` as ColorTokens,
 } as const satisfies ShadowPalette;
 
 const DARK_GLASS = {
-    elevatedSurface: createColorToken("rgba(36, 32, 29, 0.74)"),
-    elevatedBorder: createColorToken("rgba(231, 222, 211, 0.2)"),
-    elevatedShadow: `0 14px 28px ${createColorToken("rgba(0, 0, 0, 0.24)")}` as ColorTokens,
-    tabBarSurface: createColorToken("rgba(22, 19, 17, 0.84)"),
-    tabBarBorder: createColorToken("rgba(231, 222, 211, 0.14)"),
+    elevatedSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkGlassSurface),
+    elevatedBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkGlassBorder),
+    elevatedShadow: `0 14px 28px ${GENERATED_MOBILE_SURFACE_COLORS.darkGlassShadow}` as ColorTokens,
+    tabBarSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkTabBarSurface),
+    tabBarBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.darkTabBarBorder),
 } as const satisfies GlassPalette;
 
-const LIGHT_COLORS = assembleColorPalette({
-    background: createColorToken("#FDFAF7"),
-    foreground: createColorToken("#2A231E"),
-    primary: createColorToken("#A66334"),
-    primaryForeground: createColorToken("#FFFFFF"),
-    surface: createColorToken("#FFFCF8"),
-    surfaceMuted: createColorToken("#F4EEE7"),
-    mutedSurface: createColorToken("#E9E2DB"),
-    input: createColorToken("#FFFFFF"),
-    border: createColorToken("#C8BCB0"),
-    mutedForeground: createColorToken("#645A52"),
-    secondaryForeground: createColorToken("#423831"),
-    success: createColorToken("#3D6B4F"),
-    warning: createColorToken("#9A7A3F"),
-    danger: createColorToken("#B54A38"),
-    info: createColorToken("#4A619A"),
-    violet: createColorToken("#6B5A8A"),
-    amber: createColorToken("#FFB400"),
-    overlay: createColorToken("rgba(255, 255, 255, 0.56)"),
-    primarySoft: createColorToken("rgba(166, 99, 52, 0.12)"),
-    successSoft: createColorToken("rgba(61, 107, 79, 0.12)"),
-    warningSoft: createColorToken("rgba(154, 122, 63, 0.12)"),
-    dangerSoft: createColorToken("rgba(181, 74, 56, 0.12)"),
-    infoSoft: createColorToken("rgba(74, 97, 154, 0.12)"),
-    violetSoft: createColorToken("rgba(107, 90, 138, 0.12)"),
-    amberSoft: createColorToken("rgba(204, 136, 0, 0.1)"),
-    placeholderColor: createColorToken("#645A52"),
-}) satisfies ColorPalette;
+const LIGHT_COLORS = assembleColorPalette(toColorTokens(GENERATED_PALETTES.light)) satisfies ColorPalette;
 
-const LIGHT_FIELD_COLORS = assembleColorPalette({
-    background: createColorToken("#FAFAF8"),
-    foreground: createColorToken("#1F1A16"),
-    primary: createColorToken("#965424"),
-    primaryForeground: createColorToken("#FFFFFF"),
-    surface: createColorToken("#FFFFFF"),
-    surfaceMuted: createColorToken("#F2F3EF"),
-    mutedSurface: createColorToken("#EAEBE6"),
-    input: createColorToken("#FFFFFF"),
-    border: createColorToken("#91857A"),
-    mutedForeground: createColorToken("#413A34"),
-    secondaryForeground: createColorToken("#241E19"),
-    success: createColorToken("#28573A"),
-    warning: createColorToken("#705700"),
-    danger: createColorToken("#96392B"),
-    info: createColorToken("#234A83"),
-    violet: createColorToken("#5A467D"),
-    overlay: createColorToken("rgba(255, 255, 255, 0.62)"),
-    primarySoft: createColorToken("rgba(150, 84, 36, 0.16)"),
-    successSoft: createColorToken("rgba(40, 87, 58, 0.16)"),
-    warningSoft: createColorToken("rgba(112, 87, 0, 0.16)"),
-    dangerSoft: createColorToken("rgba(150, 57, 43, 0.16)"),
-    infoSoft: createColorToken("rgba(35, 74, 131, 0.16)"),
-    violetSoft: createColorToken("rgba(90, 70, 125, 0.16)"),
-    amber: createColorToken("rgba(255, 180, 0, 0.1)"),
-    amberSoft: createColorToken("rgba(204, 136, 0, 0.1)"),
-    placeholderColor: createColorToken("#413A34"),
-}) satisfies ColorPalette;
+const LIGHT_FIELD_COLORS = assembleColorPalette(toColorTokens(GENERATED_PALETTES.lightField)) satisfies ColorPalette;
 
 const LIGHT_SHADOWS = {
-    card: `0 10px 24px ${createColorToken("rgba(60, 48, 42, 0.08)")}` as ColorTokens,
-    accent: `0 0 14px ${createColorToken("rgba(176, 106, 56, 0.2)")}` as ColorTokens,
+    card: `0 10px 24px ${GENERATED_MOBILE_SURFACE_COLORS.lightShadowCard}` as ColorTokens,
+    accent: `0 0 14px ${GENERATED_MOBILE_SURFACE_COLORS.lightShadowAccent}` as ColorTokens,
 } as const satisfies ShadowPalette;
 
 const LIGHT_GLASS = {
-    elevatedSurface: createColorToken("rgba(255, 255, 255, 0.76)"),
-    elevatedBorder: createColorToken("rgba(42, 35, 30, 0.12)"),
-    elevatedShadow: `0 14px 28px ${createColorToken("rgba(60, 48, 42, 0.12)")}` as ColorTokens,
-    tabBarSurface: createColorToken("rgba(255, 255, 255, 0.72)"),
-    tabBarBorder: createColorToken("rgba(42, 35, 30, 0.1)"),
+    elevatedSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightGlassSurface),
+    elevatedBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightGlassBorder),
+    elevatedShadow: `0 14px 28px ${GENERATED_MOBILE_SURFACE_COLORS.lightGlassShadow}` as ColorTokens,
+    tabBarSurface: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightTabBarSurface),
+    tabBarBorder: createColorToken(GENERATED_MOBILE_SURFACE_COLORS.lightTabBarBorder),
 } as const satisfies GlassPalette;
 
 const DARK_HIGH_CONTRAST_COLORS = assembleColorPalette(
-    {
-        background: createColorToken("#000000"),
-        foreground: createColorToken("#FFFFFF"),
-        primary: createColorToken("#FFD0A8"),
-        primaryForeground: createColorToken("#000000"),
-        surface: createColorToken("#0F0F0F"),
-        surfaceMuted: createColorToken("#141414"),
-        mutedSurface: createColorToken("#1A1A1A"),
-        input: createColorToken("#050505"),
-        border: createColorToken("#8E8E8E"),
-        mutedForeground: createColorToken("#E7E7E7"),
-        secondaryForeground: createColorToken("#F7F7F7"),
-        success: createColorToken("#91D4A7"),
-        warning: createColorToken("#F1CF6A"),
-        danger: createColorToken("#F2A392"),
-        info: createColorToken("#A8C2F5"),
-        violet: createColorToken("#D0B8F4"),
-        overlay: createColorToken("rgba(0, 0, 0, 0.94)"),
-        primarySoft: createColorToken("rgba(255, 208, 168, 0.2)"),
-        successSoft: createColorToken("rgba(145, 212, 167, 0.2)"),
-        warningSoft: createColorToken("rgba(241, 207, 106, 0.2)"),
-        dangerSoft: createColorToken("rgba(242, 163, 146, 0.2)"),
-        infoSoft: createColorToken("rgba(168, 194, 245, 0.2)"),
-        violetSoft: createColorToken("rgba(208, 184, 244, 0.2)"),
-        amber: createColorToken("rgba(255, 180, 0, 0.1)"),
-        amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
-        placeholderColor: createColorToken("#8E8E8E"),
-    },
+    toColorTokens(GENERATED_PALETTES.darkHighContrast),
     "dark",
 ) satisfies ColorPalette;
 
-const LIGHT_HIGH_CONTRAST_COLORS = assembleColorPalette({
-    background: createColorToken("#FFFFFF"),
-    foreground: createColorToken("#111111"),
-    primary: createColorToken("#8A4A1B"),
-    primaryForeground: createColorToken("#FFFFFF"),
-    surface: createColorToken("#FFFFFF"),
-    surfaceMuted: createColorToken("#FAFAFA"),
-    mutedSurface: createColorToken("#F3F3F3"),
-    input: createColorToken("#FFFFFF"),
-    border: createColorToken("#57504A"),
-    mutedForeground: createColorToken("#39332E"),
-    secondaryForeground: createColorToken("#1D1916"),
-    success: createColorToken("#1F5B33"),
-    warning: createColorToken("#6F5600"),
-    danger: createColorToken("#8E231A"),
-    info: createColorToken("#163A70"),
-    violet: createColorToken("#4D3A70"),
-    overlay: createColorToken("rgba(17, 17, 17, 0.68)"),
-    primarySoft: createColorToken("rgba(138, 74, 27, 0.16)"),
-    successSoft: createColorToken("rgba(31, 91, 51, 0.16)"),
-    warningSoft: createColorToken("rgba(111, 86, 0, 0.16)"),
-    dangerSoft: createColorToken("rgba(142, 35, 26, 0.16)"),
-    infoSoft: createColorToken("rgba(22, 58, 112, 0.16)"),
-    violetSoft: createColorToken("rgba(77, 58, 112, 0.16)"),
-    amber: createColorToken("rgba(255, 180, 0, 0.1)"),
-    amberSoft: createColorToken("rgba(255, 180, 0, 0.1)"),
-    placeholderColor: createColorToken("#D1C4B6"),
-}) satisfies ColorPalette;
+const LIGHT_HIGH_CONTRAST_COLORS = assembleColorPalette(
+    toColorTokens(GENERATED_PALETTES.lightHighContrast),
+) satisfies ColorPalette;
 
 interface FontTokenScale {
     readonly bodyRegular: string;

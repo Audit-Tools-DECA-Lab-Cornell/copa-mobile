@@ -1,5 +1,6 @@
 import { SCALE_ACCENT_COLORS, SCALE_SOFT_COLORS } from "lib/audit/scale-colors";
 import { SOCIABILITY_EXPORT_HEADERS } from "lib/audit/sociability";
+import { GENERATED_EXPORT_DOCUMENT_COLORS } from "lib/design-system.generated";
 import type { ScaleKey } from "lib/audit/types";
 
 /** File formats supported by the mobile export flow. */
@@ -114,49 +115,34 @@ export const GUIDANCE_COLUMN_WIDTHS = [24, 64, 56] as const;
 export const SINGLE_RESPONSE_COLUMN_WIDTHS = [14, 14, 16, 24, 44, 42, 72, 22, 22, 22, 22, 22, 22, 24, 16, 16] as const;
 export const BULK_RESPONSE_COLUMN_WIDTHS = SINGLE_RESPONSE_COLUMN_WIDTHS;
 
-/** Original mobile export palette, kept for reference/fallback comparison. */
-export const MOBILE_EXPORT_PALETTE = {
-    primary: "#2563EB",
-    headerFill: "#1F2937",
-    headerText: "#FFFFFF",
-    headerSoftFill: "#F1F5F9",
-    headerSoftText: "#475569",
-    sectionFill: "#E2E8F0",
-    sectionText: "#0F172A",
-    sectionInstructionText: "#0F172A",
-    sectionNotesText: "#0F172A",
-    rowEven: "#F8FAFC",
-    rowOdd: "#FFFFFF",
-    bodyText: "#1F2937",
-    sheetBodyText: "#334155",
-    mutedText: "#6B7280",
-    titleText: "#111827",
-    border: "#E2E8F0",
-    borderStrong: "#94A3B8",
-    summaryFill: "#FEF3C7",
-    summaryText: "#92400E",
-} as const;
-
-/** Shared export palette matched to the web audit PDF/XLSX export. */
+/**
+ * Shared export palette for generated PDF/XLSX documents.
+ *
+ * Values resolve from `brand/tokens.json`. The comment this block used to carry
+ * claimed these were "matched to the web audit export", but the web pipeline
+ * derives its colours from the theme palette instead - the two were never
+ * actually tied. That divergence is recorded under `knownDrift`.
+ */
 export const WEB_AUDIT_EXPORT_PALETTE = {
-    headerFill: "#1F2937",
-    headerText: "#FFFFFF",
-    sectionFill: "#E2E8F0",
-    sectionTitleText: "#0F172A",
-    sectionText: "#0F172A",
-    sectionInstructionText: "#4B5362",
-    sectionNotesText: "#6B7280",
-    rowEven: "#F8FAFC",
-    rowOdd: "#FFFFFF",
-    bodyText: "#1F2937",
-    sheetBodyText: "#334155",
-    mutedText: "#6B7280",
-    border: "#E2E8F0",
-    borderStrong: "#94A3B8",
-    summaryFill: "#333F55",
-    summaryText: "#FFFFFF",
-    summaryNeutralFill: "#F1F5F9",
-    scoreAccentText: "#1F2937",
+    headerFill: GENERATED_EXPORT_DOCUMENT_COLORS.headerFill,
+    headerText: GENERATED_EXPORT_DOCUMENT_COLORS.headerText,
+    sectionFill: GENERATED_EXPORT_DOCUMENT_COLORS.sectionFill,
+    sectionTitleText: GENERATED_EXPORT_DOCUMENT_COLORS.sectionTitleText,
+    sectionText: GENERATED_EXPORT_DOCUMENT_COLORS.sectionText,
+    sectionInstructionText: GENERATED_EXPORT_DOCUMENT_COLORS.sectionInstructionText,
+    sectionNotesText: GENERATED_EXPORT_DOCUMENT_COLORS.sectionNotesText,
+    rowEven: GENERATED_EXPORT_DOCUMENT_COLORS.rowEven,
+    rowOdd: GENERATED_EXPORT_DOCUMENT_COLORS.rowOdd,
+    bodyText: GENERATED_EXPORT_DOCUMENT_COLORS.bodyText,
+    sheetBodyText: GENERATED_EXPORT_DOCUMENT_COLORS.sheetBodyText,
+    mutedText: GENERATED_EXPORT_DOCUMENT_COLORS.mutedText,
+    border: GENERATED_EXPORT_DOCUMENT_COLORS.border,
+    borderStrong: GENERATED_EXPORT_DOCUMENT_COLORS.borderStrong,
+    summaryFill: GENERATED_EXPORT_DOCUMENT_COLORS.summaryFill,
+    summaryText: GENERATED_EXPORT_DOCUMENT_COLORS.summaryText,
+    summaryNeutralFill: GENERATED_EXPORT_DOCUMENT_COLORS.summaryNeutralFill,
+    scoreAccentText: GENERATED_EXPORT_DOCUMENT_COLORS.scoreAccentText,
+    subtitleText: GENERATED_EXPORT_DOCUMENT_COLORS.subtitleText,
     scaleFill: SCALE_SOFT_COLORS,
     scaleAccent: SCALE_ACCENT_COLORS,
 } as const;
