@@ -1,0 +1,88 @@
+# Each answer on an ordinary scale has to be its own answer.
+#
+# The 5.40 instrument was published with 69 answers all keyed `new_option`. On a
+# device that meant tapping "Some" also marked "No" and "A lot" - three answers
+# worth 0, 1 and 2 points had collapsed into one - and the app warned about
+# duplicate keys. This flow exercises Provision and its follow-up scales, not
+# Sociability, because Sociability's three answers are a fixed contract and
+# would not have shown the bug.
+#
+# Requires the seeded E2E instrument (testing/scripts/seed-e2e-data.sh) whose
+# first audit question offers No / Some / A lot on Provision. The assertions are
+# deliberately not optional: a run that cannot reach the question must fail
+# rather than pass silently.
+appId: com.pratyush.sudhakar.audittoolsplayspacemobile
+---
+- runFlow: create-audit.yaml
+- extendedWaitUntil:
+      visible: ".*Provision.*"
+      timeout: 30000
+
+# All three answers are offered, and none of them starts out chosen.
+- assertVisible: "No"
+- assertVisible: "Some"
+- assertVisible: "A lot"
+- assertNotVisible:
+      text: "Some"
+      selected: true
+
+# Choosing one answer chooses exactly that answer.
+- tapOn: "Some"
+- assertVisible:
+      text: "Some"
+      selected: true
+- assertNotVisible:
+      text: "No"
+      selected: true
+- assertNotVisible:
+      text: "A lot"
+      selected: true
+
+# "Some" unlocks the follow-up scales, which have their own separate answers.
+- scrollUntilVisible:
+      element:
+          text: ".*Variety.*"
+      direction: DOWN
+      timeout: 10000
+- tapOn: ".*Some Variety.*"
+- assertVisible:
+      text: ".*Some Variety.*"
+      selected: true
+- assertNotVisible:
+      text: ".*No Variety.*"
+      selected: true
+
+# Changing the answer moves the selection rather than adding to it.
+- scrollUntilVisible:
+      element:
+          text: ".*Provision.*"
+      direction: UP
+      timeout: 10000
+- tapOn: "A lot"
+- assertVisible:
+      text: "A lot"
+      selected: true
+- assertNotVisible:
+      text: "Some"
+      selected: true
+
+# The chosen answer is stored by its own key, so it survives a restart offline.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+      visible: ".*Provision.*"
+      timeout: 30000
+- assertVisible:
+      text: "A lot"
+      selected: true
+- assertNotVisible:
+      text: "No"
+      selected: true
+- scrollUntilVisible:
+      element:
+          text: ".*Variety.*"
+      direction: DOWN
+      timeout: 10000
+- assertVisible:
+      text: ".*Some Variety.*"
+      selected: true

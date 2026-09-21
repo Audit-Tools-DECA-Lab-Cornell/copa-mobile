@@ -276,6 +276,12 @@ function ScaleSelector({
                     return (
                         <Button
                             key={`${scale.key}.${option.key}`}
+                            testID={`scale-option-${questionKey}-${scale.key}-${option.key}`}
+                            // Which answer is chosen is otherwise carried only by the border and
+                            // fill, so it is also announced: a screen reader reads the selected
+                            // state, and an automated run can assert which answer is actually held.
+                            accessibilityRole="radio"
+                            accessibilityState={{ selected: isSelected, disabled }}
                             width={optionWidth}
                             rounded={ds.radii.md}
                             height={layout.isTablet ? layout.formOptionHeight : 52}
