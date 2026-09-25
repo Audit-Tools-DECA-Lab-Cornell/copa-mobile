@@ -1,3 +1,4 @@
+import { compareInstrumentVersions } from "lib/audit/instrument-resolution";
 import {
     buildQuestionLookup,
     getQuestionConstructKeys,
@@ -143,22 +144,83 @@ export function buildSingleAuditWorkbook(
     };
 }
 
-/** Convert multiple audits into workbook-style sheets. */
+/** One bulk-export audit paired with the instrument version its rows are read against. */
+export interface InstrumentScopedAudit {
+    readonly exportableAudit: ExportableAudit;
+    readonly instrument: PlayspaceInstrument;
+}
+
+/**
+ * Pair every audit in a bulk export with the instrument it was submitted with.
+ *
+ * Question shapes differ between instrument versions (Sociability is a single
+ * choice up to 5.31 and multi-select from 5.32), so each audit must be read
+ * against its session's embedded instrument. The active instrument stands in
+ * only for a session that carries none and recorded that same version; any
+ * other audit cannot be read reliably, so the export stops with its code.
+ *
+ * @param exportableAudits Submitted audits in export order.
+ * @param activeInstrument App-wide active instrument, or null before one is loaded.
+ * @returns The audits in the same order, each with its resolved instrument.
+ */
+export function resolveBulkAuditInstruments(
+    exportableAudits: readonly ExportableAudit[],
+    activeInstrument: PlayspaceInstrument | null,
+): readonly InstrumentScopedAudit[] {
+    return exportableAudits.map((exportableAudit) => {
+        const { auditSession } = exportableAudit;
+        const instrument =
+            auditSession.instrument ??
+            (activeInstrument !== null && isRecordedInstrumentVersion(activeInstrument, auditSession)
+                ? activeInstrument
+                : null);
+        if (instrument === null) {
+            throw new Error(`Audit ${auditSession.audit_code} is not available for export yet.`);
+        }
+        return { exportableAudit, instrument };
+    });
+}
+
+/** Whether `instrument` is the instrument version a session recorded its answers against. */
+function isRecordedInstrumentVersion(
+    instrument: PlayspaceInstrument,
+    auditSession: Pick<AuditSession, "instrument_key" | "instrument_version">,
+): boolean {
+    return (
+        instrument.instrument_key === auditSession.instrument_key &&
+        compareInstrumentVersions(instrument.instrument_version, auditSession.instrument_version) === 0
+    );
+}
+
+/**
+ * Convert multiple audits into workbook-style sheets.
+ *
+ * Every per-audit row is read against that audit's own instrument version (see
+ * `resolveBulkAuditInstruments`), and the Guidance sheet covers each version in
+ * the file. The title names the active instrument, or the first audit's own
+ * when none is loaded.
+ */
 export function buildBulkAuditWorkbook(
     exportableAudits: readonly ExportableAudit[],
-    instrument: PlayspaceInstrument,
+    activeInstrument: PlayspaceInstrument | null,
     auditorProfile: ExportAuditorProfile | null,
 ): WorkbookPayload {
+    const scopedAudits = resolveBulkAuditInstruments(exportableAudits, activeInstrument);
+    const workbookInstrument = activeInstrument ?? scopedAudits[0]?.instrument;
+    if (workbookInstrument === undefined) {
+        throw new Error("At least one submitted audit is required for bulk export.");
+    }
+
     return {
         fileBaseName: `pvua-bulk-${new Date().toISOString().replaceAll("-", "").replaceAll(":", "").slice(0, 15)}${buildFilterFileNameSuffix(exportableAudits[0]?.resultFilter)}`,
-        title: `${instrument.instrument_name} Bulk Export`,
+        title: `${workbookInstrument.instrument_name} Bulk Export`,
         tables: [
             // Space Audit precedes the Overview so the space setup is seen before the scores.
-            buildBulkAuditSpaceAuditTable(exportableAudits, auditorProfile, instrument),
-            buildBulkAuditOverviewTable(exportableAudits, auditorProfile, instrument),
-            buildBulkAuditPreAuditTable(exportableAudits, auditorProfile, instrument),
-            buildAuditGuidanceTable(instrument),
-            buildBulkResponsesTable(exportableAudits, instrument),
+            buildBulkAuditSpaceAuditTable(scopedAudits, auditorProfile),
+            buildBulkAuditOverviewTable(scopedAudits, auditorProfile),
+            buildBulkAuditPreAuditTable(scopedAudits, auditorProfile),
+            buildBulkAuditGuidanceTable(scopedAudits, workbookInstrument),
+            buildBulkResponsesTable(scopedAudits),
         ],
     };
 }
@@ -284,21 +346,20 @@ function buildSingleAuditOverviewTable(
 }
 
 function buildBulkAuditOverviewTable(
-    exportableAudits: readonly ExportableAudit[],
+    scopedAudits: readonly InstrumentScopedAudit[],
     auditorProfile: ExportAuditorProfile | null,
-    instrument: PlayspaceInstrument,
 ): WorkbookTable {
-    const includeResultScope = exportableAudits.some(
-        (exportableAudit) =>
+    const includeResultScope = scopedAudits.some(
+        ({ exportableAudit }) =>
             exportableAudit.resultFilter !== undefined && !isDefaultReportFilter(exportableAudit.resultFilter),
     );
-    const includePlayValue = exportableAudits.some(
-        (exportableAudit) =>
+    const includePlayValue = scopedAudits.some(
+        ({ exportableAudit, instrument }) =>
             buildReportScoreProjection(exportableAudit.auditSession, instrument, exportableAudit.resultFilter)
                 .visibleConstructs.playValue,
     );
-    const includeUsability = exportableAudits.some(
-        (exportableAudit) =>
+    const includeUsability = scopedAudits.some(
+        ({ exportableAudit, instrument }) =>
             buildReportScoreProjection(exportableAudit.auditSession, instrument, exportableAudit.resultFilter)
                 .visibleConstructs.usability,
     );
@@ -335,7 +396,7 @@ function buildBulkAuditOverviewTable(
                 "Auditor Age",
                 "Auditor Role",
             ],
-            ...exportableAudits.map((exportableAudit) =>
+            ...scopedAudits.map(({ exportableAudit, instrument }) =>
                 buildBulkAuditOverviewRow(
                     exportableAudit,
                     auditorProfile,
@@ -390,14 +451,15 @@ function buildSingleAuditSpaceAuditTable(
 }
 
 function buildBulkAuditPreAuditTable(
-    exportableAudits: readonly ExportableAudit[],
+    scopedAudits: readonly InstrumentScopedAudit[],
     auditorProfile: ExportAuditorProfile | null,
-    instrument: PlayspaceInstrument,
 ): WorkbookTable {
-    const auditInfoQuestions = instrument.pre_audit_questions.filter((question) => question.page_key === "audit_info");
     const rows: SpreadsheetRow[] = [["Audit Code", "Place Name", "Question", "Recorded Answer"]];
 
-    for (const exportableAudit of exportableAudits) {
+    for (const { exportableAudit, instrument } of scopedAudits) {
+        const auditInfoQuestions = instrument.pre_audit_questions.filter(
+            (question) => question.page_key === "audit_info",
+        );
         for (const question of auditInfoQuestions) {
             rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, auditorProfile, question));
         }
@@ -412,16 +474,15 @@ function buildBulkAuditPreAuditTable(
 }
 
 function buildBulkAuditSpaceAuditTable(
-    exportableAudits: readonly ExportableAudit[],
+    scopedAudits: readonly InstrumentScopedAudit[],
     auditorProfile: ExportAuditorProfile | null,
-    instrument: PlayspaceInstrument,
 ): WorkbookTable {
-    const spaceSetupQuestions = instrument.pre_audit_questions.filter(
-        (question) => question.page_key === "space_setup",
-    );
     const rows: SpreadsheetRow[] = [["Audit Code", "Place Name", "Question", "Recorded Answer"]];
 
-    for (const exportableAudit of exportableAudits) {
+    for (const { exportableAudit, instrument } of scopedAudits) {
+        const spaceSetupQuestions = instrument.pre_audit_questions.filter(
+            (question) => question.page_key === "space_setup",
+        );
         for (const question of spaceSetupQuestions) {
             rows.push(buildBulkAuditPreAuditRow(exportableAudit.auditSession, auditorProfile, question));
         }
@@ -435,7 +496,56 @@ function buildBulkAuditSpaceAuditTable(
     };
 }
 
+const GUIDANCE_HEADER_ROW: SpreadsheetRow = ["Topic", "Guidance", "Available options"];
+
 function buildAuditGuidanceTable(instrument: PlayspaceInstrument): WorkbookTable {
+    return {
+        name: "Guidance",
+        title: "PVUA Guidance",
+        columnWidths: GUIDANCE_COLUMN_WIDTHS,
+        rows: [GUIDANCE_HEADER_ROW, ...buildGuidanceRows(instrument)],
+    };
+}
+
+/**
+ * Guidance for every instrument version in a bulk export.
+ *
+ * Each version gets its own block, headed by an `Instrument` row naming it, so
+ * an audit's answers can be read against the scales it was recorded with.
+ *
+ * @param scopedAudits Audits paired with their resolved instruments.
+ * @param workbookInstrument Instrument described when the export holds no audits.
+ * @returns The Guidance worksheet.
+ */
+function buildBulkAuditGuidanceTable(
+    scopedAudits: readonly InstrumentScopedAudit[],
+    workbookInstrument: PlayspaceInstrument,
+): WorkbookTable {
+    const instrumentsByVersion = new Map<string, PlayspaceInstrument>();
+    for (const { instrument } of scopedAudits) {
+        const versionKey = `${instrument.instrument_key}@${instrument.instrument_version}`;
+        if (!instrumentsByVersion.has(versionKey)) {
+            instrumentsByVersion.set(versionKey, instrument);
+        }
+    }
+    const instruments = instrumentsByVersion.size > 0 ? [...instrumentsByVersion.values()] : [workbookInstrument];
+
+    return {
+        name: "Guidance",
+        title: "PVUA Guidance",
+        columnWidths: GUIDANCE_COLUMN_WIDTHS,
+        rows: [
+            GUIDANCE_HEADER_ROW,
+            ...instruments.flatMap((instrument) => [
+                ["Instrument", `${instrument.instrument_name} v${instrument.instrument_version}`, ""],
+                ...buildGuidanceRows(instrument),
+            ]),
+        ],
+    };
+}
+
+/** Guidance body rows for one instrument version (no header row). */
+function buildGuidanceRows(instrument: PlayspaceInstrument): SpreadsheetRow[] {
     const executionModeOptions = instrument.execution_modes
         .map((option) => {
             const description =
@@ -447,7 +557,6 @@ function buildAuditGuidanceTable(instrument: PlayspaceInstrument): WorkbookTable
         .join("\n");
 
     const rows: SpreadsheetRow[] = [
-        ["Topic", "Guidance", "Available options"],
         ["Instrument Overview", instrument.preamble.map(stripPromptMarkup).join("\n\n"), ""],
         ["Execution Modes", "Choose the option that matches how the audit was completed.", executionModeOptions],
     ];
@@ -462,12 +571,7 @@ function buildAuditGuidanceTable(instrument: PlayspaceInstrument): WorkbookTable
         ]);
     }
 
-    return {
-        name: "Guidance",
-        title: "PVUA Guidance",
-        columnWidths: GUIDANCE_COLUMN_WIDTHS,
-        rows,
-    };
+    return rows;
 }
 
 function buildBulkAuditOverviewRow(
@@ -547,10 +651,16 @@ function buildBulkAuditPreAuditRow(
     ];
 }
 
-/** Builds the full row set for the PVUA Response Matrix. Header row is not included. */
+/**
+ * Builds the full row set for the PVUA Response Matrix. Header row is not included.
+ *
+ * @param responseColumns Score columns to keep. Defaults to the audit's own
+ * visible constructs; a bulk export passes the set shared by all its audits.
+ */
 export function buildSingleAuditResponseRows(
     exportableAudit: ExportableAudit,
     instrument: PlayspaceInstrument,
+    responseColumns?: ConstructSelection,
 ): readonly SpreadsheetRow[] {
     const { auditSession } = exportableAudit;
     const executionMode = resolveExecutionMode(auditSession);
@@ -660,7 +770,8 @@ export function buildSingleAuditResponseRows(
         rows.push(...buildOverallSummaryRows(overallTotals, isFiltering ? projection.visibleConstructs : undefined));
     }
 
-    return isFiltering ? rows.map((row) => projectResponseRow(row, projection.visibleConstructs)) : rows;
+    const columns = responseColumns ?? (isFiltering ? projection.visibleConstructs : undefined);
+    return columns === undefined ? rows : rows.map((row) => projectResponseRow(row, columns));
 }
 
 function projectResponseRow(row: SpreadsheetRow, visibleConstructs: ConstructSelection): SpreadsheetRow {
@@ -684,15 +795,42 @@ export function buildSingleAuditResponseHeaders(
         : SINGLE_RESPONSE_HEADERS;
 }
 
-/** Build detailed PVUA-style response rows across multiple audits. */
+/**
+ * Score columns shown in a bulk response matrix: every construct that any audit
+ * in it shows. Instrument versions can filter differently under one shared
+ * filter, so each audit's rows keep this common set to stay under one header.
+ */
+export function resolveBulkResponseColumns(scopedAudits: readonly InstrumentScopedAudit[]): ConstructSelection {
+    if (scopedAudits.length === 0) {
+        return { playValue: true, usability: true };
+    }
+
+    return scopedAudits.reduce<ConstructSelection>(
+        (columns, { exportableAudit, instrument }) => {
+            const projection = buildReportScoreProjection(
+                exportableAudit.auditSession,
+                instrument,
+                exportableAudit.resultFilter,
+            );
+            const visible = projection.isFiltered ? projection.visibleConstructs : { playValue: true, usability: true };
+            return {
+                playValue: columns.playValue || visible.playValue,
+                usability: columns.usability || visible.usability,
+            };
+        },
+        { playValue: false, usability: false },
+    );
+}
+
+/** Build detailed PVUA-style response rows across multiple audits, each read against its own instrument. */
 export function buildBulkAuditResponseRows(
-    exportableAudits: readonly ExportableAudit[],
-    instrument: PlayspaceInstrument,
+    scopedAudits: readonly InstrumentScopedAudit[],
+    responseColumns: ConstructSelection = resolveBulkResponseColumns(scopedAudits),
 ): readonly SpreadsheetRow[] {
     const rows: SpreadsheetRow[] = [];
 
-    for (const exportableAudit of exportableAudits) {
-        for (const row of buildSingleAuditResponseRows(exportableAudit, instrument)) {
+    for (const { exportableAudit, instrument } of scopedAudits) {
+        for (const row of buildSingleAuditResponseRows(exportableAudit, instrument, responseColumns)) {
             rows.push(row);
         }
     }
@@ -944,13 +1082,9 @@ export function buildResponsesTable(exportableAudit: ExportableAudit, instrument
 }
 
 /** Build a workbook-style response table across multiple audits. */
-export function buildBulkResponsesTable(
-    exportableAudits: readonly ExportableAudit[],
-    instrument: PlayspaceInstrument,
-): WorkbookTable {
-    const firstAudit = exportableAudits[0];
-    const headers =
-        firstAudit === undefined ? SINGLE_RESPONSE_HEADERS : buildSingleAuditResponseHeaders(firstAudit, instrument);
+export function buildBulkResponsesTable(scopedAudits: readonly InstrumentScopedAudit[]): WorkbookTable {
+    const responseColumns = resolveBulkResponseColumns(scopedAudits);
+    const headers = projectResponseRow([...SINGLE_RESPONSE_HEADERS], responseColumns).map(String);
     return {
         name: "Responses",
         title: "PVUA Response Matrix",
@@ -958,7 +1092,7 @@ export function buildBulkResponsesTable(
             const sourceIndex = SINGLE_RESPONSE_HEADERS.indexOf(header as (typeof SINGLE_RESPONSE_HEADERS)[number]);
             return BULK_RESPONSE_COLUMN_WIDTHS[sourceIndex] ?? 16;
         }),
-        rows: [headers, ...buildBulkAuditResponseRows(exportableAudits, instrument)],
+        rows: [headers, ...buildBulkAuditResponseRows(scopedAudits, responseColumns)],
     };
 }
 
