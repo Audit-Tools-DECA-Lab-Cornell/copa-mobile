@@ -20,6 +20,7 @@ import type {
     DirtySections,
     DirtyStartedAt,
     ExecutionMode,
+    PlayspaceInstrument,
     QuestionResponsePayload,
     QuestionResponseValue,
 } from "./types";
@@ -1499,18 +1500,21 @@ export function pruneCanonicalSubmittedAuditState(args: PruneCanonicalSubmittedA
 /**
  * Recompute locally visible progress from the canonical in-memory session.
  *
+ * Session payloads may omit their embedded instrument, so callers pass the
+ * instrument explicitly; `withRecomputedProgress` is the guarded entry point.
+ *
  * @param session Session snapshot whose current draft state should drive progress.
+ * @param instrument The session's own instrument definition.
  * @returns Local draft-progress percent plus the recomputed progress block.
  */
-export function deriveLocalDraftProgress(session: AuditSession): LocalDraftProgressSnapshot {
+export function deriveLocalDraftProgress(
+    session: AuditSession,
+    instrument: PlayspaceInstrument,
+): LocalDraftProgressSnapshot {
     const executionMode = session.selected_execution_mode ?? session.meta.execution_mode;
-    const visibleSections = getVisibleSections(
-        session.instrument!,
-        executionMode,
-        readSectionResponsesBySection(session),
-    );
+    const visibleSections = getVisibleSections(instrument, executionMode, readSectionResponsesBySection(session));
     const requiredPreAuditComplete = isRequiredPreAuditComplete(
-        session.instrument!.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
+        instrument.pre_audit_questions.filter((question) => question.page_key === "space_setup"),
         getPreAuditValues(session),
         executionMode,
     );
@@ -1597,17 +1601,9 @@ export function applyLocalExecutionModeChange(
             execution_mode: args.executionMode,
         },
     };
-    const nextLocalProgress = deriveLocalDraftProgress(nextSessionBase);
 
     return {
-        session: {
-            ...nextSessionBase,
-            scores: {
-                ...nextSessionBase.scores,
-                draft_progress_percent: nextLocalProgress.draftProgressPercent,
-            },
-            progress: nextLocalProgress.progress,
-        },
+        session: withRecomputedProgress(nextSessionBase),
         dirtyMeta: markMetaDirty(args.dirtyMeta, args.session.audit_id, args.nextVersion),
         didChange: true,
     };
@@ -1668,7 +1664,7 @@ function withRecomputedProgress(session: AuditSession): AuditSession {
         return session;
     }
 
-    const nextLocalProgress = deriveLocalDraftProgress(session);
+    const nextLocalProgress = deriveLocalDraftProgress(session, session.instrument);
     return {
         ...session,
         scores: {

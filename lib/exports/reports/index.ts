@@ -85,11 +85,17 @@ export async function shareSingleAuditExport(
     throw new Error("Unsupported export format.");
 }
 
-/** Generate and share a bulk export across multiple submitted audits. */
+/**
+ * Generate and share a bulk export across multiple submitted audits.
+ *
+ * Each audit is read against its own session instrument; `activeInstrument`
+ * is the fallback for sessions without one and supplies the workbook-level
+ * title and guidance.
+ */
 export async function shareBulkAuditExport(
     exportableAudits: readonly ExportableAudit[],
     auditorProfile: ExportAuditorProfile | null,
-    instrument: PlayspaceInstrument,
+    activeInstrument: PlayspaceInstrument | null,
     format: AuditExportFormat,
     colors: DesignSystemTheme["colors"],
 ): Promise<string> {
@@ -101,7 +107,7 @@ export async function shareBulkAuditExport(
         validateExportableAudit(exportableAudit);
     }
 
-    const workbook = buildBulkAuditWorkbook(exportableAudits, instrument, auditorProfile ?? null);
+    const workbook = buildBulkAuditWorkbook(exportableAudits, activeInstrument, auditorProfile ?? null);
     if (format === "csv") {
         return await shareCsvWorkbook(workbook);
     }

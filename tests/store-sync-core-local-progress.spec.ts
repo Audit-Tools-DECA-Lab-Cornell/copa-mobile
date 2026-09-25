@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    applyLocalExecutionModeChange,
     applyLocalFinalCommentsChange,
     applyLocalPreAuditChange,
     applyLocalQuestionAnswerChange,
@@ -435,6 +436,46 @@ describe("applyLocalFinalCommentsChange - progress recompute", () => {
 
         expect(result.didChange).toBe(true);
         expect(result.session.progress).toEqual(progressBefore);
+    });
+});
+
+describe("applyLocalExecutionModeChange - progress recompute", () => {
+    it("recomputes progress for the newly selected mode", () => {
+        // q1 is audit-only, so switching to survey leaves no visible questions.
+        const session = buildSession({ preAuditComplete: true, q1Answered: true });
+        expect(session.progress.total_visible_questions).toBe(1);
+
+        const result = applyLocalExecutionModeChange({
+            session,
+            executionMode: "survey",
+            nextVersion: 1,
+            dirtyMeta: emptyDirty.dirtyMeta,
+        });
+
+        expect(result.didChange).toBe(true);
+        expect(result.session.selected_execution_mode).toBe("survey");
+        expect(result.session.progress.visible_section_count).toBe(0);
+        expect(result.session.progress.total_visible_questions).toBe(0);
+        expect(result.session.scores.draft_progress_percent).toBe(0);
+    });
+
+    it("applies the mode change and leaves progress unchanged when the instrument is not loaded", () => {
+        const session = buildSession({ withInstrument: false, preAuditComplete: true, q1Answered: true });
+        const progressBefore = session.progress;
+
+        const result = applyLocalExecutionModeChange({
+            session,
+            executionMode: "survey",
+            nextVersion: 1,
+            dirtyMeta: emptyDirty.dirtyMeta,
+        });
+
+        expect(result.didChange).toBe(true);
+        expect(result.session.selected_execution_mode).toBe("survey");
+        expect(result.session.meta.execution_mode).toBe("survey");
+        expect(result.dirtyMeta).toEqual({ [session.audit_id]: 1 });
+        expect(result.session.progress).toEqual(progressBefore);
+        expect(result.session.scores.draft_progress_percent).toBe(100);
     });
 });
 

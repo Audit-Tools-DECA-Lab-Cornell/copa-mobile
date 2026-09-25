@@ -328,10 +328,12 @@ export default function ReportsScreen() {
                 const exportableAudits = (
                     await Promise.all(exportablePlaces.map((place) => buildExportableAudit(place, auditorProfile)))
                 ).map((exportableAudit) => ({ ...exportableAudit, resultFilter: bulkFilter.filter }));
+                // Each audit is read against its own session instrument; the
+                // active instrument is only the fallback for sessions without one.
                 const fileName = await shareBulkAuditExport(
                     exportableAudits,
                     auditorProfile,
-                    instrument!,
+                    instrument,
                     format,
                     ds.colors,
                 );
