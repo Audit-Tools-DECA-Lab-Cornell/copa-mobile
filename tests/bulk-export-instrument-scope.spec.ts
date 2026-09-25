@@ -1,13 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DesignSystemTheme } from "lib/design-system";
+import { createDefaultReportFilter, setDomainOverride } from "lib/audit/report-filter";
 import { calculateQuestionScores } from "lib/audit/score-helpers";
 import type { AuditSession, PlayspaceInstrument, QuestionResponsePayload } from "lib/audit/types";
 import { shareBulkAuditExport, type AuditExportFormat } from "lib/exports/reports";
 import { buildWorkbookCsvText, buildXlsxWorkbookBase64 } from "lib/exports/reports/excel";
 import { buildWorkbookPdfHtml } from "lib/exports/reports/pdf";
 import { buildBulkAuditWorkbook } from "lib/exports/reports/row-builders";
-import type { ExportableAudit, SpreadsheetRow, WorkbookPayload, WorkbookTable } from "lib/exports/reports/types";
+import {
+    SINGLE_RESPONSE_HEADERS,
+    type ExportableAudit,
+    type SpreadsheetRow,
+    type WorkbookPayload,
+    type WorkbookTable,
+} from "lib/exports/reports/types";
 
 import { buildSociabilityInstrument, buildSociabilitySession } from "./support/sociability-fixtures";
 
@@ -76,11 +83,43 @@ function buildSubmittedAudit(
     };
 }
 
-/** Model a cached session whose payload carries no embedded instrument. */
-function withoutEmbeddedInstrument(exportableAudit: ExportableAudit): ExportableAudit {
-    const auditSession: AuditSession = { ...exportableAudit.auditSession };
+/**
+ * Model a cached session whose payload carries no embedded instrument.
+ *
+ * @param recordedVersion Instrument version the session says it was recorded with.
+ */
+function withoutEmbeddedInstrument(
+    exportableAudit: ExportableAudit,
+    recordedVersion = exportableAudit.auditSession.instrument_version,
+): ExportableAudit {
+    const auditSession: AuditSession = { ...exportableAudit.auditSession, instrument_version: recordedVersion };
     delete auditSession.instrument;
     return { ...exportableAudit, auditSession };
+}
+
+/** Move the fixture question, and its stored domain score, into another domain. */
+function withQuestionDomain(exportableAudit: ExportableAudit, domain: string): ExportableAudit {
+    const { auditSession } = exportableAudit;
+    const instrument = auditSession.instrument;
+    if (instrument === undefined) {
+        throw new Error("Expected an embedded fixture instrument.");
+    }
+    const overall = auditSession.scores.overall;
+
+    return {
+        ...exportableAudit,
+        auditSession: {
+            ...auditSession,
+            instrument: {
+                ...instrument,
+                sections: instrument.sections.map((section) => ({
+                    ...section,
+                    questions: section.questions.map((question) => ({ ...question, domains: [domain] })),
+                })),
+            },
+            scores: { ...auditSession.scores, by_domain: overall === null ? {} : { [domain]: overall } },
+        },
+    };
 }
 
 function findTable(workbook: WorkbookPayload, name: string): WorkbookTable {
@@ -130,17 +169,17 @@ describe("bulk export instrument versions", () => {
         ).toEqual(["SOC-531", "SOC-532"]);
     });
 
-    it("fails on a legacy answer read against the active multi-select instrument", () => {
-        // A session without its own instrument falls back to the active one;
-        // this is the failure that reading each audit's own version prevents.
-        expect(() => buildBulkAuditWorkbook([withoutEmbeddedInstrument(legacyAudit)], activeInstrument, null)).toThrow(
-            "multiple Sociability answer must be a list",
-        );
+    it("refuses to read an audit against an active instrument of a different version", () => {
+        // Without its own instrument, the 5.31 audit would be read against the
+        // active 5.41 multi-select scales; the export names the audit instead.
+        expect(() =>
+            buildBulkAuditWorkbook([multiAudit, withoutEmbeddedInstrument(legacyAudit)], activeInstrument, null),
+        ).toThrow("Audit SOC-531 is not available for export yet.");
     });
 
-    it("falls back to the active instrument only for sessions without their own", () => {
+    it("falls back to the active instrument for a session without its own that recorded the active version", () => {
         const workbook = buildBulkAuditWorkbook(
-            [legacyAudit, withoutEmbeddedInstrument(multiAudit)],
+            [legacyAudit, withoutEmbeddedInstrument(multiAudit, "5.41")],
             activeInstrument,
             null,
         );
@@ -150,12 +189,49 @@ describe("bulk export instrument versions", () => {
         expect(multiRow?.slice(10, 13)).toEqual(["Selected", "Not selected", "Selected"]);
     });
 
-    it("keeps the workbook title and guidance on the active instrument", () => {
-        const workbook = buildBulkAuditWorkbook([legacyAudit, multiAudit], activeInstrument, null);
-        const overviewGuidance = findTable(workbook, "Guidance").rows.find((row) => row[0] === "Instrument Overview");
+    it("keeps every audit's response rows under one header when the filter applies differently per version", () => {
+        // The Movement override filters the 5.31 audit; the 5.32 audit's question
+        // sits in another domain, so it exports unfiltered with both score columns.
+        const resultFilter = setDomainOverride(createDefaultReportFilter(), "movement", {
+            playValue: true,
+            usability: false,
+        });
+        const workbook = buildBulkAuditWorkbook(
+            [
+                { ...legacyAudit, resultFilter },
+                { ...withQuestionDomain(multiAudit, "Nature"), resultFilter },
+            ],
+            activeInstrument,
+            null,
+        );
+        const [header, ...rows] = findTable(workbook, "Responses").rows;
+        const [legacyRow] = findQuestionRows(workbook);
+
+        expect(header).toEqual([...SINGLE_RESPONSE_HEADERS]);
+        expect(rows.every((row) => row.length === header?.length)).toBe(true);
+        expect(typeof legacyRow?.[14]).toBe("number");
+        expect(legacyRow?.[15]).toBe("");
+    });
+
+    it("labels guidance for each instrument version in the file and titles the workbook with the active one", () => {
+        const workbook = buildBulkAuditWorkbook([legacyAudit, multiAudit, legacyAudit], activeInstrument, null);
+        const guidanceRows = findTable(workbook, "Guidance").rows;
 
         expect(workbook.title).toBe("Active instrument Bulk Export");
-        expect(overviewGuidance?.[1]).toBe("Guidance from the active instrument.");
+        expect(guidanceRows.filter((row) => row[0] === "Instrument").map((row) => row[1])).toEqual([
+            "Sociability test instrument v5.31",
+            "Sociability test instrument v5.32",
+        ]);
+        expect(guidanceRows.some((row) => row[1] === "Guidance from the active instrument.")).toBe(false);
+    });
+
+    it("describes the active instrument's guidance when the export holds no audits", () => {
+        const guidanceRows = findTable(buildBulkAuditWorkbook([], activeInstrument, null), "Guidance").rows;
+
+        expect(guidanceRows.find((row) => row[0] === "Instrument")?.[1]).toBe("Active instrument v5.41");
+        expect(guidanceRows.find((row) => row[0] === "Instrument Overview")?.[1]).toBe(
+            "Guidance from the active instrument.",
+        );
     });
 
     it("builds from the audits' own instruments before an active instrument is loaded", () => {

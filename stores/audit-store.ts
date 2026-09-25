@@ -1042,6 +1042,7 @@ function applyLocalExecutionMode(pairKey: string, executionMode: ExecutionMode):
         executionMode,
         nextVersion,
         dirtyMeta: auditData$.dirty_meta.peek(),
+        fallbackInstrument: auditData$.instrument.peek() ?? null,
     });
     if (!result.didChange) {
         return;

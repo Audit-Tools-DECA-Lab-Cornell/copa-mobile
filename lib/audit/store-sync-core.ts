@@ -81,6 +81,12 @@ interface ApplyLocalExecutionModeChangeArgs {
     readonly executionMode: ExecutionMode;
     readonly nextVersion: number;
     readonly dirtyMeta: DirtyMeta;
+    /**
+     * App-wide active instrument. The audit screens render a session without an
+     * embedded instrument against it, so progress for the new mode is derived
+     * from the same questions the auditor sees.
+     */
+    readonly fallbackInstrument?: PlayspaceInstrument | null;
 }
 
 interface ApplyLocalAuditStartChangeArgs {
@@ -1557,6 +1563,11 @@ export function deriveLocalDraftProgress(
 /**
  * Apply a local execution-mode change without discarding existing section data.
  *
+ * A mode change alters which questions are required, so progress is always
+ * recomputed: against the session's own instrument, else the active fallback.
+ * With no instrument at all, readiness is cleared until the next sync returns
+ * server progress, so stale readiness cannot unlock submission.
+ *
  * @param args Current session, next execution mode, and dirty-meta inputs.
  * @returns Updated pure result including dirty-meta changes when needed.
  */
@@ -1601,9 +1612,16 @@ export function applyLocalExecutionModeChange(
             execution_mode: args.executionMode,
         },
     };
+    const progressInstrument = nextSessionBase.instrument ?? args.fallbackInstrument ?? null;
 
     return {
-        session: withRecomputedProgress(nextSessionBase),
+        session:
+            progressInstrument === null
+                ? {
+                      ...nextSessionBase,
+                      progress: { ...nextSessionBase.progress, ready_to_submit: false },
+                  }
+                : withProgressFromInstrument(nextSessionBase, progressInstrument),
         dirtyMeta: markMetaDirty(args.dirtyMeta, args.session.audit_id, args.nextVersion),
         didChange: true,
     };
@@ -1664,7 +1682,19 @@ function withRecomputedProgress(session: AuditSession): AuditSession {
         return session;
     }
 
-    const nextLocalProgress = deriveLocalDraftProgress(session, session.instrument);
+    return withProgressFromInstrument(session, session.instrument);
+}
+
+/**
+ * Replace `progress` and `scores.draft_progress_percent` with values derived
+ * from `instrument`.
+ *
+ * @param session Draft session after a local edit has been applied.
+ * @param instrument Instrument whose questions define the session's progress.
+ * @returns Session with progress fields recomputed.
+ */
+function withProgressFromInstrument(session: AuditSession, instrument: PlayspaceInstrument): AuditSession {
+    const nextLocalProgress = deriveLocalDraftProgress(session, instrument);
     return {
         ...session,
         scores: {

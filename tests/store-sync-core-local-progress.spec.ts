@@ -459,23 +459,42 @@ describe("applyLocalExecutionModeChange - progress recompute", () => {
         expect(result.session.scores.draft_progress_percent).toBe(0);
     });
 
-    it("applies the mode change and leaves progress unchanged when the instrument is not loaded", () => {
+    it("derives progress from the fallback instrument when the session carries none", () => {
         const session = buildSession({ withInstrument: false, preAuditComplete: true, q1Answered: true });
-        const progressBefore = session.progress;
 
         const result = applyLocalExecutionModeChange({
             session,
             executionMode: "survey",
             nextVersion: 1,
             dirtyMeta: emptyDirty.dirtyMeta,
+            fallbackInstrument: instrument,
+        });
+
+        expect(result.didChange).toBe(true);
+        expect(result.session.instrument).toBeUndefined();
+        expect(result.session.progress.total_visible_questions).toBe(0);
+        expect(result.session.scores.draft_progress_percent).toBe(0);
+    });
+
+    it("applies the mode change and clears readiness when no instrument is loaded at all", () => {
+        const session = buildSession({ withInstrument: false, preAuditComplete: true, q1Answered: true });
+        expect(session.progress.ready_to_submit).toBe(true);
+
+        const result = applyLocalExecutionModeChange({
+            session,
+            executionMode: "survey",
+            nextVersion: 1,
+            dirtyMeta: emptyDirty.dirtyMeta,
+            fallbackInstrument: null,
         });
 
         expect(result.didChange).toBe(true);
         expect(result.session.selected_execution_mode).toBe("survey");
         expect(result.session.meta.execution_mode).toBe("survey");
         expect(result.dirtyMeta).toEqual({ [session.audit_id]: 1 });
-        expect(result.session.progress).toEqual(progressBefore);
-        expect(result.session.scores.draft_progress_percent).toBe(100);
+        // Readiness for the new mode cannot be checked here, so submission
+        // waits for the progress the next sync returns.
+        expect(result.session.progress).toEqual({ ...session.progress, ready_to_submit: false });
     });
 });
 

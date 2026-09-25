@@ -89,8 +89,8 @@ export async function shareSingleAuditExport(
  * Generate and share a bulk export across multiple submitted audits.
  *
  * Each audit is read against its own session instrument; `activeInstrument`
- * is the fallback for sessions without one and supplies the workbook-level
- * title and guidance.
+ * stands in only for a session without one that recorded the same version,
+ * and names the workbook.
  */
 export async function shareBulkAuditExport(
     exportableAudits: readonly ExportableAudit[],
